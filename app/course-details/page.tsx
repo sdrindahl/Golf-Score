@@ -1,13 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
 
-export const dynamic = 'force-dynamic'
-
-export default function CourseDetails() {
+function CourseDetailsContent() {
   const searchParams = useSearchParams()
   const courseId = searchParams.get('id')
 
@@ -339,5 +337,13 @@ export default function CourseDetails() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CourseDetails() {
+  return (
+    <Suspense fallback={<div className="max-w-4xl mx-auto py-6"><div className="card text-center"><p className="text-gray-500">Loading course...</p></div></div>}>
+      <CourseDetailsContent />
+    </Suspense>
   )
 }

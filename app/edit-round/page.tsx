@@ -1,13 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 
-export const dynamic = 'force-dynamic'
-
-export default function EditRound() {
+function EditRoundContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const roundId = searchParams.get('id')
@@ -205,5 +203,13 @@ export default function EditRound() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function EditRound() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto py-6"><div className="card text-center"><p className="text-gray-500">Loading round...</p></div></div>}>
+      <EditRoundContent />
+    </Suspense>
   )
 }
