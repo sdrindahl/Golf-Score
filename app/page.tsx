@@ -5,15 +5,11 @@ import Link from 'next/link'
 import ScoreHistory from '@/components/ScoreHistory'
 import HandicapDisplay from '@/components/HandicapDisplay'
 import { Round } from '@/types'
-import { initializeCoursesIfNeeded } from '@/lib/initializeCourses'
 
 export default function Home() {
   const [rounds, setRounds] = useState<Round[]>([])
 
   useEffect(() => {
-    // Initialize courses on first load if needed
-    initializeCoursesIfNeeded()
-    
     // Load rounds from localStorage
     const savedRounds = localStorage.getItem('golfRounds')
     if (savedRounds) {

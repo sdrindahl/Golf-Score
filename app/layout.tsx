@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import CourseInitializer from '@/components/CourseInitializer'
 
 export const metadata: Metadata = {
   title: 'Golf Score Tracker',
@@ -19,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <CourseInitializer />
         <nav className="bg-green-700 text-white p-4 sticky top-0 z-50">
           <div className="max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold">⛳ Golf Score Tracker</h1>
