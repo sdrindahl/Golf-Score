@@ -59,6 +59,7 @@ export function useAuth() {
       password,
     }
 
+    // Save to Supabase first (primary source of truth)
     if (isSupabaseActive() && supabase) {
       try {
         const { error } = await supabase
@@ -66,13 +67,18 @@ export function useAuth() {
           .insert([newUser])
 
         if (error) throw error
+        console.log('User registered in Supabase')
       } catch (error) {
         console.error('Error registering user in Supabase:', error)
-        // Continue with localStorage fallback
+        throw new Error('Failed to register user. Please check your connection.')
       }
+    } else {
+      // Only use localStorage if Supabase is not available
+      users.push(newUser)
+      localStorage.setItem('golfUsers', JSON.stringify(users))
     }
 
-    // Also save to localStorage
+    // Also update localStorage cache
     users.push(newUser)
     localStorage.setItem('golfUsers', JSON.stringify(users))
 

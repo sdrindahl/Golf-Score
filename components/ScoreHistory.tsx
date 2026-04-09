@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Round } from '@/types'
+import { deleteRoundFromSupabase } from '@/lib/dataSync'
 
 interface ScoreHistoryProps {
   rounds: Round[]
@@ -24,6 +25,9 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false }: Sco
           window.location.reload()
         }
       }
+      
+      // Also delete from Supabase
+      deleteRoundFromSupabase(roundId)
     }
   }
 

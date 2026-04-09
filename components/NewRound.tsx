@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Course, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { saveRoundToSupabase } from '@/lib/dataSync'
 
 export default function NewRound() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -35,7 +36,7 @@ export default function NewRound() {
     setScores(newScores)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!selectedCourse || scores.some(s => s === 0)) {
@@ -65,6 +66,9 @@ export default function NewRound() {
     const rounds = savedRounds ? JSON.parse(savedRounds) : []
     rounds.push(round)
     localStorage.setItem('golfRounds', JSON.stringify(rounds))
+
+    // Also save to Supabase
+    await saveRoundToSupabase(round)
 
     setSubmitted(true)
   }
