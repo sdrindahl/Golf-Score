@@ -23,8 +23,16 @@ export interface Hole {
   yardage?: number
 }
 
+export interface User {
+  id: string
+  name: string
+  password: string
+}
+
 export interface Round {
   id: string
+  userId: string
+  userName: string
   courseId: string
   courseName: string
   date: string

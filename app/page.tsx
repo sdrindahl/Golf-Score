@@ -2,18 +2,33 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import ScoreHistory from '@/components/ScoreHistory'
 import HandicapDisplay from '@/components/HandicapDisplay'
-import { Round } from '@/types'
+import { Round, User } from '@/types'
+import { useAuth } from '@/lib/useAuth'
 
 export default function Home() {
   const [rounds, setRounds] = useState<Round[]>([])
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const router = useRouter()
+  const auth = useAuth()
 
   useEffect(() => {
-    // Load rounds from localStorage
+    // Get current user
+    const user = auth.getCurrentUser()
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    setCurrentUser(user)
+
+    // Load rounds from localStorage - only for current user
     const savedRounds = localStorage.getItem('golfRounds')
     if (savedRounds) {
-      setRounds(JSON.parse(savedRounds))
+      const allRounds = JSON.parse(savedRounds) as Round[]
+      const userRounds = allRounds.filter(r => r.userId === user.id)
+      setRounds(userRounds)
     }
   }, [])
 
@@ -58,6 +73,11 @@ export default function Home() {
             <Link href="/new-round">
               <button className="btn-secondary">
                 🎯 Record Round
+              </button>
+            </Link>
+            <Link href="/players">
+              <button className="btn-secondary">
+                👥 View Golfers
               </button>
             </Link>
           </div>

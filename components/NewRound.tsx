@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Course } from '@/types'
+import { Course, User } from '@/types'
+import { useAuth } from '@/lib/useAuth'
 
 export default function NewRound() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -10,8 +11,14 @@ export default function NewRound() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const auth = useAuth()
 
   useEffect(() => {
+    // Get current user
+    const user = auth.getCurrentUser()
+    setCurrentUser(user)
+
     // Load selected course from localStorage
     const saved = localStorage.getItem('selectedCourse')
     if (saved) {
@@ -20,7 +27,7 @@ export default function NewRound() {
       setScores(new Array(course.holeCount).fill(0))
       localStorage.removeItem('selectedCourse')
     }
-  }, [])
+  }, [auth])
 
   const handleScoreChange = (holeIndex: number, score: number) => {
     const newScores = [...scores]
@@ -36,9 +43,16 @@ export default function NewRound() {
       return
     }
 
-    // Save the round
+    if (!currentUser) {
+      alert('Please log in first')
+      return
+    }
+
+    // Save the round with user info
     const round = {
       id: Date.now().toString(),
+      userId: currentUser.id,
+      userName: currentUser.name,
       courseId: selectedCourse.id,
       courseName: selectedCourse.name,
       date,

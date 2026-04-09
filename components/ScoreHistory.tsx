@@ -6,9 +6,10 @@ import { Round } from '@/types'
 interface ScoreHistoryProps {
   rounds: Round[]
   onDelete?: (roundId: string) => void
+  readOnly?: boolean
 }
 
-export default function ScoreHistory({ rounds, onDelete }: ScoreHistoryProps) {
+export default function ScoreHistory({ rounds, onDelete, readOnly = false }: ScoreHistoryProps) {
   const handleDelete = (roundId: string) => {
     if (confirm('Are you sure you want to Delete This?')) {
       if (onDelete) {
@@ -43,7 +44,7 @@ export default function ScoreHistory({ rounds, onDelete }: ScoreHistoryProps) {
               <th className="text-left p-2">Course</th>
               <th className="text-center p-2">Score</th>
               <th className="text-center p-2">vs Par</th>
-              <th className="text-center p-2">Actions</th>
+              {!readOnly && <th className="text-center p-2">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -60,19 +61,21 @@ export default function ScoreHistory({ rounds, onDelete }: ScoreHistoryProps) {
                   <td className={`text-center font-bold p-2 ${vsPalColor}`}>
                     {vsPalDisplay}
                   </td>
-                  <td className="text-center p-2 space-x-2">
-                    <Link href={`/edit-round?id=${round.id}`} className="inline-block">
-                      <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                        Edit
+                  {!readOnly && (
+                    <td className="text-center p-2 space-x-2">
+                      <Link href={`/edit-round?id=${round.id}`} className="inline-block">
+                        <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                          Edit
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(round.id)}
+                        className="text-red-600 hover:text-red-800 font-semibold text-sm"
+                      >
+                        Delete
                       </button>
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(round.id)}
-                      className="text-red-600 hover:text-red-800 font-semibold text-sm"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                    </td>
+                  )}
                 </tr>
               )
             })}
