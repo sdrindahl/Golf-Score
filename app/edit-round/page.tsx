@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export default function EditRound() {
   const router = useRouter()
   const searchParams = useSearchParams()

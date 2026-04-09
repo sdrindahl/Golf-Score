@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 export default function CourseDetails() {
   const searchParams = useSearchParams()
   const courseId = searchParams.get('id')
