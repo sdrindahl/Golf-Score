@@ -1,0 +1,207 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { Round, Course } from '@/types'
+
+export default function EditRound() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const roundId = searchParams.get('id')
+
+  const [round, setRound] = useState<Round | null>(null)
+  const [course, setCourse] = useState<Course | null>(null)
+  const [scores, setScores] = useState<number[]>([])
+  const [date, setDate] = useState('')
+  const [notes, setNotes] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!roundId) return
+
+    const savedRounds = localStorage.getItem('golfRounds')
+    if (savedRounds) {
+      const rounds = JSON.parse(savedRounds)
+      const foundRound = rounds.find((r: Round) => r.id === roundId)
+      
+      if (foundRound) {
+        setRound(foundRound)
+        setScores(foundRound.scores)
+        setDate(foundRound.date)
+        setNotes(foundRound.notes || '')
+
+        // Load the course for this round
+        const savedCourses = localStorage.getItem('golfCourses')
+        if (savedCourses) {
+          const courses = JSON.parse(savedCourses)
+          const foundCourse = courses.find((c: Course) => c.id === foundRound.courseId)
+          if (foundCourse) {
+            setCourse(foundCourse)
+          }
+        }
+      }
+    }
+    setLoading(false)
+  }, [roundId])
+
+  const handleScoreChange = (holeIndex: number, score: number) => {
+    const newScores = [...scores]
+    newScores[holeIndex] = score
+    setScores(newScores)
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!round || !course || scores.some(s => s === 0)) {
+      alert('Please enter all scores')
+      return
+    }
+
+    // Update the round
+    const updatedRound: Round = {
+      ...round,
+      date,
+      scores,
+      totalScore: scores.reduce((a, b) => a + b, 0),
+      notes,
+    }
+
+    // Update in localStorage
+    const savedRounds = localStorage.getItem('golfRounds')
+    if (savedRounds) {
+      const rounds = JSON.parse(savedRounds)
+      const index = rounds.findIndex((r: Round) => r.id === roundId)
+      if (index >= 0) {
+        rounds[index] = updatedRound
+        localStorage.setItem('golfRounds', JSON.stringify(rounds))
+      }
+    }
+
+    setSubmitted(true)
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto py-6">
+        <div className="card text-center">
+          <p className="text-gray-500">Loading round...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!round || !course) {
+    return (
+      <div className="max-w-2xl mx-auto py-6">
+        <div className="card text-center">
+          <p className="text-gray-500">Round not found</p>
+          <Link href="/" className="inline-block mt-4">
+            <button className="btn-primary">Back to Dashboard</button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl mx-auto py-6">
+        <div className="card text-center">
+          <h2 className="text-3xl font-bold mb-4 text-green-600">✅ Round Updated!</h2>
+          <p className="text-lg mb-2">
+            {course.name} - Score: {scores.reduce((a, b) => a + b, 0)}
+          </p>
+          <p className="text-gray-600 mb-6">
+            vs Par {course.par}: {' '}
+            <span className={scores.reduce((a, b) => a + b, 0) - course.par < 0 ? 'text-green-600' : 'text-red-600'}>
+              {scores.reduce((a, b) => a + b, 0) - course.par > 0 ? '+' : ''}
+              {scores.reduce((a, b) => a + b, 0) - course.par}
+            </span>
+          </p>
+          <Link href="/">
+            <button className="btn-primary">Back to Dashboard</button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto py-6">
+      <div className="card mb-6">
+        <h2 className="text-2xl font-bold mb-2">{course.name}</h2>
+        <p className="text-gray-600 mb-4">Par {course.par}</p>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="label">Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="label">Notes (Optional)</label>
+              <input
+                type="text"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g., Windy day, great putting..."
+                className="input-field"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-lg font-bold mb-4">Edit Scores by Hole</h3>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              {course.holes.map((hole, index) => (
+                <div key={hole.holeNumber} className="bg-gray-50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-600 mb-2">
+                    Hole {hole.holeNumber} (Par {hole.par})
+                  </div>
+                  <input
+                    type="number"
+                    min="1"
+                    max="13"
+                    value={scores[index] || ''}
+                    onChange={(e) => handleScoreChange(index, parseInt(e.target.value) || 0)}
+                    placeholder="Score"
+                    className="w-full p-2 border border-gray-300 rounded text-center font-bold"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <p className="font-semibold">Total Score: {scores.reduce((a, b) => a + b, 0)}</p>
+            <p className="text-gray-600">vs Par {course.par}: {' '}
+              <span className={scores.reduce((a, b) => a + b, 0) - course.par < 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                {scores.reduce((a, b) => a + b, 0) - course.par > 0 ? '+' : ''}
+                {scores.reduce((a, b) => a + b, 0) - course.par}
+              </span>
+            </p>
+          </div>
+
+          <div className="flex gap-4">
+            <button type="submit" className="btn-primary flex-1">
+              💾 Save Changes
+            </button>
+            <Link href="/" className="flex-1">
+              <button type="button" className="btn-secondary w-full">
+                Cancel
+              </button>
+            </Link>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
