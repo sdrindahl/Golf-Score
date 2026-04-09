@@ -11,11 +11,14 @@ export default function Settings() {
   const auth = useAuth()
 
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [newName, setNewName] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [nameSuccess, setNameSuccess] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -26,37 +29,72 @@ export default function Settings() {
       return
     }
     setCurrentUser(user)
+    setNewName(user.name)
     setLoading(false)
   }, [router])
 
+  const handleUpdateName = (e: React.FormEvent) => {
+    e.preventDefault()
+    setNameError('')
+    setNameSuccess('')
+
+    if (!newName.trim()) {
+      setNameError('Please enter a name')
+      return
+    }
+
+    if (newName === currentUser?.name) {
+      setNameError('New name must be different from current name')
+      return
+    }
+
+    // Check if name is already taken
+    const allUsers = auth.getAllUsers()
+    if (allUsers.some(u => u.name.toLowerCase() === newName.toLowerCase() && u.id !== currentUser?.id)) {
+      setNameError('This name is already taken')
+      return
+    }
+
+    try {
+      auth.updateName(currentUser!.id, newName)
+      
+      // Update local state
+      setCurrentUser({ ...currentUser!, name: newName })
+      
+      setNameSuccess('Name updated successfully!')
+    } catch (err) {
+      setNameError((err as Error).message)
+    }
+  }
+
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setSuccess('')
+    setPasswordError('')
+    setPasswordSuccess('')
 
     // Validation
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Please fill in all fields')
+      setPasswordError('Please fill in all fields')
       return
     }
 
     if (currentPassword !== currentUser?.password) {
-      setError('Current password is incorrect')
+      setPasswordError('Current password is incorrect')
       return
     }
 
     if (newPassword.length !== 4 || !/^\d{4}$/.test(newPassword)) {
-      setError('New password must be exactly 4 digits')
+      setPasswordError('New password must be exactly 4 digits')
       return
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match')
+      setPasswordError('New passwords do not match')
       return
     }
 
     if (newPassword === currentPassword) {
-      setError('New password must be different from current password')
+      setPasswordError('New password must be different from current password')
       return
     }
 
@@ -66,12 +104,12 @@ export default function Settings() {
       // Update local state
       setCurrentUser({ ...currentUser!, password: newPassword })
       
-      setSuccess('Password updated successfully!')
+      setPasswordSuccess('Password updated successfully!')
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
     } catch (err) {
-      setError((err as Error).message)
+      setPasswordError((err as Error).message)
     }
   }
 
@@ -100,11 +138,46 @@ export default function Settings() {
         <h2 className="text-2xl font-bold mb-6">Account Information</h2>
 
         <div className="mb-8 pb-8 border-b">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600 mb-2">Player Name</p>
-            <p className="text-xl font-bold">{currentUser.name}</p>
-            <p className="text-xs text-gray-500 mt-2">User ID: {currentUser.id}</p>
-          </div>
+          <h3 className="text-xl font-bold mb-4">Update Player Name</h3>
+          
+          <form onSubmit={handleUpdateName} className="space-y-4">
+            <div>
+              <label className="label">Current Name</label>
+              <input
+                type="text"
+                value={currentUser?.name || ''}
+                disabled
+                className="input-field bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="label">New Name</label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter new name"
+                className="input-field"
+              />
+            </div>
+
+            {nameError && (
+              <div className="bg-red-100 text-red-700 p-3 rounded">
+                {nameError}
+              </div>
+            )}
+
+            {nameSuccess && (
+              <div className="bg-green-100 text-green-700 p-3 rounded">
+                ✅ {nameSuccess}
+              </div>
+            )}
+
+            <button type="submit" className="btn-primary w-full">
+              ✏️ Update Name
+            </button>
+          </form>
         </div>
 
         <h3 className="text-xl font-bold mb-4">Change Password</h3>
@@ -156,15 +229,15 @@ export default function Settings() {
             />
           </div>
 
-          {error && (
+          {passwordError && (
             <div className="bg-red-100 text-red-700 p-3 rounded">
-              {error}
+              {passwordError}
             </div>
           )}
 
-          {success && (
+          {passwordSuccess && (
             <div className="bg-green-100 text-green-700 p-3 rounded">
-              ✅ {success}
+              ✅ {passwordSuccess}
             </div>
           )}
 

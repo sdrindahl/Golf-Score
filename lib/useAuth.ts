@@ -72,6 +72,22 @@ export function useAuth() {
     }
   }
 
+  function updateName(userId: string, newName: string): void {
+    const users = getAllUsers()
+    const userIndex = users.findIndex(u => u.id === userId)
+    
+    if (userIndex >= 0) {
+      users[userIndex].name = newName
+      localStorage.setItem('golfUsers', JSON.stringify(users))
+      
+      const currentUser = getCurrentUser()
+      if (currentUser && currentUser.id === userId) {
+        currentUser.name = newName
+        localStorage.setItem('currentUser', JSON.stringify(currentUser))
+      }
+    }
+  }
+
   return {
     getCurrentUser,
     getAllUsers,
@@ -79,6 +95,7 @@ export function useAuth() {
     loginUser,
     logoutUser,
     updatePassword,
+    updateName,
     generatePassword,
   }
 }
