@@ -37,14 +37,14 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false }: Sco
     <div className="card">
       <h2 className="text-xl font-bold mb-4">Recent Rounds</h2>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-sm md:text-base">
           <thead className="bg-gray-100">
             <tr>
-              <th className="text-left p-2">Date</th>
-              <th className="text-left p-2">Course</th>
-              <th className="text-center p-2">Score</th>
-              <th className="text-center p-2">vs Par</th>
-              {!readOnly && <th className="text-center p-2">Actions</th>}
+              <th className="text-left p-2 md:p-3">Date</th>
+              <th className="text-left p-2 md:p-3">Course</th>
+              <th className="text-center p-2 md:p-3">Score</th>
+              <th className="text-center p-2 md:p-3">vs Par</th>
+              {!readOnly && <th className="text-center p-2 md:p-3">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -55,25 +55,27 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false }: Sco
 
               return (
                 <tr key={round.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2">{new Date(round.date).toLocaleDateString()}</td>
-                  <td className="p-2">{round.courseName}</td>
-                  <td className="text-center font-bold p-2">{round.totalScore}</td>
-                  <td className={`text-center font-bold p-2 ${vsPalColor}`}>
+                  <td className="p-2 md:p-3">{new Date(round.date).toLocaleDateString()}</td>
+                  <td className="p-2 md:p-3 max-w-xs truncate md:max-w-none">{round.courseName}</td>
+                  <td className="text-center font-bold p-2 md:p-3">{round.totalScore}</td>
+                  <td className={`text-center font-bold p-2 md:p-3 ${vsPalColor}`}>
                     {vsPalDisplay}
                   </td>
                   {!readOnly && (
-                    <td className="text-center p-2 space-x-2">
-                      <Link href={`/edit-round?id=${round.id}`} className="inline-block">
-                        <button className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
-                          Edit
+                    <td className="text-center p-2 md:p-3">
+                      <div className="flex gap-1 md:gap-2 justify-center flex-wrap">
+                        <Link href={`/edit-round?id=${round.id}`} className="inline-block">
+                          <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs md:text-sm">
+                            Edit
+                          </button>
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(round.id)}
+                          className="text-red-600 hover:text-red-800 font-semibold text-xs md:text-sm"
+                        >
+                          Delete
                         </button>
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(round.id)}
-                        className="text-red-600 hover:text-red-800 font-semibold text-sm"
-                      >
-                        Delete
-                      </button>
+                      </div>
                     </td>
                   )}
                 </tr>

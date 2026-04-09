@@ -144,11 +144,11 @@ export default function NewRound() {
 
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4">Enter Scores by Hole</h3>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-9 gap-2 md:gap-3">
               {selectedCourse.holes.map((hole, index) => (
-                <div key={hole.holeNumber} className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600 mb-2">
-                    Hole {hole.holeNumber} (Par {hole.par})
+                <div key={hole.holeNumber} className="bg-gray-50 p-2 md:p-3 rounded-lg">
+                  <div className="text-xs md:text-sm text-gray-600 mb-1">
+                    H{hole.holeNumber}
                   </div>
                   <input
                     type="number"
@@ -156,8 +156,8 @@ export default function NewRound() {
                     max="13"
                     value={scores[index] || ''}
                     onChange={(e) => handleScoreChange(index, parseInt(e.target.value) || 0)}
-                    placeholder="Score"
-                    className="w-full p-2 border border-gray-300 rounded text-center font-bold"
+                    placeholder="0"
+                    className="w-full p-2 border border-gray-300 rounded text-center font-bold text-sm"
                   />
                 </div>
               ))}
