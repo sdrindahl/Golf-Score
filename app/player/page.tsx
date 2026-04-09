@@ -39,6 +39,8 @@ function PlayerProfileContent() {
         const playerRounds = allRounds.filter(r => r.userId === playerId)
         setRounds(playerRounds)
       }
+    } else {
+      setPlayer(null)
     }
 
     setLoading(false)

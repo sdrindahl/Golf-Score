@@ -10,6 +10,7 @@
     "db:seed": "node scripts/seed-courses.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.0",
     "axios": "^1.6.0",
     "next": "^16.2.3",
     "react": "^18.2.0",

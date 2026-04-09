@@ -8,35 +8,46 @@ import { useAuth } from '@/lib/useAuth'
 export default function Players() {
   const [players, setPlayers] = useState<User[]>([])
   const [playerStats, setPlayerStats] = useState<Record<string, { roundCount: number; handicap: number }>>({})
+  const [loading, setLoading] = useState(true)
   const auth = useAuth()
 
   useEffect(() => {
-    // Get all players
-    const allUsers = auth.getAllUsers()
-    setPlayers(allUsers)
+    const loadPlayers = async () => {
+      try {
+        // Get all players from Supabase or localStorage
+        const allUsers = await auth.getAllUsersAsync()
+        setPlayers(allUsers)
 
-    // Calculate stats for each player
-    const savedRounds = localStorage.getItem('golfRounds')
-    const allRounds: Round[] = savedRounds ? JSON.parse(savedRounds) : []
+        // Calculate stats for each player
+        const savedRounds = localStorage.getItem('golfRounds')
+        const allRounds: Round[] = savedRounds ? JSON.parse(savedRounds) : []
 
-    const stats: Record<string, { roundCount: number; handicap: number }> = {}
-    
-    allUsers.forEach(user => {
-      const userRounds = allRounds.filter(r => r.userId === user.id)
-      const roundCount = userRounds.length
+        const stats: Record<string, { roundCount: number; handicap: number }> = {}
+        
+        allUsers.forEach(user => {
+          const userRounds = allRounds.filter(r => r.userId === user.id)
+          const roundCount = userRounds.length
 
-      let handicap = 0
-      if (userRounds.length > 0) {
-        const recentRounds = userRounds.slice(-8)
-        const avgScore = recentRounds.reduce((sum, r) => sum + r.totalScore, 0) / recentRounds.length
-        const bestScore = Math.min(...recentRounds.map(r => r.totalScore))
-        handicap = Math.round((avgScore - bestScore) * 10) / 10
+          let handicap = 0
+          if (userRounds.length > 0) {
+            const recentRounds = userRounds.slice(-8)
+            const avgScore = recentRounds.reduce((sum, r) => sum + r.totalScore, 0) / recentRounds.length
+            const bestScore = Math.min(...recentRounds.map(r => r.totalScore))
+            handicap = Math.round((avgScore - bestScore) * 10) / 10
+          }
+
+          stats[user.id] = { roundCount, handicap }
+        })
+
+        setPlayerStats(stats)
+      } catch (error) {
+        console.error('Error loading players:', error)
+      } finally {
+        setLoading(false)
       }
+    }
 
-      stats[user.id] = { roundCount, handicap }
-    })
-
-    setPlayerStats(stats)
+    loadPlayers()
   }, [])
 
   return (
@@ -48,7 +59,11 @@ export default function Players() {
         </p>
       </div>
 
-      {players.length === 0 ? (
+      {loading ? (
+        <div className="card text-center py-12">
+          <p className="text-gray-500 text-lg">Loading golfers...</p>
+        </div>
+      ) : players.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-gray-500 text-lg">No players yet</p>
         </div>

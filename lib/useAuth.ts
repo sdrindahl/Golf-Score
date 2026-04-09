@@ -1,6 +1,11 @@
 import { User } from '@/types'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export function useAuth() {
+  function isSupabaseActive(): boolean {
+    return isSupabaseConfigured()
+  }
+
   function getCurrentUser(): User | null {
     if (typeof window === 'undefined') return null
     const user = localStorage.getItem('currentUser')
@@ -13,15 +18,35 @@ export function useAuth() {
     return users ? JSON.parse(users) : []
   }
 
+  async function getAllUsersAsync(): Promise<User[]> {
+    if (!isSupabaseActive() || !supabase) {
+      // Fallback to localStorage
+      return getAllUsers()
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Error fetching users from Supabase:', error)
+      // Fallback to localStorage
+      return getAllUsers()
+    }
+  }
+
   function generatePassword(): string {
     return Math.floor(Math.random() * 10000)
       .toString()
       .padStart(4, '0')
   }
 
-  function registerUser(name: string, password: string): User {
-    const users = getAllUsers()
-    
+  async function registerUser(name: string, password: string): Promise<User> {
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
+
     // Check if user already exists
     const existing = users.find(u => u.name.toLowerCase() === name.toLowerCase())
     if (existing) {
@@ -34,16 +59,30 @@ export function useAuth() {
       password,
     }
 
+    if (isSupabaseActive() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('users')
+          .insert([newUser])
+
+        if (error) throw error
+      } catch (error) {
+        console.error('Error registering user in Supabase:', error)
+        // Continue with localStorage fallback
+      }
+    }
+
+    // Also save to localStorage
     users.push(newUser)
     localStorage.setItem('golfUsers', JSON.stringify(users))
-    
+
     return newUser
   }
 
-  function loginUser(name: string, password: string): User {
-    const users = getAllUsers()
+  async function loginUser(name: string, password: string): Promise<User> {
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
     const user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password)
-    
+
     if (!user) {
       throw new Error('Invalid name or password')
     }
@@ -56,14 +95,28 @@ export function useAuth() {
     localStorage.removeItem('currentUser')
   }
 
-  function updatePassword(userId: string, newPassword: string): void {
-    const users = getAllUsers()
+  async function updatePassword(userId: string, newPassword: string): Promise<void> {
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
     const userIndex = users.findIndex(u => u.id === userId)
-    
+
     if (userIndex >= 0) {
       users[userIndex].password = newPassword
+
+      if (isSupabaseActive() && supabase) {
+        try {
+          const { error } = await supabase
+            .from('users')
+            .update({ password: newPassword })
+            .eq('id', userId)
+
+          if (error) throw error
+        } catch (error) {
+          console.error('Error updating password in Supabase:', error)
+        }
+      }
+
       localStorage.setItem('golfUsers', JSON.stringify(users))
-      
+
       const currentUser = getCurrentUser()
       if (currentUser && currentUser.id === userId) {
         currentUser.password = newPassword
@@ -72,14 +125,28 @@ export function useAuth() {
     }
   }
 
-  function updateName(userId: string, newName: string): void {
-    const users = getAllUsers()
+  async function updateName(userId: string, newName: string): Promise<void> {
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
     const userIndex = users.findIndex(u => u.id === userId)
-    
+
     if (userIndex >= 0) {
       users[userIndex].name = newName
+
+      if (isSupabaseActive() && supabase) {
+        try {
+          const { error } = await supabase
+            .from('users')
+            .update({ name: newName })
+            .eq('id', userId)
+
+          if (error) throw error
+        } catch (error) {
+          console.error('Error updating name in Supabase:', error)
+        }
+      }
+
       localStorage.setItem('golfUsers', JSON.stringify(users))
-      
+
       const currentUser = getCurrentUser()
       if (currentUser && currentUser.id === userId) {
         currentUser.name = newName
@@ -91,11 +158,13 @@ export function useAuth() {
   return {
     getCurrentUser,
     getAllUsers,
+    getAllUsersAsync,
     registerUser,
     loginUser,
     logoutUser,
     updatePassword,
     updateName,
     generatePassword,
+    isSupabaseActive,
   }
 }
