@@ -20,7 +20,7 @@ export default function NavBar() {
     setLoading(false)
 
     // If not logged in and not on login page, redirect to login
-    if (!user && pathname !== '/login' && !pathname.startsWith('/player/') && pathname !== '/settings') {
+    if (!user && pathname !== '/login' && !pathname.startsWith('/player') && pathname !== '/settings') {
       router.push('/login')
     }
   }, [pathname, router])
@@ -57,7 +57,7 @@ export default function NavBar() {
                     Home
                   </button>
                 </Link>
-                <Link href={`/player/${currentUser.id}`}>
+                <Link href={`/player?id=${currentUser.id}`}>
                   <button className="bg-green-600 hover:bg-green-800 px-4 py-2 rounded font-semibold text-sm">
                     My Profile
                   </button>
