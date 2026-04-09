@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
 
-export default function EditCourse() {
+function EditCourseContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const courseId = searchParams.get('id')
@@ -229,5 +229,13 @@ export default function EditCourse() {
         </div>
       </form>
     </div>
+  )
+}
+
+export default function EditCourse() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto py-6"><div className="card text-center"><p className="text-gray-500">Loading course...</p></div></div>}>
+      <EditCourseContent />
+    </Suspense>
   )
 }
