@@ -10,7 +10,7 @@ interface ScoreHistoryProps {
 
 export default function ScoreHistory({ rounds, onDelete }: ScoreHistoryProps) {
   const handleDelete = (roundId: string) => {
-    if (confirm('Are you sure you want to delete this round?')) {
+    if (confirm('Are you sure you want to Delete This?')) {
       if (onDelete) {
         onDelete(roundId)
       } else {

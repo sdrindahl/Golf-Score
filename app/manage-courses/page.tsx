@@ -17,7 +17,7 @@ export default function ManageCourses() {
   }, [])
 
   const handleDelete = (courseId: string) => {
-    if (confirm('Are you sure you want to delete this course?')) {
+    if (confirm('Are you sure you want to Delete This?')) {
       const updated = courses.filter(c => c.id !== courseId)
       setCourses(updated)
       localStorage.setItem('golfCourses', JSON.stringify(updated))
