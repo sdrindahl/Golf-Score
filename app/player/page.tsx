@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ScoreHistory from '@/components/ScoreHistory'
-import HandicapDisplay from '@/components/HandicapDisplay'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import { syncDataFromSupabase } from '@/lib/dataSync'
@@ -200,15 +199,16 @@ function PlayerProfileContent() {
         </div>
       </div>
 
-      {/* Handicap Display */}
-      <div className="mb-6">
-        <HandicapDisplay handicap={handicap} totalRounds={rounds.length} />
-      </div>
-
       {/* Statistics */}
       {rounds.length > 0 && (
         <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4">Best Rounds</h2>
+          <div className="flex items-start justify-between mb-4">
+            <h2 className="text-xl font-bold">Best Rounds</h2>
+            <div className="text-right">
+              <p className="text-xs text-gray-600">Handicap</p>
+              <p className="text-2xl font-bold text-green-600">{handicap}</p>
+            </div>
+          </div>
           
           {/* Best 18-Hole Round */}
           {(() => {
