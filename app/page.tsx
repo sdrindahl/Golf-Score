@@ -85,10 +85,10 @@ export default function Home() {
         <HandicapDisplay handicap={handicap} totalRounds={rounds.length} />
         
         <div className="card mt-6">
-          <h3 className="text-lg font-bold mb-4">Statistics</h3>
+          <h3 className="text-lg font-bold mb-4">Best Rounds</h3>
           {rounds.length > 0 ? (
-            <div className="space-y-4">
-              {/* 18-Hole Statistics */}
+            <div className="space-y-3">
+              {/* Best 18-Hole Round */}
               {(() => {
                 const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
                 const rounds18 = rounds.filter(r => {
@@ -98,32 +98,22 @@ export default function Home() {
                 
                 if (rounds18.length === 0) return null
                 
-                const best18 = Math.min(...rounds18.map(r => r.totalScore))
-                const worst18 = Math.max(...rounds18.map(r => r.totalScore))
-                const avg18 = (rounds18.reduce((sum, r) => sum + r.totalScore, 0) / rounds18.length).toFixed(1)
+                const best18 = rounds18.reduce((best, current) => 
+                  current.totalScore < best.totalScore ? current : best
+                )
                 
                 return (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-2">18-Hole Rounds ({rounds18.length})</p>
-                    <div className="space-y-2 ml-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Best:</span>
-                        <span className="font-bold text-green-600">{best18}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Worst:</span>
-                        <span className="font-bold text-red-600">{worst18}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Average:</span>
-                        <span className="font-bold text-blue-600">{avg18}</span>
-                      </div>
+                  <div className="border-b pb-3">
+                    <p className="text-xs font-semibold text-gray-600 mb-1">Best 18-Hole Round</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700">{best18.courseName}</span>
+                      <span className="text-lg font-bold text-green-600">{best18.totalScore}</span>
                     </div>
                   </div>
                 )
               })()}
               
-              {/* 9-Hole Statistics */}
+              {/* Best 9-Hole Round */}
               {(() => {
                 const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
                 const rounds9 = rounds.filter(r => {
@@ -133,37 +123,20 @@ export default function Home() {
                 
                 if (rounds9.length === 0) return null
                 
-                const best9 = Math.min(...rounds9.map(r => r.totalScore))
-                const worst9 = Math.max(...rounds9.map(r => r.totalScore))
-                const avg9 = (rounds9.reduce((sum, r) => sum + r.totalScore, 0) / rounds9.length).toFixed(1)
+                const best9 = rounds9.reduce((best, current) => 
+                  current.totalScore < best.totalScore ? current : best
+                )
                 
                 return (
-                  <div className="pt-2 border-t">
-                    <p className="text-xs font-semibold text-gray-600 mb-2">9-Hole Rounds ({rounds9.length})</p>
-                    <div className="space-y-2 ml-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Best:</span>
-                        <span className="font-bold text-green-600">{best9}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Worst:</span>
-                        <span className="font-bold text-red-600">{worst9}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Average:</span>
-                        <span className="font-bold text-blue-600">{avg9}</span>
-                      </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-1">Best 9-Hole Round</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700">{best9.courseName}</span>
+                      <span className="text-lg font-bold text-green-600">{best9.totalScore}</span>
                     </div>
                   </div>
                 )
               })()}
-              
-              <div className="pt-2 border-t mt-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Total Rounds:</span>
-                  <span className="font-bold">{rounds.length}</span>
-                </div>
-              </div>
             </div>
           ) : (
             <p className="text-gray-500 text-sm">No rounds recorded yet. Start by recording your first round!</p>
