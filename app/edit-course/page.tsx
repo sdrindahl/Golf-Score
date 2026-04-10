@@ -67,6 +67,8 @@ function EditCourseContent() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
+      courseRating: 72.0,
+      slopeRating: 130,
     }
 
     // Update in localStorage

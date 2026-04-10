@@ -73,7 +73,7 @@ function PlayerProfileContent() {
     if (rounds.length === 0) return 0
     
     // Get course data to find course ratings
-    const courses = courseData
+    const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
     
     // Calculate handicap differential for each round
     // Formula: (Score - Course Rating) × 113 / Slope Rating

@@ -8,6 +8,8 @@ export const DEFAULT_COURSES: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 72.5,
+    slopeRating: 133,
     holes: [
       { holeNumber: 1, par: 5, handicap: 13, yardage: 520 },
       { holeNumber: 2, par: 4, handicap: 7, yardage: 385 },
@@ -36,6 +38,8 @@ export const DEFAULT_COURSES: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 70.8,
+    slopeRating: 124,
     holes: [
       { holeNumber: 1, par: 4, handicap: 9, yardage: 380 },
       { holeNumber: 2, par: 3, handicap: 17, yardage: 157 },
@@ -64,6 +68,8 @@ export const DEFAULT_COURSES: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 71.6,
+    slopeRating: 129,
     holes: [
       { holeNumber: 1, par: 4, handicap: 4, yardage: 330 },
       { holeNumber: 2, par: 3, handicap: 14, yardage: 136 },
@@ -92,6 +98,8 @@ export const DEFAULT_COURSES: Course[] = [
     state: 'MN',
     holeCount: 9,
     par: 34,
+    courseRating: 35.2,
+    slopeRating: 121,
     holes: [
       { holeNumber: 1, par: 4, handicap: 1, yardage: 346 },
       { holeNumber: 2, par: 4, handicap: 15, yardage: 253 },
@@ -111,6 +119,8 @@ export const DEFAULT_COURSES: Course[] = [
     state: 'MN',
     holeCount: 9,
     par: 27,
+    courseRating: 27.5,
+    slopeRating: 120,
     holes: [
       { holeNumber: 1, par: 3, handicap: 15, yardage: 122 },
       { holeNumber: 2, par: 3, handicap: 13, yardage: 123 },

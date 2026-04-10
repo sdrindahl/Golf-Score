@@ -188,6 +188,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 71.9,
+    slopeRating: 130,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
