@@ -24,11 +24,17 @@ function EditCourseContent() {
     if (!courseId) return
 
     const savedCourses = localStorage.getItem('golfCourses')
+    console.log('📂 Loading courses from localStorage')
     if (savedCourses) {
       const courses = JSON.parse(savedCourses)
-      const course = courses.find((c: Course) => c.id === courseId)
+      console.log('  Total courses found:', courses.length)
+      console.log('  Looking for courseId:', courseId, '(type:', typeof courseId, ')')
+      console.log('  All course IDs:', courses.map((c: any) => ({ id: c.id, type: typeof c.id })))
+      
+      const course = courses.find((c: Course) => String(c.id) === String(courseId))
       
       if (course) {
+        console.log('✅ Course found:', course)
         setCourseName(course.name)
         setLocation(course.location)
         setState(course.state)
@@ -36,6 +42,8 @@ function EditCourseContent() {
         setCourseRating(course.courseRating || 72.0)
         setSlopeRating(course.slopeRating || 113)
         setHoles(course.holes)
+      } else {
+        console.log('❌ Course not found with ID:', courseId)
       }
     }
     setLoading(false)
@@ -100,18 +108,21 @@ function EditCourseContent() {
       const savedCourses = localStorage.getItem('golfCourses')
       if (savedCourses) {
         const courses = JSON.parse(savedCourses)
-        const index = courses.findIndex((c: Course) => c.id === courseId)
+        const index = courses.findIndex((c: Course) => String(c.id) === String(courseId))
         console.log('  Found course at index:', index)
         if (index >= 0) {
           courses[index] = updatedCourse
           localStorage.setItem('golfCourses', JSON.stringify(courses))
           console.log('✅ Course saved successfully')
+          console.log('  Saved courseRating:', courses[index].courseRating)
+          console.log('  Saved slopeRating:', courses[index].slopeRating)
           setSubmitted(true)
           // Redirect after a short delay
           setTimeout(() => {
             router.push('/manage-courses')
           }, 1500)
         } else {
+          console.error('❌ Course not found! Course ID:', courseId)
           alert('Course not found in database')
         }
       } else {
