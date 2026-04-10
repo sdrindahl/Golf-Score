@@ -15,6 +15,8 @@ function EditCourseContent() {
   const [state, setState] = useState('')
   const [holeCount, setHoleCount] = useState(18)
   const [holes, setHoles] = useState<any[]>([])
+  const [courseRating, setCourseRating] = useState('')
+  const [slopeRating, setSlopeRating] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -32,6 +34,8 @@ function EditCourseContent() {
         setState(course.state)
         setHoleCount(course.holeCount)
         setHoles(course.holes)
+        setCourseRating(course.courseRating?.toString() || '')
+        setSlopeRating(course.slopeRating?.toString() || '')
       }
     }
     setLoading(false)
@@ -67,8 +71,8 @@ function EditCourseContent() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
-      courseRating: 72.0,
-      slopeRating: 130,
+      courseRating: courseRating ? parseFloat(courseRating) : 72.0,
+      slopeRating: slopeRating ? parseFloat(slopeRating) : 130,
     }
 
     // Update in localStorage
@@ -153,6 +157,33 @@ function EditCourseContent() {
                   placeholder="e.g., CA"
                   className="input-field"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Course Rating</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={courseRating}
+                  onChange={(e) => setCourseRating(e.target.value)}
+                  placeholder="e.g., 71.2"
+                  className="input-field"
+                />
+                <p className="text-xs text-gray-500 mt-1">Typically 66-77</p>
+              </div>
+              <div>
+                <label className="label">Slope Rating</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={slopeRating}
+                  onChange={(e) => setSlopeRating(e.target.value)}
+                  placeholder="e.g., 135"
+                  className="input-field"
+                />
+                <p className="text-xs text-gray-500 mt-1">Typically 55-155</p>
               </div>
             </div>
           </div>
