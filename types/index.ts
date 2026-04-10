@@ -5,6 +5,8 @@ export interface Course {
   state: string
   holeCount: number
   par: number
+  courseRating: number  // e.g., 72.4
+  slopeRating: number   // e.g., 135
   holes: Hole[]
   tees?: Tee[]
 }

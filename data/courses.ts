@@ -8,6 +8,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 71,
+    courseRating: 71.2,
+    slopeRating: 135,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -21,6 +23,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 73.8,
+    slopeRating: 145,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -34,6 +38,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 72.0,
+    slopeRating: 132,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -47,6 +53,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 71.5,
+    slopeRating: 128,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -60,6 +68,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 72.3,
+    slopeRating: 130,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -73,6 +83,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 71.8,
+    slopeRating: 127,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -86,6 +98,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 73.2,
+    slopeRating: 138,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -99,6 +113,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 71,
+    courseRating: 71.0,
+    slopeRating: 131,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -112,6 +128,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 72.5,
+    slopeRating: 133,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -125,6 +143,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 70.8,
+    slopeRating: 124,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -138,6 +158,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 71.6,
+    slopeRating: 129,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
@@ -151,6 +173,8 @@ export const COURSES_DATABASE: Course[] = [
     state: 'MN',
     holeCount: 18,
     par: 72,
+    courseRating: 72.1,
+    slopeRating: 131,
     holes: Array.from({ length: 18 }, (_, i) => ({
       holeNumber: i + 1,
       par: i % 3 === 0 ? 3 : i % 5 === 0 ? 5 : 4,
