@@ -11,6 +11,9 @@ function RoundDetailContent() {
   const roundId = searchParams.get('id')
   const auth = useAuth()
 
+  console.log('🚀 RoundDetailContent rendering!')
+  console.log('📍 Current URL search params:', window.location.search)
+
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)

@@ -137,7 +137,14 @@ export default function NewRound() {
               <p className="text-xs mt-1">The round was saved locally. It may not sync to other devices.</p>
             </div>
           )}
-          <button onClick={() => router.push(`/round-detail?id=${savedRoundId}`)} className="btn-primary">
+          <button 
+            onClick={() => {
+              console.log('🔥 View Scorecard button clicked!')
+              console.log('🔑 Navigating to /round-detail?id=' + savedRoundId)
+              router.push(`/round-detail?id=${savedRoundId}`)
+            }} 
+            className="btn-primary"
+          >
             View Scorecard
           </button>
         </div>
