@@ -158,11 +158,11 @@ export default function Players() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
+    <div className="max-w-6xl mx-auto py-6">
       <div className="card mb-6">
         <h1 className="text-3xl font-bold mb-2">👥 Golfers</h1>
         <p className="text-gray-600">
-          Click on any player to view their scorecard and statistics
+          View player profiles and statistics
         </p>
         {currentUser?.is_admin && (
           <p className="text-sm text-blue-600 mt-2">👨‍💼 Admin privileges enabled</p>
@@ -178,66 +178,67 @@ export default function Players() {
           <p className="text-gray-500 text-lg">No players yet</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {players
-            .filter(player => {
-              // Show all players if current user is admin
-              if (currentUser?.is_admin) return true
-              // Regular users don't see admin users
-              return !player.is_admin
-            })
-            .map(player => (
-            <div key={player.id} className="relative">
-              <Link href={`/player?id=${player.id}`}>
-                <div className="card hover:shadow-lg cursor-pointer transition transform hover:scale-105">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold">{player.name}</h3>
-                      <p className="text-sm text-gray-500">Player ID: {player.id.slice(0, 8)}...</p>
-                    </div>
-                    <span className="text-3xl">⛳</span>
-                  </div>
-
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Rounds:</span>
-                      <span className="font-bold text-lg">{playerStats[player.id]?.roundCount || 0}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Handicap:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-lg">
-                          {playerStats[player.id]?.handicap.toFixed(1) || '—'}
-                        </span>
+        <div className="card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs md:text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="text-left p-1 md:p-3 text-xs md:text-sm">Player</th>
+                  <th className="text-center p-1 md:p-3 text-xs md:text-sm">Rounds</th>
+                  <th className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell">Handicap</th>
+                  <th className="text-center p-1 md:p-3 text-xs md:text-sm">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {players
+                  .filter(player => {
+                    // Show all players if current user is admin
+                    if (currentUser?.is_admin) return true
+                    // Regular users don't see admin users
+                    return !player.is_admin
+                  })
+                  .map(player => (
+                  <tr key={player.id} className="border-b hover:bg-gray-50">
+                    <td className="p-1 md:p-3 text-xs md:text-sm font-semibold">
+                      <div>{player.name}</div>
+                      <div className="text-gray-500 text-xs hidden md:block">ID: {player.id.slice(0, 8)}...</div>
+                    </td>
+                    <td className="text-center p-1 md:p-3 text-xs md:text-sm font-bold">
+                      {playerStats[player.id]?.roundCount || 0}
+                    </td>
+                    <td className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="font-bold">{playerStats[player.id]?.handicap.toFixed(1) || '—'}</span>
                         <div className="group relative">
-                          <span className="text-gray-400 text-sm cursor-help">ℹ️</span>
+                          <span className="text-gray-400 text-xs cursor-help">ℹ️</span>
                           <div className="hidden group-hover:block absolute right-0 z-10 w-48 bg-gray-800 text-white text-xs rounded p-2 whitespace-wrap">
-                            Calculated using USGA Handicap Index: (Score - Course Rating) × 113 / Slope Rating
+                            USGA Handicap: (Score - Course Rating) × 113 / Slope Rating
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition">
-                    View Profile →
-                  </button>
-                </div>
-              </Link>
-
-              {currentUser?.is_admin && currentUser.id !== player.id && (
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    setDeleteModal({ userId: player.id, userName: player.name })
-                  }}
-                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          ))}
+                    </td>
+                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
+                      <div className="flex flex-col sm:flex-row gap-0.5 md:gap-2 justify-center">
+                        <Link href={`/player?id=${player.id}`} className="inline-block">
+                          <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
+                            View
+                          </button>
+                        </Link>
+                        {currentUser?.is_admin && currentUser.id !== player.id && (
+                          <button
+                            onClick={() => setDeleteModal({ userId: player.id, userName: player.name })}
+                            className="text-red-600 hover:text-red-800 font-semibold text-xs"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
