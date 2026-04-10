@@ -86,30 +86,6 @@ function RoundDetailContent() {
   const frontNineTotal = frontNine.reduce((sum, score) => sum + score, 0)
   const backNineTotal = backNine.reduce((sum, score) => sum + score, 0)
 
-  const renderHoleCard = (holeIndex: number, holeNum: number) => {
-    const hole = course.holes[holeIndex]
-    const score = round.scores[holeIndex]
-    const vsPar = score - hole.par
-    const vsPalColor = vsPar < 0 ? 'text-green-600 font-bold' : vsPar > 0 ? 'text-red-600 font-bold' : 'text-gray-600'
-
-    return (
-      <div key={holeNum} className="flex justify-between items-center p-2 border-b hover:bg-gray-50">
-        <div className="flex items-center gap-4 flex-1">
-          <span className="font-semibold text-lg w-8">{holeNum}</span>
-          <span className="text-sm text-gray-600 w-8">Par {hole.par}</span>
-          {hole.yardage && <span className="text-sm text-gray-600 w-16">{hole.yardage}yd</span>}
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600 w-10 text-right">HCP {hole.handicap}</span>
-          <span className="font-bold text-lg w-8 text-center">{score}</span>
-          <span className={`font-semibold w-12 text-right ${vsPalColor}`}>
-            {vsPar > 0 ? '+' : ''}{vsPar}
-          </span>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-4xl mx-auto py-6">
       {/* Header */}
@@ -133,11 +109,70 @@ function RoundDetailContent() {
         )}
       </div>
 
-      {/* Front 9 */}
+      {/* Front 9 Table */}
       <div className="card mb-6">
         <h2 className="text-2xl font-bold mb-4">Front 9</h2>
-        <div className="mb-4">
-          {Array.from({ length: 9 }, (_, i) => renderHoleCard(i, i + 1))}
+        <div className="overflow-x-auto mb-6">
+          <table className="w-full text-xs md:text-sm">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="text-center px-1 md:px-3 py-1 md:py-2">Hole</th>
+                {course.holes.slice(0, 9).map((hole) => (
+                  <th key={hole.holeNumber} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm font-semibold">
+                    {hole.holeNumber}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Par</td>
+                {course.holes.slice(0, 9).map((hole) => (
+                  <td key={`par-${hole.holeNumber}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                    {hole.par}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b">
+                <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Score</td>
+                {round.scores.slice(0, 9).map((score, index) => (
+                  <td key={`score-${index}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm text-blue-600">
+                    {score}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-b">
+                <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">vs Par</td>
+                {round.scores.slice(0, 9).map((score, index) => {
+                  const holeIndex = index
+                  const hole = course.holes[holeIndex]
+                  const vsPar = score - hole.par
+                  const color = vsPar < 0 ? 'text-green-600' : vsPar > 0 ? 'text-red-600' : 'text-gray-600'
+                  return (
+                    <td key={`vsPar-${index}`} className={`text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm ${color}`}>
+                      {vsPar > 0 ? '+' : ''}{vsPar}
+                    </td>
+                  )
+                })}
+              </tr>
+              <tr className="hidden md:table-row border-b">
+                <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
+                {course.holes.slice(0, 9).map((hole) => (
+                  <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                    {hole.yardage || '—'}
+                  </td>
+                ))}
+              </tr>
+              <tr className="hidden md:table-row">
+                <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
+                {course.holes.slice(0, 9).map((hole) => (
+                  <td key={`hcp-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                    {hole.handicap}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
         </div>
         <div className="flex justify-between items-center p-3 bg-gray-100 rounded font-bold text-lg">
           <span>Front 9 Total</span>
@@ -151,12 +186,71 @@ function RoundDetailContent() {
         </div>
       </div>
 
-      {/* Back 9 */}
+      {/* Back 9 Table */}
       {backNine.length > 0 && (
         <div className="card mb-6">
           <h2 className="text-2xl font-bold mb-4">Back 9</h2>
-          <div className="mb-4">
-            {Array.from({ length: Math.min(9, backNine.length) }, (_, i) => renderHoleCard(i + 9, i + 10))}
+          <div className="overflow-x-auto mb-6">
+            <table className="w-full text-xs md:text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="text-center px-1 md:px-3 py-1 md:py-2">Hole</th>
+                  {course.holes.slice(9, 18).map((hole) => (
+                    <th key={hole.holeNumber} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm font-semibold">
+                      {hole.holeNumber}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b">
+                  <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Par</td>
+                  {course.holes.slice(9, 18).map((hole) => (
+                    <td key={`par-${hole.holeNumber}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                      {hole.par}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-b">
+                  <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Score</td>
+                  {round.scores.slice(9, 18).map((score, index) => (
+                    <td key={`score-${index + 9}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm text-blue-600">
+                      {score}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-b">
+                  <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">vs Par</td>
+                  {round.scores.slice(9, 18).map((score, index) => {
+                    const holeIndex = index + 9
+                    const hole = course.holes[holeIndex]
+                    const vsPar = score - hole.par
+                    const color = vsPar < 0 ? 'text-green-600' : vsPar > 0 ? 'text-red-600' : 'text-gray-600'
+                    return (
+                      <td key={`vsPar-${index + 9}`} className={`text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm ${color}`}>
+                        {vsPar > 0 ? '+' : ''}{vsPar}
+                      </td>
+                    )
+                  })}
+                </tr>
+                <tr className="hidden md:table-row border-b">
+                  <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
+                  {course.holes.slice(9, 18).map((hole) => (
+                    <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                      {hole.yardage || '—'}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="hidden md:table-row">
+                  <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
+                  {course.holes.slice(9, 18).map((hole) => (
+                    <td key={`hcp-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                      {hole.handicap}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div className="flex justify-between items-center p-3 bg-gray-100 rounded font-bold text-lg">
             <span>Back 9 Total</span>
