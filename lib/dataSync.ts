@@ -15,6 +15,9 @@ export async function syncDataFromSupabase(): Promise<void> {
   try {
     console.log('Syncing data from Supabase...')
 
+    // First, migrate any localStorage users that don't exist in Supabase
+    await migrateLocalStorageUsersToSupabase()
+
     // Sync users
     try {
       const { data: users, error: usersError } = await supabase
@@ -65,6 +68,77 @@ export async function syncDataFromSupabase(): Promise<void> {
   } catch (error) {
     console.error('Error during Supabase sync:', error)
     // Continue with localStorage data if sync fails
+  }
+}
+
+/**
+ * Migrate users and rounds from localStorage to Supabase
+ * This ensures users created before Supabase was configured still sync across devices
+ */
+async function migrateLocalStorageUsersToSupabase(): Promise<void> {
+  if (!isSupabaseConfigured() || !supabase) {
+    return
+  }
+
+  try {
+    // Get all users from Supabase
+    const { data: supabaseUsers, error: usersError } = await supabase
+      .from('users')
+      .select('id')
+
+    if (usersError) throw usersError
+
+    const supabaseUserIds = new Set(supabaseUsers?.map(u => u.id) || [])
+
+    // Get all users from localStorage
+    const localStorageUsers: User[] = JSON.parse(localStorage.getItem('golfUsers') || '[]')
+
+    // Migrate users that exist locally but not in Supabase
+    for (const user of localStorageUsers) {
+      if (!supabaseUserIds.has(user.id)) {
+        try {
+          const { error } = await supabase
+            .from('users')
+            .insert([user])
+
+          if (error) throw error
+          console.log(`Migrated user to Supabase: ${user.name}`)
+          supabaseUserIds.add(user.id)
+        } catch (error) {
+          console.error(`Error migrating user ${user.name}:`, error)
+        }
+      }
+    }
+
+    // Migrate rounds
+    const { data: supabaseRounds, error: roundsError } = await supabase
+      .from('rounds')
+      .select('id')
+
+    if (roundsError) throw roundsError
+
+    const supabaseRoundIds = new Set(supabaseRounds?.map(r => r.id) || [])
+    const localStorageRounds: Round[] = JSON.parse(localStorage.getItem('golfRounds') || '[]')
+
+    for (const round of localStorageRounds) {
+      if (!supabaseRoundIds.has(round.id)) {
+        try {
+          const { error } = await supabase
+            .from('rounds')
+            .insert([round])
+
+          if (error) throw error
+          console.log(`Migrated round to Supabase: ${round.id}`)
+          supabaseRoundIds.add(round.id)
+        } catch (error) {
+          console.error(`Error migrating round ${round.id}:`, error)
+        }
+      }
+    }
+
+    console.log('Local storage migration to Supabase complete')
+  } catch (error) {
+    console.error('Error during local storage migration:', error)
   }
 }
 

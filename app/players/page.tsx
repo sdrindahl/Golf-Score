@@ -16,6 +16,7 @@ export default function Players() {
       try {
         // Get all players from Supabase or localStorage
         const allUsers = await auth.getAllUsersAsync()
+        console.log('Loaded users:', allUsers)
         setPlayers(allUsers)
 
         // Calculate stats for each player
@@ -40,6 +41,10 @@ export default function Players() {
         })
 
         setPlayerStats(stats)
+
+        if (allUsers.length === 0) {
+          console.warn('No users found. Supabase configured:', auth.isSupabaseActive())
+        }
       } catch (error) {
         console.error('Error loading players:', error)
       } finally {
