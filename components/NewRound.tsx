@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import { saveRoundToSupabase } from '@/lib/dataSync'
 
 export default function NewRound() {
+  const router = useRouter()
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [scores, setScores] = useState<number[]>([])
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
@@ -103,9 +105,9 @@ export default function NewRound() {
               <p className="text-xs mt-1">The round was saved locally. It may not sync to other devices.</p>
             </div>
           )}
-          <Link href="/">
-            <button className="btn-primary">Back to Dashboard</button>
-          </Link>
+          <button onClick={() => router.push('/')} className="btn-primary">
+            Back to Dashboard
+          </button>
         </div>
       </div>
     )
