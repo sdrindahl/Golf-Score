@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
-  <!-- Background -->
-  <rect width="192" height="192" fill="#f0fdf4"/>
-  
-  <!-- Gradient for depth -->
+  <!-- Transparent background for maskable icon -->
   <defs>
     <linearGradient id="flagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
@@ -18,7 +15,7 @@
   <rect x="86" y="40" width="20" height="110" fill="url(#poleGrad)" rx="4"/>
   
   <!-- Flag -->
-  <path d="M 106 50 Q 140 50 150 65 Q 140 80 106 80 Z" fill="url(#flagGrad)" filter="drop-shadow(2px 2px 4px rgba(0,0,0,0.2))"/>
+  <path d="M 106 50 Q 140 50 150 65 Q 140 80 106 80 Z" fill="url(#flagGrad)"/>
   
   <!-- Flag outline -->
   <path d="M 106 50 Q 140 50 150 65 Q 140 80 106 80 Z" fill="none" stroke="#15803d" stroke-width="2"/>
@@ -32,7 +29,4 @@
   <circle cx="75" cy="135" r="1.5" fill="#cbd5e1"/>
   <circle cx="85" cy="135" r="1.5" fill="#cbd5e1"/>
   <circle cx="80" cy="140" r="1.5" fill="#cbd5e1"/>
-  
-  <!-- Shadow -->
-  <ellipse cx="96" cy="160" rx="28" ry="8" fill="rgba(0,0,0,0.08)"/>
 </svg>
