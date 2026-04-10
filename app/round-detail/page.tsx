@@ -11,26 +11,13 @@ function RoundDetailContent() {
   const roundId = searchParams.get('id')
   const auth = useAuth()
 
-  console.log('🚀 RoundDetailContent rendering!')
-  console.log('📍 roundId from searchParams:', roundId)
-  try {
-    console.log('📍 Current URL search params:', window.location.search)
-  } catch (e) {
-    console.log('⚠️ Could not access window.location')
-  }
-
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
 
   useEffect(() => {
-    if (!roundId) {
-      console.log('❌ No roundId in query params')
-      return
-    }
-
-    console.log('🔍 Looking for round with ID:', roundId)
+    if (!roundId) return
 
     // Get current user for permission checking
     const user = auth.getCurrentUser()
@@ -39,43 +26,22 @@ function RoundDetailContent() {
     try {
       // Get round from localStorage
       const savedRounds = localStorage.getItem('golfRounds')
-      console.log('📦 golfRounds from localStorage:', savedRounds ? JSON.parse(savedRounds).length + ' rounds' : 'not found')
-      
       if (savedRounds) {
         const allRounds = JSON.parse(savedRounds) as Round[]
-        console.log('📋 All round IDs:', allRounds.map(r => r.id))
-        
         const foundRound = allRounds.find(r => r.id === roundId)
-        console.log('✅ Found round:', foundRound ? 'yes' : 'no')
-        
         if (foundRound) {
           setRound(foundRound)
 
           // Get course data
           const savedCourses = localStorage.getItem('golfCourses')
-          console.log('🏌️ golfCourses from localStorage:', savedCourses ? JSON.parse(savedCourses).length + ' courses' : 'not found')
-          
           if (savedCourses) {
             const allCourses = JSON.parse(savedCourses) as Course[]
-            console.log('📍 Course IDs available:', allCourses.map(c => c.id))
-            console.log('🔎 Looking for courseId:', foundRound.courseId)
-            
             const foundCourse = allCourses.find(c => c.id === foundRound.courseId)
-            console.log('✅ Found course:', foundCourse ? 'yes' : 'no')
-            
             if (foundCourse) {
               setCourse(foundCourse)
-            } else {
-              console.warn('⚠️ Course not found in golfCourses')
             }
-          } else {
-            console.warn('⚠️ golfCourses not in localStorage')
           }
-        } else {
-          console.warn('⚠️ Round not found in stored rounds array')
         }
-      } else {
-        console.warn('⚠️ golfRounds not in localStorage')
       }
     } catch (error) {
       console.error('Error loading round detail:', error)
@@ -105,13 +71,8 @@ function RoundDetailContent() {
     return (
       <div className="max-w-4xl mx-auto py-6">
         <div className="card text-center">
-          <p className="text-gray-500 mb-4">Round not found</p>
-          <p className="text-xs text-gray-400 mb-6">
-            Looking for roundId: {roundId}<br/>
-            {!round && 'Round data not in localStorage'}
-            {round && !course && 'Course data not in localStorage'}
-          </p>
-          <button onClick={() => router.push('/')} className="btn-primary">Back to Home</button>
+          <p className="text-gray-500">Round not found</p>
+          <button onClick={() => router.push('/')} className="btn-primary mt-4">Back to Home</button>
         </div>
       </div>
     )
@@ -251,13 +212,11 @@ function RoundDetailContent() {
 }
 
 export default function RoundDetail() {
-  console.log('📄 RoundDetail (wrapper) component mounted!')
   return (
     <Suspense fallback={
       <div className="max-w-4xl mx-auto py-6">
         <div className="card text-center">
-          <p className="text-gray-500">Loading scorecard...</p>
-          <p className="text-xs text-gray-400 mt-2">⏳ Fetching your round details</p>
+          <p className="text-gray-500">Loading...</p>
         </div>
       </div>
     }>

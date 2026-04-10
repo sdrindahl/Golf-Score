@@ -80,13 +80,10 @@ export default function NewRound() {
       notes,
     }
 
-    console.log('💾 Saving round:', round)
-
     const savedRounds = localStorage.getItem('golfRounds')
     const rounds = savedRounds ? JSON.parse(savedRounds) : []
     rounds.push(round)
     localStorage.setItem('golfRounds', JSON.stringify(rounds))
-    console.log('✅ Round saved to localStorage. Total rounds:', rounds.length)
 
     // Also save the course to golfCourses so round-detail can find it
     const savedCourses = localStorage.getItem('golfCourses')
@@ -95,12 +92,7 @@ export default function NewRound() {
     if (!courseExists) {
       courses.push(selectedCourse)
       localStorage.setItem('golfCourses', JSON.stringify(courses))
-      console.log('✅ Course saved to localStorage. Total courses:', courses.length)
-    } else {
-      console.log('ℹ️ Course already exists in localStorage')
     }
-
-    console.log('🔑 Setting savedRoundId to:', round.id)
 
     // Also save to Supabase
     try {
