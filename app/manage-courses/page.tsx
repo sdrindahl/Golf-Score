@@ -74,7 +74,6 @@ export default function ManageCourses() {
                   <th className="text-left px-3 py-2 md:py-3 font-semibold hidden md:table-cell">Location</th>
                   <th className="text-center px-3 py-2 md:py-3 font-semibold">Holes</th>
                   <th className="text-center px-3 py-2 md:py-3 font-semibold">Par</th>
-                  <th className="text-center px-3 py-2 md:py-3 font-semibold">Rating</th>
                   <th className="text-center px-3 py-2 md:py-3 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -98,11 +97,8 @@ export default function ManageCourses() {
                     <td className="text-center px-3 py-2 md:py-3 font-semibold">
                       {course.par}
                     </td>
-                    <td className="text-center px-3 py-2 md:py-3 text-gray-600 text-sm">
-                      {course.courseRating || course.holes.reduce((sum, h) => sum + h.par, 0) || '—'}
-                    </td>
                     <td className="text-center px-3 py-2 md:py-3">
-                      <div className="flex gap-2 justify-center flex-wrap">
+                      <div className="flex gap-1 justify-center">
                         <button
                           onClick={() => handleSelectCourse(course)}
                           className="btn-primary text-xs px-2 py-1"
@@ -110,15 +106,24 @@ export default function ManageCourses() {
                           Select
                         </button>
                         {currentUser?.is_admin && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              handleDelete(course.id)
-                            }}
-                            className="btn-danger text-xs px-2 py-1"
-                          >
-                            Delete
-                          </button>
+                          <>
+                            <Link href={`/edit-course?id=${course.id}`}>
+                              <button
+                                className="btn-secondary text-xs px-2 py-1"
+                              >
+                                Edit
+                              </button>
+                            </Link>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                handleDelete(course.id)
+                              }}
+                              className="btn-danger text-xs px-2 py-1"
+                            >
+                              Delete
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
