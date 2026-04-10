@@ -12,6 +12,7 @@ export default function NewRound() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const auth = useAuth()
 
@@ -38,6 +39,7 @@ export default function NewRound() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSaveError(null)
 
     if (!selectedCourse || scores.some(s => s === 0)) {
       alert('Please select a course and enter all scores')
@@ -68,7 +70,14 @@ export default function NewRound() {
     localStorage.setItem('golfRounds', JSON.stringify(rounds))
 
     // Also save to Supabase
-    await saveRoundToSupabase(round)
+    try {
+      await saveRoundToSupabase(round)
+      console.log('✅ Round successfully saved to Supabase')
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+      console.error('❌ Failed to save round to Supabase:', errorMsg)
+      setSaveError(errorMsg)
+    }
 
     setSubmitted(true)
   }
@@ -88,6 +97,12 @@ export default function NewRound() {
               {scores.reduce((a, b) => a + b, 0) - (selectedCourse?.par || 72)}
             </span>
           </p>
+          {saveError && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-3 rounded mb-4">
+              <p className="text-sm"><strong>⚠️ Cloud sync warning:</strong> {saveError}</p>
+              <p className="text-xs mt-1">The round was saved locally. It may not sync to other devices.</p>
+            </div>
+          )}
           <Link href="/">
             <button className="btn-primary">Back to Dashboard</button>
           </Link>

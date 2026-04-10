@@ -237,19 +237,29 @@ function roundToSupabase(round: Round) {
  */
 export async function saveRoundToSupabase(round: Round): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) {
+    console.warn('Supabase not configured, round will not sync to other devices')
     return
   }
 
   try {
-    const { error } = await supabase
+    const roundData = roundToSupabase(round)
+    console.log('Saving round to Supabase:', roundData)
+    
+    const { data, error } = await supabase
       .from('rounds')
-      .insert([roundToSupabase(round)])
+      .insert([roundData])
+      .select()
 
-    if (error) throw error
-    console.log('Round saved to Supabase:', round.id)
+    if (error) {
+      console.error('Supabase error response:', error)
+      throw new Error(`Supabase error: ${error.message}`)
+    }
+    
+    console.log('✅ Round successfully saved to Supabase:', data)
   } catch (error) {
-    console.error('Error saving round to Supabase:', error)
-    // Continue - data will be in localStorage
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    console.error('❌ Error saving round to Supabase:', errorMsg)
+    throw error
   }
 }
 
