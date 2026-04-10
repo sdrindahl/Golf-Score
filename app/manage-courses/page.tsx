@@ -93,7 +93,7 @@ export default function ManageCourses() {
                       {course.location}, {course.state}
                     </td>
                     <td className="text-center px-3 py-2 md:py-3 font-semibold">
-                      {course.holeCount}
+                      {course.holes.length}
                     </td>
                     <td className="text-center px-3 py-2 md:py-3 font-semibold">
                       {course.par}
