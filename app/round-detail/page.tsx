@@ -198,11 +198,11 @@ function RoundDetailContent() {
 
       {/* Actions */}
       <div className="flex gap-3">
-        <button onClick={() => router.push(`/player?id=${round.userId}`)} className="btn-primary flex-1">
+        <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="btn-primary flex-1">
           Exit Scorecard
         </button>
         {canEditRound() && (
-          <button onClick={() => router.push(`/edit-round?id=${round.id}`)} className="btn-secondary flex-1">
+          <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="btn-secondary flex-1">
             Edit Round
           </button>
         )}
