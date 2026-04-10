@@ -85,6 +85,15 @@ export default function NewRound() {
     rounds.push(round)
     localStorage.setItem('golfRounds', JSON.stringify(rounds))
 
+    // Also save the course to golfCourses so round-detail can find it
+    const savedCourses = localStorage.getItem('golfCourses')
+    const courses = savedCourses ? JSON.parse(savedCourses) : []
+    const courseExists = courses.some((c: Course) => c.id === selectedCourse.id)
+    if (!courseExists) {
+      courses.push(selectedCourse)
+      localStorage.setItem('golfCourses', JSON.stringify(courses))
+    }
+
     // Also save to Supabase
     try {
       await saveRoundToSupabase(round)
