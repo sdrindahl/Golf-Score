@@ -151,9 +151,8 @@ export default function NewRound() {
                 return
               }
               const targetUrl = `/round-detail?id=${savedRoundId}`
-              console.log('🔑 Calling router.push with:', targetUrl)
-              router.push(targetUrl)
-              console.log('✅ router.push called')
+              console.log('🔑 Navigating to:', targetUrl)
+              window.location.href = targetUrl
             }} 
             className="btn-primary"
           >
