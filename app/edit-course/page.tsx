@@ -35,13 +35,14 @@ function EditCourseContent() {
       
       if (course) {
         console.log('✅ Course found:', course)
-        setCourseName(course.name)
-        setLocation(course.location)
-        setState(course.state)
-        setHoleCount(course.holeCount)
-        setCourseRating(course.courseRating || 72.0)
-        setSlopeRating(course.slopeRating || 113)
-        setHoles(course.holes)
+        // Handle both camelCase and snake_case from Supabase
+        setCourseName(course.name || '')
+        setLocation(course.location || course.city || '')
+        setState(course.state || '')
+        setHoleCount(course.holeCount || course.hole_count || 18)
+        setCourseRating(course.courseRating || course.course_rating || 72.0)
+        setSlopeRating(course.slopeRating || course.slope_rating || 113)
+        setHoles(course.holes || [])
       } else {
         console.log('❌ Course not found with ID:', courseId)
       }
@@ -69,8 +70,18 @@ function EditCourseContent() {
     console.log('  courseRating:', courseRating)
     console.log('  slopeRating:', slopeRating)
 
-    if (!courseName?.trim() || !location?.trim() || !state?.trim()) {
-      alert('Please fill in all course details')
+    if (!courseName?.trim()) {
+      alert('Please enter a course name')
+      return
+    }
+
+    if (!location?.trim()) {
+      alert('Please enter a location/city')
+      return
+    }
+
+    if (!state?.trim()) {
+      alert('Please enter a state/region')
       return
     }
 
@@ -89,6 +100,10 @@ function EditCourseContent() {
       return
     }
 
+    // Ensure ratings are valid numbers
+    const validCourseRating = isNaN(courseRating) ? 72.0 : courseRating
+    const validSlopeRating = isNaN(slopeRating) ? 113 : slopeRating
+
     const updatedCourse: Course = {
       id: courseId,
       name: courseName || '',
@@ -97,8 +112,8 @@ function EditCourseContent() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
-      courseRating,
-      slopeRating,
+      courseRating: validCourseRating,
+      slopeRating: validSlopeRating,
     }
 
     console.log('💾 Saving course:', updatedCourse)
