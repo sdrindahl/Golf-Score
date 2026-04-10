@@ -53,8 +53,18 @@ function EditCourseContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!courseName.trim() || !location.trim() || !state.trim()) {
+    if (!courseName?.trim() || !location?.trim() || !state?.trim()) {
       alert('Please fill in all course details')
+      return
+    }
+
+    if (!courseId) {
+      alert('Course ID is missing')
+      return
+    }
+
+    if (holes.length === 0) {
+      alert('No holes defined for this course')
       return
     }
 
@@ -64,10 +74,10 @@ function EditCourseContent() {
     }
 
     const updatedCourse: Course = {
-      id: courseId!,
-      name: courseName,
-      location,
-      state,
+      id: courseId,
+      name: courseName || '',
+      location: location || '',
+      state: state || '',
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
@@ -76,17 +86,28 @@ function EditCourseContent() {
     }
 
     // Update in localStorage
-    const savedCourses = localStorage.getItem('golfCourses')
-    if (savedCourses) {
-      const courses = JSON.parse(savedCourses)
-      const index = courses.findIndex((c: Course) => c.id === courseId)
-      if (index >= 0) {
-        courses[index] = updatedCourse
-        localStorage.setItem('golfCourses', JSON.stringify(courses))
+    try {
+      const savedCourses = localStorage.getItem('golfCourses')
+      if (savedCourses) {
+        const courses = JSON.parse(savedCourses)
+        const index = courses.findIndex((c: Course) => c.id === courseId)
+        if (index >= 0) {
+          courses[index] = updatedCourse
+          localStorage.setItem('golfCourses', JSON.stringify(courses))
+          setSubmitted(true)
+          // Redirect after a short delay
+          setTimeout(() => {
+            router.push('/manage-courses')
+          }, 1500)
+        } else {
+          alert('Course not found in database')
+        }
+      } else {
+        alert('No courses found in storage')
       }
+    } catch (err) {
+      alert('Error saving course: ' + (err instanceof Error ? err.message : String(err)))
     }
-
-    setSubmitted(true)
   }
 
   if (loading) {
