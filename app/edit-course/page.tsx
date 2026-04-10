@@ -176,6 +176,18 @@ function EditCourseContent() {
   return (
     <div className="max-w-4xl mx-auto py-6">
       <form onSubmit={handleSubmit}>
+        {/* Action Buttons (Top) */}
+        <div className="flex gap-4 mb-6">
+          <button type="submit" className="btn-primary flex-1">
+            💾 Save Changes
+          </button>
+          <Link href="/manage-courses" className="flex-1">
+            <button type="button" className="btn-secondary w-full">
+              Cancel
+            </button>
+          </Link>
+        </div>
+
         {/* Course Details */}
         <div className="card mb-6">
           <h2 className="text-2xl font-bold mb-6">Edit Golf Course</h2>
