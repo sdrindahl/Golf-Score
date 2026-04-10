@@ -25,7 +25,9 @@ function PlayerProfileContent() {
     const loadPlayerData = async () => {
       try {
         // Sync from Supabase first to get latest rounds
+        console.log('📥 Syncing data from Supabase...')
         await syncDataFromSupabase()
+        console.log('✅ Sync complete')
       } catch (error) {
         console.error('Error syncing data:', error)
       }
@@ -46,6 +48,8 @@ function PlayerProfileContent() {
         if (savedRounds) {
           const allRounds = JSON.parse(savedRounds) as Round[]
           const playerRounds = allRounds.filter(r => r.userId === playerId)
+          console.log(`📊 Found ${playerRounds.length} rounds for player ${foundPlayer.name}`)
+          console.log('Player ID:', playerId)
           setRounds(playerRounds)
         }
       } else {

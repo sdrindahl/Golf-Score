@@ -36,6 +36,7 @@ export async function syncDataFromSupabase(): Promise<void> {
 
     // Sync rounds
     try {
+      console.log('📥 Fetching rounds from Supabase...')
       const { data: supabaseRounds, error: roundsError } = await supabase
         .from('rounds')
         .select('*')
@@ -56,7 +57,9 @@ export async function syncDataFromSupabase(): Promise<void> {
           notes: r.notes
         }))
         localStorage.setItem('golfRounds', JSON.stringify(roundsInCamelCase))
-        console.log(`Synced ${roundsInCamelCase.length} rounds from Supabase`)
+        console.log(`✅ Synced ${roundsInCamelCase.length} rounds from Supabase`)
+      } else {
+        console.log('ℹ️ No rounds found in Supabase')
       }
     } catch (error) {
       console.error('Error syncing rounds:', error)
