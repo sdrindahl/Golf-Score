@@ -8,6 +8,11 @@ export default function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
 
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return
+    }
+
     // Check if app is already installed
     if ((window as any).navigator.standalone === true) {
       setIsInstalled(true)
@@ -28,12 +33,12 @@ export default function InstallPrompt() {
       setInstallPrompt(null)
     }
 
-    (window as any).addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    (window as any).addEventListener('appinstalled', handleAppInstalled)
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+    window.addEventListener('appinstalled', handleAppInstalled)
 
     return () => {
-      (window as any).removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      (window as any).removeEventListener('appinstalled', handleAppInstalled)
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', handleAppInstalled)
     }
   }, [])
 
