@@ -93,17 +93,46 @@ function PlayerProfileContent() {
     // Get course data to find course ratings
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
     
+    console.log('📊 All courses in storage:', courses)
+    console.log('📊 Calculating handicap for', rounds.length, 'rounds')
+
     // Calculate handicap differential for each round
     // Formula: (Score - Course Rating) × 113 / Slope Rating
     const differentials = rounds
       .map(round => {
         const course = courses.find((c: any) => c.id === round.courseId)
-        if (!course || !course.courseRating || !course.slopeRating) {
+        console.log(`Round ${round.id}: looking for course ${round.courseId}`, course)
+        
+        if (!course) {
+          console.log(`  ❌ Course not found`)
           return null
         }
-        return (round.totalScore - course.courseRating) * 113 / course.slopeRating
+        
+        // Use provided courseRating or calculate from holes, default to 72
+        let courseRating = course.courseRating
+        let slopeRating = course.slopeRating
+        
+        if (!courseRating && course.holes) {
+          // Calculate approximate rating from hole par values
+          courseRating = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+        }
+        
+        if (!courseRating) courseRating = 72
+        if (!slopeRating) slopeRating = 130
+        
+        console.log(`  Rating: ${courseRating}, Slope: ${slopeRating}`)
+        
+        if (!slopeRating) {
+          return null
+        }
+        
+        const differential = (round.totalScore - courseRating) * 113 / slopeRating
+        console.log(`  Differential: (${round.totalScore} - ${courseRating}) * 113 / ${slopeRating} = ${differential.toFixed(2)}`)
+        return differential
       })
       .filter((d: any) => d !== null) as number[]
+
+    console.log('📊 Valid differentials:', differentials)
 
     // Use best X of last 20 in the calculation based on USGA rules
     if (differentials.length > 0) {
@@ -124,7 +153,11 @@ function PlayerProfileContent() {
       const bestDifferentials = sortedDifferentials.slice(0, bestCount)
       handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
       
-      console.log(`🎯 Handicap calculation: ${roundCount} rounds, using best ${bestCount}, differentials: ${bestDifferentials.map(d => d.toFixed(1)).join(', ')}, handicap: ${handicap}`)
+      console.log(`🎯 Handicap calculation: ${roundCount} differentials, using best ${bestCount}`)
+      console.log(`   Best: ${bestDifferentials.map(d => d.toFixed(1)).join(', ')}`)
+      console.log(`   Handicap: ${handicap}`)
+    } else {
+      console.log('❌ No valid differentials calculated')
     }
 
     return handicap

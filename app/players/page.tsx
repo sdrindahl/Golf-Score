@@ -50,10 +50,28 @@ export default function Players() {
             const differentials = userRounds
               .map(round => {
                 const course = courses.find((c: any) => c.id === round.courseId)
-                if (!course || !course.courseRating || !course.slopeRating) {
+                
+                if (!course) {
                   return null
                 }
-                return (round.totalScore - course.courseRating) * 113 / course.slopeRating
+                
+                // Use provided courseRating or calculate from holes, default to 72
+                let courseRating = course.courseRating
+                let slopeRating = course.slopeRating
+                
+                if (!courseRating && course.holes) {
+                  // Calculate approximate rating from hole par values
+                  courseRating = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+                }
+                
+                if (!courseRating) courseRating = 72
+                if (!slopeRating) slopeRating = 130
+                
+                if (!slopeRating) {
+                  return null
+                }
+                
+                return (round.totalScore - courseRating) * 113 / slopeRating
               })
               .filter((d: any) => d !== null) as number[]
 
