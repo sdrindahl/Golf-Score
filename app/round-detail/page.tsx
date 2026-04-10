@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 
 function RoundDetailContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const roundId = searchParams.get('id')
   const auth = useAuth()
@@ -72,9 +72,7 @@ function RoundDetailContent() {
       <div className="max-w-4xl mx-auto py-6">
         <div className="card text-center">
           <p className="text-gray-500">Round not found</p>
-          <Link href="/">
-            <button className="btn-primary mt-4">Back to Home</button>
-          </Link>
+          <button onClick={() => router.push('/')} className="btn-primary mt-4">Back to Home</button>
         </div>
       </div>
     )
@@ -200,13 +198,13 @@ function RoundDetailContent() {
 
       {/* Actions */}
       <div className="flex gap-3">
-        <Link href={`/player?id=${round.userId}`}>
-          <button className="btn-primary flex-1">Exit Scorecard</button>
-        </Link>
+        <button onClick={() => router.push(`/player?id=${round.userId}`)} className="btn-primary flex-1">
+          Exit Scorecard
+        </button>
         {canEditRound() && (
-          <Link href={`/edit-round?id=${round.id}`}>
-            <button className="btn-secondary flex-1">Edit Round</button>
-          </Link>
+          <button onClick={() => router.push(`/edit-round?id=${round.id}`)} className="btn-secondary flex-1">
+            Edit Round
+          </button>
         )}
       </div>
     </div>

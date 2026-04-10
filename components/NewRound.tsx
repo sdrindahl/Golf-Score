@@ -17,6 +17,7 @@ export default function NewRound() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
+  const [savedRoundId, setSavedRoundId] = useState<string | null>(null)
   const auth = useAuth()
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function NewRound() {
       setSaveError(errorMsg)
     }
 
+    setSavedRoundId(round.id)
     setSubmitted(true)
   }
 
@@ -118,8 +120,8 @@ export default function NewRound() {
               <p className="text-xs mt-1">The round was saved locally. It may not sync to other devices.</p>
             </div>
           )}
-          <button onClick={() => router.push('/')} className="btn-primary">
-            Back to Dashboard
+          <button onClick={() => router.push(`/round-detail?id=${savedRoundId}`)} className="btn-primary">
+            View Scorecard
           </button>
         </div>
       </div>
