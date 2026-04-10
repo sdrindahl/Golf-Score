@@ -112,15 +112,15 @@ function CourseDetailsContent() {
         <div className="grid grid-cols-3 gap-6 mb-6">
           <div className="text-center">
             <p className="text-gray-600 text-sm">Holes</p>
-            <p className="text-2xl font-bold">{course.holeCount}</p>
+            <p className="text-2xl font-bold">{course.holes.length}</p>
           </div>
           <div className="text-center">
             <p className="text-gray-600 text-sm">Average Par</p>
-            <p className="text-2xl font-bold">{(course.par / course.holeCount).toFixed(1)}</p>
+            <p className="text-2xl font-bold">{course.holes.length > 0 ? (course.holes.reduce((sum, h) => sum + h.par, 0) / course.holes.length).toFixed(1) : '—'}</p>
           </div>
           <div className="text-center">
             <p className="text-gray-600 text-sm">Type</p>
-            <p className="text-2xl font-bold">{course.holeCount === 18 ? 'Full' : 'Executive'}</p>
+            <p className="text-2xl font-bold">{course.holes.length === 18 ? 'Full' : 'Executive'}</p>
           </div>
         </div>
 
@@ -239,7 +239,7 @@ function CourseDetailsContent() {
                 </div>
                 <div className="text-center">
                   <p className="text-gray-600 text-sm">Average Par</p>
-                  <p className="text-2xl font-bold">{(editingHoles.reduce((sum, h) => sum + h.par, 0) / editingHoles.length).toFixed(1)}</p>
+                  <p className="text-2xl font-bold">{editingHoles.length > 0 ? (editingHoles.reduce((sum, h) => sum + h.par, 0) / editingHoles.length).toFixed(1) : '—'}</p>
                 </div>
               </div>
             </div>

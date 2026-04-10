@@ -211,7 +211,7 @@ function EditCourseContent() {
                 </div>
                 <div className="text-center">
                   <p className="text-gray-600 text-sm">Average Par</p>
-                  <p className="text-2xl font-bold">{(holes.reduce((sum, h) => sum + h.par, 0) / holes.length).toFixed(1)}</p>
+                  <p className="text-2xl font-bold">{holes.length > 0 ? (holes.reduce((sum, h) => sum + h.par, 0) / holes.length).toFixed(1) : '—'}</p>
                 </div>
               </div>
             </div>
