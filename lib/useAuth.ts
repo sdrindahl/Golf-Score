@@ -109,8 +109,19 @@ export function useAuth() {
   }
 
   async function loginUser(name: string, password: string): Promise<User> {
-    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
-    const user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password)
+    // Try localStorage first (fastest)
+    let users = getAllUsers()
+    let user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password)
+
+    // If not found in localStorage and Supabase is active, try Supabase
+    if (!user && isSupabaseActive()) {
+      try {
+        users = await getAllUsersAsync()
+        user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password)
+      } catch (error) {
+        console.warn('Supabase login fetch failed, using localStorage only:', error)
+      }
+    }
 
     if (!user) {
       throw new Error('Invalid name or password')
