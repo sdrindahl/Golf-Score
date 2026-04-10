@@ -5,7 +5,7 @@ interface HandicapDisplayProps {
 
 export default function HandicapDisplay({ handicap, totalRounds }: HandicapDisplayProps) {
   return (
-    <div className="card bg-green-50 border-2 border-green-500 p-4">
+    <div className="card bg-green-50 border-2 border-green-500 p-3 md:p-4">
       <div className="flex items-start justify-between mb-2">
         <h3 className="text-xs font-semibold text-gray-600">YOUR HANDICAP</h3>
         <div className="group relative">
@@ -17,7 +17,7 @@ export default function HandicapDisplay({ handicap, totalRounds }: HandicapDispl
           </div>
         </div>
       </div>
-      <div className="text-3xl font-bold text-green-700 mb-2">
+      <div className="text-2xl md:text-3xl font-bold text-green-700 mb-2">
         {handicap.toFixed(1)}
       </div>
       <p className="text-xs text-gray-600">

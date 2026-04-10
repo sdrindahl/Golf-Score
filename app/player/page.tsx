@@ -186,16 +186,16 @@ function PlayerProfileContent() {
     <div className="max-w-4xl mx-auto py-6">
       {/* Header */}
       <div className="card mb-6">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold">👤 {player.name}'s Profile</h1>
+            <h1 className="text-xl md:text-2xl font-bold">{player.name}</h1>
             {isOwnProfile && (
-              <p className="text-green-600 font-semibold text-sm mt-1">This is your profile</p>
+              <p className="text-green-600 font-semibold text-xs md:text-sm mt-1">This is your profile</p>
             )}
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-600">Total Rounds</p>
-            <p className="text-4xl font-bold">{rounds.length}</p>
+            <p className="text-xs md:text-sm text-gray-600">Total Rounds</p>
+            <p className="text-2xl md:text-3xl font-bold">{rounds.length}</p>
           </div>
         </div>
       </div>
