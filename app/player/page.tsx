@@ -71,10 +71,32 @@ function PlayerProfileContent() {
 
   const calculateHandicap = (): number => {
     if (rounds.length === 0) return 0
-    const recentRounds = rounds.slice(-8)
-    const avgScore = recentRounds.reduce((sum, r) => sum + r.totalScore, 0) / recentRounds.length
-    const bestScore = Math.min(...recentRounds.map(r => r.totalScore))
-    return Math.round((avgScore - bestScore) * 10) / 10
+    
+    // Get course data to find course ratings
+    const courses = courseData
+    
+    // Calculate handicap differential for each round
+    // Formula: (Score - Course Rating) × 113 / Slope Rating
+    const differentials = rounds
+      .map(round => {
+        const course = courses.find((c: any) => c.id === round.courseId)
+        if (!course || !course.courseRating || !course.slopeRating) {
+          return null
+        }
+        return (round.totalScore - course.courseRating) * 113 / course.slopeRating
+      })
+      .filter((d: any) => d !== null) as number[]
+
+    // Use best 8 of last 20 in the calculation (if available)
+    if (differentials.length > 0) {
+      const recentDifferentials = differentials.slice(-20)
+      const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
+      const bestCount = Math.min(8, Math.ceil(sortedDifferentials.length / 2))
+      const bestDifferentials = sortedDifferentials.slice(0, bestCount)
+      return Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
+    }
+
+    return 0
   }
 
   const handicap = calculateHandicap()

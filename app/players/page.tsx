@@ -153,11 +153,19 @@ export default function Players() {
                       <span className="text-gray-600">Rounds:</span>
                       <span className="font-bold text-lg">{playerStats[player.id]?.roundCount || 0}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-gray-600">Handicap:</span>
-                      <span className="font-bold text-lg">
-                        {playerStats[player.id]?.handicap.toFixed(1) || '—'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg">
+                          {playerStats[player.id]?.handicap.toFixed(1) || '—'}
+                        </span>
+                        <div className="group relative">
+                          <span className="text-gray-400 text-sm cursor-help">ℹ️</span>
+                          <div className="hidden group-hover:block absolute right-0 z-10 w-48 bg-gray-800 text-white text-xs rounded p-2 whitespace-wrap">
+                            Calculated using USGA Handicap Index: (Score - Course Rating) × 113 / Slope Rating
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
