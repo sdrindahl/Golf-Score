@@ -65,7 +65,6 @@ export default function CourseSearch() {
                 onClick={() => setSelectedCourse(course)}
               >
                 <h3 className="text-lg font-bold">{course.name}</h3>
-                <p className="text-gray-600">{course.location}, {course.state}</p>
                 <div className="mt-2 flex gap-4 text-sm">
                   <span>⛳ {course.holeCount} Holes</span>
                   <span>📍 Par {course.par}</span>
@@ -93,10 +92,6 @@ export default function CourseSearch() {
           <div className="card sticky top-20">
             <h3 className="text-xl font-bold mb-4">{selectedCourse.name}</h3>
             <div className="space-y-3 mb-6">
-              <div>
-                <p className="text-gray-600 text-sm">Location</p>
-                <p className="font-semibold">{selectedCourse.location}, {selectedCourse.state}</p>
-              </div>
               <div>
                 <p className="text-gray-600 text-sm">Holes</p>
                 <p className="font-semibold">{selectedCourse.holeCount}</p>
