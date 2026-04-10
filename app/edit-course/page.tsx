@@ -52,6 +52,14 @@ function EditCourseContent() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    console.log('🔧 Form submitted')
+    console.log('  courseId:', courseId)
+    console.log('  courseName:', courseName)
+    console.log('  location:', location)
+    console.log('  state:', state)
+    console.log('  courseRating:', courseRating)
+    console.log('  slopeRating:', slopeRating)
 
     if (!courseName?.trim() || !location?.trim() || !state?.trim()) {
       alert('Please fill in all course details')
@@ -85,15 +93,19 @@ function EditCourseContent() {
       slopeRating,
     }
 
+    console.log('💾 Saving course:', updatedCourse)
+
     // Update in localStorage
     try {
       const savedCourses = localStorage.getItem('golfCourses')
       if (savedCourses) {
         const courses = JSON.parse(savedCourses)
         const index = courses.findIndex((c: Course) => c.id === courseId)
+        console.log('  Found course at index:', index)
         if (index >= 0) {
           courses[index] = updatedCourse
           localStorage.setItem('golfCourses', JSON.stringify(courses))
+          console.log('✅ Course saved successfully')
           setSubmitted(true)
           // Redirect after a short delay
           setTimeout(() => {
@@ -106,6 +118,7 @@ function EditCourseContent() {
         alert('No courses found in storage')
       }
     } catch (err) {
+      console.error('❌ Error saving course:', err)
       alert('Error saving course: ' + (err instanceof Error ? err.message : String(err)))
     }
   }
