@@ -59,21 +59,37 @@ export function useAuth() {
       password,
     }
 
-    // Save to Supabase first (primary source of truth) - let it generate UUID
+    // Save to Supabase first (primary source of truth)
     if (isSupabaseActive() && supabase) {
       try {
-        // Don't send id - let Supabase generate UUID
+        // Insert user without ID and let Supabase generate UUID
         const { data, error } = await supabase
           .from('users')
           .insert([{ name, password }])
           .select()
 
-        if (error) throw error
+        if (error) {
+          console.error('Insert error:', error)
+          throw error
+        }
         
         // Update newUser with the Supabase-generated UUID
         if (data && data.length > 0) {
           newUser.id = data[0].id
           console.log('User registered in Supabase with ID:', newUser.id)
+        } else {
+          console.warn('Insert succeeded but no data returned in select()')
+          // Fetch the user we just created to get the UUID
+          const { data: fetchedUser } = await supabase
+            .from('users')
+            .select('id')
+            .eq('name', name)
+            .single()
+          
+          if (fetchedUser) {
+            newUser.id = fetchedUser.id
+            console.log('Retrieved user ID from database:', newUser.id)
+          }
         }
       } catch (error) {
         console.error('Error registering user in Supabase:', error)
@@ -84,6 +100,10 @@ export function useAuth() {
     // Add user to array and update cache
     users.push(newUser)
     localStorage.setItem('golfUsers', JSON.stringify(users))
+    
+    // Auto-login the new user
+    localStorage.setItem('currentUser', JSON.stringify(newUser))
+    console.log('User auto-logged in:', newUser.name)
 
     return newUser
   }
