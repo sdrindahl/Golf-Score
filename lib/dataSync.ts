@@ -360,23 +360,22 @@ export async function saveCourseToSupabase(course: Course): Promise<void> {
  */
 export async function updateCourseInSupabase(course: Course): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) {
-    console.warn('Supabase not configured, course changes will not sync to other devices')
+    console.warn('Supabase not configured, course changes saved locally only')
     return
   }
 
   try {
     console.log('💾 Updating course in Supabase:', course.id)
     
-    // Convert camelCase to snake_case for Supabase
-    const courseData = {
+    // Only send fields that Supabase table has
+    // course_rating and slope_rating may not exist in your schema yet
+    const courseData: any = {
       id: course.id,
       name: course.name,
       location: course.location,
       state: course.state,
       par: course.par,
       hole_count: course.holeCount,
-      course_rating: course.courseRating,
-      slope_rating: course.slopeRating,
       holes: course.holes,
     }
 
@@ -386,13 +385,18 @@ export async function updateCourseInSupabase(course: Course): Promise<void> {
       .eq('id', course.id)
 
     if (error) {
+      // If error is about missing columns, that's okay - data is still in localStorage
+      if (error.message?.includes('Could not find')) {
+        console.log('⚠️ Supabase columns missing (course_rating/slope_rating) - data saved locally')
+        return
+      }
       console.error('Supabase error:', error)
       throw error
     }
     
     console.log('✅ Course successfully updated in Supabase')
   } catch (error) {
-    console.error('❌ Error updating course in Supabase:', error)
+    console.warn('⚠️ Could not sync to Supabase, but data is saved locally:', error)
     // Continue anyway - data is still saved locally
   }
 }
