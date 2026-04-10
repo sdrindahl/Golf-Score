@@ -90,15 +90,44 @@ export async function syncDataFromSupabase(): Promise<void> {
 
     // Sync courses
     try {
-      const { data: courses, error: coursesError } = await supabase
+      const { data: supabaseCourses, error: coursesError } = await supabase
         .from('courses')
         .select('*')
 
       if (coursesError) throw coursesError
 
-      if (courses && courses.length > 0) {
-        localStorage.setItem('golfCourses', JSON.stringify(courses))
-        console.log(`Synced ${courses.length} courses from Supabase`)
+      if (supabaseCourses && supabaseCourses.length > 0) {
+        // Merge with existing local courses to avoid losing unsaved/local edits
+        const existingLocal = localStorage.getItem('golfCourses')
+        const localCourses = existingLocal ? JSON.parse(existingLocal) : []
+        
+        // Create a map of Supabase courses by ID for efficient lookup
+        const supabaseCourseMap = new Map(supabaseCourses.map(c => [c.id, c]))
+        
+        // Keep all local courses, but update any that exist in Supabase
+        const mergedCourses = localCourses.map((localCourse: any) => {
+          const supabaseCourse = supabaseCourseMap.get(localCourse.id)
+          // Preserve local edits to courseRating and slopeRating
+          if (supabaseCourse) {
+            return {
+              ...supabaseCourse,
+              courseRating: localCourse.courseRating ?? supabaseCourse.course_rating ?? 72.0,
+              slopeRating: localCourse.slopeRating ?? supabaseCourse.slope_rating ?? 113,
+              holes: localCourse.holes ?? supabaseCourse.holes,
+            }
+          }
+          return localCourse
+        })
+        
+        // Add any Supabase courses that don't exist locally
+        for (const supabaseCourse of supabaseCourses) {
+          if (!localCourses.some((c: any) => c.id === supabaseCourse.id)) {
+            mergedCourses.push(supabaseCourse)
+          }
+        }
+        
+        localStorage.setItem('golfCourses', JSON.stringify(mergedCourses))
+        console.log(`✅ Merged courses: ${mergedCourses.length} total (${supabaseCourses.length} from Supabase)`)
       }
     } catch (error) {
       console.error('Error syncing courses:', error)

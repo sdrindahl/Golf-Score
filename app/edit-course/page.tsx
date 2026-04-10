@@ -76,16 +76,6 @@ function EditCourseContent() {
       return
     }
 
-    if (!location?.trim()) {
-      alert('Please enter a location/city')
-      return
-    }
-
-    if (!state?.trim()) {
-      alert('Please enter a state/region')
-      return
-    }
-
     if (!courseId) {
       alert('Course ID is missing')
       return
@@ -200,29 +190,6 @@ function EditCourseContent() {
                 placeholder="e.g., Pebble Beach Golf Links"
                 className="input-field"
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">Location/City</label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Pebble Beach"
-                  className="input-field"
-                />
-              </div>
-              <div>
-                <label className="label">State/Region</label>
-                <input
-                  type="text"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                  placeholder="e.g., CA"
-                  className="input-field"
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
