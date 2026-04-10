@@ -208,22 +208,26 @@ function PlayerProfileContent() {
       {/* Statistics */}
       {rounds.length > 0 && (
         <div className="card mb-6">
-          <h2 className="text-2xl font-bold mb-4">Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-gray-600 text-sm">Best Score</p>
-              <p className="text-3xl font-bold text-green-600">{Math.min(...rounds.map(r => r.totalScore))}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-gray-600 text-sm">Worst Score</p>
-              <p className="text-3xl font-bold text-red-600">{Math.max(...rounds.map(r => r.totalScore))}</p>
-            </div>
-            <div className="text-center">
-              <p className="text-gray-600 text-sm">Average Score</p>
-              <p className="text-3xl font-bold text-blue-600">
-                {(rounds.reduce((sum, r) => sum + r.totalScore, 0) / rounds.length).toFixed(1)}
-              </p>
-            </div>
+          <h2 className="text-xl font-bold mb-4">Statistics</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs md:text-sm">
+              <tbody>
+                <tr className="border-b">
+                  <td className="p-2 md:p-3 text-gray-600 font-semibold">Best Score</td>
+                  <td className="p-2 md:p-3 text-right font-bold text-green-600">{Math.min(...rounds.map(r => r.totalScore))}</td>
+                </tr>
+                <tr className="border-b">
+                  <td className="p-2 md:p-3 text-gray-600 font-semibold">Worst Score</td>
+                  <td className="p-2 md:p-3 text-right font-bold text-red-600">{Math.max(...rounds.map(r => r.totalScore))}</td>
+                </tr>
+                <tr>
+                  <td className="p-2 md:p-3 text-gray-600 font-semibold">Average Score</td>
+                  <td className="p-2 md:p-3 text-right font-bold text-blue-600">
+                    {(rounds.reduce((sum, r) => sum + r.totalScore, 0) / rounds.length).toFixed(1)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       )}
