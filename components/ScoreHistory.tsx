@@ -65,9 +65,14 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false }: Sco
                   <td className={`text-center font-bold p-2 md:p-3 ${vsPalColor}`}>
                     {vsPalDisplay}
                   </td>
-                  {!readOnly && (
+                  {!readOnly ? (
                     <td className="text-center p-2 md:p-3">
                       <div className="flex gap-1 md:gap-2 justify-center flex-wrap">
+                        <Link href={`/round-detail?id=${round.id}`} className="inline-block">
+                          <button className="text-green-600 hover:text-green-800 font-semibold text-xs md:text-sm">
+                            View
+                          </button>
+                        </Link>
                         <Link href={`/edit-round?id=${round.id}`} className="inline-block">
                           <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs md:text-sm">
                             Edit
@@ -80,6 +85,14 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false }: Sco
                           Delete
                         </button>
                       </div>
+                    </td>
+                  ) : (
+                    <td className="text-center p-2 md:p-3">
+                      <Link href={`/round-detail?id=${round.id}`} className="inline-block">
+                        <button className="text-green-600 hover:text-green-800 font-semibold text-xs md:text-sm">
+                          View Card
+                        </button>
+                      </Link>
                     </td>
                   )}
                 </tr>
