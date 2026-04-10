@@ -69,7 +69,9 @@ export default function ManageCourses() {
                   <th className="text-left px-3 py-2 md:py-3 font-semibold hidden md:table-cell">Location</th>
                   <th className="text-center px-3 py-2 md:py-3 font-semibold">Holes</th>
                   <th className="text-center px-3 py-2 md:py-3 font-semibold">Par</th>
-                  <th className="text-center px-3 py-2 md:py-3 font-semibold">Actions</th>
+                  {currentUser?.is_admin && (
+                    <th className="text-center px-3 py-2 md:py-3 font-semibold">Actions</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -93,30 +95,28 @@ export default function ManageCourses() {
                     <td className="text-center px-3 py-2 md:py-3 font-semibold">
                       {course.par}
                     </td>
-                    <td className="text-center px-3 py-2 md:py-3">
-                      <div className="flex gap-1 justify-center">
-                        {currentUser?.is_admin && (
-                          <>
-                            <Link href={`/edit-course?id=${course.id}`}>
-                              <button
-                                className="btn-secondary text-xs px-2 py-1"
-                              >
-                                Edit
-                              </button>
-                            </Link>
+                    {currentUser?.is_admin && (
+                      <td className="text-center px-3 py-2 md:py-3">
+                        <div className="flex gap-1 justify-center">
+                          <Link href={`/edit-course?id=${course.id}`}>
                             <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                handleDelete(course.id)
-                              }}
-                              className="btn-danger text-xs px-2 py-1"
+                              className="btn-secondary text-xs px-2 py-1"
                             >
-                              Delete
+                              Edit
                             </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+                          </Link>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleDelete(course.id)
+                            }}
+                            className="btn-danger text-xs px-2 py-1"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
