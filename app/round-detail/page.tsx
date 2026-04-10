@@ -12,7 +12,12 @@ function RoundDetailContent() {
   const auth = useAuth()
 
   console.log('🚀 RoundDetailContent rendering!')
-  console.log('📍 Current URL search params:', window.location.search)
+  console.log('📍 roundId from searchParams:', roundId)
+  try {
+    console.log('📍 Current URL search params:', window.location.search)
+  } catch (e) {
+    console.log('⚠️ Could not access window.location')
+  }
 
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
@@ -246,11 +251,13 @@ function RoundDetailContent() {
 }
 
 export default function RoundDetail() {
+  console.log('📄 RoundDetail (wrapper) component mounted!')
   return (
     <Suspense fallback={
       <div className="max-w-4xl mx-auto py-6">
         <div className="card text-center">
-          <p className="text-gray-500">Loading...</p>
+          <p className="text-gray-500">Loading scorecard...</p>
+          <p className="text-xs text-gray-400 mt-2">⏳ Fetching your round details</p>
         </div>
       </div>
     }>
