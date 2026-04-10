@@ -67,12 +67,7 @@ export default function Home() {
             </Link>
             <Link href="/manage-courses">
               <button className="btn-secondary">
-                📋 My Courses
-              </button>
-            </Link>
-            <Link href="/new-round">
-              <button className="btn-secondary">
-                🎯 Record Round
+                📋 Select Course
               </button>
             </Link>
             <Link href="/players">
