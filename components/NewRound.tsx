@@ -16,6 +16,7 @@ export default function NewRound() {
   const [submitted, setSubmitted] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
   const auth = useAuth()
 
   useEffect(() => {
@@ -37,6 +38,18 @@ export default function NewRound() {
     const newScores = [...scores]
     newScores[holeIndex] = score
     setScores(newScores)
+  }
+
+  const handleNextHole = () => {
+    if (currentHoleIndex < (selectedCourse?.holeCount || 0) - 1) {
+      setCurrentHoleIndex(currentHoleIndex + 1)
+    }
+  }
+
+  const handlePreviousHole = () => {
+    if (currentHoleIndex > 0) {
+      setCurrentHoleIndex(currentHoleIndex - 1)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,33 +178,62 @@ export default function NewRound() {
 
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4">Enter Scores by Hole</h3>
-            <div className="space-y-4">
-              {selectedCourse.holes.map((hole, index) => (
-                <div key={hole.holeNumber} className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-3">
+            
+            {/* Progress indicator */}
+            <div className="mb-4 p-3 bg-blue-100 rounded-lg">
+              <p className="font-semibold text-blue-900">
+                Progress: Hole {currentHoleIndex + 1} of {selectedCourse.holeCount}
+                <span className="ml-2 text-sm font-normal">({scores.filter(s => s > 0).length}/{selectedCourse.holeCount} completed)</span>
+              </p>
+            </div>
+
+            {/* Completed holes overview */}
+            {currentHoleIndex > 0 && (
+              <div className="mb-6 p-4 bg-green-50 rounded-lg">
+                <p className="font-semibold text-green-900 mb-3">Completed Holes</p>
+                <div className="flex gap-2 flex-wrap">
+                  {selectedCourse.holes.slice(0, currentHoleIndex).map((hole, index) => (
+                    <div key={hole.holeNumber} className="bg-white border border-green-300 rounded px-3 py-2 text-sm">
+                      <span className="font-bold">#{hole.holeNumber}</span>
+                      <span className="text-gray-600 mx-2">|</span>
+                      <span className="font-bold">{scores[index]}</span>
+                      <span className={`text-xs ml-2 ${scores[index] - hole.par < 0 ? 'text-green-600' : scores[index] - hole.par > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                        {scores[index] - hole.par > 0 ? '+' : ''}{scores[index] - hole.par}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Current hole input */}
+            <div className="bg-gray-50 p-6 rounded-lg mb-6">
+              {selectedCourse.holes[currentHoleIndex] && (
+                <>
+                  <div className="flex justify-between items-center mb-6">
                     <div>
-                      <span className="font-bold text-lg">Hole {hole.holeNumber}</span>
-                      <span className="text-gray-600 ml-3">Par {hole.par}</span>
+                      <span className="font-bold text-xl">Hole {selectedCourse.holes[currentHoleIndex].holeNumber}</span>
+                      <span className="text-gray-600 ml-3 text-lg">Par {selectedCourse.holes[currentHoleIndex].par}</span>
                     </div>
                     <div className="text-right">
-                      <span className="text-3xl font-bold text-blue-600">{scores[index] || '—'}</span>
-                      {scores[index] && (
-                        <span className={`text-sm ml-2 ${scores[index] - hole.par < 0 ? 'text-green-600' : scores[index] - hole.par > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                          {scores[index] - hole.par > 0 ? '+' : ''}{scores[index] - hole.par}
+                      <span className="text-5xl font-bold text-blue-600">{scores[currentHoleIndex] || '—'}</span>
+                      {scores[currentHoleIndex] && (
+                        <span className={`text-lg ml-2 ${scores[currentHoleIndex] - selectedCourse.holes[currentHoleIndex].par < 0 ? 'text-green-600' : scores[currentHoleIndex] - selectedCourse.holes[currentHoleIndex].par > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                          {scores[currentHoleIndex] - selectedCourse.holes[currentHoleIndex].par > 0 ? '+' : ''}{scores[currentHoleIndex] - selectedCourse.holes[currentHoleIndex].par}
                         </span>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-2 flex-wrap mb-6">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                       <button
                         key={num}
                         type="button"
-                        onClick={() => handleScoreChange(index, num)}
-                        className={`p-2 w-10 h-10 rounded font-bold text-sm transition ${
-                          scores[index] === num
-                            ? 'bg-blue-600 text-white'
+                        onClick={() => handleScoreChange(currentHoleIndex, num)}
+                        className={`p-3 w-14 h-14 rounded font-bold text-lg transition ${
+                          scores[currentHoleIndex] === num
+                            ? 'bg-blue-600 text-white shadow-lg'
                             : 'bg-white border border-gray-300 text-gray-700 hover:bg-blue-50'
                         }`}
                       >
@@ -200,23 +242,53 @@ export default function NewRound() {
                     ))}
                     <button
                       type="button"
-                      onClick={() => handleScoreChange(index, (scores[index] || 0) + 1)}
-                      className="p-2 px-3 rounded font-bold text-sm bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 transition"
+                      onClick={() => handleScoreChange(currentHoleIndex, (scores[currentHoleIndex] || 0) + 1)}
+                      className="p-3 px-4 rounded font-bold text-lg bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 transition"
                     >
                       +
                     </button>
-                    {scores[index] > 0 && (
+                    {scores[currentHoleIndex] > 0 && (
                       <button
                         type="button"
-                        onClick={() => handleScoreChange(index, Math.max(0, (scores[index] || 0) - 1))}
-                        className="p-2 px-3 rounded font-bold text-sm bg-white border border-gray-300 text-gray-700 hover:bg-red-50 transition"
+                        onClick={() => handleScoreChange(currentHoleIndex, Math.max(0, (scores[currentHoleIndex] || 0) - 1))}
+                        className="p-3 px-4 rounded font-bold text-lg bg-white border border-gray-300 text-gray-700 hover:bg-red-50 transition"
                       >
                         −
                       </button>
                     )}
                   </div>
-                </div>
-              ))}
+
+                  {/* Navigation buttons */}
+                  <div className="flex gap-4">
+                    {currentHoleIndex > 0 && (
+                      <button
+                        type="button"
+                        onClick={handlePreviousHole}
+                        className="btn-secondary flex-1"
+                      >
+                        ← Previous Hole
+                      </button>
+                    )}
+                    {scores[currentHoleIndex] > 0 && currentHoleIndex < selectedCourse.holeCount - 1 && (
+                      <button
+                        type="button"
+                        onClick={handleNextHole}
+                        className="btn-primary flex-1"
+                      >
+                        Next Hole →
+                      </button>
+                    )}
+                    {scores[currentHoleIndex] > 0 && currentHoleIndex === selectedCourse.holeCount - 1 && (
+                      <button
+                        type="submit"
+                        className="btn-primary flex-1"
+                      >
+                        ✓ Finish Round
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -231,9 +303,6 @@ export default function NewRound() {
           </div>
 
           <div className="flex gap-4">
-            <button type="submit" className="btn-primary flex-1">
-              Save Round
-            </button>
             <Link href="/" className="flex-1">
               <button type="button" className="btn-secondary w-full">
                 Cancel
