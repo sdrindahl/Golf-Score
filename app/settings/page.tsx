@@ -19,6 +19,7 @@ export default function Settings() {
   const [nameSuccess, setNameSuccess] = useState('')
   const [passwordError, setPasswordError] = useState('')
   const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -110,6 +111,22 @@ export default function Settings() {
       setConfirmPassword('')
     } catch (err) {
       setPasswordError((err as Error).message)
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete your account? This action cannot be undone and will remove all your data including all golf rounds.\n\nType your name to confirm: ${currentUser?.name}`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setDeleteError('')
+      await auth.deleteUser(currentUser!.id)
+      router.push('/login')
+    } catch (err) {
+      setDeleteError((err as Error).message)
     }
   }
 
@@ -245,6 +262,30 @@ export default function Settings() {
             🔒 Update Password
           </button>
         </form>
+      </div>
+
+      <div className="card mt-6 border-2 border-red-200 bg-red-50">
+        <h2 className="text-2xl font-bold mb-4 text-red-600">🗑️ Danger Zone</h2>
+        
+        <div className="bg-white p-4 rounded mb-4">
+          <h3 className="text-lg font-bold mb-2">Delete Account</h3>
+          <p className="text-gray-600 text-sm mb-4">
+            This will permanently delete your account and all associated golf rounds. This action cannot be undone.
+          </p>
+          
+          {deleteError && (
+            <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+              {deleteError}
+            </div>
+          )}
+
+          <button
+            onClick={handleDeleteAccount}
+            className="btn-danger w-full"
+          >
+            ⚠️ Delete My Account
+          </button>
+        </div>
       </div>
 
       <Link href="/">

@@ -159,6 +159,55 @@ export function useAuth() {
     }
   }
 
+  async function deleteUser(userId: string): Promise<void> {
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
+    const userIndex = users.findIndex(u => u.id === userId)
+
+    if (userIndex >= 0) {
+      // Remove user from users array
+      users.splice(userIndex, 1)
+
+      // Delete from Supabase
+      if (isSupabaseActive() && supabase) {
+        try {
+          // Delete all rounds for this user
+          const { error: roundsError } = await supabase
+            .from('rounds')
+            .delete()
+            .eq('user_id', userId)
+
+          if (roundsError) throw roundsError
+
+          // Delete user
+          const { error: userError } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', userId)
+
+          if (userError) throw userError
+
+          console.log('User deleted from Supabase')
+        } catch (error) {
+          console.error('Error deleting user from Supabase:', error)
+        }
+      }
+
+      // Update users in localStorage
+      localStorage.setItem('golfUsers', JSON.stringify(users))
+
+      // Remove all rounds for this user from localStorage
+      const savedRounds = localStorage.getItem('golfRounds')
+      if (savedRounds) {
+        const allRounds = JSON.parse(savedRounds)
+        const filteredRounds = allRounds.filter((r: any) => r.userId !== userId)
+        localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+      }
+
+      // Log out the user
+      logoutUser()
+    }
+  }
+
   return {
     getCurrentUser,
     getAllUsers,
@@ -168,6 +217,7 @@ export function useAuth() {
     logoutUser,
     updatePassword,
     updateName,
+    deleteUser,
     generatePassword,
     isSupabaseActive,
   }
