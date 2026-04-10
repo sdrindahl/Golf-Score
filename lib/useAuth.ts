@@ -53,31 +53,36 @@ export function useAuth() {
       throw new Error('User already exists')
     }
 
-    const newUser: User = {
+    let newUser: User = {
       id: `user_${Date.now()}`,
       name,
       password,
     }
 
-    // Add user to array
-    users.push(newUser)
-
-    // Save to Supabase first (primary source of truth)
+    // Save to Supabase first (primary source of truth) - let it generate UUID
     if (isSupabaseActive() && supabase) {
       try {
-        const { error } = await supabase
+        // Don't send id - let Supabase generate UUID
+        const { data, error } = await supabase
           .from('users')
-          .insert([newUser])
+          .insert([{ name, password }])
+          .select()
 
         if (error) throw error
-        console.log('User registered in Supabase')
+        
+        // Update newUser with the Supabase-generated UUID
+        if (data && data.length > 0) {
+          newUser.id = data[0].id
+          console.log('User registered in Supabase with ID:', newUser.id)
+        }
       } catch (error) {
         console.error('Error registering user in Supabase:', error)
         throw new Error('Failed to register user. Please check your connection.')
       }
     }
 
-    // Update localStorage cache
+    // Add user to array and update cache
+    users.push(newUser)
     localStorage.setItem('golfUsers', JSON.stringify(users))
 
     return newUser
