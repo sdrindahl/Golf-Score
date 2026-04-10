@@ -16,7 +16,8 @@ export async function syncDataFromSupabase(): Promise<void> {
     console.log('Syncing data from Supabase...')
 
     // First, migrate any localStorage users that don't exist in Supabase
-    await migrateLocalStorageUsersToSupabase()
+    // DISABLED: Migration was causing duplicate inserts on every sync
+    // await migrateLocalStorageUsersToSupabase()
 
     // Sync users
     try {

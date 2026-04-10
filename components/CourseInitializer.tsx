@@ -8,6 +8,19 @@ export default function CourseInitializer() {
   useEffect(() => {
     const initializeData = async () => {
       try {
+        // One-time cleanup: clear localStorage for New3 test user to prevent re-migration
+        const cleanupFlag = localStorage.getItem('_cleaned_new3_test_data')
+        if (!cleanupFlag) {
+          const rounds = JSON.parse(localStorage.getItem('golfRounds') || '[]')
+          const new3Rounds = rounds.filter((r: any) => r.userId === 'New3')
+          if (new3Rounds.length > 0) {
+            console.log(`🧹 Cleaning up ${new3Rounds.length} test rounds for New3 user`)
+            const cleanedRounds = rounds.filter((r: any) => r.userId !== 'New3')
+            localStorage.setItem('golfRounds', JSON.stringify(cleanedRounds))
+          }
+          localStorage.setItem('_cleaned_new3_test_data', '1')
+        }
+
         // First, sync data from Supabase (if available)
         await syncDataFromSupabase()
       } catch (error) {
