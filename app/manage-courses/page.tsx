@@ -31,11 +31,6 @@ export default function ManageCourses() {
     }
   }
 
-  const handleSelectCourse = (course: Course) => {
-    localStorage.setItem('selectedCourse', JSON.stringify(course))
-    window.location.href = '/new-round'
-  }
-
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto py-6">
@@ -81,12 +76,13 @@ export default function ManageCourses() {
                 {courses.map((course) => (
                   <tr key={course.id} className="border-b hover:bg-gray-50">
                     <td className="px-3 py-2 md:py-3">
-                      <button
-                        onClick={() => handleSelectCourse(course)}
-                        className="font-bold text-blue-600 hover:underline text-left"
-                      >
-                        {course.name}
-                      </button>
+                      <Link href={`/course-details?id=${course.id}`}>
+                        <button
+                          className="font-bold text-blue-600 hover:underline text-left"
+                        >
+                          {course.name}
+                        </button>
+                      </Link>
                     </td>
                     <td className="px-3 py-2 md:py-3 text-gray-600 hidden md:table-cell text-sm">
                       {course.location}, {course.state}
@@ -99,12 +95,6 @@ export default function ManageCourses() {
                     </td>
                     <td className="text-center px-3 py-2 md:py-3">
                       <div className="flex gap-1 justify-center">
-                        <button
-                          onClick={() => handleSelectCourse(course)}
-                          className="btn-primary text-xs px-2 py-1"
-                        >
-                          Select
-                        </button>
                         {currentUser?.is_admin && (
                           <>
                             <Link href={`/edit-course?id=${course.id}`}>
