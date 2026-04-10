@@ -183,61 +183,64 @@ function PlayerProfileContent() {
   const isOwnProfile = currentUser?.id === player.id
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
-      <div className="md:col-span-2">
+    <div className="max-w-4xl mx-auto py-6">
+      {/* Header */}
+      <div className="card mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h1 className="text-3xl font-bold">👤 {player.name}'s Profile</h1>
+            {isOwnProfile && (
+              <p className="text-green-600 font-semibold text-sm mt-1">This is your profile</p>
+            )}
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-gray-600">Total Rounds</p>
+            <p className="text-4xl font-bold">{rounds.length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Handicap Display */}
+      <div className="mb-6">
+        <HandicapDisplay handicap={handicap} totalRounds={rounds.length} />
+      </div>
+
+      {/* Statistics */}
+      {rounds.length > 0 && (
         <div className="card mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">👤 {player.name}'s Profile</h1>
-              {isOwnProfile && (
-                <p className="text-green-600 font-semibold">This is your profile</p>
-              )}
+          <h2 className="text-2xl font-bold mb-4">Statistics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-gray-600 text-sm">Best Score</p>
+              <p className="text-3xl font-bold text-green-600">{Math.min(...rounds.map(r => r.totalScore))}</p>
             </div>
-            <div className="text-right">
-              <p className="text-gray-600">Total Rounds</p>
-              <p className="text-4xl font-bold">{rounds.length}</p>
+            <div className="text-center">
+              <p className="text-gray-600 text-sm">Worst Score</p>
+              <p className="text-3xl font-bold text-red-600">{Math.max(...rounds.map(r => r.totalScore))}</p>
+            </div>
+            <div className="text-center">
+              <p className="text-gray-600 text-sm">Average Score</p>
+              <p className="text-3xl font-bold text-blue-600">
+                {(rounds.reduce((sum, r) => sum + r.totalScore, 0) / rounds.length).toFixed(1)}
+              </p>
             </div>
           </div>
         </div>
+      )}
 
-        {rounds.length > 0 ? (
-          <ScoreHistory rounds={rounds} onDelete={() => {}} readOnly={!isOwnProfile} userId={player?.id} />
-        ) : (
-          <div className="card text-center py-12">
-            <p className="text-gray-500 text-lg">No rounds recorded yet</p>
-          </div>
-        )}
-      </div>
+      {/* Recent Rounds */}
+      {rounds.length > 0 ? (
+        <ScoreHistory rounds={rounds} onDelete={() => {}} readOnly={!isOwnProfile} userId={player?.id} />
+      ) : (
+        <div className="card text-center py-12">
+          <p className="text-gray-500 text-lg">No rounds recorded yet</p>
+        </div>
+      )}
 
-      <div>
-        <HandicapDisplay handicap={handicap} totalRounds={rounds.length} />
-
-        {rounds.length > 0 && (
-          <div className="card mt-6">
-            <h3 className="text-lg font-bold mb-4">Statistics</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Best Score:</span>
-                <span className="font-bold">{Math.min(...rounds.map(r => r.totalScore))}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Worst Score:</span>
-                <span className="font-bold">{Math.max(...rounds.map(r => r.totalScore))}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Average Score:</span>
-                <span className="font-bold">
-                  {(rounds.reduce((sum, r) => sum + r.totalScore, 0) / rounds.length).toFixed(1)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <Link href="/players">
-          <button className="btn-secondary w-full mt-6">Back to Golfer Profiles</button>
-        </Link>
-      </div>
+      {/* Back Button */}
+      <Link href="/players">
+        <button className="btn-secondary w-full mt-6">← Back to Golfer Profiles</button>
+      </Link>
     </div>
   )
 }
