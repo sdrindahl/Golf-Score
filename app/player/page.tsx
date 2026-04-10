@@ -192,9 +192,15 @@ function PlayerProfileContent() {
               <p className="text-green-600 font-semibold text-xs md:text-sm mt-1">This is your profile</p>
             )}
           </div>
-          <div className="text-right">
-            <p className="text-xs md:text-sm text-gray-600">Total Rounds</p>
-            <p className="text-2xl md:text-3xl font-bold">{rounds.length}</p>
+          <div className="text-right space-y-3">
+            <div>
+              <p className="text-xs md:text-sm text-gray-600">Handicap</p>
+              <p className="text-2xl md:text-3xl font-bold text-green-600">{handicap}</p>
+            </div>
+            <div>
+              <p className="text-xs md:text-sm text-gray-600">Total Rounds</p>
+              <p className="text-2xl md:text-3xl font-bold">{rounds.length}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -202,13 +208,7 @@ function PlayerProfileContent() {
       {/* Statistics */}
       {rounds.length > 0 && (
         <div className="card mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <h2 className="text-xl font-bold">Best Rounds</h2>
-            <div className="text-right">
-              <p className="text-xs text-gray-600">Handicap</p>
-              <p className="text-2xl font-bold text-green-600">{handicap}</p>
-            </div>
-          </div>
+          <h2 className="text-xl font-bold mb-4">Best Rounds</h2>
           
           {/* Best 18-Hole Round */}
           {(() => {
