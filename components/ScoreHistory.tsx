@@ -54,14 +54,14 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
     <div className="card">
       <h2 className="text-xl font-bold mb-4">Recent Rounds</h2>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm md:text-base">
+        <table className="w-full text-xs md:text-base">
           <thead className="bg-gray-100">
             <tr>
-              <th className="text-left p-2 md:p-3">Date</th>
-              <th className="text-left p-2 md:p-3">Course</th>
-              <th className="text-center p-2 md:p-3">Score</th>
-              <th className="text-center p-2 md:p-3">vs Par</th>
-              {!readOnly && <th className="text-center p-2 md:p-3">Actions</th>}
+              <th className="text-left p-1 md:p-3 text-xs md:text-sm">Date</th>
+              <th className="text-left p-1 md:p-3 text-xs md:text-sm">Course</th>
+              <th className="text-center p-1 md:p-3 text-xs md:text-sm">Score</th>
+              <th className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell">vs Par</th>
+              {!readOnly && <th className="text-center p-1 md:p-3 text-xs md:text-sm">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -72,23 +72,23 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
 
               return (
                 <tr key={round.id} className="border-b hover:bg-gray-50">
-                  <td className="p-2 md:p-3">{new Date(round.date).toLocaleDateString()}</td>
-                  <td className="p-2 md:p-3 max-w-xs truncate md:max-w-none">{round.courseName}</td>
-                  <td className="text-center font-bold p-2 md:p-3">{round.totalScore}</td>
-                  <td className={`text-center font-bold p-2 md:p-3 ${vsPalColor}`}>
+                  <td className="p-1 md:p-3 text-xs md:text-sm">{new Date(round.date).toLocaleDateString()}</td>
+                  <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate">{round.courseName}</td>
+                  <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm">{round.totalScore}</td>
+                  <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
                     {vsPalDisplay}
                   </td>
                   {!readOnly ? (
-                    <td className="text-center p-2 md:p-3">
-                      <div className="flex gap-1 md:gap-2 justify-center flex-wrap">
+                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
+                      <div className="flex flex-col sm:flex-row gap-0.5 md:gap-2 justify-center">
                         <Link href={`/round-detail?id=${round.id}`} className="inline-block">
-                          <button className="text-green-600 hover:text-green-800 font-semibold text-xs md:text-sm">
+                          <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
                             View
                           </button>
                         </Link>
                         {canEditRound(round.userId) && (
                           <Link href={`/edit-round?id=${round.id}`} className="inline-block">
-                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs md:text-sm">
+                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs">
                               Edit
                             </button>
                           </Link>
@@ -96,7 +96,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
                         {canEditRound(round.userId) && (
                           <button
                             onClick={() => handleDelete(round.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold text-xs md:text-sm"
+                            className="text-red-600 hover:text-red-800 font-semibold text-xs"
                           >
                             Delete
                           </button>
@@ -104,9 +104,9 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
                       </div>
                     </td>
                   ) : (
-                    <td className="text-center p-2 md:p-3">
+                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
                       <Link href={`/round-detail?id=${round.id}`} className="inline-block">
-                        <button className="text-green-600 hover:text-green-800 font-semibold text-xs md:text-sm">
+                        <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
                           View Card
                         </button>
                       </Link>
