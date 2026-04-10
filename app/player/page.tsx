@@ -185,8 +185,8 @@ function PlayerProfileContent() {
           </div>
         )}
 
-        <Link href="/">
-          <button className="btn-secondary w-full mt-6">Back to Home</button>
+        <Link href="/players">
+          <button className="btn-secondary w-full mt-6">Back to Golfer Profiles</button>
         </Link>
       </div>
     </div>
