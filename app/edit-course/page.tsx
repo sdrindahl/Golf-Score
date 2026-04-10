@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
+import { updateCourseInSupabase } from '@/lib/dataSync'
 
 function EditCourseContent() {
   const router = useRouter()
@@ -59,7 +60,7 @@ function EditCourseContent() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     console.log('🔧 Form submitted')
@@ -128,9 +129,13 @@ function EditCourseContent() {
         if (index >= 0) {
           courses[index] = updatedCourse
           localStorage.setItem('golfCourses', JSON.stringify(courses))
-          console.log('✅ Course saved successfully')
+          console.log('✅ Course saved to localStorage')
           console.log('  Saved courseRating:', courses[index].courseRating)
           console.log('  Saved slopeRating:', courses[index].slopeRating)
+          
+          // Also save to Supabase so changes persist across devices
+          await updateCourseInSupabase(updatedCourse)
+          
           setSubmitted(true)
           // Redirect after a short delay
           setTimeout(() => {

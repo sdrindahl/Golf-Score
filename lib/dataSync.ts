@@ -356,6 +356,48 @@ export async function saveCourseToSupabase(course: Course): Promise<void> {
 }
 
 /**
+ * Update a course in Supabase
+ */
+export async function updateCourseInSupabase(course: Course): Promise<void> {
+  if (!isSupabaseConfigured() || !supabase) {
+    console.warn('Supabase not configured, course changes will not sync to other devices')
+    return
+  }
+
+  try {
+    console.log('💾 Updating course in Supabase:', course.id)
+    
+    // Convert camelCase to snake_case for Supabase
+    const courseData = {
+      id: course.id,
+      name: course.name,
+      location: course.location,
+      state: course.state,
+      par: course.par,
+      hole_count: course.holeCount,
+      course_rating: course.courseRating,
+      slope_rating: course.slopeRating,
+      holes: course.holes,
+    }
+
+    const { error } = await supabase
+      .from('courses')
+      .update(courseData)
+      .eq('id', course.id)
+
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
+    
+    console.log('✅ Course successfully updated in Supabase')
+  } catch (error) {
+    console.error('❌ Error updating course in Supabase:', error)
+    // Continue anyway - data is still saved locally
+  }
+}
+
+/**
  * Sync all courses to Supabase
  */
 export async function syncCoursesToSupabase(courses: Course[]): Promise<void> {
