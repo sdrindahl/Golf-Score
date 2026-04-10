@@ -140,8 +140,20 @@ export default function NewRound() {
           <button 
             onClick={() => {
               console.log('🔥 View Scorecard button clicked!')
-              console.log('🔑 Navigating to /round-detail?id=' + savedRoundId)
-              router.push(`/round-detail?id=${savedRoundId}`)
+              console.log('� Router object:', router ? 'exists' : 'MISSING')
+              console.log('📍 savedRoundId:', savedRoundId)
+              if (!router) {
+                console.error('❌ Router is not available!')
+                return
+              }
+              if (!savedRoundId) {
+                console.error('❌ savedRoundId is not set!')
+                return
+              }
+              const targetUrl = `/round-detail?id=${savedRoundId}`
+              console.log('🔑 Calling router.push with:', targetUrl)
+              router.push(targetUrl)
+              console.log('✅ router.push called')
             }} 
             className="btn-primary"
           >
