@@ -108,26 +108,42 @@ function PlayerProfileContent() {
           return null
         }
         
-        // Use provided courseRating or calculate from holes, default to 72
+        const is9Hole = course.holes && course.holes.length === 9
+        
+        // Use provided courseRating or calculate from holes, default to 72 (or 36 for 9-hole)
         let courseRating = course.courseRating
         let slopeRating = course.slopeRating
         
         if (!courseRating && course.holes) {
           // Calculate approximate rating from hole par values
-          courseRating = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+          const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+          courseRating = totalPar
+          // Note: This is using par as rating, which is not ideal
+          console.log(`  ⚠️  Using par (${totalPar}) as course rating (should be ~71-73 for 18 holes, ~35-36 for 9 holes)`)
         }
         
-        if (!courseRating) courseRating = 72
+        if (!courseRating) courseRating = is9Hole ? 36 : 72
         if (!slopeRating) slopeRating = 130
         
-        console.log(`  Rating: ${courseRating}, Slope: ${slopeRating}`)
+        console.log(`  Holes: ${is9Hole ? '9-hole' : '18-hole'}, Rating: ${courseRating}, Slope: ${slopeRating}`)
         
         if (!slopeRating) {
           return null
         }
         
-        const differential = (round.totalScore - courseRating) * 113 / slopeRating
-        console.log(`  Differential: (${round.totalScore} - ${courseRating}) * 113 / ${slopeRating} = ${differential.toFixed(2)}`)
+        // For 9-hole rounds, we need to convert to 18-hole equivalent
+        let adjustedScore = round.totalScore
+        let adjustedRating = courseRating
+        
+        if (is9Hole) {
+          // Double 9-hole scores and ratings to get 18-hole equivalents
+          adjustedScore = round.totalScore * 2
+          adjustedRating = courseRating * 2
+          console.log(`  Converting 9-hole to 18-hole equivalent: ${round.totalScore} → ${adjustedScore}, rating ${courseRating} → ${adjustedRating}`)
+        }
+        
+        const differential = (adjustedScore - adjustedRating) * 113 / slopeRating
+        console.log(`  Differential: (${adjustedScore} - ${adjustedRating}) * 113 / ${slopeRating} = ${differential.toFixed(2)}`)
         return differential
       })
       .filter((d: any) => d !== null) as number[]

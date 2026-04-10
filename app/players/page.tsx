@@ -55,23 +55,36 @@ export default function Players() {
                   return null
                 }
                 
-                // Use provided courseRating or calculate from holes, default to 72
+                const is9Hole = course.holes && course.holes.length === 9
+                
+                // Use provided courseRating or calculate from holes, default to 72 (or 36 for 9-hole)
                 let courseRating = course.courseRating
                 let slopeRating = course.slopeRating
                 
                 if (!courseRating && course.holes) {
                   // Calculate approximate rating from hole par values
-                  courseRating = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+                  const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+                  courseRating = totalPar
                 }
                 
-                if (!courseRating) courseRating = 72
+                if (!courseRating) courseRating = is9Hole ? 36 : 72
                 if (!slopeRating) slopeRating = 130
                 
                 if (!slopeRating) {
                   return null
                 }
                 
-                return (round.totalScore - courseRating) * 113 / slopeRating
+                // For 9-hole rounds, convert to 18-hole equivalent
+                let adjustedScore = round.totalScore
+                let adjustedRating = courseRating
+                
+                if (is9Hole) {
+                  // Double 9-hole scores and ratings to get 18-hole equivalents
+                  adjustedScore = round.totalScore * 2
+                  adjustedRating = courseRating * 2
+                }
+                
+                return (adjustedScore - adjustedRating) * 113 / slopeRating
               })
               .filter((d: any) => d !== null) as number[]
 
