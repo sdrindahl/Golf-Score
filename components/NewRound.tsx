@@ -165,21 +165,56 @@ export default function NewRound() {
 
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4">Enter Scores by Hole</h3>
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-9 gap-2 md:gap-3">
+            <div className="space-y-4">
               {selectedCourse.holes.map((hole, index) => (
-                <div key={hole.holeNumber} className="bg-gray-50 p-2 md:p-3 rounded-lg">
-                  <div className="text-xs md:text-sm text-gray-600 mb-1">
-                    H{hole.holeNumber}
+                <div key={hole.holeNumber} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <span className="font-bold text-lg">Hole {hole.holeNumber}</span>
+                      <span className="text-gray-600 ml-3">Par {hole.par}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-3xl font-bold text-blue-600">{scores[index] || '—'}</span>
+                      {scores[index] && (
+                        <span className={`text-sm ml-2 ${scores[index] - hole.par < 0 ? 'text-green-600' : scores[index] - hole.par > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                          {scores[index] - hole.par > 0 ? '+' : ''}{scores[index] - hole.par}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    min="1"
-                    max="13"
-                    value={scores[index] || ''}
-                    onChange={(e) => handleScoreChange(index, parseInt(e.target.value) || 0)}
-                    placeholder="0"
-                    className="w-full p-2 border border-gray-300 rounded text-center font-bold text-sm"
-                  />
+                  
+                  <div className="flex gap-2 flex-wrap">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => handleScoreChange(index, num)}
+                        className={`p-2 w-10 h-10 rounded font-bold text-sm transition ${
+                          scores[index] === num
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-blue-50'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => handleScoreChange(index, (scores[index] || 0) + 1)}
+                      className="p-2 px-3 rounded font-bold text-sm bg-white border border-gray-300 text-gray-700 hover:bg-blue-50 transition"
+                    >
+                      +
+                    </button>
+                    {scores[index] > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleScoreChange(index, Math.max(0, (scores[index] || 0) - 1))}
+                        className="p-2 px-3 rounded font-bold text-sm bg-white border border-gray-300 text-gray-700 hover:bg-red-50 transition"
+                      >
+                        −
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
