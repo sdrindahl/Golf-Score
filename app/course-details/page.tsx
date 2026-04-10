@@ -251,12 +251,12 @@ function CourseDetailsContent() {
             <div className="mb-8">
               <h3 className="text-xl font-bold mb-4">Front 9</h3>
               <div className="overflow-x-auto mb-6">
-                <table className="w-full">
+                <table className="w-full text-xs md:text-sm">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="text-center p-3">Hole</th>
+                      <th className="text-center px-1 md:px-3 py-1 md:py-2 text-xs md:text-sm">Hole</th>
                       {course.holes.slice(0, 9).map((hole) => (
-                        <th key={hole.holeNumber} className="text-center p-2 text-sm">
+                        <th key={hole.holeNumber} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm font-semibold">
                           {hole.holeNumber}
                         </th>
                       ))}
@@ -264,25 +264,25 @@ function CourseDetailsContent() {
                   </thead>
                   <tbody>
                     <tr className="border-b">
-                      <td className="font-bold p-3 text-center">Yds</td>
+                      <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Par</td>
                       {course.holes.slice(0, 9).map((hole) => (
-                        <td key={`yds-${hole.holeNumber}`} className="text-center text-sm p-2">
-                          {hole.yardage || '—'}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b">
-                      <td className="font-bold p-3 text-center">Par</td>
-                      {course.holes.slice(0, 9).map((hole) => (
-                        <td key={`par-${hole.holeNumber}`} className="text-center font-bold p-2 text-sm">
+                        <td key={`par-${hole.holeNumber}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
                           {hole.par}
                         </td>
                       ))}
                     </tr>
-                    <tr>
-                      <td className="font-bold p-3 text-center">HCP</td>
+                    <tr className="hidden md:table-row border-b">
+                      <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
                       {course.holes.slice(0, 9).map((hole) => (
-                        <td key={`hcp-${hole.holeNumber}`} className="text-center text-sm p-2">
+                        <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                          {hole.yardage || '—'}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="hidden md:table-row">
+                      <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
+                      {course.holes.slice(0, 9).map((hole) => (
+                        <td key={`hcp-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
                           {hole.handicap}
                         </td>
                       ))}
@@ -297,12 +297,12 @@ function CourseDetailsContent() {
               <div className="mb-8">
                 <h3 className="text-xl font-bold mb-4">Back 9</h3>
                 <div className="overflow-x-auto mb-6">
-                  <table className="w-full">
+                  <table className="w-full text-xs md:text-sm">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="text-center p-3">Hole</th>
+                        <th className="text-center px-1 md:px-3 py-1 md:py-2 text-xs md:text-sm">Hole</th>
                         {course.holes.slice(9, 18).map((hole) => (
-                          <th key={hole.holeNumber} className="text-center p-2 text-sm">
+                          <th key={hole.holeNumber} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm font-semibold">
                             {hole.holeNumber}
                           </th>
                         ))}
@@ -310,25 +310,25 @@ function CourseDetailsContent() {
                     </thead>
                     <tbody>
                       <tr className="border-b">
-                        <td className="font-bold p-3 text-center">Yds</td>
+                        <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Par</td>
                         {course.holes.slice(9, 18).map((hole) => (
-                          <td key={`yds-${hole.holeNumber}`} className="text-center text-sm p-2">
-                            {hole.yardage || '—'}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className="border-b">
-                        <td className="font-bold p-3 text-center">Par</td>
-                        {course.holes.slice(9, 18).map((hole) => (
-                          <td key={`par-${hole.holeNumber}`} className="text-center font-bold p-2 text-sm">
+                          <td key={`par-${hole.holeNumber}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
                             {hole.par}
                           </td>
                         ))}
                       </tr>
-                      <tr>
-                        <td className="font-bold p-3 text-center">HCP</td>
+                      <tr className="hidden md:table-row border-b">
+                        <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
                         {course.holes.slice(9, 18).map((hole) => (
-                          <td key={`hcp-${hole.holeNumber}`} className="text-center text-sm p-2">
+                          <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                            {hole.yardage || '—'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="hidden md:table-row">
+                        <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
+                        {course.holes.slice(9, 18).map((hole) => (
+                          <td key={`hcp-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
                             {hole.handicap}
                           </td>
                         ))}
