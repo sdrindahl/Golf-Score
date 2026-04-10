@@ -88,6 +88,8 @@ function PlayerProfileContent() {
   const calculateHandicap = (): number => {
     if (rounds.length === 0) return 0
     
+    let handicap = 0
+    
     // Get course data to find course ratings
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
     
@@ -103,16 +105,29 @@ function PlayerProfileContent() {
       })
       .filter((d: any) => d !== null) as number[]
 
-    // Use best 8 of last 20 in the calculation (if available)
+    // Use best X of last 20 in the calculation based on USGA rules
     if (differentials.length > 0) {
       const recentDifferentials = differentials.slice(-20)
       const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
-      const bestCount = Math.min(8, Math.ceil(sortedDifferentials.length / 2))
+      
+      // USGA Handicap calculation based on number of scores
+      let bestCount = 1
+      const roundCount = sortedDifferentials.length
+      if (roundCount >= 6) bestCount = 2
+      if (roundCount >= 7) bestCount = 3
+      if (roundCount >= 9) bestCount = 4
+      if (roundCount >= 11) bestCount = 5
+      if (roundCount >= 13) bestCount = 6
+      if (roundCount >= 15) bestCount = 7
+      if (roundCount >= 17) bestCount = 8
+      
       const bestDifferentials = sortedDifferentials.slice(0, bestCount)
-      return Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
+      handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
+      
+      console.log(`🎯 Handicap calculation: ${roundCount} rounds, using best ${bestCount}, differentials: ${bestDifferentials.map(d => d.toFixed(1)).join(', ')}, handicap: ${handicap}`)
     }
 
-    return 0
+    return handicap
   }
 
   const handicap = calculateHandicap()

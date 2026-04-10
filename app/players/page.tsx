@@ -57,11 +57,22 @@ export default function Players() {
               })
               .filter((d: any) => d !== null) as number[]
 
-            // Use best 8 of last 20 in the calculation (if available)
+            // Use best X of last 20 in the calculation based on USGA rules
             if (differentials.length > 0) {
               const recentDifferentials = differentials.slice(-20)
               const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
-              const bestCount = Math.min(8, Math.ceil(sortedDifferentials.length / 2))
+              
+              // USGA Handicap calculation based on number of scores
+              let bestCount = 1
+              const numDifferentials = sortedDifferentials.length
+              if (numDifferentials >= 6) bestCount = 2
+              if (numDifferentials >= 7) bestCount = 3
+              if (numDifferentials >= 9) bestCount = 4
+              if (numDifferentials >= 11) bestCount = 5
+              if (numDifferentials >= 13) bestCount = 6
+              if (numDifferentials >= 15) bestCount = 7
+              if (numDifferentials >= 17) bestCount = 8
+              
               const bestDifferentials = sortedDifferentials.slice(0, bestCount)
               handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
             }
