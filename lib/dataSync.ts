@@ -59,7 +59,9 @@ export async function syncDataFromSupabase(): Promise<void> {
         localStorage.setItem('golfRounds', JSON.stringify(roundsInCamelCase))
         console.log(`✅ Synced ${roundsInCamelCase.length} rounds from Supabase`)
       } else {
-        console.log('ℹ️ No rounds found in Supabase')
+        // Clear localStorage if Supabase has no rounds (prevents stale cached data)
+        localStorage.setItem('golfRounds', JSON.stringify([]))
+        console.log('ℹ️ No rounds found in Supabase - cleared local cache')
       }
     } catch (error) {
       console.error('Error syncing rounds:', error)
