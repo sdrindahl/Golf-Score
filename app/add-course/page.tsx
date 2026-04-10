@@ -11,6 +11,8 @@ export default function AddCourse() {
   const [location, setLocation] = useState('')
   const [state, setState] = useState('')
   const [holeCount, setHoleCount] = useState(18)
+  const [courseRating, setCourseRating] = useState(72.0)
+  const [slopeRating, setSlopeRating] = useState(113)
   const [holes, setHoles] = useState<any[]>([])
   const [submitted, setSubmitted] = useState(false)
 
@@ -65,8 +67,8 @@ export default function AddCourse() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
-      courseRating: 72.0,
-      slopeRating: 130,
+      courseRating,
+      slopeRating,
     }
 
     // Save to localStorage
@@ -152,6 +154,30 @@ export default function AddCourse() {
                 <option value={9}>9 Holes</option>
                 <option value={18}>18 Holes</option>
               </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Course Rating</label>
+                <input
+                  type="number"
+                  value={courseRating}
+                  onChange={(e) => setCourseRating(parseFloat(e.target.value))}
+                  placeholder="e.g., 72.4"
+                  step="0.1"
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">Slope Rating</label>
+                <input
+                  type="number"
+                  value={slopeRating}
+                  onChange={(e) => setSlopeRating(parseInt(e.target.value))}
+                  placeholder="e.g., 135"
+                  className="input-field"
+                />
+              </div>
             </div>
           </div>
         </div>

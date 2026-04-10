@@ -122,7 +122,7 @@ function PlayerProfileContent() {
         }
         
         if (!courseRating) courseRating = is9Hole ? 36 : 72
-        if (!slopeRating) slopeRating = 130
+        if (!slopeRating) slopeRating = 113
         
         console.log(`  Holes: ${is9Hole ? '9-hole' : '18-hole'}, Rating: ${courseRating}, Slope: ${slopeRating}`)
         

@@ -14,6 +14,8 @@ function EditCourseContent() {
   const [location, setLocation] = useState('')
   const [state, setState] = useState('')
   const [holeCount, setHoleCount] = useState(18)
+  const [courseRating, setCourseRating] = useState(72.0)
+  const [slopeRating, setSlopeRating] = useState(113)
   const [holes, setHoles] = useState<any[]>([])
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -31,6 +33,8 @@ function EditCourseContent() {
         setLocation(course.location)
         setState(course.state)
         setHoleCount(course.holeCount)
+        setCourseRating(course.courseRating || 72.0)
+        setSlopeRating(course.slopeRating || 113)
         setHoles(course.holes)
       }
     }
@@ -67,8 +71,8 @@ function EditCourseContent() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
-      courseRating: 72.0,
-      slopeRating: 130,
+      courseRating,
+      slopeRating,
     }
 
     // Update in localStorage
@@ -151,6 +155,30 @@ function EditCourseContent() {
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   placeholder="e.g., CA"
+                  className="input-field"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Course Rating</label>
+                <input
+                  type="number"
+                  value={courseRating}
+                  onChange={(e) => setCourseRating(parseFloat(e.target.value))}
+                  placeholder="e.g., 72.4"
+                  step="0.1"
+                  className="input-field"
+                />
+              </div>
+              <div>
+                <label className="label">Slope Rating</label>
+                <input
+                  type="number"
+                  value={slopeRating}
+                  onChange={(e) => setSlopeRating(parseInt(e.target.value))}
+                  placeholder="e.g., 135"
                   className="input-field"
                 />
               </div>

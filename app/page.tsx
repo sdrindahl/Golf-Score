@@ -63,7 +63,7 @@ export default function Home() {
         }
         
         if (!courseRating) courseRating = is9Hole ? 36 : 72
-        if (!slopeRating) slopeRating = 130
+        if (!slopeRating) slopeRating = 113
         
         if (!slopeRating) {
           return null
