@@ -35,12 +35,76 @@ export default function Home() {
   const calculateHandicap = (): number => {
     if (rounds.length === 0) return 0
     
-    // Simple handicap calculation: average of last 8 rounds minus best score
-    const recentRounds = rounds.slice(-8)
-    const avgScore = recentRounds.reduce((sum, r) => sum + r.totalScore, 0) / recentRounds.length
-    const bestScore = Math.min(...recentRounds.map(r => r.totalScore))
+    let handicap = 0
     
-    return Math.round((avgScore - bestScore) * 10) / 10
+    // Get course data to find course ratings
+    const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+
+    // Calculate handicap differential for each round
+    // Formula: (Score - Course Rating) × 113 / Slope Rating
+    const differentials = rounds
+      .map(round => {
+        const course = courses.find((c: any) => c.id === round.courseId)
+        
+        if (!course) {
+          return null
+        }
+        
+        const is9Hole = course.holes && course.holes.length === 9
+        
+        // Use provided courseRating or calculate from holes, default to 72 (or 36 for 9-hole)
+        let courseRating = course.courseRating
+        let slopeRating = course.slopeRating
+        
+        if (!courseRating && course.holes) {
+          // Calculate approximate rating from hole par values
+          const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
+          courseRating = totalPar
+        }
+        
+        if (!courseRating) courseRating = is9Hole ? 36 : 72
+        if (!slopeRating) slopeRating = 130
+        
+        if (!slopeRating) {
+          return null
+        }
+        
+        // For 9-hole rounds, we need to convert to 18-hole equivalent
+        let adjustedScore = round.totalScore
+        let adjustedRating = courseRating
+        
+        if (is9Hole) {
+          // Double 9-hole scores and ratings to get 18-hole equivalents
+          adjustedScore = round.totalScore * 2
+          adjustedRating = courseRating * 2
+        }
+        
+        const differential = (adjustedScore - adjustedRating) * 113 / slopeRating
+        return differential
+      })
+      .filter((d: any) => d !== null) as number[]
+
+    // Use best X of last 20 in the calculation based on USGA rules
+    if (differentials.length > 0) {
+      const recentDifferentials = differentials.slice(-20)
+      const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
+      
+      // USGA Handicap calculation based on number of scores
+      let bestCount = 1
+      const roundCount = sortedDifferentials.length
+      if (roundCount >= 6) bestCount = 2
+      if (roundCount >= 7) bestCount = 3
+      if (roundCount >= 9) bestCount = 4
+      if (roundCount >= 11) bestCount = 5
+      if (roundCount >= 13) bestCount = 6
+      if (roundCount >= 15) bestCount = 7
+      if (roundCount >= 17) bestCount = 8
+      
+      const bestDifferentials = sortedDifferentials.slice(0, bestCount)
+      handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
+    }
+
+    return handicap
   }
 
   const handleDeleteRound = (roundId: string) => {
