@@ -14,9 +14,14 @@ function RoundDetailContent() {
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<any>(null)
 
   useEffect(() => {
     if (!roundId) return
+
+    // Get current user for permission checking
+    const user = auth.getCurrentUser()
+    setCurrentUser(user)
 
     try {
       // Get round from localStorage
@@ -44,6 +49,13 @@ function RoundDetailContent() {
       setLoading(false)
     }
   }, [roundId])
+
+  // Check if user can edit this round
+  const canEditRound = (): boolean => {
+    if (!currentUser || !round) return false
+    if (currentUser.is_admin) return true
+    return currentUser.id === round.userId
+  }
 
   if (loading) {
     return (
@@ -188,12 +200,14 @@ function RoundDetailContent() {
 
       {/* Actions */}
       <div className="flex gap-3">
-        <Link href="/">
-          <button className="btn-primary flex-1">Back to Home</button>
+        <Link href={`/player?id=${round.userId}`}>
+          <button className="btn-primary flex-1">Exit Scorecard</button>
         </Link>
-        <Link href={`/edit-round?id=${round.id}`}>
-          <button className="btn-secondary flex-1">Edit Round</button>
-        </Link>
+        {canEditRound() && (
+          <Link href={`/edit-round?id=${round.id}`}>
+            <button className="btn-secondary flex-1">Edit Round</button>
+          </Link>
+        )}
       </div>
     </div>
   )
