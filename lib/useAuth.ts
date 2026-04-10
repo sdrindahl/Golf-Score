@@ -233,6 +233,64 @@ export function useAuth() {
     }
   }
 
+  async function deleteUserByAdmin(adminId: string, userIdToDelete: string): Promise<void> {
+    // Check if the current user is an admin
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
+    const adminUser = users.find(u => u.id === adminId)
+
+    if (!adminUser || !adminUser.is_admin) {
+      throw new Error('You do not have permission to delete users')
+    }
+
+    if (adminId === userIdToDelete) {
+      throw new Error('Admin cannot delete their own account')
+    }
+
+    const userIndex = users.findIndex(u => u.id === userIdToDelete)
+
+    if (userIndex >= 0) {
+      // Remove user from users array
+      users.splice(userIndex, 1)
+
+      // Delete from Supabase
+      if (isSupabaseActive() && supabase) {
+        try {
+          // Delete all rounds for this user
+          const { error: roundsError } = await supabase
+            .from('rounds')
+            .delete()
+            .eq('user_id', userIdToDelete)
+
+          if (roundsError) throw roundsError
+
+          // Delete user
+          const { error: userError } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', userIdToDelete)
+
+          if (userError) throw userError
+
+          console.log(`Admin deleted user: ${userIdToDelete}`)
+        } catch (error) {
+          console.error('Error deleting user from Supabase:', error)
+          throw error
+        }
+      }
+
+      // Update users in localStorage
+      localStorage.setItem('golfUsers', JSON.stringify(users))
+
+      // Remove all rounds for this user from localStorage
+      const savedRounds = localStorage.getItem('golfRounds')
+      if (savedRounds) {
+        const allRounds = JSON.parse(savedRounds)
+        const filteredRounds = allRounds.filter((r: any) => r.userId !== userIdToDelete)
+        localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+      }
+    }
+  }
+
   return {
     getCurrentUser,
     getAllUsers,
@@ -243,6 +301,7 @@ export function useAuth() {
     updatePassword,
     updateName,
     deleteUser,
+    deleteUserByAdmin,
     generatePassword,
     isSupabaseActive,
   }
