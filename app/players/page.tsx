@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { User, Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { syncDataFromSupabase } from '@/lib/dataSync'
 
 export default function Players() {
   const [players, setPlayers] = useState<User[]>([])
@@ -17,6 +18,9 @@ export default function Players() {
   useEffect(() => {
     const loadPlayers = async () => {
       try {
+        // Sync from Supabase first to get latest rounds
+        await syncDataFromSupabase()
+
         // Get current user
         const user = auth.getCurrentUser()
         setCurrentUser(user)

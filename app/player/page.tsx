@@ -7,6 +7,7 @@ import ScoreHistory from '@/components/ScoreHistory'
 import HandicapDisplay from '@/components/HandicapDisplay'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { syncDataFromSupabase } from '@/lib/dataSync'
 
 function PlayerProfileContent() {
   const searchParams = useSearchParams()
@@ -21,29 +22,40 @@ function PlayerProfileContent() {
   useEffect(() => {
     if (!playerId) return
 
-    // Get current user
-    const user = auth.getCurrentUser()
-    setCurrentUser(user)
-
-    // Find the player
-    const allUsers = auth.getAllUsers()
-    const foundPlayer = allUsers.find(u => u.id === playerId)
-
-    if (foundPlayer) {
-      setPlayer(foundPlayer)
-
-      // Load player's rounds
-      const savedRounds = localStorage.getItem('golfRounds')
-      if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds) as Round[]
-        const playerRounds = allRounds.filter(r => r.userId === playerId)
-        setRounds(playerRounds)
+    const loadPlayerData = async () => {
+      try {
+        // Sync from Supabase first to get latest rounds
+        await syncDataFromSupabase()
+      } catch (error) {
+        console.error('Error syncing data:', error)
       }
-    } else {
-      setPlayer(null)
+
+      // Get current user
+      const user = auth.getCurrentUser()
+      setCurrentUser(user)
+
+      // Find the player
+      const allUsers = auth.getAllUsers()
+      const foundPlayer = allUsers.find(u => u.id === playerId)
+
+      if (foundPlayer) {
+        setPlayer(foundPlayer)
+
+        // Load player's rounds from synced localStorage
+        const savedRounds = localStorage.getItem('golfRounds')
+        if (savedRounds) {
+          const allRounds = JSON.parse(savedRounds) as Round[]
+          const playerRounds = allRounds.filter(r => r.userId === playerId)
+          setRounds(playerRounds)
+        }
+      } else {
+        setPlayer(null)
+      }
+
+      setLoading(false)
     }
 
-    setLoading(false)
+    loadPlayerData()
   }, [playerId])
 
   if (loading) {
