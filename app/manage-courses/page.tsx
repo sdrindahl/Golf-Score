@@ -47,7 +47,7 @@ export default function ManageCourses() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
+    <div className="max-w-6xl mx-auto py-6">
       <div className="card mb-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Select Course</h2>
@@ -66,36 +66,66 @@ export default function ManageCourses() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
-            {courses.map((course) => (
-              <Link key={course.id} href={`/course-details?id=${course.id}`}>
-                <div className="border rounded-lg p-4 hover:bg-gray-50 transition cursor-pointer">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold">{course.name}</h3>
-                      <p className="text-gray-600">{course.location}, {course.state}</p>
-                      <div className="mt-2 flex gap-6 text-sm text-gray-600">
-                        <span>⛳ {course.holeCount} Holes</span>
-                        <span>📍 Par {course.par}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      {currentUser?.is_admin && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs md:text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="text-left px-3 py-2 md:py-3 font-semibold">Course</th>
+                  <th className="text-left px-3 py-2 md:py-3 font-semibold hidden md:table-cell">Location</th>
+                  <th className="text-center px-3 py-2 md:py-3 font-semibold">Holes</th>
+                  <th className="text-center px-3 py-2 md:py-3 font-semibold">Par</th>
+                  <th className="text-center px-3 py-2 md:py-3 font-semibold">Rating</th>
+                  <th className="text-center px-3 py-2 md:py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courses.map((course) => (
+                  <tr key={course.id} className="border-b hover:bg-gray-50">
+                    <td className="px-3 py-2 md:py-3">
+                      <button
+                        onClick={() => handleSelectCourse(course)}
+                        className="font-bold text-blue-600 hover:underline text-left"
+                      >
+                        {course.name}
+                      </button>
+                    </td>
+                    <td className="px-3 py-2 md:py-3 text-gray-600 hidden md:table-cell text-sm">
+                      {course.location}, {course.state}
+                    </td>
+                    <td className="text-center px-3 py-2 md:py-3 font-semibold">
+                      {course.holeCount}
+                    </td>
+                    <td className="text-center px-3 py-2 md:py-3 font-semibold">
+                      {course.par}
+                    </td>
+                    <td className="text-center px-3 py-2 md:py-3 text-gray-600 text-sm">
+                      {course.courseRating || '—'}
+                    </td>
+                    <td className="text-center px-3 py-2 md:py-3">
+                      <div className="flex gap-2 justify-center flex-wrap">
                         <button
-                          onClick={(e) => {
-                            e.preventDefault()
-                            handleDelete(course.id)
-                          }}
-                          className="btn-danger"
+                          onClick={() => handleSelectCourse(course)}
+                          className="btn-primary text-xs px-2 py-1"
                         >
-                          Delete
+                          Select
                         </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                        {currentUser?.is_admin && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              handleDelete(course.id)
+                            }}
+                            className="btn-danger text-xs px-2 py-1"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
