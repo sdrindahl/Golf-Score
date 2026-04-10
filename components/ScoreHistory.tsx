@@ -3,14 +3,27 @@
 import Link from 'next/link'
 import { Round } from '@/types'
 import { deleteRoundFromSupabase } from '@/lib/dataSync'
+import { useAuth } from '@/lib/useAuth'
 
 interface ScoreHistoryProps {
   rounds: Round[]
   onDelete?: (roundId: string) => void
   readOnly?: boolean
+  userId?: string // ID of the player whose rounds are being shown
 }
 
-export default function ScoreHistory({ rounds, onDelete, readOnly = false }: ScoreHistoryProps) {
+export default function ScoreHistory({ rounds, onDelete, readOnly = false, userId }: ScoreHistoryProps) {
+  const auth = useAuth()
+  const currentUser = auth.getCurrentUser()
+
+  // Determine if current user can edit a round
+  const canEditRound = (roundUserId: string): boolean => {
+    if (!currentUser) return false
+    if (currentUser.is_admin) return true // Admins can edit any round
+    if (!readOnly && currentUser.id === roundUserId) return true // Users can edit their own rounds
+    return false
+  }
+
   const handleDelete = (roundId: string) => {
     if (confirm('Are you sure you want to Delete This?')) {
       if (onDelete) {
@@ -73,17 +86,21 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false }: Sco
                             View
                           </button>
                         </Link>
-                        <Link href={`/edit-round?id=${round.id}`} className="inline-block">
-                          <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs md:text-sm">
-                            Edit
+                        {canEditRound(round.userId) && (
+                          <Link href={`/edit-round?id=${round.id}`} className="inline-block">
+                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs md:text-sm">
+                              Edit
+                            </button>
+                          </Link>
+                        )}
+                        {canEditRound(round.userId) && (
+                          <button
+                            onClick={() => handleDelete(round.id)}
+                            className="text-red-600 hover:text-red-800 font-semibold text-xs md:text-sm"
+                          >
+                            Delete
                           </button>
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(round.id)}
-                          className="text-red-600 hover:text-red-800 font-semibold text-xs md:text-sm"
-                        >
-                          Delete
-                        </button>
+                        )}
                       </div>
                     </td>
                   ) : (

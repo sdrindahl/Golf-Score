@@ -83,7 +83,7 @@ export default function Home() {
           </div>
         </div>
 
-        <ScoreHistory rounds={rounds} onDelete={handleDeleteRound} />
+        <ScoreHistory rounds={rounds} onDelete={handleDeleteRound} userId={currentUser?.id} />
       </div>
 
       <div>

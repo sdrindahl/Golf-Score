@@ -4,11 +4,13 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
+import { useAuth } from '@/lib/useAuth'
 
 function EditRoundContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const roundId = searchParams.get('id')
+  const auth = useAuth()
 
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
@@ -17,16 +19,32 @@ function EditRoundContent() {
   const [notes, setNotes] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [authorized, setAuthorized] = useState(false)
 
   useEffect(() => {
     if (!roundId) return
 
+    // Get current user to check authorization
+    const currentUser = auth.getCurrentUser()
+    
     const savedRounds = localStorage.getItem('golfRounds')
     if (savedRounds) {
       const rounds = JSON.parse(savedRounds)
       const foundRound = rounds.find((r: Round) => r.id === roundId)
       
       if (foundRound) {
+        // Check if user is authorized to edit this round
+        // User can edit if they own the round or are an admin
+        const isOwner = currentUser && foundRound.userId === currentUser.id
+        const isAdmin = currentUser?.is_admin
+        
+        if (!isOwner && !isAdmin) {
+          setAuthorized(false)
+          setLoading(false)
+          return
+        }
+
+        setAuthorized(true)
         setRound(foundRound)
         setScores(foundRound.scores)
         setDate(foundRound.date)
@@ -88,6 +106,20 @@ function EditRoundContent() {
       <div className="max-w-2xl mx-auto py-6">
         <div className="card text-center">
           <p className="text-gray-500">Loading round...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!authorized) {
+    return (
+      <div className="max-w-2xl mx-auto py-6">
+        <div className="card text-center">
+          <p className="text-red-600 text-lg font-semibold">❌ Access Denied</p>
+          <p className="text-gray-600 mt-2">You can only edit your own rounds. Only admins can edit other users' rounds.</p>
+          <Link href="/" className="inline-block mt-4">
+            <button className="btn-primary">Back to Dashboard</button>
+          </Link>
         </div>
       </div>
     )

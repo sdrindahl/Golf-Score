@@ -152,7 +152,7 @@ function PlayerProfileContent() {
         </div>
 
         {rounds.length > 0 ? (
-          <ScoreHistory rounds={rounds} onDelete={() => {}} readOnly={!isOwnProfile} />
+          <ScoreHistory rounds={rounds} onDelete={() => {}} readOnly={!isOwnProfile} userId={player?.id} />
         ) : (
           <div className="card text-center py-12">
             <p className="text-gray-500 text-lg">No rounds recorded yet</p>
