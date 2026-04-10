@@ -104,7 +104,9 @@ export default function Players() {
 
     setDeleteLoading(true)
     try {
+      console.log(`🗑️ Admin deleting user: ${userId}`)
       await auth.deleteUserByAdmin(currentUser.id, userId)
+      console.log(`✅ User deleted successfully from Supabase`)
       
       // Remove from local state
       setPlayers(players.filter(p => p.id !== userId))
@@ -112,10 +114,12 @@ export default function Players() {
       alert('User deleted successfully')
       
       // Refresh the players list to ensure sync with Supabase
+      console.log('🔄 Refreshing page to sync with Supabase...')
       setTimeout(() => {
         window.location.reload()
-      }, 500)
+      }, 1000)
     } catch (error: any) {
+      console.error('❌ Error deleting user:', error)
       alert(`Error: ${error.message}`)
     } finally {
       setDeleteLoading(false)

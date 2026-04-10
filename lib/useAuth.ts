@@ -266,6 +266,8 @@ export function useAuth() {
       // Delete from Supabase
       if (isSupabaseActive() && supabase) {
         try {
+          console.log(`🗑️ Deleting user ${userIdToDelete} from Supabase...`)
+          
           // Delete all rounds for this user
           const { error: roundsError } = await supabase
             .from('rounds')
@@ -273,6 +275,7 @@ export function useAuth() {
             .eq('user_id', userIdToDelete)
 
           if (roundsError) throw roundsError
+          console.log(`✅ Deleted rounds for user ${userIdToDelete}`)
 
           // Delete user
           const { error: userError } = await supabase
@@ -281,12 +284,13 @@ export function useAuth() {
             .eq('id', userIdToDelete)
 
           if (userError) throw userError
-
-          console.log(`Admin deleted user: ${userIdToDelete}`)
+          console.log(`✅ Deleted user ${userIdToDelete} from Supabase`)
         } catch (error) {
-          console.error('Error deleting user from Supabase:', error)
+          console.error(`❌ Error deleting user from Supabase:`, error)
           throw error
         }
+      } else {
+        console.warn('⚠️ Supabase not configured, only deleted from localStorage')
       }
 
       // Update users in localStorage
