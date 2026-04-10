@@ -30,7 +30,7 @@ export default function NewRound() {
     if (saved) {
       const course = JSON.parse(saved)
       setSelectedCourse(course)
-      setScores(new Array(course.holeCount).fill(0))
+      setScores(new Array(course.holes.length).fill(0))
       localStorage.removeItem('selectedCourse')
     }
   }, [auth])
@@ -42,7 +42,7 @@ export default function NewRound() {
   }
 
   const handleNextHole = () => {
-    if (currentHoleIndex < (selectedCourse?.holeCount || 0) - 1) {
+    if (currentHoleIndex < (selectedCourse?.holes.length || 0) - 1) {
       setCurrentHoleIndex(currentHoleIndex + 1)
     }
   }
@@ -184,8 +184,8 @@ export default function NewRound() {
             {/* Progress indicator */}
             <div className="mb-4 p-3 bg-blue-100 rounded-lg">
               <p className="font-semibold text-blue-900">
-                Progress: Hole {currentHoleIndex + 1} of {selectedCourse.holeCount}
-                <span className="ml-2 text-sm font-normal">({scores.filter(s => s > 0).length}/{selectedCourse.holeCount} completed)</span>
+                Progress: Hole {currentHoleIndex + 1} of {selectedCourse.holes.length}
+                <span className="ml-2 text-sm font-normal">({scores.filter(s => s > 0).length}/{selectedCourse.holes.length} completed)</span>
               </p>
             </div>
 
@@ -271,7 +271,7 @@ export default function NewRound() {
                         ← Previous Hole
                       </button>
                     )}
-                    {scores[currentHoleIndex] > 0 && currentHoleIndex < selectedCourse.holeCount - 1 && (
+                    {scores[currentHoleIndex] > 0 && currentHoleIndex < selectedCourse.holes.length - 1 && (
                       <button
                         type="button"
                         onClick={handleNextHole}
@@ -280,7 +280,7 @@ export default function NewRound() {
                         Next Hole →
                       </button>
                     )}
-                    {scores[currentHoleIndex] > 0 && currentHoleIndex === selectedCourse.holeCount - 1 && (
+                    {scores[currentHoleIndex] > 0 && currentHoleIndex === selectedCourse.holes.length - 1 && (
                       <button
                         type="submit"
                         className="btn-primary flex-1"
