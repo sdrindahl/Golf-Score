@@ -76,6 +76,11 @@ export default function Players() {
       setPlayers(players.filter(p => p.id !== userId))
       setDeleteModal(null)
       alert('User deleted successfully')
+      
+      // Refresh the players list to ensure sync with Supabase
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
     } catch (error: any) {
       alert(`Error: ${error.message}`)
     } finally {
