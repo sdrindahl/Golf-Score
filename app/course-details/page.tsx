@@ -245,94 +245,99 @@ function CourseDetailsContent() {
             </div>
           </div>
         ) : (
-          // View Only Table
+          // View Only Table - Separated Front 9 and Back 9
           <>
-            <div className="overflow-x-auto mb-6">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="text-center p-3">Hole</th>
-                    {course.holes.map((hole) => (
-                      <th key={hole.holeNumber} className="text-center p-2 text-sm">
-                        {hole.holeNumber}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b">
-                    <td className="font-bold p-3 text-center">Yds</td>
-                    {course.holes.map((hole) => (
-                      <td key={`yds-${hole.holeNumber}`} className="text-center text-sm p-2">
-                        {hole.yardage || '—'}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="border-b">
-                    <td className="font-bold p-3 text-center">Par</td>
-                    {course.holes.map((hole) => (
-                      <td key={`par-${hole.holeNumber}`} className="text-center font-bold p-2 text-sm">
-                        {hole.par}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr>
-                    <td className="font-bold p-3 text-center">HCP</td>
-                    {course.holes.map((hole) => (
-                      <td key={`hcp-${hole.holeNumber}`} className="text-center text-sm p-2">
-                        {hole.handicap}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Score Card Summary */}
-            <div className="pt-6 border-t">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-bold mb-3">Front 9</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Total Par:</span>
-                      <span className="font-bold">{course.holes.slice(0, 9).reduce((sum, h) => sum + h.par, 0)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Yardage:</span>
-                      <span className="font-bold">
-                        {course.holes.slice(0, 9).reduce((sum, h) => sum + (h.yardage || 0), 0)} yards
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Holes:</span>
-                      <span className="font-bold">9</span>
-                    </div>
-                  </div>
-                </div>
-                {course.holeCount === 18 && (
-                  <div>
-                    <h3 className="font-bold mb-3">Back 9</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>Total Par:</span>
-                        <span className="font-bold">{course.holes.slice(9, 18).reduce((sum, h) => sum + h.par, 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Yardage:</span>
-                        <span className="font-bold">
-                          {course.holes.slice(9, 18).reduce((sum, h) => sum + (h.yardage || 0), 0)} yards
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Holes:</span>
-                        <span className="font-bold">9</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            {/* Front 9 Table */}
+            <div className="mb-8">
+              <h3 className="text-xl font-bold mb-4">Front 9</h3>
+              <div className="overflow-x-auto mb-6">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-center p-3">Hole</th>
+                      {course.holes.slice(0, 9).map((hole) => (
+                        <th key={hole.holeNumber} className="text-center p-2 text-sm">
+                          {hole.holeNumber}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="font-bold p-3 text-center">Yds</td>
+                      {course.holes.slice(0, 9).map((hole) => (
+                        <td key={`yds-${hole.holeNumber}`} className="text-center text-sm p-2">
+                          {hole.yardage || '—'}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr className="border-b">
+                      <td className="font-bold p-3 text-center">Par</td>
+                      {course.holes.slice(0, 9).map((hole) => (
+                        <td key={`par-${hole.holeNumber}`} className="text-center font-bold p-2 text-sm">
+                          {hole.par}
+                        </td>
+                      ))}
+                    </tr>
+                    <tr>
+                      <td className="font-bold p-3 text-center">HCP</td>
+                      {course.holes.slice(0, 9).map((hole) => (
+                        <td key={`hcp-${hole.holeNumber}`} className="text-center text-sm p-2">
+                          {hole.handicap}
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
+
+            {/* Back 9 Table */}
+            {course.holes.length > 9 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold mb-4">Back 9</h3>
+                <div className="overflow-x-auto mb-6">
+                  <table className="w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="text-center p-3">Hole</th>
+                        {course.holes.slice(9, 18).map((hole) => (
+                          <th key={hole.holeNumber} className="text-center p-2 text-sm">
+                            {hole.holeNumber}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="font-bold p-3 text-center">Yds</td>
+                        {course.holes.slice(9, 18).map((hole) => (
+                          <td key={`yds-${hole.holeNumber}`} className="text-center text-sm p-2">
+                            {hole.yardage || '—'}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr className="border-b">
+                        <td className="font-bold p-3 text-center">Par</td>
+                        {course.holes.slice(9, 18).map((hole) => (
+                          <td key={`par-${hole.holeNumber}`} className="text-center font-bold p-2 text-sm">
+                            {hole.par}
+                          </td>
+                        ))}
+                      </tr>
+                      <tr>
+                        <td className="font-bold p-3 text-center">HCP</td>
+                        {course.holes.slice(9, 18).map((hole) => (
+                          <td key={`hcp-${hole.holeNumber}`} className="text-center text-sm p-2">
+                            {hole.handicap}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
