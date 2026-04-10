@@ -110,7 +110,14 @@ export default function Players() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {players.map(player => (
+          {players
+            .filter(player => {
+              // Show all players if current user is admin
+              if (currentUser?.is_admin) return true
+              // Regular users don't see admin users
+              return !player.is_admin
+            })
+            .map(player => (
             <div key={player.id} className="relative">
               <Link href={`/player?id=${player.id}`}>
                 <div className="card hover:shadow-lg cursor-pointer transition transform hover:scale-105">
