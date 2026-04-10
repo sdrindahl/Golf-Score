@@ -3,12 +3,19 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Course } from '@/types'
+import { useAuth } from '@/lib/useAuth'
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const auth = useAuth()
 
   useEffect(() => {
+    // Get current user
+    const user = auth.getCurrentUser()
+    setCurrentUser(user)
+
     const savedCourses = localStorage.getItem('golfCourses')
     if (savedCourses) {
       setCourses(JSON.parse(savedCourses))
@@ -43,10 +50,12 @@ export default function ManageCourses() {
     <div className="max-w-4xl mx-auto py-6">
       <div className="card mb-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">My Courses</h2>
-          <Link href="/add-course">
-            <button className="btn-primary">➕ Add Course</button>
-          </Link>
+          <h2 className="text-2xl font-bold">Select Course</h2>
+          {currentUser?.is_admin && (
+            <Link href="/add-course">
+              <button className="btn-primary">➕ Add Course</button>
+            </Link>
+          )}
         </div>
 
         {courses.length === 0 ? (
@@ -71,15 +80,17 @@ export default function ManageCourses() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          handleDelete(course.id)
-                        }}
-                        className="btn-danger"
-                      >
-                        Delete
-                      </button>
+                      {currentUser?.is_admin && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            handleDelete(course.id)
+                          }}
+                          className="btn-danger"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
