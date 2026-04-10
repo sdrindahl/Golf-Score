@@ -209,26 +209,82 @@ function PlayerProfileContent() {
       {rounds.length > 0 && (
         <div className="card mb-6">
           <h2 className="text-xl font-bold mb-4">Statistics</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs md:text-sm">
-              <tbody>
-                <tr className="border-b">
-                  <td className="p-2 md:p-3 text-gray-600 font-semibold">Best Score</td>
-                  <td className="p-2 md:p-3 text-right font-bold text-green-600">{Math.min(...rounds.map(r => r.totalScore))}</td>
-                </tr>
-                <tr className="border-b">
-                  <td className="p-2 md:p-3 text-gray-600 font-semibold">Worst Score</td>
-                  <td className="p-2 md:p-3 text-right font-bold text-red-600">{Math.max(...rounds.map(r => r.totalScore))}</td>
-                </tr>
-                <tr>
-                  <td className="p-2 md:p-3 text-gray-600 font-semibold">Average Score</td>
-                  <td className="p-2 md:p-3 text-right font-bold text-blue-600">
-                    {(rounds.reduce((sum, r) => sum + r.totalScore, 0) / rounds.length).toFixed(1)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          
+          {/* 18-Hole Statistics */}
+          {(() => {
+            const rounds18 = rounds.filter(r => {
+              const course = JSON.parse(localStorage.getItem('golfCourses') || '[]').find((c: any) => c.id === r.courseId)
+              return course && course.holes.length === 18
+            })
+            
+            if (rounds18.length === 0) return null
+            
+            const best18 = Math.min(...rounds18.map(r => r.totalScore))
+            const worst18 = Math.max(...rounds18.map(r => r.totalScore))
+            const avg18 = (rounds18.reduce((sum, r) => sum + r.totalScore, 0) / rounds18.length).toFixed(1)
+            
+            return (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">18-Hole Rounds ({rounds18.length})</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs md:text-sm">
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="p-2 md:p-3 text-gray-600 font-semibold">Best Score</td>
+                        <td className="p-2 md:p-3 text-right font-bold text-green-600">{best18}</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="p-2 md:p-3 text-gray-600 font-semibold">Worst Score</td>
+                        <td className="p-2 md:p-3 text-right font-bold text-red-600">{worst18}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 md:p-3 text-gray-600 font-semibold">Average Score</td>
+                        <td className="p-2 md:p-3 text-right font-bold text-blue-600">{avg18}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })()}
+          
+          {/* 9-Hole Statistics */}
+          {(() => {
+            const rounds9 = rounds.filter(r => {
+              const course = JSON.parse(localStorage.getItem('golfCourses') || '[]').find((c: any) => c.id === r.courseId)
+              return course && course.holes.length === 9
+            })
+            
+            if (rounds9.length === 0) return null
+            
+            const best9 = Math.min(...rounds9.map(r => r.totalScore))
+            const worst9 = Math.max(...rounds9.map(r => r.totalScore))
+            const avg9 = (rounds9.reduce((sum, r) => sum + r.totalScore, 0) / rounds9.length).toFixed(1)
+            
+            return (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">9-Hole Rounds ({rounds9.length})</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs md:text-sm">
+                    <tbody>
+                      <tr className="border-b">
+                        <td className="p-2 md:p-3 text-gray-600 font-semibold">Best Score</td>
+                        <td className="p-2 md:p-3 text-right font-bold text-green-600">{best9}</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="p-2 md:p-3 text-gray-600 font-semibold">Worst Score</td>
+                        <td className="p-2 md:p-3 text-right font-bold text-red-600">{worst9}</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 md:p-3 text-gray-600 font-semibold">Average Score</td>
+                        <td className="p-2 md:p-3 text-right font-bold text-blue-600">{avg9}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })()}
         </div>
       )}
 
