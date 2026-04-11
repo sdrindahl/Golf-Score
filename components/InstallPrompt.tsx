@@ -24,6 +24,7 @@ export default function InstallPrompt() {
       e.preventDefault()
       setInstallPrompt(e)
       setShowPrompt(true)
+      console.log('beforeinstallprompt event fired')
     }
 
     // Listen for successful installation
@@ -31,6 +32,7 @@ export default function InstallPrompt() {
       setIsInstalled(true)
       setShowPrompt(false)
       setInstallPrompt(null)
+      console.log('App installed successfully')
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
@@ -43,16 +45,24 @@ export default function InstallPrompt() {
   }, [])
 
   const handleInstall = async () => {
-    if (!installPrompt) return
-
-    installPrompt.prompt()
-    const { outcome } = await installPrompt.userChoice
-    
-    if (outcome === 'accepted') {
-      setIsInstalled(true)
-      setShowPrompt(false)
+    if (!installPrompt) {
+      console.log('No install prompt available')
+      return
     }
-    setInstallPrompt(null)
+
+    try {
+      installPrompt.prompt()
+      const { outcome } = await installPrompt.userChoice
+      console.log('User choice:', outcome)
+      
+      if (outcome === 'accepted') {
+        setIsInstalled(true)
+        setShowPrompt(false)
+      }
+      setInstallPrompt(null)
+    } catch (error) {
+      console.error('Install error:', error)
+    }
   }
 
   // Don't show anything if app is already installed

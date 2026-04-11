@@ -40,6 +40,16 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Don't cache manifest or service worker updates
+  if (event.request.url.includes('manifest.json') || event.request.url.includes('sw.js')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/')
+      })
+    )
+    return
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -74,3 +84,4 @@ self.addEventListener('fetch', (event) => {
       })
   )
 })
+
