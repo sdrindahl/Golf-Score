@@ -13,15 +13,54 @@ export default function ManageCourses() {
   const auth = useAuth()
 
   useEffect(() => {
-    // Get current user
-    const user = auth.getCurrentUser()
-    setCurrentUser(user)
+    const loadCourses = async () => {
+      // Get current user
+      const user = auth.getCurrentUser()
+      setCurrentUser(user)
 
-    const savedCourses = localStorage.getItem('golfCourses')
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses))
+      // Sync latest data from Supabase first
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          console.log('📥 Fetching courses from Supabase...')
+          const { data: supabaseCourses, error } = await supabase
+            .from('courses')
+            .select('*')
+
+          if (error) {
+            console.error('Error fetching courses from Supabase:', error)
+          } else if (supabaseCourses && supabaseCourses.length > 0) {
+            console.log('✅ Got courses from Supabase:', supabaseCourses.length)
+            // Convert snake_case to camelCase if needed
+            const convertedCourses = supabaseCourses.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              location: c.location,
+              state: c.state,
+              holeCount: c.hole_count || c.holeCount,
+              par: c.par,
+              holes: c.holes,
+              courseRating: c.course_rating || c.courseRating,
+              slopeRating: c.slope_rating || c.slopeRating,
+            }))
+            localStorage.setItem('golfCourses', JSON.stringify(convertedCourses))
+            setCourses(convertedCourses)
+            setLoading(false)
+            return
+          }
+        } catch (error) {
+          console.error('Error syncing courses:', error)
+        }
+      }
+
+      // Fallback to localStorage if Supabase is not available
+      const savedCourses = localStorage.getItem('golfCourses')
+      if (savedCourses) {
+        setCourses(JSON.parse(savedCourses))
+      }
+      setLoading(false)
     }
-    setLoading(false)
+
+    loadCourses()
   }, [])
 
   const handleDelete = async (courseId: string) => {
