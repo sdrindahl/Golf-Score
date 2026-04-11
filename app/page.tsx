@@ -123,7 +123,7 @@ export default function Home() {
           <p className="text-gray-600 mb-6">
             Track your rounds, calculate your handicap, and improve your game.
           </p>
-          <div className="flex gap-4 flex-wrap">
+          <div className="hidden md:flex gap-4 flex-wrap">
             <Link href="/add-course">
               <button className="btn-primary">
                 ➕ Add Course
