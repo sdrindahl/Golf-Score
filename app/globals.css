@@ -76,7 +76,7 @@ body {
 }
 
 .input-field {
-  @apply w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 text-sm;
+  @apply w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 text-sm font-semibold;
   background-color: var(--bg-secondary);
   border-color: var(--border-color);
   color: var(--text-primary);

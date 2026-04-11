@@ -237,16 +237,16 @@ function EditCourseContent() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {holes.map((hole) => (
-                <div key={hole.holeNumber} className="border p-4 rounded">
-                  <h4 className="font-bold mb-3">Hole {hole.holeNumber}</h4>
+                <div key={hole.holeNumber} className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
+                  <h4 className="font-bold mb-4 text-lg">Hole {hole.holeNumber}</h4>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-semibold">Par</label>
+                      <label className="text-sm font-bold block mb-2">Par</label>
                       <select
                         value={hole.par}
                         onChange={(e) => handleHoleChange(hole.holeNumber, 'par', parseInt(e.target.value))}
-                        className="input-field mt-1"
+                        className="input-field mt-1 font-semibold"
                       >
                         <option value={3}>Par 3</option>
                         <option value={4}>Par 4</option>
@@ -255,14 +255,14 @@ function EditCourseContent() {
                     </div>
 
                     <div>
-                      <label className="text-sm font-semibold">Handicap Index</label>
+                      <label className="text-sm font-bold block mb-2">Handicap Index</label>
                       <input
                         type="number"
                         value={hole.handicap}
                         onChange={(e) => handleHoleChange(hole.holeNumber, 'handicap', parseInt(e.target.value))}
                         min="1"
                         max={holeCount}
-                        className="input-field mt-1"
+                        className="input-field mt-1 font-semibold"
                       />
                     </div>
                   </div>
