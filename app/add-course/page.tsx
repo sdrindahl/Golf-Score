@@ -29,6 +29,10 @@ export default function AddCourse() {
   // Initialize holes array when holeCount changes
   const handleHoleCountChange = (count: number) => {
     setHoleCount(count)
+    // Set appropriate default course rating based on hole count
+    const defaultRating = count === 9 ? 36.0 : 72.0
+    setCourseRating(defaultRating)
+    
     const newHoles = Array.from({ length: count }, (_, i) => ({
       holeNumber: i + 1,
       par: 4,

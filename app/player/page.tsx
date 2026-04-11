@@ -100,10 +100,8 @@ function PlayerProfileContent() {
     const differentials = rounds
       .map(round => {
         const course = courses.find((c: any) => c.id === round.courseId)
-        console.log(`Round ${round.id}: looking for course ${round.courseId}`, course)
         
         if (!course) {
-          console.log(`  ❌ Course not found`)
           return null
         }
         
@@ -113,18 +111,19 @@ function PlayerProfileContent() {
         let courseRating = course.courseRating
         let slopeRating = course.slopeRating
         
+        // If courseRating is set to default 18-hole rating (72) but this is a 9-hole course, adjust it
+        if (is9Hole && courseRating === 72) {
+          courseRating = 36
+        }
+        
         if (!courseRating && course.holes) {
           // Calculate approximate rating from hole par values
           const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
           courseRating = totalPar
-          // Note: This is using par as rating, which is not ideal
-          console.log(`  ⚠️  Using par (${totalPar}) as course rating (should be ~71-73 for 18 holes, ~35-36 for 9 holes)`)
         }
         
         if (!courseRating) courseRating = is9Hole ? 36 : 72
         if (!slopeRating) slopeRating = 113
-        
-        console.log(`  Holes: ${is9Hole ? '9-hole' : '18-hole'}, Rating: ${courseRating}, Slope: ${slopeRating}`)
         
         if (!slopeRating) {
           return null
@@ -138,11 +137,9 @@ function PlayerProfileContent() {
           // Double 9-hole scores and ratings to get 18-hole equivalents
           adjustedScore = round.totalScore * 2
           adjustedRating = courseRating * 2
-          console.log(`  Converting 9-hole to 18-hole equivalent: ${round.totalScore} → ${adjustedScore}, rating ${courseRating} → ${adjustedRating}`)
         }
         
         const differential = (adjustedScore - adjustedRating) * 113 / slopeRating
-        console.log(`  Differential: (${adjustedScore} - ${adjustedRating}) * 113 / ${slopeRating} = ${differential.toFixed(2)}`)
         return differential
       })
       .filter((d: any) => d !== null) as number[]

@@ -56,6 +56,11 @@ export default function Home() {
         let courseRating = course.courseRating
         let slopeRating = course.slopeRating
         
+        // If courseRating is set to default 18-hole rating (72) but this is a 9-hole course, adjust it
+        if (is9Hole && courseRating === 72) {
+          courseRating = 36
+        }
+        
         if (!courseRating && course.holes) {
           // Calculate approximate rating from hole par values
           const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
