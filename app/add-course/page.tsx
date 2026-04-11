@@ -15,7 +15,6 @@ export default function AddCourse() {
   const [courseRating, setCourseRating] = useState(72.0)
   const [slopeRating, setSlopeRating] = useState(113)
   const [holes, setHoles] = useState<any[]>([])
-  const [submitted, setSubmitted] = useState(false)
 
   // Initialize holes array on component mount
   useEffect(() => {
@@ -111,29 +110,8 @@ export default function AddCourse() {
       }
     }
 
-    setSubmitted(true)
-  }
-
-  if (submitted) {
-    return (
-      <div className="max-w-2xl mx-auto py-6">
-        <div className="card text-center">
-          <h2 className="text-3xl font-bold mb-4 text-green-600">✅ Course Added!</h2>
-          <p className="text-lg mb-6">{courseName} - {location}, {state}</p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/new-round">
-              <button className="btn-primary">Record a Round</button>
-            </Link>
-            <Link href="/manage-courses">
-              <button className="btn-primary">View All Courses</button>
-            </Link>
-            <Link href="/">
-              <button className="btn-primary">Back to Dashboard</button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
+    // Redirect to manage-courses page
+    router.push('/manage-courses')
   }
 
   return (
@@ -279,7 +257,7 @@ export default function AddCourse() {
         {/* Action Buttons */}
         <div className="flex gap-4">
           <button type="submit" className="btn-primary flex-1">
-            ✅ Add Course
+            💾 Save Course
           </button>
           <Link href="/" className="flex-1">
             <button type="button" className="btn-primary w-full">
