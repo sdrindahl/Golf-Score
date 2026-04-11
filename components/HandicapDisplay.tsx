@@ -17,7 +17,7 @@ export default function HandicapDisplay({ handicap, totalRounds }: HandicapDispl
           </div>
         </div>
       </div>
-      <div className="text-2xl md:text-3xl font-bold text-green-700 mb-2">
+      <div className="text-xl font-bold text-green-700 mb-2">
         {handicap.toFixed(1)}
       </div>
       <p className="text-xs text-gray-600">

@@ -146,9 +146,9 @@ export default function Home() {
         <HandicapDisplay handicap={handicap} totalRounds={rounds.length} />
         
         <div className="card mt-6">
-          <h3 className="text-lg font-bold mb-4">Best Rounds</h3>
+          <h3 className="text-lg font-bold mb-3">Best Rounds</h3>
           {rounds.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Best 18-Hole Round */}
               {(() => {
                 const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
@@ -164,11 +164,11 @@ export default function Home() {
                 )
                 
                 return (
-                  <div className="border-b pb-3">
-                    <p className="text-xs font-semibold text-gray-600 mb-1">Best 18-Hole Round</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">{best18.courseName}</span>
-                      <span className="text-lg font-bold text-green-600">{best18.totalScore}</span>
+                  <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
+                    <span className="text-gray-700 font-medium">18-Hole:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600">{best18.courseName}</span>
+                      <span className="font-bold text-green-600">{best18.totalScore}</span>
                     </div>
                   </div>
                 )
@@ -189,11 +189,11 @@ export default function Home() {
                 )
                 
                 return (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-1">Best 9-Hole Round</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">{best9.courseName}</span>
-                      <span className="text-lg font-bold text-green-600">{best9.totalScore}</span>
+                  <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
+                    <span className="text-gray-700 font-medium">9-Hole:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600">{best9.courseName}</span>
+                      <span className="font-bold text-green-600">{best9.totalScore}</span>
                     </div>
                   </div>
                 )
