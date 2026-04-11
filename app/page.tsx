@@ -119,7 +119,7 @@ export default function Home() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
       <div className="md:col-span-2">
         <div className="card mb-6">
-          <h2 className="text-2xl font-bold mb-4">Golf Score Tracker</h2>
+          <h2 className="text-2xl font-bold mb-4 text-center">Golf Score Tracker</h2>
           <div className="hidden md:flex gap-4 flex-wrap">
             <Link href="/add-course">
               <button className="btn-primary">
