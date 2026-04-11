@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { deleteRoundFromSupabase } from '@/lib/dataSync'
 
 function EditRoundContent() {
   const router = useRouter()
@@ -68,6 +69,26 @@ function EditRoundContent() {
     const newScores = [...scores]
     newScores[holeIndex] = score
     setScores(newScores)
+  }
+
+  const handleDelete = () => {
+    if (confirm('Are you sure you want to delete this round? This action cannot be undone.')) {
+      // Delete from localStorage
+      const savedRounds = localStorage.getItem('golfRounds')
+      if (savedRounds) {
+        const rounds = JSON.parse(savedRounds)
+        const updated = rounds.filter((r: Round) => r.id !== roundId)
+        localStorage.setItem('golfRounds', JSON.stringify(updated))
+      }
+      
+      // Delete from Supabase
+      deleteRoundFromSupabase(roundId).catch(error => {
+        console.log('Could not delete from Supabase:', error)
+      })
+      
+      // Redirect back home
+      router.push('/')
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -226,11 +247,20 @@ function EditRoundContent() {
             <button type="submit" className="btn-primary flex-1">
               💾 Save Changes
             </button>
-            <Link href="/" className="flex-1">
-              <button type="button" className="btn-secondary w-full">
-                Cancel
-              </button>
-            </Link>
+            <button 
+              type="button"
+              onClick={handleDelete}
+              className="btn-danger flex-1"
+            >
+              🗑️ Delete Round
+            </button>
+            <button 
+              type="button"
+              onClick={() => router.push('/')}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </div>
