@@ -151,63 +151,63 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
-      <div className="card mb-6">
-        <h1 className="text-2xl font-bold mb-2">⚙️ Settings</h1>
-        <p className="text-gray-600 text-sm">Manage your account settings</p>
+    <div className="max-w-xl mx-auto py-4">
+      <div className="card mb-4">
+        <h1 className="text-xl font-bold mb-1">⚙️ Settings</h1>
+        <p className="text-gray-600 text-xs">Manage your account</p>
       </div>
 
       {/* Update Name Card */}
-      <div className="card mb-6">
-        <h2 className="text-lg font-bold mb-4">Update Player Name</h2>
+      <div className="card mb-4 p-3">
+        <h2 className="text-base font-bold mb-3">Update Name</h2>
         
-        <form onSubmit={handleUpdateName} className="space-y-3">
+        <form onSubmit={handleUpdateName} className="space-y-2">
           <div>
-            <label className="label">Current Name</label>
+            <label className="label text-xs">Current Name</label>
             <input
               type="text"
               value={currentUser?.name || ''}
               disabled
-              className="input-field bg-gray-100 cursor-not-allowed"
+              className="input-field bg-gray-100 cursor-not-allowed py-1 text-sm"
             />
           </div>
 
           <div>
-            <label className="label">New Name</label>
+            <label className="label text-xs">New Name</label>
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Enter new name"
-              className="input-field"
+              className="input-field py-1 text-sm"
             />
           </div>
 
           {nameError && (
-            <div className="bg-red-100 text-red-700 p-3 rounded text-sm">
+            <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
               {nameError}
             </div>
           )}
 
           {nameSuccess && (
-            <div className="bg-green-100 text-green-700 p-3 rounded text-sm">
+            <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
               ✅ {nameSuccess}
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full">
+          <button type="submit" className="btn-primary w-full py-1 text-sm">
             ✏️ Update Name
           </button>
         </form>
       </div>
 
       {/* Change Password Card */}
-      <div className="card mb-6">
-        <h2 className="text-lg font-bold mb-4">Change Password</h2>
+      <div className="card mb-4 p-3">
+        <h2 className="text-base font-bold mb-3">Change Password</h2>
         
-        <form onSubmit={handleChangePassword} className="space-y-3">
+        <form onSubmit={handleChangePassword} className="space-y-2">
           <div>
-            <label className="label">Current Password (4 digits)</label>
+            <label className="label text-xs">Current Password (4 digits)</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -215,12 +215,12 @@ export default function Settings() {
                 onChange={(e) => setCurrentPassword(e.target.value.slice(0, 4))}
                 placeholder="0000"
                 maxLength={4}
-                className="input-field text-center text-2xl tracking-widest font-mono"
+                className="input-field text-center text-xl tracking-widest font-mono py-1"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-600 text-sm"
+                className="absolute right-3 top-2 text-gray-600 text-xs"
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -228,43 +228,43 @@ export default function Settings() {
           </div>
 
           <div>
-            <label className="label">New Password (4 digits)</label>
+            <label className="label text-xs">New Password (4 digits)</label>
             <input
               type={showPassword ? 'text' : 'password'}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value.slice(0, 4))}
               placeholder="0000"
               maxLength={4}
-              className="input-field text-center text-2xl tracking-widest font-mono"
+              className="input-field text-center text-xl tracking-widest font-mono py-1"
             />
-            <p className="text-xs text-gray-500 mt-1">Must be exactly 4 digits</p>
+            <p className="text-xs text-gray-500 mt-0.5">Must be exactly 4 digits</p>
           </div>
 
           <div>
-            <label className="label">Confirm New Password</label>
+            <label className="label text-xs">Confirm Password</label>
             <input
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value.slice(0, 4))}
               placeholder="0000"
               maxLength={4}
-              className="input-field text-center text-2xl tracking-widest font-mono"
+              className="input-field text-center text-xl tracking-widest font-mono py-1"
             />
           </div>
 
           {passwordError && (
-            <div className="bg-red-100 text-red-700 p-3 rounded text-sm">
+            <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
               {passwordError}
             </div>
           )}
 
           {passwordSuccess && (
-            <div className="bg-green-100 text-green-700 p-3 rounded text-sm">
+            <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
               ✅ {passwordSuccess}
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full">
+          <button type="submit" className="btn-primary w-full py-1 text-sm">
             🔒 Update Password
           </button>
         </form>
@@ -274,35 +274,35 @@ export default function Settings() {
 
       <button 
         onClick={handleLogout} 
-        className="btn-secondary w-full mt-6"
+        className="btn-secondary w-full mt-3 py-1 text-sm"
       >
         🚪 Logout
       </button>
 
       {/* Delete Account Card */}
-      <div className="card mt-6 border-2 border-red-200 bg-red-50">
-        <h2 className="text-lg font-bold mb-4 text-red-600">⚠️ Delete Account</h2>
+      <div className="card mt-3 p-3 border-2 border-red-200 bg-red-50">
+        <h2 className="text-base font-bold mb-2 text-red-600">⚠️ Delete Account</h2>
         
-        <p className="text-gray-600 text-sm mb-4">
-          This will permanently delete your account and all associated golf rounds. This action cannot be undone.
+        <p className="text-gray-600 text-xs mb-3">
+          Permanently delete your account and all golf rounds.
         </p>
         
         {deleteError && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+          <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-xs">
             {deleteError}
           </div>
         )}
 
         <button
           onClick={handleDeleteAccount}
-          className="btn-danger w-full"
+          className="btn-danger w-full py-1 text-sm"
         >
-          🗑️ Delete My Account
+          🗑️ Delete Account
         </button>
       </div>
 
       <Link href="/">
-        <button className="btn-secondary w-full mt-6">← Back to Home</button>
+        <button className="btn-secondary w-full mt-3 py-1 text-sm">← Back</button>
       </Link>
     </div>
   )

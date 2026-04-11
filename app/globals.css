@@ -70,7 +70,7 @@ body {
 }
 
 .input-field {
-  @apply w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2;
+  @apply w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 text-sm;
   background-color: var(--bg-secondary);
   border-color: var(--border-color);
   color: var(--text-primary);
