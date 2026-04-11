@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
@@ -23,11 +24,29 @@ export default function ManageCourses() {
     setLoading(false)
   }, [])
 
-  const handleDelete = (courseId: string) => {
+  const handleDelete = async (courseId: string) => {
     if (confirm('Are you sure you want to Delete This?')) {
       const updated = courses.filter(c => c.id !== courseId)
       setCourses(updated)
       localStorage.setItem('golfCourses', JSON.stringify(updated))
+
+      // Delete from Supabase if configured
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { error } = await supabase
+            .from('courses')
+            .delete()
+            .eq('id', courseId)
+
+          if (error) {
+            console.error('Error deleting course from Supabase:', error)
+          } else {
+            console.log('Course deleted from Supabase successfully')
+          }
+        } catch (error) {
+          console.error('Error deleting course from Supabase:', error)
+        }
+      }
     }
   }
 

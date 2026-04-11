@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export default function AddCourse() {
   const router = useRouter()
@@ -50,7 +51,7 @@ export default function AddCourse() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!courseName.trim() || !location.trim() || !state.trim()) {
@@ -80,6 +81,35 @@ export default function AddCourse() {
     const courses = savedCourses ? JSON.parse(savedCourses) : []
     courses.push(newCourse)
     localStorage.setItem('golfCourses', JSON.stringify(courses))
+
+    // Save to Supabase if configured
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('courses')
+          .insert([
+            {
+              id: newCourse.id,
+              name: newCourse.name,
+              location: newCourse.location,
+              state: newCourse.state,
+              hole_count: newCourse.holeCount,
+              par: newCourse.par,
+              holes: newCourse.holes,
+              course_rating: newCourse.courseRating,
+              slope_rating: newCourse.slopeRating,
+            },
+          ])
+
+        if (error) {
+          console.error('Error saving course to Supabase:', error)
+        } else {
+          console.log('Course saved to Supabase successfully')
+        }
+      } catch (error) {
+        console.error('Error saving course to Supabase:', error)
+      }
+    }
 
     setSubmitted(true)
   }
