@@ -153,59 +153,59 @@ export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto py-6">
       <div className="card mb-6">
-        <h1 className="text-3xl font-bold mb-2">⚙️ Settings</h1>
-        <p className="text-gray-600">Manage your account settings</p>
+        <h1 className="text-2xl font-bold mb-2">⚙️ Settings</h1>
+        <p className="text-gray-600 text-sm">Manage your account settings</p>
       </div>
 
-      <div className="card">
-        <h2 className="text-2xl font-bold mb-6">Account Information</h2>
-
-        <div className="mb-8 pb-8 border-b">
-          <h3 className="text-xl font-bold mb-4">Update Player Name</h3>
-          
-          <form onSubmit={handleUpdateName} className="space-y-4">
-            <div>
-              <label className="label">Current Name</label>
-              <input
-                type="text"
-                value={currentUser?.name || ''}
-                disabled
-                className="input-field bg-gray-100 cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="label">New Name</label>
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Enter new name"
-                className="input-field"
-              />
-            </div>
-
-            {nameError && (
-              <div className="bg-red-100 text-red-700 p-3 rounded">
-                {nameError}
-              </div>
-            )}
-
-            {nameSuccess && (
-              <div className="bg-green-100 text-green-700 p-3 rounded">
-                ✅ {nameSuccess}
-              </div>
-            )}
-
-            <button type="submit" className="btn-primary w-full">
-              ✏️ Update Name
-            </button>
-          </form>
-        </div>
-
-        <h3 className="text-xl font-bold mb-4">Change Password</h3>
+      {/* Update Name Card */}
+      <div className="card mb-6">
+        <h2 className="text-lg font-bold mb-4">Update Player Name</h2>
         
-        <form onSubmit={handleChangePassword} className="space-y-4">
+        <form onSubmit={handleUpdateName} className="space-y-3">
+          <div>
+            <label className="label">Current Name</label>
+            <input
+              type="text"
+              value={currentUser?.name || ''}
+              disabled
+              className="input-field bg-gray-100 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="label">New Name</label>
+            <input
+              type="text"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Enter new name"
+              className="input-field"
+            />
+          </div>
+
+          {nameError && (
+            <div className="bg-red-100 text-red-700 p-3 rounded text-sm">
+              {nameError}
+            </div>
+          )}
+
+          {nameSuccess && (
+            <div className="bg-green-100 text-green-700 p-3 rounded text-sm">
+              ✅ {nameSuccess}
+            </div>
+          )}
+
+          <button type="submit" className="btn-primary w-full">
+            ✏️ Update Name
+          </button>
+        </form>
+      </div>
+
+      {/* Change Password Card */}
+      <div className="card mb-6">
+        <h2 className="text-lg font-bold mb-4">Change Password</h2>
+        
+        <form onSubmit={handleChangePassword} className="space-y-3">
           <div>
             <label className="label">Current Password (4 digits)</label>
             <div className="relative">
@@ -253,18 +253,18 @@ export default function Settings() {
           </div>
 
           {passwordError && (
-            <div className="bg-red-100 text-red-700 p-3 rounded">
+            <div className="bg-red-100 text-red-700 p-3 rounded text-sm">
               {passwordError}
             </div>
           )}
 
           {passwordSuccess && (
-            <div className="bg-green-100 text-green-700 p-3 rounded">
+            <div className="bg-green-100 text-green-700 p-3 rounded text-sm">
               ✅ {passwordSuccess}
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full mt-6">
+          <button type="submit" className="btn-primary w-full">
             🔒 Update Password
           </button>
         </form>
@@ -279,28 +279,26 @@ export default function Settings() {
         🚪 Logout
       </button>
 
+      {/* Delete Account Card */}
       <div className="card mt-6 border-2 border-red-200 bg-red-50">
-        <h2 className="text-2xl font-bold mb-4 text-red-600">🗑️ Danger Zone</h2>
+        <h2 className="text-lg font-bold mb-4 text-red-600">⚠️ Delete Account</h2>
         
-        <div className="bg-white p-4 rounded mb-4">
-          <h3 className="text-lg font-bold mb-2">Delete Account</h3>
-          <p className="text-gray-600 text-sm mb-4">
-            This will permanently delete your account and all associated golf rounds. This action cannot be undone.
-          </p>
-          
-          {deleteError && (
-            <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-              {deleteError}
-            </div>
-          )}
+        <p className="text-gray-600 text-sm mb-4">
+          This will permanently delete your account and all associated golf rounds. This action cannot be undone.
+        </p>
+        
+        {deleteError && (
+          <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm">
+            {deleteError}
+          </div>
+        )}
 
-          <button
-            onClick={handleDeleteAccount}
-            className="btn-danger w-full"
-          >
-            ⚠️ Delete My Account
-          </button>
-        </div>
+        <button
+          onClick={handleDeleteAccount}
+          className="btn-danger w-full"
+        >
+          🗑️ Delete My Account
+        </button>
       </div>
 
       <Link href="/">
