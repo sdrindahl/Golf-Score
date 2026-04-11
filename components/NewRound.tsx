@@ -357,7 +357,12 @@ export default function NewRound() {
           <div className="flex gap-4">
             <button 
               type="button" 
-              onClick={() => router.push('/')}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('Cancel button clicked')
+                window.location.href = '/'
+              }}
               className="btn-secondary w-full"
             >
               Cancel
