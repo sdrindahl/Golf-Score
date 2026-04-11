@@ -185,21 +185,21 @@ function PlayerProfileContent() {
     <div className="max-w-4xl mx-auto py-6">
       {/* Header */}
       <div className="card mb-6">
-        <div className="flex items-start justify-between">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">{player.name}</h1>
+            <h1 className="text-lg md:text-xl font-bold">{player.name}</h1>
             {isOwnProfile && (
-              <p className="text-green-600 font-semibold text-xs md:text-sm mt-1">This is your profile</p>
+              <p className="text-green-600 font-semibold text-xs mt-1">Your profile</p>
             )}
           </div>
-          <div className="text-right space-y-3">
+          <div className="flex gap-6 text-right">
             <div>
-              <p className="text-xs md:text-sm text-gray-600">Handicap</p>
-              <p className="text-2xl md:text-3xl font-bold text-green-600">{handicap}</p>
+              <p className="text-xs text-gray-600">Handicap</p>
+              <p className="text-xl font-bold text-green-600">{handicap}</p>
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-600">Total Rounds</p>
-              <p className="text-2xl md:text-3xl font-bold">{rounds.length}</p>
+              <p className="text-xs text-gray-600">Rounds</p>
+              <p className="text-xl font-bold">{rounds.length}</p>
             </div>
           </div>
         </div>
@@ -208,7 +208,9 @@ function PlayerProfileContent() {
       {/* Statistics */}
       {rounds.length > 0 && (
         <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4">Best Rounds</h2>
+          <h2 className="text-lg font-bold mb-3">Best Rounds</h2>
+          
+          <div className="space-y-2">
           
           {/* Best 18-Hole Round */}
           {(() => {
@@ -225,11 +227,11 @@ function PlayerProfileContent() {
             )
             
             return (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold text-gray-600 mb-2">Best 18-Hole Round</h3>
-                <div className="flex justify-between items-center p-2 md:p-3 bg-green-50 rounded">
-                  <span className="text-sm text-gray-700">{best18.courseName}</span>
-                  <span className="text-lg font-bold text-green-600">{best18.totalScore}</span>
+              <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
+                <span className="text-gray-700 font-medium">18-Hole:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">{best18.courseName}</span>
+                  <span className="font-bold text-green-600">{best18.totalScore}</span>
                 </div>
               </div>
             )
@@ -250,15 +252,16 @@ function PlayerProfileContent() {
             )
             
             return (
-              <div>
-                <h3 className="text-sm font-semibold text-gray-600 mb-2">Best 9-Hole Round</h3>
-                <div className="flex justify-between items-center p-2 md:p-3 bg-green-50 rounded">
-                  <span className="text-sm text-gray-700">{best9.courseName}</span>
-                  <span className="text-lg font-bold text-green-600">{best9.totalScore}</span>
+              <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
+                <span className="text-gray-700 font-medium">9-Hole:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">{best9.courseName}</span>
+                  <span className="font-bold text-green-600">{best9.totalScore}</span>
                 </div>
               </div>
             )
           })()}
+          </div>
         </div>
       )}
 
