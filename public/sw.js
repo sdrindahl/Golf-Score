@@ -1,4 +1,4 @@
-const CACHE_NAME = 'golf-tracker-v1'
+const CACHE_NAME = 'golf-tracker-v2'
 const urlsToCache = [
   '/',
   '/offline.html',
@@ -24,6 +24,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName)
             return caches.delete(cacheName)
           }
         })
@@ -33,53 +34,85 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event
 self.addEventListener('fetch', (event) => {
+  const { request } = event
+  const url = new URL(request.url)
+
   // Skip non-GET requests
-  if (event.request.method !== 'GET') {
+  if (request.method !== 'GET') {
     return
   }
 
-  // Don't cache manifest or service worker updates
-  if (event.request.url.includes('manifest.json') || event.request.url.includes('sw.js')) {
+  // Don't cache manifest.json, sw.js, or API calls - always fetch fresh
+  if (url.pathname.includes('manifest.json') || 
+      url.pathname.includes('sw.js') ||
+      url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/')
+      fetch(request).catch(() => {
+        return caches.match('/') || new Response('Offline')
       })
     )
     return
   }
 
+  // HTML pages: Network-first (always try to get latest)
+  if (request.headers.get('accept')?.includes('text/html') || 
+      url.pathname === '/' || 
+      !url.pathname.includes('.')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Don't cache error responses
+          if (!response || response.status !== 200) {
+            return response
+          }
+          // Don't cache non-basic responses
+          if (response.type !== 'basic') {
+            return response
+          }
+          // Clone and cache the response
+          const responseToCache = response.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache)
+          })
+          return response
+        })
+        .catch(() => {
+          // Network failed, try cache
+          return caches.match(request) || caches.match('/')
+        })
+    )
+    return
+  }
+
+  // Assets (JS, CSS, images, fonts): Cache-first
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
         if (response) {
           return response
         }
 
-        return fetch(event.request)
+        return fetch(request)
           .then((response) => {
             // Don't cache non-successful responses
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response
             }
 
-            // Clone the response
+            // Clone and cache the response
             const responseToCache = response.clone()
-
-            // Cache successful responses
-            if (event.request.method === 'GET') {
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache)
-                })
-            }
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(request, responseToCache)
+              })
 
             return response
           })
           .catch(() => {
-            // Return offline page or cached response
-            return caches.match('/')
+            // Return offline fallback for assets
+            return caches.match('/') || new Response('Offline')
           })
       })
   )
