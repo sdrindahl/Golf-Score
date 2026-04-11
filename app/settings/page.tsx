@@ -319,27 +319,29 @@ export default function Settings() {
         🚪 Logout
       </button>
 
-      {/* Delete Account Card */}
-      <div className="card mt-3 p-3 border-2 border-red-200 bg-red-50">
-        <h2 className="text-base font-bold mb-2 text-red-600">⚠️ Delete Account</h2>
-        
-        <p className="text-gray-600 text-xs mb-3">
-          Permanently delete your account and all golf rounds.
-        </p>
-        
-        {deleteError && (
-          <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-xs">
-            {deleteError}
-          </div>
-        )}
+      {/* Delete Account Card - Admin Only */}
+      {currentUser?.is_admin && (
+        <div className="card mt-3 p-3 border-2 border-red-200 bg-red-50">
+          <h2 className="text-base font-bold mb-2 text-red-600">⚠️ Delete Account</h2>
+          
+          <p className="text-gray-600 text-xs mb-3">
+            Permanently delete an account and all golf rounds.
+          </p>
+          
+          {deleteError && (
+            <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-xs">
+              {deleteError}
+            </div>
+          )}
 
-        <button
-          onClick={handleDeleteAccount}
-          className="btn-danger w-full py-1 text-sm"
-        >
-          🗑️ Delete Account
-        </button>
-      </div>
+          <button
+            onClick={handleDeleteAccount}
+            className="btn-danger w-full py-1 text-sm"
+          >
+            🗑️ Delete Account
+          </button>
+        </div>
+      )}
 
       <Link href="/">
         <button className="btn-secondary w-full mt-3 py-1 text-sm">← Back</button>
