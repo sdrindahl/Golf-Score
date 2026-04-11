@@ -23,6 +23,8 @@ export default function Settings() {
   const [deleteError, setDeleteError] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [editingName, setEditingName] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
 
   useEffect(() => {
     const user = auth.getCurrentUser()
@@ -157,117 +159,159 @@ export default function Settings() {
         <p className="text-gray-600 text-xs">Manage your account</p>
       </div>
 
-      {/* Update Name Card */}
+      {/* Current Name Card */}
       <div className="card mb-4 p-3">
-        <h2 className="text-base font-bold mb-3">Update Name</h2>
-        
-        <form onSubmit={handleUpdateName} className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <label className="label text-xs">Current Name</label>
-            <input
-              type="text"
-              value={currentUser?.name || ''}
-              disabled
-              className="input-field bg-gray-100 cursor-not-allowed py-1 text-sm"
-            />
+            <p className="text-xs text-gray-600">Player Name</p>
+            <p className="text-base font-semibold">{currentUser?.name}</p>
           </div>
-
-          <div>
-            <label className="label text-xs">New Name</label>
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Enter new name"
-              className="input-field py-1 text-sm"
-            />
-          </div>
-
-          {nameError && (
-            <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
-              {nameError}
-            </div>
+          {!editingName && (
+            <button
+              onClick={() => {
+                setEditingName(true)
+                setNameError('')
+                setNameSuccess('')
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
+            >
+              Edit
+            </button>
           )}
+        </div>
 
-          {nameSuccess && (
-            <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
-              ✅ {nameSuccess}
+        {/* Edit Name Form */}
+        {editingName && (
+          <form onSubmit={handleUpdateName} className="mt-3 pt-3 border-t space-y-2">
+            <div>
+              <label className="label text-xs">New Name</label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter new name"
+                className="input-field py-1 text-sm"
+              />
             </div>
-          )}
 
-          <button type="submit" className="btn-primary w-full py-1 text-sm">
-            ✏️ Update Name
-          </button>
-        </form>
+            {nameError && (
+              <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
+                {nameError}
+              </div>
+            )}
+
+            {nameSuccess && (
+              <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
+                ✅ {nameSuccess}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary flex-1 py-1 text-sm">
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingName(false)}
+                className="btn-secondary flex-1 py-1 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Change Password Card */}
       <div className="card mb-4 p-3">
-        <h2 className="text-base font-bold mb-3">Change Password</h2>
-        
-        <form onSubmit={handleChangePassword} className="space-y-2">
-          <div>
-            <label className="label text-xs">Current Password (4 digits)</label>
-            <div className="relative">
+        {!showPasswordForm ? (
+          <button
+            onClick={() => {
+              setShowPasswordForm(true)
+              setPasswordError('')
+              setPasswordSuccess('')
+              setCurrentPassword('')
+              setNewPassword('')
+              setConfirmPassword('')
+            }}
+            className="w-full text-left text-base font-semibold text-blue-600 hover:text-blue-800"
+          >
+            🔒 Change Password
+          </button>
+        ) : (
+          <form onSubmit={handleChangePassword} className="space-y-2">
+            <div>
+              <label className="label text-xs">Current Password (4 digits)</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value.slice(0, 4))}
+                  placeholder="0000"
+                  maxLength={4}
+                  className="input-field text-center text-lg tracking-widest font-mono py-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1.5 text-gray-600 text-xs"
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="label text-xs">New Password (4 digits)</label>
               <input
                 type={showPassword ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value.slice(0, 4))}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value.slice(0, 4))}
                 placeholder="0000"
                 maxLength={4}
-                className="input-field text-center text-xl tracking-widest font-mono py-1"
+                className="input-field text-center text-lg tracking-widest font-mono py-1"
               />
+              <p className="text-xs text-gray-500 mt-0.5">Exactly 4 digits</p>
+            </div>
+
+            <div>
+              <label className="label text-xs">Confirm Password</label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value.slice(0, 4))}
+                placeholder="0000"
+                maxLength={4}
+                className="input-field text-center text-lg tracking-widest font-mono py-1"
+              />
+            </div>
+
+            {passwordError && (
+              <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
+                {passwordError}
+              </div>
+            )}
+
+            {passwordSuccess && (
+              <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
+                ✅ {passwordSuccess}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button type="submit" className="btn-primary flex-1 py-1 text-sm">
+                Save
+              </button>
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2 text-gray-600 text-xs"
+                onClick={() => setShowPasswordForm(false)}
+                className="btn-secondary flex-1 py-1 text-sm"
               >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
+                Cancel
               </button>
             </div>
-          </div>
-
-          <div>
-            <label className="label text-xs">New Password (4 digits)</label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value.slice(0, 4))}
-              placeholder="0000"
-              maxLength={4}
-              className="input-field text-center text-xl tracking-widest font-mono py-1"
-            />
-            <p className="text-xs text-gray-500 mt-0.5">Must be exactly 4 digits</p>
-          </div>
-
-          <div>
-            <label className="label text-xs">Confirm Password</label>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value.slice(0, 4))}
-              placeholder="0000"
-              maxLength={4}
-              className="input-field text-center text-xl tracking-widest font-mono py-1"
-            />
-          </div>
-
-          {passwordError && (
-            <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
-              {passwordError}
-            </div>
-          )}
-
-          {passwordSuccess && (
-            <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
-              ✅ {passwordSuccess}
-            </div>
-          )}
-
-          <button type="submit" className="btn-primary w-full py-1 text-sm">
-            🔒 Update Password
-          </button>
-        </form>
+          </form>
+        )}
       </div>
 
       <ThemeSelector />
