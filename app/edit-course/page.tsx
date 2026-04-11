@@ -237,12 +237,12 @@ function EditCourseContent() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {holes.map((hole) => (
-                <div key={hole.holeNumber} className="bg-green-900 bg-opacity-20 border-2 border-green-700 p-4 rounded-lg">
-                  <h4 className="font-bold mb-4 text-lg">Hole {hole.holeNumber}</h4>
+                <div key={hole.holeNumber} className="bg-green-900 bg-opacity-40 border-2 border-green-600 p-4 rounded-lg">
+                  <h4 className="font-bold mb-4 text-lg text-white">Hole {hole.holeNumber}</h4>
                   
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-bold block mb-2">Par</label>
+                      <label className="text-sm font-bold block mb-2 text-white">Par</label>
                       <select
                         value={hole.par}
                         onChange={(e) => handleHoleChange(hole.holeNumber, 'par', parseInt(e.target.value))}
