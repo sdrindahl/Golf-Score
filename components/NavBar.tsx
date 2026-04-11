@@ -30,6 +30,11 @@ export default function NavBar() {
     return false
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser')
+    router.push('/login')
+  }
+
   // Don't show navbar on login page
   if (pathname === '/login') {
     return null
@@ -53,6 +58,12 @@ export default function NavBar() {
                   <span>👤</span>
                   <span className="font-semibold">{currentUser.name}</span>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-800 rounded font-semibold text-sm transition"
+                >
+                  🚪 Logout
+                </button>
               </div>
             )}
           </div>

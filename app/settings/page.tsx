@@ -131,6 +131,11 @@ export default function Settings() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser')
+    router.push('/login')
+  }
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto py-6">
@@ -266,6 +271,13 @@ export default function Settings() {
       </div>
 
       <ThemeSelector />
+
+      <button 
+        onClick={handleLogout} 
+        className="btn-secondary w-full mt-6"
+      >
+        🚪 Logout
+      </button>
 
       <div className="card mt-6 border-2 border-red-200 bg-red-50">
         <h2 className="text-2xl font-bold mb-4 text-red-600">🗑️ Danger Zone</h2>
