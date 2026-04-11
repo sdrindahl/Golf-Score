@@ -154,10 +154,6 @@ export default function Settings() {
 
   return (
     <div className="max-w-xl mx-auto py-4">
-      <div className="card mb-4">
-        <h1 className="text-xl font-bold mb-1">⚙️ Settings</h1>
-        <p className="text-gray-600 text-xs">Manage your account</p>
-      </div>
 
       {/* Current Name Card */}
       <div className="card mb-4 p-3">
