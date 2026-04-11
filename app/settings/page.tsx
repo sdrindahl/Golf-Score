@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import ThemeSelector from '@/components/ThemeSelector'
 
 export default function Settings() {
   const router = useRouter()
@@ -263,6 +264,8 @@ export default function Settings() {
           </button>
         </form>
       </div>
+
+      <ThemeSelector />
 
       <div className="card mt-6 border-2 border-red-200 bg-red-50">
         <h2 className="text-2xl font-bold mb-4 text-red-600">🗑️ Danger Zone</h2>
