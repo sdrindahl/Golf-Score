@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { deleteRoundFromSupabase } from '@/lib/dataSync'
 
 function RoundDetailContent() {
   const router = useRouter()
@@ -55,6 +56,26 @@ function RoundDetailContent() {
     if (!currentUser || !round) return false
     if (currentUser.is_admin) return true
     return currentUser.id === round.userId
+  }
+
+  const handleDeleteRound = () => {
+    if (confirm('Are you sure you want to delete this round? This action cannot be undone.')) {
+      // Delete from localStorage
+      const savedRounds = localStorage.getItem('golfRounds')
+      if (savedRounds) {
+        const allRounds = JSON.parse(savedRounds)
+        const updated = allRounds.filter((r: Round) => r.id !== roundId)
+        localStorage.setItem('golfRounds', JSON.stringify(updated))
+      }
+
+      // Delete from Supabase
+      deleteRoundFromSupabase(roundId as string).catch(error => {
+        console.log('Could not delete from Supabase:', error)
+      })
+
+      // Redirect back home
+      router.push('/')
+    }
   }
 
   if (loading) {
@@ -291,13 +312,18 @@ function RoundDetailContent() {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="btn-primary flex-1">
+      <div className="flex gap-3 flex-wrap">
+        <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="btn-primary flex-1 min-w-32">
           Exit Scorecard
         </button>
         {canEditRound() && (
-          <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="btn-secondary flex-1">
+          <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="btn-secondary flex-1 min-w-32">
             Edit Round
+          </button>
+        )}
+        {canEditRound() && (
+          <button onClick={handleDeleteRound} className="btn-danger flex-1 min-w-32">
+            Delete Round
           </button>
         )}
       </div>

@@ -18,10 +18,17 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
 
   // Determine if current user can edit a round
   const canEditRound = (roundUserId: string): boolean => {
-    if (!currentUser) return false
-    if (currentUser.is_admin) return true // Admins can edit any round
-    if (!readOnly && currentUser.id === roundUserId) return true // Users can edit their own rounds
-    return false
+    if (!currentUser) {
+      console.log('❌ ScoreHistory: No currentUser found')
+      return false
+    }
+    if (currentUser.is_admin) {
+      console.log('✅ ScoreHistory: User is admin, can edit')
+      return true
+    }
+    const canEdit = !readOnly && currentUser.id === roundUserId
+    console.log(`ScoreHistory: readOnly=${readOnly}, currentUser.id=${currentUser.id}, roundUserId=${roundUserId}, can edit=${canEdit}`)
+    return canEdit
   }
 
   const handleDelete = (roundId: string) => {
