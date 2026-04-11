@@ -27,11 +27,34 @@ export default function NewRound() {
 
     // Load selected course from localStorage
     const saved = localStorage.getItem('selectedCourse')
+    console.log('🔍 NewRound - checking localStorage for selectedCourse:', saved ? 'Found' : 'Not found')
+    
     if (saved) {
-      const course = JSON.parse(saved)
-      setSelectedCourse(course)
-      setScores(new Array(course.holes.length).fill(0))
-      localStorage.removeItem('selectedCourse')
+      try {
+        const course = JSON.parse(saved)
+        console.log('✅ NewRound - Course loaded:', {
+          name: course.name,
+          holesCount: course.holes?.length,
+          holeCountProperty: course.holeCount,
+          hasHolesArray: Array.isArray(course.holes),
+          courseKeys: Object.keys(course)
+        })
+        
+        if (!course.holes || !Array.isArray(course.holes) || course.holes.length === 0) {
+          console.error('❌ NewRound - Course missing holes array or empty:', course)
+          alert('Error: Course data is incomplete. Please select a course again.')
+          return
+        }
+        
+        setSelectedCourse(course)
+        setScores(new Array(course.holes.length).fill(0))
+        localStorage.removeItem('selectedCourse')
+      } catch (error) {
+        console.error('❌ NewRound - Failed to parse course from localStorage:', error)
+        alert('Error loading course. Please try selecting it again.')
+      }
+    } else {
+      console.log('⚠️ NewRound - No selectedCourse in localStorage. Show course selection screen.')
     }
   }, [auth])
 

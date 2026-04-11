@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
 
 function CourseDetailsContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const courseId = searchParams.get('id')
 
   const [course, setCourse] = useState<Course | null>(null)
@@ -64,10 +65,29 @@ function CourseDetailsContent() {
     }
   }
 
-  const handleStartRound = () => {
+  const handleStartRound = async () => {
     if (course) {
-      localStorage.setItem('selectedCourse', JSON.stringify(course))
-      window.location.href = '/new-round'
+      try {
+        console.log('🎯 CourseDetails - Starting round with course:', {
+          name: course.name,
+          id: course.id,
+          holesLength: course.holes?.length,
+          hasHoles: Array.isArray(course.holes),
+        })
+        
+        // Store course in localStorage
+        localStorage.setItem('selectedCourse', JSON.stringify(course))
+        console.log('✅ CourseDetails - Course saved to localStorage. Navigating to /new-round')
+        
+        // Use Next.js router instead of window.location.href for better reliability
+        router.push('/new-round')
+      } catch (error) {
+        console.error('❌ CourseDetails - Error starting round:', error)
+        alert('Error starting round. Please try again.')
+      }
+    } else {
+      console.error('❌ CourseDetails - No course object available!')
+      alert('Course data is missing. Please refresh and try again.')
     }
   }
 

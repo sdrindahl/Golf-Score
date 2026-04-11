@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
 
 export default function CourseSearch() {
+  const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [displayedCourses, setDisplayedCourses] = useState<Course[]>([])
@@ -103,8 +105,20 @@ export default function CourseSearch() {
             </div>
             <button
               onClick={() => {
-                localStorage.setItem('selectedCourse', JSON.stringify(selectedCourse))
-                window.location.href = '/new-round'
+                try {
+                  console.log('🎯 CourseSearch - Starting round with course:', {
+                    name: selectedCourse.name,
+                    id: selectedCourse.id,
+                    holesLength: selectedCourse.holes?.length,
+                    hasHoles: Array.isArray(selectedCourse.holes)
+                  })
+                  localStorage.setItem('selectedCourse', JSON.stringify(selectedCourse))
+                  console.log('✅ CourseSearch - Course saved to localStorage. Navigating to /new-round')
+                  router.push('/new-round')
+                } catch (error) {
+                  console.error('❌ CourseSearch - Error starting round:', error)
+                  alert('Error starting round. Please try again.')
+                }
               }}
               className="btn-primary w-full"
             >
