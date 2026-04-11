@@ -18,7 +18,9 @@ export default function ManageCourses() {
       const user = auth.getCurrentUser()
       setCurrentUser(user)
 
-      // Sync latest data from Supabase first
+      let coursesToDisplay: Course[] = []
+
+      // Try to fetch from Supabase first
       if (isSupabaseConfigured() && supabase) {
         try {
           console.log('📥 Fetching courses from Supabase...')
@@ -42,21 +44,31 @@ export default function ManageCourses() {
               courseRating: c.course_rating || c.courseRating,
               slopeRating: c.slope_rating || c.slopeRating,
             }))
+            coursesToDisplay = convertedCourses
             localStorage.setItem('golfCourses', JSON.stringify(convertedCourses))
-            setCourses(convertedCourses)
-            setLoading(false)
-            return
+          } else {
+            console.log('ℹ️ No courses from Supabase, checking localStorage...')
           }
         } catch (error) {
           console.error('Error syncing courses:', error)
         }
       }
 
-      // Fallback to localStorage if Supabase is not available
-      const savedCourses = localStorage.getItem('golfCourses')
-      if (savedCourses) {
-        setCourses(JSON.parse(savedCourses))
+      // If no courses from Supabase, use localStorage
+      if (coursesToDisplay.length === 0) {
+        const savedCourses = localStorage.getItem('golfCourses')
+        if (savedCourses) {
+          try {
+            const localCourses = JSON.parse(savedCourses)
+            console.log('📱 Got courses from localStorage:', localCourses.length)
+            coursesToDisplay = localCourses
+          } catch (error) {
+            console.error('Error parsing localStorage courses:', error)
+          }
+        }
       }
+
+      setCourses(coursesToDisplay)
       setLoading(false)
     }
 
