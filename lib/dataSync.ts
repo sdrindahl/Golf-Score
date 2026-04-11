@@ -440,9 +440,20 @@ export async function syncCoursesToSupabase(courses: Course[]): Promise<void> {
 
   try {
     for (const course of courses) {
+      // Only send fields that exist in Supabase table
+      const courseData = {
+        id: course.id,
+        name: course.name,
+        location: course.location,
+        state: course.state,
+        par: course.par,
+        hole_count: course.holeCount,
+        holes: course.holes,
+      }
+      
       const { error } = await supabase
         .from('courses')
-        .upsert([course])
+        .upsert([courseData])
 
       if (error) throw error
     }

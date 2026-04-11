@@ -40,9 +40,9 @@ export default function ManageCourses() {
               state: c.state,
               holeCount: c.hole_count || c.holeCount,
               par: c.par,
-              holes: c.holes,
-              courseRating: c.course_rating || c.courseRating,
-              slopeRating: c.slope_rating || c.slopeRating,
+              holes: c.holes || [],
+              courseRating: c.course_rating || c.courseRating || 72.0,
+              slopeRating: c.slope_rating || c.slopeRating || 113,
             }))
             coursesToDisplay = convertedCourses
             localStorage.setItem('golfCourses', JSON.stringify(convertedCourses))

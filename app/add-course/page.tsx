@@ -97,8 +97,6 @@ export default function AddCourse() {
               hole_count: newCourse.holeCount,
               par: newCourse.par,
               holes: newCourse.holes,
-              course_rating: newCourse.courseRating,
-              slope_rating: newCourse.slopeRating,
             },
           ])
           .select()
