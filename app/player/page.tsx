@@ -181,6 +181,12 @@ function PlayerProfileContent() {
   const handicap = calculateHandicap()
   const isOwnProfile = currentUser?.id === player.id
 
+  const handleDeleteRound = (roundId: string) => {
+    const updated = rounds.filter(r => r.id !== roundId)
+    setRounds(updated)
+    localStorage.setItem('golfRounds', JSON.stringify(updated))
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-6">
       {/* Header */}
@@ -267,7 +273,7 @@ function PlayerProfileContent() {
 
       {/* Recent Rounds */}
       {rounds.length > 0 ? (
-        <ScoreHistory rounds={rounds} onDelete={() => {}} readOnly={!isOwnProfile} userId={player?.id} />
+        <ScoreHistory rounds={rounds} onDelete={handleDeleteRound} readOnly={!isOwnProfile} userId={player?.id} />
       ) : (
         <div className="card text-center py-12">
           <p className="text-gray-500 text-lg">No rounds recorded yet</p>
