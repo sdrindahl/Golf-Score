@@ -107,13 +107,18 @@ export async function syncDataFromSupabase(): Promise<void> {
         // Keep all local courses, but update any that exist in Supabase
         const mergedCourses = localCourses.map((localCourse: any) => {
           const supabaseCourse = supabaseCourseMap.get(localCourse.id)
-          // Preserve local edits to courseRating and slopeRating
+          // Preserve local edits, fill in defaults for missing Supabase columns
           if (supabaseCourse) {
             return {
-              ...supabaseCourse,
-              courseRating: localCourse.courseRating ?? supabaseCourse.course_rating ?? 72.0,
-              slopeRating: localCourse.slopeRating ?? supabaseCourse.slope_rating ?? 113,
-              holes: localCourse.holes ?? supabaseCourse.holes,
+              id: supabaseCourse.id,
+              name: supabaseCourse.name,
+              location: localCourse.location ?? 'Unknown',
+              state: localCourse.state ?? 'Unknown',
+              holeCount: supabaseCourse.hole_count || localCourse.holeCount,
+              par: supabaseCourse.par,
+              holes: supabaseCourse.holes || localCourse.holes,
+              courseRating: localCourse.courseRating ?? 72.0,
+              slopeRating: localCourse.slopeRating ?? 113,
             }
           }
           return localCourse
@@ -122,7 +127,17 @@ export async function syncDataFromSupabase(): Promise<void> {
         // Add any Supabase courses that don't exist locally
         for (const supabaseCourse of supabaseCourses) {
           if (!localCourses.some((c: any) => c.id === supabaseCourse.id)) {
-            mergedCourses.push(supabaseCourse)
+            mergedCourses.push({
+              id: supabaseCourse.id,
+              name: supabaseCourse.name,
+              location: 'Unknown',
+              state: 'Unknown',
+              holeCount: supabaseCourse.hole_count,
+              par: supabaseCourse.par,
+              holes: supabaseCourse.holes || [],
+              courseRating: 72.0,
+              slopeRating: 113,
+            })
           }
         }
         
@@ -397,12 +412,10 @@ export async function updateCourseInSupabase(course: Course): Promise<void> {
     console.log('💾 Updating course in Supabase:', course.id)
     
     // Only send fields that Supabase table has
-    // course_rating and slope_rating may not exist in your schema yet
+    // location, state, course_rating and slope_rating may not exist in your schema
     const courseData: any = {
       id: course.id,
       name: course.name,
-      location: course.location,
-      state: course.state,
       par: course.par,
       hole_count: course.holeCount,
       holes: course.holes,
@@ -444,8 +457,6 @@ export async function syncCoursesToSupabase(courses: Course[]): Promise<void> {
       const courseData = {
         id: course.id,
         name: course.name,
-        location: course.location,
-        state: course.state,
         par: course.par,
         hole_count: course.holeCount,
         holes: course.holes,

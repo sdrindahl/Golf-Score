@@ -36,13 +36,13 @@ export default function ManageCourses() {
             const convertedCourses = supabaseCourses.map((c: any) => ({
               id: c.id,
               name: c.name,
-              location: c.location,
-              state: c.state,
+              location: c.location || 'Unknown',
+              state: c.state || 'Unknown',
               holeCount: c.hole_count || c.holeCount,
               par: c.par,
               holes: c.holes || [],
-              courseRating: c.course_rating || c.courseRating || 72.0,
-              slopeRating: c.slope_rating || c.slopeRating || 113,
+              courseRating: 72.0,
+              slopeRating: 113,
             }))
             coursesToDisplay = convertedCourses
             localStorage.setItem('golfCourses', JSON.stringify(convertedCourses))

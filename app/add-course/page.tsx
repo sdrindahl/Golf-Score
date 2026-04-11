@@ -92,8 +92,6 @@ export default function AddCourse() {
             {
               id: newCourse.id,
               name: newCourse.name,
-              location: newCourse.location,
-              state: newCourse.state,
               hole_count: newCourse.holeCount,
               par: newCourse.par,
               holes: newCourse.holes,
