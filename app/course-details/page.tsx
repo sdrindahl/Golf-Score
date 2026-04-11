@@ -272,7 +272,7 @@ function CourseDetailsContent() {
               <h3 className="text-xl font-bold mb-4">Front 9</h3>
               <div className="overflow-x-auto mb-6">
                 <table className="w-full text-xs md:text-sm">
-                  <thead className="bg-gray-100">
+                  <thead className="table-header">
                     <tr>
                       <th className="text-center px-1 md:px-3 py-1 md:py-2 text-xs md:text-sm">Hole</th>
                       {course.holes.slice(0, 9).map((hole) => (
@@ -318,7 +318,7 @@ function CourseDetailsContent() {
                 <h3 className="text-xl font-bold mb-4">Back 9</h3>
                 <div className="overflow-x-auto mb-6">
                   <table className="w-full text-xs md:text-sm">
-                    <thead className="bg-gray-100">
+                    <thead className="table-header">
                       <tr>
                         <th className="text-center px-1 md:px-3 py-1 md:py-2 text-xs md:text-sm">Hole</th>
                         {course.holes.slice(9, 18).map((hole) => (

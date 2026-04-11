@@ -84,3 +84,15 @@ body {
   @apply block font-semibold mb-2;
   color: var(--text-primary);
 }
+
+/* Table header styling */
+.table-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Table row hover effect */
+.table-row:hover {
+  background-color: var(--border-color);
+}

@@ -197,7 +197,7 @@ function RoundDetailContent() {
             </tbody>
           </table>
         </div>
-        <div className="flex justify-between items-center p-3 bg-gray-100 rounded font-bold text-lg">
+        <div className="flex justify-between items-center p-3 rounded font-bold text-lg" style={{backgroundColor: 'var(--border-color)'}}>
           <span>Front 9 Total</span>
           <div className="flex gap-4 items-center">
             <span>Par {frontNinePar}</span>
@@ -215,7 +215,7 @@ function RoundDetailContent() {
           <h2 className="text-2xl font-bold mb-4">Back 9</h2>
           <div className="overflow-x-auto mb-6">
             <table className="w-full text-xs md:text-sm">
-              <thead className="bg-gray-100">
+              <thead className="table-headerr">
                 <tr>
                   <th className="text-center px-1 md:px-3 py-1 md:py-2">Hole</th>
                   {course.holes.slice(9, 18).map((hole) => (
@@ -275,7 +275,7 @@ function RoundDetailContent() {
               </tbody>
             </table>
           </div>
-          <div className="flex justify-between items-center p-3 bg-gray-100 rounded font-bold text-lg">
+          <div className="flex justify-between items-center p-3 rounded font-bold text-lg" style={{backgroundColor: 'var(--border-color)'}}>
             <span>Back 9 Total</span>
             <div className="flex gap-4 items-center">
               <span>Par {backNinePar}</span>

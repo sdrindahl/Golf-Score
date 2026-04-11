@@ -181,7 +181,7 @@ export default function Players() {
         <div className="card">
           <div className="overflow-x-auto">
             <table className="w-full text-xs md:text-sm">
-              <thead className="bg-gray-100">
+              <thead className="table-header">
                 <tr>
                   <th className="text-left p-1 md:p-3 text-xs md:text-sm">Player</th>
                   <th className="text-center p-1 md:p-3 text-xs md:text-sm">Rounds</th>

@@ -63,7 +63,7 @@ export default function ManageCourses() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs md:text-sm">
-              <thead className="bg-gray-100">
+              <thead className="table-header">
                 <tr>
                   <th className="text-left px-3 py-2 md:py-3 font-semibold">Course</th>
                   <th className="text-left px-3 py-2 md:py-3 font-semibold hidden md:table-cell">Location</th>
@@ -76,7 +76,7 @@ export default function ManageCourses() {
               </thead>
               <tbody>
                 {courses.map((course) => (
-                  <tr key={course.id} className="border-b hover:bg-gray-50">
+                  <tr key={course.id} className="table-row border-b">
                     <td className="px-3 py-2 md:py-3">
                       <Link href={`/course-details?id=${course.id}`}>
                         <button

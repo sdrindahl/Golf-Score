@@ -62,7 +62,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
       <h2 className="text-xl font-bold mb-4">Recent Rounds</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-xs md:text-base">
-          <thead className="bg-gray-100">
+          <thead className="table-header">
             <tr>
               <th className="text-left p-1 md:p-3 text-xs md:text-sm">Date</th>
               <th className="text-left p-1 md:p-3 text-xs md:text-sm">Course</th>
@@ -78,7 +78,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
               const vsPalDisplay = vsPar > 0 ? `+${vsPar}` : `${vsPar}`
 
               return (
-                <tr key={round.id} className="border-b hover:bg-gray-50">
+                <tr key={round.id} className="table-row border-b">
                   <td className="p-1 md:p-3 text-xs md:text-sm">{new Date(round.date).toLocaleDateString()}</td>
                   <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate">{round.courseName}</td>
                   <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm">{round.totalScore}</td>
