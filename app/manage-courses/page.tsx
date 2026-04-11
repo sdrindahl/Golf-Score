@@ -47,16 +47,11 @@ export default function ManageCourses() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Select Course</h2>
           {currentUser?.is_admin && (
-            <Link href="/add-course" className="hidden md:block">
+            <Link href="/add-course">
               <button className="btn-primary">➕ Add Course</button>
             </Link>
           )}
         </div>
-        {currentUser?.is_admin && (
-          <Link href="/add-course" className="block md:hidden mb-4">
-            <button className="btn-primary w-full">➕ Add Course</button>
-          </Link>
-        )}
 
         {courses.length === 0 ? (
           <div className="text-center py-10">
