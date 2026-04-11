@@ -2,20 +2,23 @@
   <!-- Background -->
   <rect width="192" height="192" fill="#22c55e"/>
   
-  <!-- Tee -->
-  <rect x="80" y="110" width="32" height="55" rx="4" fill="#92400e"/>
-  <polygon points="70,110 96,95 122,110" fill="#b45309"/>
-  
   <!-- Golf Ball -->
-  <circle cx="96" cy="85" r="28" fill="#ffffff" stroke="#333" stroke-width="0.5"/>
+  <circle cx="96" cy="96" r="70" fill="#ffffff" stroke="#333" stroke-width="1"/>
   
-  <!-- Dimples on ball -->
-  <circle cx="85" cy="75" r="2" fill="#e5e7eb"/>
-  <circle cx="107" cy="75" r="2" fill="#e5e7eb"/>
-  <circle cx="88" cy="88" r="1.5" fill="#e5e7eb"/>
-  <circle cx="104" cy="88" r="1.5" fill="#e5e7eb"/>
-  <circle cx="96" cy="72" r="1.5" fill="#e5e7eb"/>
-  <circle cx="81" cy="92" r="1.5" fill="#e5e7eb"/>
-  <circle cx="111" cy="92" r="1.5" fill="#e5e7eb"/>
-  <circle cx="96" cy="98" r="2" fill="#e5e7eb"/>
+  <!-- Dimples pattern -->
+  <circle cx="70" cy="70" r="3" fill="#e5e7eb"/>
+  <circle cx="96" cy="55" r="3" fill="#e5e7eb"/>
+  <circle cx="122" cy="70" r="3" fill="#e5e7eb"/>
+  <circle cx="60" cy="96" r="2.5" fill="#e5e7eb"/>
+  <circle cx="96" cy="85" r="2.5" fill="#e5e7eb"/>
+  <circle cx="132" cy="96" r="2.5" fill="#e5e7eb"/>
+  <circle cx="70" cy="122" r="3" fill="#e5e7eb"/>
+  <circle cx="96" cy="137" r="3" fill="#e5e7eb"/>
+  <circle cx="122" cy="122" r="3" fill="#e5e7eb"/>
+  <circle cx="55" cy="110" r="2" fill="#e5e7eb"/>
+  <circle cx="137" cy="110" r="2" fill="#e5e7eb"/>
+  <circle cx="80" cy="50" r="2" fill="#e5e7eb"/>
+  <circle cx="112" cy="50" r="2" fill="#e5e7eb"/>
+  <circle cx="50" cy="75" r="2" fill="#e5e7eb"/>
+  <circle cx="142" cy="75" r="2" fill="#e5e7eb"/>
 </svg>
