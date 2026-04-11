@@ -355,11 +355,13 @@ export default function NewRound() {
           </div>
 
           <div className="flex gap-4">
-            <Link href="/" className="flex-1">
-              <button type="button" className="btn-secondary w-full">
-                Cancel
-              </button>
-            </Link>
+            <button 
+              type="button" 
+              onClick={() => router.push('/')}
+              className="btn-secondary w-full"
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </div>
