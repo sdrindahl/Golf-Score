@@ -82,9 +82,11 @@ function EditRoundContent() {
       }
       
       // Delete from Supabase
-      deleteRoundFromSupabase(roundId).catch(error => {
-        console.log('Could not delete from Supabase:', error)
-      })
+      if (roundId) {
+        deleteRoundFromSupabase(roundId).catch(error => {
+          console.log('Could not delete from Supabase:', error)
+        })
+      }
       
       // Redirect back home
       router.push('/')
