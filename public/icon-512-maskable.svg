@@ -1,34 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Transparent background for maskable icon -->
-  <defs>
-    <linearGradient id="flagGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="poleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#78350f;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#92400e;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Tee -->
+  <rect x="208" y="300" width="96" height="150" rx="8" fill="#92400e"/>
+  <polygon points="160,300 256,260 352,300" fill="#b45309"/>
   
-  <!-- Pole -->
-  <rect x="228" y="100" width="56" height="280" fill="url(#poleGrad)" rx="8"/>
+  <!-- Golf Ball -->
+  <circle cx="256" cy="200" r="85" fill="#ffffff" stroke="#333" stroke-width="1"/>
   
-  <!-- Flag -->
-  <path d="M 284 130 Q 370 130 400 170 Q 370 210 284 210 Z" fill="url(#flagGrad)"/>
-  
-  <!-- Flag outline -->
-  <path d="M 284 130 Q 370 130 400 170 Q 370 210 284 210 Z" fill="none" stroke="#15803d" stroke-width="4"/>
-  
-  <!-- Golf ball -->
-  <circle cx="210" cy="340" r="50" fill="white" stroke="#cbd5e1" stroke-width="2"/>
-  
-  <!-- Golf ball dimples pattern -->
-  <circle cx="190" cy="320" r="4" fill="#cbd5e1"/>
-  <circle cx="230" cy="320" r="4" fill="#cbd5e1"/>
-  <circle cx="200" cy="360" r="4" fill="#cbd5e1"/>
-  <circle cx="220" cy="360" r="4" fill="#cbd5e1"/>
-  <circle cx="210" cy="340" r="3" fill="#cbd5e1"/>
-  <circle cx="190" cy="340" r="3" fill="#cbd5e1"/>
-  <circle cx="230" cy="340" r="3" fill="#cbd5e1"/>
+  <!-- Dimples on ball -->
+  <circle cx="220" cy="160" r="6" fill="#e5e7eb"/>
+  <circle cx="292" cy="160" r="6" fill="#e5e7eb"/>
+  <circle cx="230" cy="195" r="5" fill="#e5e7eb"/>
+  <circle cx="282" cy="195" r="5" fill="#e5e7eb"/>
+  <circle cx="256" cy="140" r="5" fill="#e5e7eb"/>
+  <circle cx="210" cy="220" r="5" fill="#e5e7eb"/>
+  <circle cx="302" cy="220" r="5" fill="#e5e7eb"/>
+  <circle cx="256" cy="245" r="6" fill="#e5e7eb"/>
+  <circle cx="190" cy="190" r="4" fill="#e5e7eb"/>
+  <circle cx="322" cy="190" r="4" fill="#e5e7eb"/>
 </svg>
