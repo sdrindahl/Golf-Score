@@ -57,16 +57,22 @@ body {
 
 .btn-secondary {
   @apply font-semibold py-2 px-4 md:px-4 rounded-lg transition-colors text-sm md:text-base;
-  background-color: var(--border-color);
-  color: var(--text-primary);
+  background-color: var(--accent-color);
+  color: #ffffff;
 }
 
 .btn-secondary:hover {
-  filter: brightness(0.8);
+  filter: brightness(0.9);
 }
 
 .btn-danger {
-  @apply bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 md:px-4 rounded-lg transition-colors text-sm md:text-base;
+  @apply font-semibold py-2 px-4 md:px-4 rounded-lg transition-colors text-sm md:text-base;
+  background-color: var(--accent-color);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  filter: brightness(0.9);
 }
 
 .input-field {

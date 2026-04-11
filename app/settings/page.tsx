@@ -314,7 +314,7 @@ export default function Settings() {
 
       <button 
         onClick={handleLogout} 
-        className="btn-secondary w-full mt-3 py-1 text-sm"
+        className="btn-primary w-full mt-3 py-1 text-sm"
       >
         🚪 Logout
       </button>
@@ -336,7 +336,7 @@ export default function Settings() {
 
           <button
             onClick={handleDeleteAccount}
-            className="btn-danger w-full py-1 text-sm"
+            className="btn-primary w-full py-1 text-sm"
           >
             🗑️ Delete Account
           </button>
@@ -344,7 +344,7 @@ export default function Settings() {
       )}
 
       <Link href="/">
-        <button className="btn-secondary w-full mt-3 py-1 text-sm">← Back</button>
+        <button className="btn-primary w-full mt-3 py-1 text-sm">← Back</button>
       </Link>
     </div>
   )

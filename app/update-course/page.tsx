@@ -306,7 +306,7 @@ export default function UpdateCourseData() {
             <button className="btn-primary">View My Courses</button>
           </Link>
           <Link href="/">
-            <button className="btn-secondary">Back to Dashboard</button>
+            <button className="btn-primary">Back to Dashboard</button>
           </Link>
         </div>
       </div>

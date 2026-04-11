@@ -191,7 +191,7 @@ export default function NewRound() {
               <button className="btn-primary w-full">📋 Select Course</button>
             </Link>
             <Link href="/add-course" className="flex-1">
-              <button className="btn-secondary w-full">➕ Add New Course</button>
+              <button className="btn-primary w-full">➕ Add New Course</button>
             </Link>
           </div>
         </div>

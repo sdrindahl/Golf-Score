@@ -319,12 +319,12 @@ function RoundDetailContent() {
           Exit Scorecard
         </button>
         {canEditRound() && (
-          <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="btn-secondary flex-1 min-w-32">
+          <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="btn-primary flex-1 min-w-32">
             Edit Round
           </button>
         )}
         {canEditRound() && (
-          <button onClick={handleDeleteRound} className="btn-danger flex-1 min-w-32">
+          <button onClick={handleDeleteRound} className="btn-primary flex-1 min-w-32">
             Delete Round
           </button>
         )}

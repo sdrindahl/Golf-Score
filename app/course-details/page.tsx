@@ -197,7 +197,7 @@ function CourseDetailsContent() {
             </>
           )}
           <Link href="/manage-courses" className="flex-1">
-            <button className="btn-secondary w-full">
+            <button className="btn-primary w-full">
               ← Back
             </button>
           </Link>

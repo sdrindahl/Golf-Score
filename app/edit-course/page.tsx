@@ -165,7 +165,7 @@ function EditCourseContent() {
               <button className="btn-primary">Back to Courses</button>
             </Link>
             <Link href="/">
-              <button className="btn-secondary">Dashboard</button>
+              <button className="btn-primary">Dashboard</button>
             </Link>
           </div>
         </div>

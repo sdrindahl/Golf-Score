@@ -243,7 +243,7 @@ export default function Players() {
       )}
 
       <Link href="/">
-        <button className="btn-secondary w-full mt-8">← Back to Home</button>
+        <button className="btn-primary w-full mt-8">← Back to Home</button>
       </Link>
 
       {deleteModal && (

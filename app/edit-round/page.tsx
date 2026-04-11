@@ -252,14 +252,14 @@ function EditRoundContent() {
             <button 
               type="button"
               onClick={handleDelete}
-              className="btn-danger flex-1"
+              className="btn-primary flex-1"
             >
               🗑️ Delete Round
             </button>
             <button 
               type="button"
               onClick={() => router.push('/')}
-              className="btn-secondary flex-1"
+              className="btn-primary flex-1"
             >
               Cancel
             </button>

@@ -279,7 +279,7 @@ function PlayerProfileContent() {
 
       {/* Back Button */}
       <Link href="/players">
-        <button className="btn-secondary w-full mt-6">← Back to Golfer Profiles</button>
+        <button className="btn-primary w-full mt-6">← Back to Golfer Profiles</button>
       </Link>
     </div>
   )

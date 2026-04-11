@@ -98,7 +98,7 @@ export default function ManageCourses() {
                         <div className="flex gap-1 justify-center">
                           <Link href={`/edit-course?id=${course.id}`}>
                             <button
-                              className="btn-secondary text-xs px-2 py-1"
+                              className="btn-primary text-xs px-2 py-1"
                             >
                               Edit
                             </button>
@@ -108,7 +108,7 @@ export default function ManageCourses() {
                               e.preventDefault()
                               handleDelete(course.id)
                             }}
-                            className="btn-danger text-xs px-2 py-1"
+                            className="btn-primary text-xs px-2 py-1"
                           >
                             Delete
                           </button>
@@ -124,7 +124,7 @@ export default function ManageCourses() {
       </div>
 
       <Link href="/">
-        <button className="btn-secondary w-full">Back to Dashboard</button>
+        <button className="btn-primary w-full">Back to Dashboard</button>
       </Link>
     </div>
   )

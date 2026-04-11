@@ -95,10 +95,10 @@ export default function AddCourse() {
               <button className="btn-primary">Record a Round</button>
             </Link>
             <Link href="/manage-courses">
-              <button className="btn-secondary">View All Courses</button>
+              <button className="btn-primary">View All Courses</button>
             </Link>
             <Link href="/">
-              <button className="btn-secondary">Back to Dashboard</button>
+              <button className="btn-primary">Back to Dashboard</button>
             </Link>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function AddCourse() {
             ✅ Add Course
           </button>
           <Link href="/" className="flex-1">
-            <button type="button" className="btn-secondary w-full">
+            <button type="button" className="btn-primary w-full">
               Cancel
             </button>
           </Link>
