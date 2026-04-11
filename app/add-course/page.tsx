@@ -82,6 +82,7 @@ export default function AddCourse() {
     localStorage.setItem('golfCourses', JSON.stringify(courses))
 
     // Save to Supabase if configured
+    let supabaseSaved = false
     if (isSupabaseConfigured() && supabase) {
       try {
         const { error } = await supabase
@@ -104,14 +105,25 @@ export default function AddCourse() {
           console.error('Error saving course to Supabase:', error)
         } else {
           console.log('Course saved to Supabase successfully')
+          supabaseSaved = true
         }
       } catch (error) {
         console.error('Error saving course to Supabase:', error)
       }
+    } else {
+      // Supabase not configured, proceed anyway
+      supabaseSaved = true
     }
 
-    // Redirect to manage-courses page
-    router.push('/manage-courses')
+    // Wait a moment for data to sync, then redirect
+    if (supabaseSaved) {
+      setTimeout(() => {
+        router.push('/manage-courses')
+      }, 500)
+    } else {
+      // Still redirect if Supabase failed, but user will see data from localStorage
+      router.push('/manage-courses')
+    }
   }
 
   return (
