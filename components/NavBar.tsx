@@ -114,6 +114,14 @@ export default function NavBar() {
               <span className="text-lg mb-1">⚙️</span>
               Account
             </button>
+            <button
+              onClick={handleLogout}
+              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition bg-green-700 hover:bg-red-600"
+              title="Logout"
+            >
+              <span className="text-lg mb-1">🚪</span>
+              Logout
+            </button>
           </div>
         </nav>
       )}
