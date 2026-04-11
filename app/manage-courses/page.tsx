@@ -44,13 +44,11 @@ export default function ManageCourses() {
   return (
     <div className="max-w-6xl mx-auto py-6">
       <div className="card mb-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center gap-2 mb-6 flex-wrap">
           <h2 className="text-2xl font-bold">Select Course</h2>
-          {currentUser?.is_admin && (
-            <Link href="/add-course">
-              <button className="btn-primary">➕ Add Course</button>
-            </Link>
-          )}
+          <Link href="/add-course">
+            <button className="btn-primary whitespace-nowrap">➕ Add Course</button>
+          </Link>
         </div>
 
         {courses.length === 0 ? (
