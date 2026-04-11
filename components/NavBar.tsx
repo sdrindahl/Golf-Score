@@ -24,11 +24,10 @@ export default function NavBar() {
     }
   }, [pathname, router])
 
-  const handleLogout = () => {
-    if (confirm('Are you sure you want to log out?')) {
-      auth.logoutUser()
-      router.push('/login')
-    }
+  const isActive = (path: string) => {
+    if (path === '/' && pathname === '/') return true
+    if (path !== '/' && pathname.startsWith(path)) return true
+    return false
   }
 
   // Don't show navbar on login page
@@ -37,55 +36,77 @@ export default function NavBar() {
   }
 
   return (
-    <nav className="bg-green-700 text-white p-3 md:p-4 sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-2 md:mb-0">
-          <h1 
-            onClick={() => router.push('/')}
-            className="text-lg md:text-2xl font-bold cursor-pointer"
-          >
-            ⛳ Golf Tracker
-          </h1>
-
-          <div className="flex items-center gap-2 md:gap-4">
+    <>
+      {/* Desktop Top Navigation */}
+      <nav className="hidden md:block bg-green-700 text-white p-4 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between">
+            <h1 
+              onClick={() => router.push('/')}
+              className="text-2xl font-bold cursor-pointer"
+            >
+              ⛳ Golf Tracker
+            </h1>
             {!loading && currentUser && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-green-600 rounded text-xs md:text-sm">
-                <span>👤</span>
-                <span className="font-semibold hidden sm:inline">{currentUser.name}</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-600 rounded">
+                  <span>👤</span>
+                  <span className="font-semibold">{currentUser.name}</span>
+                </div>
               </div>
             )}
           </div>
         </div>
+      </nav>
 
-        {!loading && currentUser && (
-          <div className="flex gap-2 flex-wrap md:flex-nowrap md:justify-end md:border-t md:border-green-500 md:pt-2 md:mt-2">
+      {/* Mobile Bottom Navigation */}
+      {!loading && currentUser && (
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-green-700 text-white border-t border-green-600 z-50">
+          <div className="flex justify-around">
             <button
               onClick={() => router.push('/')}
-              className="bg-green-600 hover:bg-green-800 px-3 py-2 rounded font-semibold text-xs md:text-sm w-full md:w-auto flex-1 md:flex-none"
+              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+                isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
+                  ? 'bg-green-600 text-white'
+                  : 'hover:bg-green-600'
+              }`}
             >
+              <span className="text-lg mb-1">🏠</span>
               Home
             </button>
             <button
-              onClick={() => router.push(`/player?id=${currentUser.id}`)}
-              className="bg-green-600 hover:bg-green-800 px-3 py-2 rounded font-semibold text-xs md:text-sm w-full md:w-auto flex-1 md:flex-none"
+              onClick={() => router.push('/players')}
+              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+                pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+              }`}
             >
-              Profile
+              <span className="text-lg mb-1">👥</span>
+              Golfers
+            </button>
+            <button
+              onClick={() => router.push('/manage-courses')}
+              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+                pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
+                  ? 'bg-green-600 text-white'
+                  : 'hover:bg-green-600'
+              }`}
+            >
+              <span className="text-lg mb-1">⛳</span>
+              Courses
             </button>
             <button
               onClick={() => router.push('/settings')}
-              className="bg-green-600 hover:bg-green-800 px-3 py-2 rounded font-semibold text-xs md:text-sm w-full md:w-auto flex-1 md:flex-none"
+              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+                pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+              }`}
             >
-              ⚙️
-            </button>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-800 px-3 py-2 rounded font-semibold text-xs md:text-sm flex-1 md:flex-none"
-            >
-              Logout
+              <span className="text-lg mb-1">⚙️</span>
+              Account
             </button>
           </div>
-        )}
-      </div>
-    </nav>
+        </nav>
+      )}
+    </>
   )
 }
+

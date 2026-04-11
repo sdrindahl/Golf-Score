@@ -48,7 +48,7 @@ export default function RootLayout({
       <body>
         <CourseInitializer />
         <NavBar />
-        <main className="max-w-6xl mx-auto p-3 md:p-4 lg:p-6">
+        <main className="max-w-6xl mx-auto p-3 md:p-4 lg:p-6 pb-24 md:pb-6">
           {children}
         </main>
         <script
