@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import ThemeSelector from '@/components/ThemeSelector'
+
 import PageWrapper from '@/components/PageWrapper'
 
 export default function Settings() {
@@ -313,7 +313,7 @@ export default function Settings() {
         </div>
 
         <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
-          <ThemeSelector />
+
         </div>
 
         <button 

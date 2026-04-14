@@ -112,37 +112,38 @@ export default function ManageCourses() {
           {favorites.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-gray-800">⭐ Favorite Courses</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              <div className="space-y-3">
                 {courses
                   .filter(c => favorites.includes(c.id))
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((course) => (
                     <Link key={course.id} href={`/course-details?id=${course.id}`}>
-                      <div className="bg-green-50/95 backdrop-blur rounded-lg p-2 shadow-md border border-green-200 cursor-pointer hover:shadow-lg hover:border-green-400 transition-all active:scale-95">
-                        <div className="flex items-start justify-between mb-1">
+                      <div className="bg-green-50 rounded-lg m-0.5 p-2.5 shadow-md border-l-4 border-l-green-600 cursor-pointer hover:shadow-lg transition-all active:scale-95">
+                        <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-bold text-green-700 truncate">{course.name}</h3>
-                            <p className="text-xs text-gray-600 line-clamp-1 mb-1">{course.location}, {course.state}</p>
-                            <div className="flex gap-2 text-xs">
-                              <span className="font-semibold text-gray-800">H: <span className="text-green-600">{course.holes.length}</span></span>
-                              <span className="font-semibold text-gray-800">Par: <span className="text-green-600">{course.par}</span></span>
-                              <span className="font-semibold text-gray-800">Y: <span className="text-green-600">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</span></span>
-                            </div>
+                            <p className="text-xs text-gray-500 mb-1">{course.location}, {course.state}</p>
+                            <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{course.name}</p>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              toggleFavorite(course.id)
-                            }}
-                            className="ml-1 text-lg hover:scale-110 transition-transform"
-                          >
-                            ⭐
-                          </button>
+                          <div className="flex items-center gap-2 md:gap-3 ml-2 md:ml-4">
+                            <div className="text-right">
+                              <p className="text-base md:text-lg font-bold text-gray-800">{course.holes.length}</p>
+                              <p className="text-xs text-gray-500">Holes</p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleFavorite(course.id)
+                              }}
+                              className="text-xl md:text-2xl hover:scale-110 transition-transform flex-shrink-0"
+                            >
+                              ⭐
+                            </button>
+                          </div>
                         </div>
 
                         {currentUser?.is_admin && (
-                          <div className="flex gap-1 mt-1.5">
+                          <div className="flex gap-1.5 mt-2">
                             <Link href={`/edit-course?id=${course.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
                               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
                                 Edit
@@ -176,37 +177,38 @@ export default function ManageCourses() {
             </div>
           ) : (
             <div>
-              <h3 className="text-lg font-bold text-gray-800 mb-2">All Courses</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">All Courses</h3>
+              <div className="space-y-3">
                 {courses
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((course) => (
                     <Link key={course.id} href={`/course-details?id=${course.id}`}>
-                      <div className="bg-white/95 backdrop-blur rounded-lg p-2 shadow-md border border-white/20 cursor-pointer hover:shadow-lg hover:border-green-200 transition-all active:scale-95">
-                        <div className="flex items-start justify-between mb-1">
+                      <div className={`rounded-lg m-0.5 p-2.5 shadow-md border-l-4 border-l-green-600 cursor-pointer hover:shadow-lg transition-all active:scale-95 ${favorites.includes(course.id) ? 'bg-green-50' : 'bg-white'}`}>
+                        <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-bold text-green-600 truncate">{course.name}</h3>
-                            <p className="text-xs text-gray-600 line-clamp-1 mb-1">{course.location}, {course.state}</p>
-                            <div className="flex gap-2 text-xs">
-                              <span className="font-semibold text-gray-800">H: <span className="text-green-600">{course.holes.length}</span></span>
-                              <span className="font-semibold text-gray-800">Par: <span className="text-green-600">{course.par}</span></span>
-                              <span className="font-semibold text-gray-800">Y: <span className="text-green-600">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</span></span>
-                            </div>
+                            <p className="text-xs text-gray-500 mb-1">{course.location}, {course.state}</p>
+                            <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{course.name}</p>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              toggleFavorite(course.id)
-                            }}
-                            className="ml-1 text-lg hover:scale-110 transition-transform"
-                          >
-                            {favorites.includes(course.id) ? '⭐' : '☆'}
-                          </button>
+                          <div className="flex items-center gap-2 md:gap-3 ml-2 md:ml-4">
+                            <div className="text-right">
+                              <p className="text-base md:text-lg font-bold text-gray-800">{course.holes.length}</p>
+                              <p className="text-xs text-gray-500">Holes</p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleFavorite(course.id)
+                              }}
+                              className="text-xl md:text-2xl hover:scale-110 transition-transform flex-shrink-0"
+                            >
+                              {favorites.includes(course.id) ? '⭐' : '☆'}
+                            </button>
+                          </div>
                         </div>
 
                         {currentUser?.is_admin && (
-                          <div className="flex gap-1 mt-1.5">
+                          <div className="flex gap-1.5 mt-2">
                             <Link href={`/edit-course?id=${course.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
                               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
                                 Edit
@@ -233,7 +235,7 @@ export default function ManageCourses() {
         </div>
 
         <Link href="/">
-          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">Back to Dashboard</button>
+          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">Home</button>
         </Link>
       </div>
     </PageWrapper>
