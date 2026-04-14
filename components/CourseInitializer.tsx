@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { COURSES_DATABASE } from '@/data/courses'
-import { syncDataFromSupabase } from '@/lib/dataSync'
+import { syncDataFromSupabase, saveCourseToSupabase } from '@/lib/dataSync'
 
 export default function CourseInitializer() {
   useEffect(() => {
@@ -76,6 +76,24 @@ export default function CourseInitializer() {
       // Ensure golfUsers exists (even if empty)
       if (!localStorage.getItem('golfUsers')) {
         localStorage.setItem('golfUsers', JSON.stringify([]))
+      }
+
+      // Sync courses to Supabase to ensure they exist for foreign key constraints
+      try {
+        const localCoursesStr = localStorage.getItem('golfCourses')
+        if (localCoursesStr) {
+          const localCourses = JSON.parse(localCoursesStr)
+          console.log(`📤 Syncing ${localCourses.length} courses to Supabase...`)
+          for (const course of localCourses) {
+            // Fire and forget - don't wait for each one
+            saveCourseToSupabase(course).catch(error => {
+              // Courses might already exist, that's fine
+              console.log(`Note: Course ${course.id} already in Supabase or sync skipped`)
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error syncing courses to Supabase:', error)
       }
     }
 

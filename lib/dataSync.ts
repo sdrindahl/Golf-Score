@@ -399,9 +399,10 @@ export async function saveCourseToSupabase(course: Course): Promise<void> {
   }
 
   try {
+    // Use upsert to insert if new, update if already exists
     const { error } = await supabase
       .from('courses')
-      .insert([course])
+      .upsert([course], { onConflict: 'id' })
 
     if (error) throw error
     console.log('Course saved to Supabase:', course.id)
