@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course, Hole } from '@/types'
 import Link from 'next/link'
+import { saveRoundToSupabase } from '@/lib/dataSync'
 
 function TrackRoundContent() {
   const router = useRouter()
@@ -138,6 +139,13 @@ function TrackRoundContent() {
           allRounds[index].totalScore = totalScore
           localStorage.setItem('golfRounds', JSON.stringify(allRounds))
           console.log('💾 Round auto-saved after hole', currentHoleIndex + 1)
+          
+          // Also sync to Supabase so other devices see the update
+          const updatedRound = allRounds[index]
+          saveRoundToSupabase(updatedRound).catch(error => {
+            console.log('Could not sync round to Supabase:', error)
+            // Don't stop the app if Supabase sync fails
+          })
         }
       }
     } catch (error) {
@@ -166,6 +174,10 @@ function TrackRoundContent() {
 
   const handleFinishRound = () => {
     if (round) {
+      // Final sync to Supabase before navigating away
+      saveRoundToSupabase(round).catch(error => {
+        console.log('Could not sync final round to Supabase:', error)
+      })
       router.push(`/round-detail?id=${round.id}`)
     }
   }
