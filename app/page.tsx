@@ -124,7 +124,9 @@ export default function Home() {
   }
 
   const handleViewRounds = () => {
-    router.push('/player')
+    if (currentUser) {
+      router.push(`/player?id=${currentUser.id}`)
+    }
   }
 
   const handleViewCourses = () => {
