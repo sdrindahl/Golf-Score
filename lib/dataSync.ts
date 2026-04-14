@@ -52,6 +52,7 @@ export async function syncDataFromSupabase(): Promise<void> {
           userName: r.user_name,
           courseId: r.course_id,
           courseName: r.course_name,
+          selectedTee: r.selected_tee,
           date: r.date,
           scores: r.scores,
           totalScore: r.total_score,
@@ -295,6 +296,7 @@ function roundToSupabase(round: Round) {
     user_name: round.userName,
     course_id: round.courseId,
     course_name: round.courseName,
+    selected_tee: round.selectedTee,
     date: round.date,
     scores: round.scores,
     total_score: round.totalScore,
@@ -315,9 +317,10 @@ export async function saveRoundToSupabase(round: Round): Promise<void> {
     const roundData = roundToSupabase(round)
     console.log('Saving round to Supabase:', roundData)
     
+    // Use upsert to insert if new, update if already exists
     const { data, error } = await supabase
       .from('rounds')
-      .insert([roundData])
+      .upsert([roundData], { onConflict: 'id' })
       .select()
 
     if (error) {
