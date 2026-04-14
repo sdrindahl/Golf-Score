@@ -100,10 +100,10 @@ function CourseDetailsContent() {
         
         // Store course in localStorage
         localStorage.setItem('selectedCourse', JSON.stringify(course))
-        console.log('✅ CourseDetails - Course saved to localStorage. Navigating to /new-round')
+        console.log('✅ CourseDetails - Course saved to localStorage. Navigating to /select-tee')
         
-        // Use Next.js router instead of window.location.href for better reliability
-        router.push('/new-round')
+        // Navigate to tee selection instead of new-round
+        router.push(`/select-tee?courseId=${course.id}`)
       } catch (error) {
         console.error('❌ CourseDetails - Error starting round:', error)
         alert('Error starting round. Please try again.')

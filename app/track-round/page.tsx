@@ -13,15 +13,18 @@ function TrackRoundContent() {
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
+  const [scores, setScores] = useState<number[]>([])
+  
+  // GPS state
   const [userLat, setUserLat] = useState<number | null>(null)
   const [userLng, setUserLng] = useState<number | null>(null)
   const [distance, setDistance] = useState<number | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [geolocationError, setGeolocationError] = useState<string | null>(null)
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
-  const [watchId, setWatchId] = useState<number | null>(null)
+  const [geolocationError, setGeolocationError] = useState<string | null>(null)
+  
+  const [loading, setLoading] = useState(true)
 
-  // Haversine formula to calculate distance between two coordinates
+  // Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
     const R = 6371 // Earth's radius in km
     const dLat = ((lat2 - lat1) * Math.PI) / 180
@@ -34,23 +37,23 @@ function TrackRoundContent() {
         Math.sin(dLon / 2)
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     const km = R * c
-    const yards = km * 1093.61 // Convert km to yards
+    const yards = km * 1093.61
     return Math.round(yards)
   }
 
+  // Load round and course
   useEffect(() => {
     if (!roundId) return
 
     try {
-      // Load round from localStorage
       const savedRounds = localStorage.getItem('golfRounds')
       if (savedRounds) {
         const allRounds = JSON.parse(savedRounds) as Round[]
         const foundRound = allRounds.find((r) => r.id === roundId)
         if (foundRound) {
           setRound(foundRound)
+          setScores([...foundRound.scores])
 
-          // Load course from localStorage
           const savedCourses = localStorage.getItem('golfCourses')
           if (savedCourses) {
             const allCourses = JSON.parse(savedCourses) as Course[]
@@ -68,63 +71,45 @@ function TrackRoundContent() {
     }
   }, [roundId])
 
-  // Request geolocation permission and start tracking
+  // Request geolocation
   useEffect(() => {
-    if (!loading && !round) return
+    if (!loading && round) {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLat(position.coords.latitude)
+            setUserLng(position.coords.longitude)
+            setGpsAccuracy(position.coords.accuracy)
+            setGeolocationError(null)
+          },
+          (error) => {
+            let errorMsg = 'Unable to get location'
+            if (error.code === error.PERMISSION_DENIED) {
+              errorMsg = 'Location permission denied. Please enable location services.'
+            }
+            setGeolocationError(errorMsg)
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        )
 
-    if ('geolocation' in navigator) {
-      // Request location immediately
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLat(position.coords.latitude)
-          setUserLng(position.coords.longitude)
-          setGpsAccuracy(position.coords.accuracy)
-          setGeolocationError(null)
-        },
-        (error) => {
-          let errorMsg = 'Unable to get location'
-          if (error.code === error.PERMISSION_DENIED) {
-            errorMsg = 'Location permission denied. Please enable location services.'
-          } else if (error.code === error.POSITION_UNAVAILABLE) {
-            errorMsg = 'Location information is unavailable.'
-          }
-          setGeolocationError(errorMsg)
-          console.error('Geolocation error:', error)
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
-        }
-      )
+        // Watch position for continuous updates
+        const id = navigator.geolocation.watchPosition(
+          (position) => {
+            setUserLat(position.coords.latitude)
+            setUserLng(position.coords.longitude)
+            setGpsAccuracy(position.coords.accuracy)
+            setGeolocationError(null)
+          },
+          () => {},
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        )
 
-      // Watch position for continuous updates
-      const id = navigator.geolocation.watchPosition(
-        (position) => {
-          setUserLat(position.coords.latitude)
-          setUserLng(position.coords.longitude)
-          setGpsAccuracy(position.coords.accuracy)
-          setGeolocationError(null)
-        },
-        (error) => {
-          console.error('Watch position error:', error)
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
-        }
-      )
-
-      setWatchId(id)
-
-      return () => {
-        navigator.geolocation.clearWatch(id)
+        return () => navigator.geolocation.clearWatch(id)
       }
     }
   }, [loading, round])
 
-  // Calculate distance to current hole whenever location or hole changes
+  // Calculate distance to current hole
   useEffect(() => {
     if (
       userLat !== null &&
@@ -138,6 +123,35 @@ function TrackRoundContent() {
     }
   }, [userLat, userLng, currentHoleIndex, course])
 
+  // Auto-save round after each hole
+  const saveRound = (updatedScores: number[]) => {
+    if (!round) return
+
+    try {
+      const savedRounds = localStorage.getItem('golfRounds')
+      if (savedRounds) {
+        const allRounds = JSON.parse(savedRounds) as Round[]
+        const index = allRounds.findIndex((r) => r.id === roundId)
+        if (index >= 0) {
+          const totalScore = updatedScores.reduce((sum, score) => sum + score, 0)
+          allRounds[index].scores = updatedScores
+          allRounds[index].totalScore = totalScore
+          localStorage.setItem('golfRounds', JSON.stringify(allRounds))
+          console.log('💾 Round auto-saved after hole', currentHoleIndex + 1)
+        }
+      }
+    } catch (error) {
+      console.error('Error saving round:', error)
+    }
+  }
+
+  const handleScoreChange = (delta: number) => {
+    const newScores = [...scores]
+    newScores[currentHoleIndex] = Math.max(0, newScores[currentHoleIndex] + delta)
+    setScores(newScores)
+    saveRound(newScores)
+  }
+
   const handleNextHole = () => {
     if (course && currentHoleIndex < course.holes.length - 1) {
       setCurrentHoleIndex(currentHoleIndex + 1)
@@ -147,6 +161,19 @@ function TrackRoundContent() {
   const handlePreviousHole = () => {
     if (currentHoleIndex > 0) {
       setCurrentHoleIndex(currentHoleIndex - 1)
+    }
+  }
+
+  const handleFinishRound = () => {
+    if (round) {
+      router.push(`/round-detail?id=${round.id}`)
+    }
+  }
+
+  const handleBackToTeeSelector = () => {
+    if (confirm('Go back to tee selector? Your current round will be saved.')) {
+      saveRound(scores)
+      router.back()
     }
   }
 
@@ -177,13 +204,13 @@ function TrackRoundContent() {
     return (
       <div className="max-w-2xl mx-auto py-6">
         <div className="card text-center">
-          <h2 className="text-2xl font-bold mb-4">Round Complete</h2>
+          <h2 className="text-2xl font-bold mb-4">Round Complete! 🎉</h2>
           <p className="text-gray-600 mb-6">
             You've finished all {course.holes.length} holes!
           </p>
-          <Link href={`/round-detail?id=${roundId}`}>
-            <button className="btn-primary">View Scorecard</button>
-          </Link>
+          <button onClick={handleFinishRound} className="btn-primary">
+            View Scorecard
+          </button>
         </div>
       </div>
     )
@@ -192,44 +219,39 @@ function TrackRoundContent() {
   const currentHole: Hole = course.holes[currentHoleIndex]
   const selectedTee = round.selectedTee
   const teeBox = currentHole[selectedTee]
+  const currentScore = scores[currentHoleIndex] || 0
+  const parDifference = currentScore - currentHole.par
 
   return (
     <div className="max-w-2xl mx-auto py-6">
+      {/* Back button */}
+      <button
+        onClick={handleBackToTeeSelector}
+        className="mb-4 px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+      >
+        ← Back to Tee
+      </button>
+
       {/* GPS Status */}
       {geolocationError && (
-        <div className="card mb-6 bg-red-50 border-red-200">
-          <p className="text-red-700">
+        <div className="card mb-4 bg-red-50 border-red-200">
+          <p className="text-red-700 text-sm">
             <strong>⚠️ Location Error:</strong> {geolocationError}
           </p>
         </div>
       )}
 
       {userLat !== null && (
-        <div className="card mb-6 bg-green-50 border-green-200">
+        <div className="card mb-4 bg-green-50 border-green-200">
           <p className="text-green-700 text-sm">
             ✅ GPS Active • Accuracy: ±{Math.round(gpsAccuracy || 0)}m
           </p>
         </div>
       )}
 
-      {/* Main display */}
-      <div className="card mb-6">
-        {/* Course and hole header */}
-        <div className="mb-6 pb-6 border-b">
-          <p className="text-gray-600 text-sm">
-            {round.courseName} • {selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s Tee
-          </p>
-          <h1 className="text-4xl font-bold mt-2">
-            Hole {currentHole.holeNumber}
-            <span className="text-2xl text-gray-600 ml-4">Par {currentHole.par}</span>
-          </h1>
-          <p className="text-lg text-gray-600 mt-2">
-            Hole {currentHoleIndex + 1} of {course.holes.length}
-          </p>
-        </div>
-
-        {/* Distance to pin - Main focus */}
-        <div className="mb-8 text-center p-8 bg-blue-50 rounded-lg">
+      <div className="card">
+        {/* Distance to green - MAIN FOCUS */}
+        <div className="mb-8 text-center p-8 bg-blue-50 rounded-lg border-2 border-blue-200">
           <p className="text-gray-600 text-sm mb-2">Distance to Green</p>
           {distance !== null ? (
             <>
@@ -241,24 +263,62 @@ function TrackRoundContent() {
           )}
         </div>
 
-        {/* Hole info grid */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="p-4 bg-gray-50 rounded-lg text-center">
+        {/* Hole info header */}
+        <div className="mb-6 pb-4 border-b">
+          <p className="text-gray-600 text-sm">
+            {round.courseName} • {selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s Tee
+          </p>
+          <h1 className="text-3xl font-bold mt-2">Hole {currentHole.holeNumber}</h1>
+          <p className="text-gray-600 mt-1">
+            Hole {currentHoleIndex + 1} of {course.holes.length}
+          </p>
+        </div>
+
+        {/* Par and Yardage */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-gray-600 text-sm">Par</p>
+            <p className="text-3xl font-bold text-gray-800">{currentHole.par}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-gray-600 text-sm">Yardage</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{teeBox.yardage}</p>
+            <p className="text-3xl font-bold text-gray-800">{teeBox.yardage}</p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg text-center">
-            <p className="text-gray-600 text-sm">Rating</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{teeBox.courseRating.toFixed(1)}</p>
-          </div>
-          <div className="p-4 bg-gray-50 rounded-lg text-center">
-            <p className="text-gray-600 text-sm">Slope</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{teeBox.slopeRating}</p>
+        </div>
+
+        {/* Score entry with +/- buttons */}
+        <div className="mb-8 p-6 bg-yellow-50 rounded-lg border-2 border-yellow-200">
+          <p className="text-gray-600 text-sm text-center mb-4">Your Score</p>
+          <div className="flex items-center justify-center gap-6">
+            <button
+              onClick={() => handleScoreChange(-1)}
+              className="px-6 py-3 bg-red-500 text-white text-2xl font-bold rounded-lg hover:bg-red-600"
+            >
+              −
+            </button>
+            <div className="text-center">
+              <div className="text-5xl font-bold text-gray-800">{currentScore}</div>
+              <div className={`text-lg mt-2 font-semibold ${
+                parDifference < 0 ? 'text-green-600' : 
+                parDifference > 0 ? 'text-red-600' : 
+                'text-gray-600'
+              }`}>
+                {parDifference === 0 ? 'Even' : 
+                 parDifference < 0 ? `${Math.abs(parDifference)} under` : 
+                 `${parDifference} over`}
+              </div>
+            </div>
+            <button
+              onClick={() => handleScoreChange(1)}
+              className="px-6 py-3 bg-green-500 text-white text-2xl font-bold rounded-lg hover:bg-green-600"
+            >
+              +
+            </button>
           </div>
         </div>
 
         {/* Navigation buttons */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-3">
           {currentHoleIndex > 0 && (
             <button onClick={handlePreviousHole} className="btn-secondary flex-1">
               ← Previous Hole
@@ -270,45 +330,19 @@ function TrackRoundContent() {
             </button>
           )}
           {currentHoleIndex === course.holes.length - 1 && (
-            <button
-              onClick={() => setCurrentHoleIndex(currentHoleIndex + 1)}
-              className="btn-primary flex-1"
-            >
+            <button onClick={handleFinishRound} className="btn-primary flex-1">
               Finish Round ✓
             </button>
           )}
         </div>
-
-        {/* Back to scorecard button */}
-        <Link href={`/round-detail?id=${roundId}`}>
-          <button className="btn-secondary w-full">Back to Scorecard</button>
-        </Link>
       </div>
-
-      {/* Debug info (optional) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="card bg-gray-50 text-xs">
-          <p className="text-gray-600">
-            <strong>Debug:</strong> Hole GPS: ({currentHole.greenLat}, {currentHole.greenLng}) | User GPS: (
-            {userLat?.toFixed(4)}, {userLng?.toFixed(4)})
-          </p>
-        </div>
-      )}
     </div>
   )
 }
 
-export default function TrackRoundPage() {
+export default function TrackRound() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-2xl mx-auto py-6">
-          <div className="card text-center">
-            <p className="text-gray-500">Loading...</p>
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<div>Loading...</div>}>
       <TrackRoundContent />
     </Suspense>
   )
