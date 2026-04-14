@@ -10,6 +10,7 @@ import PageWrapper from '@/components/PageWrapper'
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const auth = useAuth()
@@ -39,6 +40,11 @@ export default function ManageCourses() {
       })
       
       localStorage.setItem('golfCourses', JSON.stringify(uniqueCourses))
+
+      // Load favorites from localStorage
+      const savedFavorites = localStorage.getItem('favoriteCourses')
+      const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : []
+      setFavorites(new Set(favoriteIds))
 
       setCourses(uniqueCourses)
       setLoading(false)
@@ -73,6 +79,17 @@ export default function ManageCourses() {
     }
   }
 
+  const toggleFavorite = (courseId: string) => {
+    const newFavorites = new Set(favorites)
+    if (newFavorites.has(courseId)) {
+      newFavorites.delete(courseId)
+    } else {
+      newFavorites.add(courseId)
+    }
+    setFavorites(newFavorites)
+    localStorage.setItem('favoriteCourses', JSON.stringify(Array.from(newFavorites)))
+  }
+
   if (loading) {
     return (
       <PageWrapper title="Select Course">
@@ -94,6 +111,65 @@ export default function ManageCourses() {
             </Link>
           </div>
 
+          {/* Favorite Courses Section */}
+          {favorites.size > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-gray-800">⭐ Favorite Courses</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                {courses
+                  .filter(c => favorites.has(c.id))
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((course) => (
+                    <Link key={course.id} href={`/course-details?id=${course.id}`}>
+                      <div className="bg-green-50/95 backdrop-blur rounded-lg p-2 shadow-md border border-green-200 cursor-pointer hover:shadow-lg hover:border-green-400 transition-all active:scale-95">
+                        <div className="flex items-start justify-between mb-1">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-bold text-green-700 truncate">{course.name}</h3>
+                            <p className="text-xs text-gray-600 line-clamp-1 mb-1">{course.location}, {course.state}</p>
+                            <div className="flex gap-2 text-xs">
+                              <span className="font-semibold text-gray-800">H: <span className="text-green-600">{course.holes.length}</span></span>
+                              <span className="font-semibold text-gray-800">Par: <span className="text-green-600">{course.par}</span></span>
+                              <span className="font-semibold text-gray-800">Y: <span className="text-green-600">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</span></span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              toggleFavorite(course.id)
+                            }}
+                            className="ml-1 text-lg hover:scale-110 transition-transform"
+                          >
+                            ⭐
+                          </button>
+                        </div>
+
+                        {currentUser?.is_admin && (
+                          <div className="flex gap-1 mt-1.5">
+                            <Link href={`/edit-course?id=${course.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
+                              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
+                                Edit
+                              </button>
+                            </Link>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleDelete(course.id)
+                              }}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {courses.length === 0 ? (
             <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
               <p className="text-gray-500 text-lg mb-4">No courses added yet</p>
@@ -102,55 +178,59 @@ export default function ManageCourses() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-              {courses.sort((a, b) => a.name.localeCompare(b.name)).map((course) => (
-                <div key={course.id} className="bg-white/95 backdrop-blur rounded-lg p-2 shadow-md border border-white/20">
-                  <div className="mb-1">
-                    <Link href={`/course-details?id=${course.id}`}>
-                      <h3 className="text-sm font-bold text-green-600 hover:text-green-700 cursor-pointer mb-0.5 truncate">{course.name}</h3>
-                    </Link>
-                    <p className="text-xs text-gray-600 line-clamp-1">{course.location}, {course.state}</p>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1 mb-2 bg-gray-50 rounded-lg p-1.5">
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500">Holes</p>
-                      <p className="text-sm font-bold text-gray-800">{course.holes.length}</p>
-                    </div>
-                    <div className="text-center border-l border-r border-gray-200">
-                      <p className="text-xs text-gray-500">Par</p>
-                      <p className="text-sm font-bold text-gray-800">{course.par}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500">Yards</p>
-                      <p className="text-sm font-bold text-gray-800">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-1">
-                    <Link href={`/course-details?id=${course.id}`} className="flex-1">
-                      <button className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-1.5 py-1 rounded-md transition-colors">
-                        View
-                      </button>
-                    </Link>
-                    {currentUser?.is_admin && (
-                      <>
-                        <Link href={`/edit-course?id=${course.id}`} className="flex-1">
-                          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1.5 py-1 rounded-md transition-colors">
-                            Edit
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">All Courses</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+                {courses
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((course) => (
+                    <Link key={course.id} href={`/course-details?id=${course.id}`}>
+                      <div className="bg-white/95 backdrop-blur rounded-lg p-2 shadow-md border border-white/20 cursor-pointer hover:shadow-lg hover:border-green-200 transition-all active:scale-95">
+                        <div className="flex items-start justify-between mb-1">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-bold text-green-600 truncate">{course.name}</h3>
+                            <p className="text-xs text-gray-600 line-clamp-1 mb-1">{course.location}, {course.state}</p>
+                            <div className="flex gap-2 text-xs">
+                              <span className="font-semibold text-gray-800">H: <span className="text-green-600">{course.holes.length}</span></span>
+                              <span className="font-semibold text-gray-800">Par: <span className="text-green-600">{course.par}</span></span>
+                              <span className="font-semibold text-gray-800">Y: <span className="text-green-600">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</span></span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              toggleFavorite(course.id)
+                            }}
+                            className="ml-1 text-lg hover:scale-110 transition-transform"
+                          >
+                            {favorites.has(course.id) ? '⭐' : '☆'}
                           </button>
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(course.id)}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
+                        </div>
+
+                        {currentUser?.is_admin && (
+                          <div className="flex gap-1 mt-1.5">
+                            <Link href={`/edit-course?id=${course.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
+                              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
+                                Edit
+                              </button>
+                            </Link>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleDelete(course.id)
+                              }}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+              </div>
             </div>
           )}
         </div>
