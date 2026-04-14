@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import ThemeSelector from '@/components/ThemeSelector'
+import PageWrapper from '@/components/PageWrapper'
 
 export default function Settings() {
   const router = useRouter()
@@ -140,11 +141,11 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-6">
-        <div className="card text-center">
+      <PageWrapper title="Account Settings">
+        <div className="max-w-2xl mx-auto bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
           <p className="text-gray-500">Loading...</p>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
@@ -153,199 +154,203 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-xl mx-auto py-4">
+    <PageWrapper title="Account Settings">
+      <div className="max-w-xl mx-auto space-y-4">
 
-      {/* Current Name Card */}
-      <div className="card mb-4 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-xs text-gray-600">Player Name</p>
-            <p className="text-base font-semibold">{currentUser?.name}</p>
-          </div>
-          {!editingName && (
-            <button
-              onClick={() => {
-                setEditingName(true)
-                setNameError('')
-                setNameSuccess('')
-              }}
-              className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
-            >
-              Edit
-            </button>
-          )}
-        </div>
-
-        {/* Edit Name Form */}
-        {editingName && (
-          <form onSubmit={handleUpdateName} className="mt-3 pt-3 border-t space-y-2">
+        {/* Current Name Card */}
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
+          <div className="flex items-center justify-between gap-2">
             <div>
-              <label className="label text-xs">New Name</label>
-              <input
-                type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Enter new name"
-                className="input-field py-1 text-sm"
-              />
+              <p className="text-xs text-gray-600 font-semibold uppercase">Player Name</p>
+              <p className="text-lg font-bold text-gray-800">{currentUser?.name}</p>
             </div>
-
-            {nameError && (
-              <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
-                {nameError}
-              </div>
-            )}
-
-            {nameSuccess && (
-              <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
-                ✅ {nameSuccess}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button type="submit" className="btn-primary flex-1 py-1 text-sm">
-                Save
-              </button>
+            {!editingName && (
               <button
-                type="button"
-                onClick={() => setEditingName(false)}
-                className="btn-secondary flex-1 py-1 text-sm"
+                onClick={() => {
+                  setEditingName(true)
+                  setNameError('')
+                  setNameSuccess('')
+                }}
+                className="text-blue-600 hover:text-blue-800 text-sm font-semibold"
               >
-                Cancel
+                Edit
               </button>
-            </div>
-          </form>
-        )}
-      </div>
+            )}
+          </div>
 
-      {/* Change Password Card */}
-      <div className="card mb-4 p-3">
-        {!showPasswordForm ? (
-          <button
-            onClick={() => {
-              setShowPasswordForm(true)
-              setPasswordError('')
-              setPasswordSuccess('')
-              setCurrentPassword('')
-              setNewPassword('')
-              setConfirmPassword('')
-            }}
-            className="w-full text-left text-base font-semibold text-blue-600 hover:text-blue-800"
-          >
-            🔒 Change Password
-          </button>
-        ) : (
-          <form onSubmit={handleChangePassword} className="space-y-2">
-            <div>
-              <label className="label text-xs">Current Password (4 digits)</label>
-              <div className="relative">
+          {/* Edit Name Form */}
+          {editingName && (
+            <form onSubmit={handleUpdateName} className="mt-4 pt-4 border-t space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">New Name</label>
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value.slice(0, 4))}
-                  placeholder="0000"
-                  maxLength={4}
-                  className="input-field text-center text-lg tracking-widest font-mono py-1"
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Enter new name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-sm"
                 />
+              </div>
+
+              {nameError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-xs font-semibold">
+                  {nameError}
+                </div>
+              )}
+
+              {nameSuccess && (
+                <div className="bg-green-100 text-green-700 p-3 rounded-lg text-xs font-semibold">
+                  ✅ {nameSuccess}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+                  Save
+                </button>
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1.5 text-gray-600 text-xs"
+                  onClick={() => setEditingName(false)}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 rounded-lg transition-colors text-sm"
                 >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                  Cancel
                 </button>
               </div>
-            </div>
-
-            <div>
-              <label className="label text-xs">New Password (4 digits)</label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value.slice(0, 4))}
-                placeholder="0000"
-                maxLength={4}
-                className="input-field text-center text-lg tracking-widest font-mono py-1"
-              />
-              <p className="text-xs text-gray-500 mt-0.5">Exactly 4 digits</p>
-            </div>
-
-            <div>
-              <label className="label text-xs">Confirm Password</label>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value.slice(0, 4))}
-                placeholder="0000"
-                maxLength={4}
-                className="input-field text-center text-lg tracking-widest font-mono py-1"
-              />
-            </div>
-
-            {passwordError && (
-              <div className="bg-red-100 text-red-700 p-2 rounded text-xs">
-                {passwordError}
-              </div>
-            )}
-
-            {passwordSuccess && (
-              <div className="bg-green-100 text-green-700 p-2 rounded text-xs">
-                ✅ {passwordSuccess}
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button type="submit" className="btn-primary flex-1 py-1 text-sm">
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowPasswordForm(false)}
-                className="btn-secondary flex-1 py-1 text-sm"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      <ThemeSelector />
-
-      <button 
-        onClick={handleLogout} 
-        className="btn-primary w-full mt-3 py-1 text-sm"
-      >
-        🚪 Logout
-      </button>
-
-      {/* Delete Account Card - Admin Only */}
-      {currentUser?.is_admin && (
-        <div className="card mt-3 p-3 border-2 border-red-200 bg-red-50">
-          <h2 className="text-base font-bold mb-2 text-red-600">⚠️ Delete Account</h2>
-          
-          <p className="text-gray-600 text-xs mb-3">
-            Permanently delete an account and all golf rounds.
-          </p>
-          
-          {deleteError && (
-            <div className="bg-red-100 text-red-700 p-2 rounded mb-2 text-xs">
-              {deleteError}
-            </div>
+            </form>
           )}
-
-          <button
-            onClick={handleDeleteAccount}
-            className="btn-primary w-full py-1 text-sm"
-          >
-            🗑️ Delete Account
-          </button>
         </div>
-      )}
 
-      <Link href="/">
-        <button className="btn-primary w-full mt-3 py-1 text-sm">← Back</button>
-      </Link>
-    </div>
+        {/* Change Password Card */}
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
+          {!showPasswordForm ? (
+            <button
+              onClick={() => {
+                setShowPasswordForm(true)
+                setPasswordError('')
+                setPasswordSuccess('')
+                setCurrentPassword('')
+                setNewPassword('')
+                setConfirmPassword('')
+              }}
+              className="w-full text-left text-base font-bold text-gray-800 hover:text-blue-600"
+            >
+              🔒 Change Password
+            </button>
+          ) : (
+            <form onSubmit={handleChangePassword} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Current Password (4 digits)</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value.slice(0, 4))}
+                    placeholder="0000"
+                    maxLength={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2 text-gray-600 text-sm"
+                  >
+                    {showPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">New Password (4 digits)</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value.slice(0, 4))}
+                  placeholder="0000"
+                  maxLength={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono"
+                />
+                <p className="text-xs text-gray-500 mt-1">Exactly 4 digits</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Confirm Password</label>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value.slice(0, 4))}
+                  placeholder="0000"
+                  maxLength={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono"
+                />
+              </div>
+
+              {passwordError && (
+                <div className="bg-red-100 text-red-700 p-3 rounded-lg text-xs font-semibold">
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="bg-green-100 text-green-700 p-3 rounded-lg text-xs font-semibold">
+                  ✅ {passwordSuccess}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordForm(false)}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 rounded-lg transition-colors text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
+          <ThemeSelector />
+        </div>
+
+        <button 
+          onClick={handleLogout} 
+          className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20"
+        >
+          🚪 Logout
+        </button>
+
+        {/* Delete Account Card - Admin Only */}
+        {currentUser?.is_admin && (
+          <div className="bg-red-50 backdrop-blur rounded-3xl p-6 shadow-lg border-2 border-red-200">
+            <h2 className="text-lg font-bold mb-2 text-red-600">⚠️ Delete Account</h2>
+            
+            <p className="text-gray-600 text-xs mb-4">
+              Permanently delete an account and all golf rounds.
+            </p>
+            
+            {deleteError && (
+              <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-3 text-xs font-semibold">
+                {deleteError}
+              </div>
+            )}
+
+            <button
+              onClick={handleDeleteAccount}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors"
+            >
+              🗑️ Delete Account
+            </button>
+          </div>
+        )}
+
+        <Link href="/">
+          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">← Back to Home</button>
+        </Link>
+      </div>
+    </PageWrapper>
   )
 }

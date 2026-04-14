@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import ScoreHistory from '@/components/ScoreHistory'
-import HandicapDisplay from '@/components/HandicapDisplay'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 
@@ -112,101 +110,107 @@ export default function Home() {
     return handicap
   }
 
-  const handleDeleteRound = (roundId: string) => {
-    const updated = rounds.filter(r => r.id !== roundId)
-    setRounds(updated)
-    localStorage.setItem('golfRounds', JSON.stringify(updated))
+  const handicap = calculateHandicap()
+  
+  const calculateBestScore = (): number | null => {
+    if (rounds.length === 0) return null
+    return Math.min(...rounds.map(r => r.totalScore))
   }
 
-  const handicap = calculateHandicap()
+  const bestScore = calculateBestScore()
+
+  const handleStartNewRound = () => {
+    router.push('/manage-courses')
+  }
+
+  const handleViewRounds = () => {
+    if (currentUser) {
+      router.push(`/player?id=${currentUser.id}`)
+    }
+  }
+
+  const handleViewCourses = () => {
+    router.push('/manage-courses')
+  }
+
+  const handleViewGolfers = () => {
+    router.push('/players')
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
-      <div className="md:col-span-2">
-        <div className="card mb-6">
-          <h2 className="text-2xl font-bold mb-4 text-center">Golf Score Tracker</h2>
-          <div className="hidden md:flex gap-4 flex-wrap">
-            <Link href="/add-course">
-              <button className="btn-primary">
-                ➕ Add Course
-              </button>
-            </Link>
-            <Link href="/manage-courses">
-              <button className="btn-secondary">
-                📋 Select Course
-              </button>
-            </Link>
-            <Link href="/players">
-              <button className="btn-secondary">
-                👥 View Golfers
-              </button>
-            </Link>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 pb-12">
+      {/* Welcome Banner with Account Link */}
+      <div className="px-6 py-10 text-white relative">
+        <div className="absolute top-6 right-6">
+          <Link href="/settings">
+            <button className="text-white/80 hover:text-white text-sm font-medium underline transition-colors">
+              Account
+            </button>
+          </Link>
+        </div>
+        <p className="text-base opacity-80 mb-1 font-medium">Welcome back</p>
+        <h1 className="text-5xl font-bold tracking-tight">{currentUser?.name || 'Golfer'}</h1>
+      </div>
+
+      {/* Main Content */}
+      <div className="px-4 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Rounds Card */}
+          <button
+            onClick={handleViewRounds}
+            className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer border border-white/20"
+          >
+            <div className="text-5xl mb-3 text-center">🏌️</div>
+            <div className="text-3xl font-bold text-center text-gray-800">{rounds.length}</div>
+            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Rounds</div>
+          </button>
+
+          {/* Best Score Card */}
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+            <div className="text-5xl mb-3 text-center">🏆</div>
+            <div className="text-3xl font-bold text-center text-gray-800">
+              {bestScore ? bestScore : '—'}
+            </div>
+            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Best</div>
+          </div>
+
+          {/* Handicap Card */}
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+            <div className="text-5xl mb-3 text-center">⛳</div>
+            <div className="text-3xl font-bold text-center text-gray-800">
+              {handicap > 0 ? handicap : '—'}
+            </div>
+            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Handicap</div>
           </div>
         </div>
 
-        <ScoreHistory rounds={rounds} onDelete={handleDeleteRound} userId={currentUser?.id} />
-      </div>
+        {/* Start New Round Button */}
+        <button
+          onClick={handleStartNewRound}
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+        >
+          <span className="text-2xl">+</span>
+          <span className="text-lg">Start New Round</span>
+        </button>
 
-      <div>
-        <HandicapDisplay handicap={handicap} totalRounds={rounds.length} />
-        
-        <div className="card mt-6">
-          <h3 className="text-lg font-bold mb-3">Best Rounds</h3>
-          {rounds.length > 0 ? (
-            <div className="space-y-2">
-              {/* Best 18-Hole Round */}
-              {(() => {
-                const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-                const rounds18 = rounds.filter(r => {
-                  const course = courses.find((c: any) => c.id === r.courseId)
-                  return course && course.holes.length === 18
-                })
-                
-                if (rounds18.length === 0) return null
-                
-                const best18 = rounds18.reduce((best, current) => 
-                  current.totalScore < best.totalScore ? current : best
-                )
-                
-                return (
-                  <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
-                    <span className="text-gray-700 font-medium">18-Hole:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-600">{best18.courseName}</span>
-                      <span className="font-bold text-green-600">{best18.totalScore}</span>
-                    </div>
-                  </div>
-                )
-              })()}
-              
-              {/* Best 9-Hole Round */}
-              {(() => {
-                const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-                const rounds9 = rounds.filter(r => {
-                  const course = courses.find((c: any) => c.id === r.courseId)
-                  return course && course.holes.length === 9
-                })
-                
-                if (rounds9.length === 0) return null
-                
-                const best9 = rounds9.reduce((best, current) => 
-                  current.totalScore < best.totalScore ? current : best
-                )
-                
-                return (
-                  <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
-                    <span className="text-gray-700 font-medium">9-Hole:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-600">{best9.courseName}</span>
-                      <span className="font-bold text-green-600">{best9.totalScore}</span>
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No rounds recorded yet. Start by recording your first round!</p>
-          )}
+        {/* View Courses and Golfers */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={handleViewCourses}
+            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">🏌️‍♂️</span>
+            <span>View Courses</span>
+          </button>
+
+          <button
+            onClick={handleViewGolfers}
+            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2"
+          >
+            <span className="text-xl">👥</span>
+            <span>View Golfers</span>
+          </button>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Round } from '@/types'
 import { deleteRoundFromSupabase } from '@/lib/dataSync'
 import { useAuth } from '@/lib/useAuth'
@@ -13,6 +13,7 @@ interface ScoreHistoryProps {
 }
 
 export default function ScoreHistory({ rounds, onDelete, readOnly = false, userId }: ScoreHistoryProps) {
+  const router = useRouter()
   const auth = useAuth()
   const currentUser = auth.getCurrentUser()
 
@@ -58,72 +59,36 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
   const sortedRounds = [...rounds].reverse()
 
   return (
-    <div className="card">
-      <h2 className="text-xl font-bold mb-4">Recent Rounds</h2>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs md:text-base">
-          <thead className="table-header">
-            <tr>
-              <th className="text-left p-1 md:p-3 text-xs md:text-sm">Date</th>
-              <th className="text-left p-1 md:p-3 text-xs md:text-sm">Course</th>
-              <th className="text-center p-1 md:p-3 text-xs md:text-sm">Score</th>
-              <th className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell">vs Par</th>
-              {!readOnly && <th className="text-center p-1 md:p-3 text-xs md:text-sm">Actions</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedRounds.map((round) => {
-              const vsPar = round.totalScore - 72 // Assuming 18 holes, par 72
-              const vsPalColor = vsPar < 0 ? 'text-green-600' : vsPar > 0 ? 'text-red-600' : 'text-gray-600'
-              const vsPalDisplay = vsPar > 0 ? `+${vsPar}` : `${vsPar}`
+    <div>
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Rounds — Tap to view</h2>
+      <div className="space-y-3">
+        {sortedRounds.map((round) => {
+          const vsPar = round.totalScore - 72 // Assuming 18 holes, par 72
+          const vsPalColor = vsPar < 0 ? 'text-green-600 font-bold' : vsPar > 0 ? 'text-red-600 font-bold' : 'text-gray-600 font-semibold'
+          const vsPalDisplay = vsPar > 0 ? `+${vsPar}` : `${vsPar}`
 
-              return (
-                <tr key={round.id} className="table-row border-b">
-                  <td className="p-1 md:p-3 text-xs md:text-sm">{new Date(round.date).toLocaleDateString()}</td>
-                  <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate">{round.courseName}</td>
-                  <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm">{round.totalScore}</td>
-                  <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
-                    {vsPalDisplay}
-                  </td>
-                  {!readOnly ? (
-                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
-                      <div className="flex flex-col sm:flex-row gap-0.5 md:gap-2 justify-center">
-                        <Link href={`/round-detail?id=${round.id}`} className="inline-block">
-                          <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
-                            View
-                          </button>
-                        </Link>
-                        {canEditRound(round.userId) && (
-                          <Link href={`/edit-round?id=${round.id}`} className="inline-block">
-                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs">
-                              Edit
-                            </button>
-                          </Link>
-                        )}
-                        {canEditRound(round.userId) && (
-                          <button
-                            onClick={() => handleDelete(round.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold text-xs"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  ) : (
-                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
-                      <Link href={`/round-detail?id=${round.id}`} className="inline-block">
-                        <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
-                          View Card
-                        </button>
-                      </Link>
-                    </td>
-                  )}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+          return (
+            <div
+              key={round.id}
+              onClick={() => router.push(`/round-detail?id=${round.id}`)}
+              className="bg-white/95 backdrop-blur rounded-2xl p-5 shadow-md border border-white/20 cursor-pointer transition-all active:scale-95 active:shadow-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-1">{new Date(round.date).toLocaleDateString()}</p>
+                  <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{round.courseName}</p>
+                </div>
+                <div className="flex items-center gap-4 ml-4">
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-gray-800">{round.totalScore}</p>
+                    <p className={`text-xs ${vsPalColor}`}>{vsPalDisplay}</p>
+                  </div>
+                  <div className="text-2xl text-gray-400">→</div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

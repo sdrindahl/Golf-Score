@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import ScoreHistory from '@/components/ScoreHistory'
+import PageWrapper from '@/components/PageWrapper'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import { syncDataFromSupabase } from '@/lib/dataSync'
@@ -63,24 +64,28 @@ function PlayerProfileContent() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto py-6">
-        <div className="card text-center">
-          <p className="text-gray-500">Loading profile...</p>
+      <PageWrapper title="Player Profile">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
+            <p className="text-gray-500">Loading profile...</p>
+          </div>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
   if (!player) {
     return (
-      <div className="max-w-2xl mx-auto py-6">
-        <div className="card text-center">
-          <p className="text-gray-500">Player not found</p>
-          <Link href="/">
-            <button className="btn-primary mt-4">Back to Home</button>
-          </Link>
+      <PageWrapper title="Player Profile">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
+            <p className="text-gray-500">Player not found</p>
+            <Link href="/">
+              <button className="btn-primary mt-4">Back to Home</button>
+            </Link>
+          </div>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
@@ -185,103 +190,103 @@ function PlayerProfileContent() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
-      {/* Header */}
-      <div className="card mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg md:text-xl font-bold">{player.name}</h1>
-            {isOwnProfile && (
-              <p className="text-green-600 font-semibold text-xs mt-1">Your profile</p>
-            )}
-          </div>
-          <div className="flex gap-6 text-right">
-            <div>
-              <p className="text-xs text-gray-600">Handicap</p>
-              <p className="text-xl font-bold text-green-600">{handicap}</p>
+    <>
+      <PageWrapper title={player.name} userName={isOwnProfile ? 'Your profile' : undefined}>
+        <div className="max-w-4xl mx-auto space-y-6">
+          {/* Header Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+              <div className="text-5xl mb-3 text-center">⛳</div>
+              <div className="text-3xl font-bold text-center text-gray-800">{handicap}</div>
+              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Handicap</div>
             </div>
-            <div>
-              <p className="text-xs text-gray-600">Rounds</p>
-              <p className="text-xl font-bold">{rounds.length}</p>
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+              <div className="text-5xl mb-3 text-center">🏌️</div>
+              <div className="text-3xl font-bold text-center text-gray-800">{rounds.length}</div>
+              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Rounds</div>
             </div>
           </div>
+
+          {/* Statistics */}
+          {rounds.length > 0 && (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg border border-white/20">
+              <h2 className="text-lg font-bold mb-3 text-gray-800">Best Rounds</h2>
+              
+              <div className="space-y-2">
+              
+              {/* Best 18-Hole Round */}
+              {(() => {
+                const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+                const rounds18 = rounds.filter(r => {
+                  const course = courses.find((c: any) => c.id === r.courseId)
+                  return course && course.holes.length === 18
+                })
+                
+                if (rounds18.length === 0) return null
+                
+                const best18 = rounds18.reduce((best, current) => 
+                  current.totalScore < best.totalScore ? current : best
+                )
+                
+                return (
+                  <div className="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg text-sm">
+                    <span className="text-gray-700 font-medium">18-Hole:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600">{best18.courseName}</span>
+                      <span className="font-bold text-green-600">{best18.totalScore}</span>
+                    </div>
+                  </div>
+                )
+              })()}
+              
+              {/* Best 9-Hole Round */}
+              {(() => {
+                const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+                const rounds9 = rounds.filter(r => {
+                  const course = courses.find((c: any) => c.id === r.courseId)
+                  return course && course.holes.length === 9
+                })
+                
+                if (rounds9.length === 0) return null
+                
+                const best9 = rounds9.reduce((best, current) => 
+                  current.totalScore < best.totalScore ? current : best
+                )
+                
+                return (
+                  <div className="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg text-sm">
+                    <span className="text-gray-700 font-medium">9-Hole:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-600">{best9.courseName}</span>
+                      <span className="font-bold text-green-600">{best9.totalScore}</span>
+                    </div>
+                  </div>
+                )
+              })()}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Rounds */}
+          {rounds.length > 0 ? (
+            <ScoreHistory rounds={rounds} onDelete={handleDeleteRound} readOnly={!isOwnProfile} userId={player?.id} />
+          ) : (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
+              <p className="text-gray-500 text-lg">No rounds recorded yet</p>
+            </div>
+          )}
         </div>
+      </PageWrapper>
+
+      {/* Home Button - Fixed at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 px-4 py-4 z-10">
+        <Link href="/">
+          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">
+            🏠 Home
+          </button>
+        </Link>
       </div>
-
-      {/* Statistics */}
-      {rounds.length > 0 && (
-        <div className="card mb-6">
-          <h2 className="text-lg font-bold mb-3">Best Rounds</h2>
-          
-          <div className="space-y-2">
-          
-          {/* Best 18-Hole Round */}
-          {(() => {
-            const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-            const rounds18 = rounds.filter(r => {
-              const course = courses.find((c: any) => c.id === r.courseId)
-              return course && course.holes.length === 18
-            })
-            
-            if (rounds18.length === 0) return null
-            
-            const best18 = rounds18.reduce((best, current) => 
-              current.totalScore < best.totalScore ? current : best
-            )
-            
-            return (
-              <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
-                <span className="text-gray-700 font-medium">18-Hole:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">{best18.courseName}</span>
-                  <span className="font-bold text-green-600">{best18.totalScore}</span>
-                </div>
-              </div>
-            )
-          })()}
-          
-          {/* Best 9-Hole Round */}
-          {(() => {
-            const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-            const rounds9 = rounds.filter(r => {
-              const course = courses.find((c: any) => c.id === r.courseId)
-              return course && course.holes.length === 9
-            })
-            
-            if (rounds9.length === 0) return null
-            
-            const best9 = rounds9.reduce((best, current) => 
-              current.totalScore < best.totalScore ? current : best
-            )
-            
-            return (
-              <div className="flex justify-between items-center py-1 px-2 bg-gray-50 rounded text-sm">
-                <span className="text-gray-700 font-medium">9-Hole:</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-600">{best9.courseName}</span>
-                  <span className="font-bold text-green-600">{best9.totalScore}</span>
-                </div>
-              </div>
-            )
-          })()}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Rounds */}
-      {rounds.length > 0 ? (
-        <ScoreHistory rounds={rounds} onDelete={handleDeleteRound} readOnly={!isOwnProfile} userId={player?.id} />
-      ) : (
-        <div className="card text-center py-12">
-          <p className="text-gray-500 text-lg">No rounds recorded yet</p>
-        </div>
-      )}
-
-      {/* Back Button */}
-      <Link href="/players">
-        <button className="btn-primary w-full mt-6">← Back to Golfer Profiles</button>
-      </Link>
-    </div>
+    </>
   )
 }
 
