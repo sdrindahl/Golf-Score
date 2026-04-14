@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { deleteRoundFromSupabase } from '@/lib/dataSync'
+import { deleteRoundFromSupabase, updateRoundInSupabase } from '@/lib/dataSync'
 
 function EditRoundContent() {
   const router = useRouter()
@@ -138,6 +138,11 @@ function EditRoundContent() {
         localStorage.setItem('golfRounds', JSON.stringify(rounds))
       }
     }
+
+    // Sync to Supabase
+    updateRoundInSupabase(updatedRound).catch(error => {
+      console.error('Failed to sync round to Supabase:', error)
+    })
 
     setSubmitted(true)
   }
