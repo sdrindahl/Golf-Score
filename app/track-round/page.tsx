@@ -138,13 +138,13 @@ function TrackRoundContent() {
           allRounds[index].scores = updatedScores
           allRounds[index].totalScore = totalScore
           localStorage.setItem('golfRounds', JSON.stringify(allRounds))
-          console.log('💾 Round auto-saved after hole', currentHoleIndex + 1)
+          console.log('💾 Round auto-saved locally after hole', currentHoleIndex + 1)
           
           // Also sync to Supabase so other devices see the update
           const updatedRound = allRounds[index]
           saveRoundToSupabase(updatedRound).catch(error => {
-            console.log('Could not sync round to Supabase:', error)
-            // Don't stop the app if Supabase sync fails
+            console.error('❌ Failed to sync round to Supabase:', error.message)
+            // Don't stop the app if Supabase sync fails - but log the error
           })
         }
       }
@@ -176,7 +176,8 @@ function TrackRoundContent() {
     if (round) {
       // Final sync to Supabase before navigating away
       saveRoundToSupabase(round).catch(error => {
-        console.log('Could not sync final round to Supabase:', error)
+        console.error('❌ Failed to sync final round to Supabase:', error.message)
+        // Still navigate even if sync fails - rounds are saved locally
       })
       router.push(`/round-detail?id=${round.id}`)
     }

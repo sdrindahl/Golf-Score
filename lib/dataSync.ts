@@ -315,7 +315,7 @@ export async function saveRoundToSupabase(round: Round): Promise<void> {
 
   try {
     const roundData = roundToSupabase(round)
-    console.log('Saving round to Supabase:', roundData)
+    console.log('📤 Attempting to save round to Supabase:', roundData)
     
     // Use upsert to insert if new, update if already exists
     const { data, error } = await supabase
@@ -324,14 +324,22 @@ export async function saveRoundToSupabase(round: Round): Promise<void> {
       .select()
 
     if (error) {
-      console.error('Supabase error response:', error)
+      console.error('❌ Supabase upsert error response:', error)
+      console.error('Error code:', error.code)
+      console.error('Error message:', error.message)
+      console.error('Error details:', error.details)
       throw new Error(`Supabase error: ${error.message}`)
     }
     
-    console.log('✅ Round successfully saved to Supabase:', data)
+    if (data && data.length > 0) {
+      console.log('✅ Round successfully saved to Supabase:', data[0])
+    } else {
+      console.warn('⚠️ Upsert returned no data:', data)
+    }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error)
     console.error('❌ Error saving round to Supabase:', errorMsg)
+    // Re-throw so track-round can see the error
     throw error
   }
 }
