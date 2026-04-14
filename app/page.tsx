@@ -9,10 +9,13 @@ import { useAuth } from '@/lib/useAuth'
 export default function Home() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [isClient, setIsClient] = useState(false)
   const router = useRouter()
   const auth = useAuth()
 
   useEffect(() => {
+    setIsClient(true)
+    
     // Get current user
     const user = auth.getCurrentUser()
     if (!user) {
@@ -119,14 +122,16 @@ export default function Home() {
 
   const bestScore = calculateBestScore()
 
+  if (!isClient || !currentUser) {
+    return null
+  }
+
   const handleStartNewRound = () => {
     router.push('/manage-courses')
   }
 
   const handleViewRounds = () => {
-    if (currentUser) {
-      router.push(`/player?id=${currentUser.id}`)
-    }
+    router.push(`/player?id=${currentUser.id}`)
   }
 
   const handleViewCourses = () => {
