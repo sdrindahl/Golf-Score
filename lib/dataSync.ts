@@ -40,9 +40,17 @@ export async function syncDataFromSupabase(): Promise<void> {
       console.log('📥 Fetching rounds from Supabase...')
       const { data: supabaseRounds, error: roundsError } = await supabase
         .from('rounds')
-        .select('*')
+        .select('id, user_id, user_name, course_id, course_name, selected_tee, date, scores, total_score, notes')
 
-      if (roundsError) throw roundsError
+      if (roundsError) {
+        console.error('❌ Rounds query error:', {
+          code: roundsError.code,
+          message: roundsError.message,
+          details: roundsError.details,
+          hint: roundsError.hint
+        })
+        throw roundsError
+      }
 
       if (supabaseRounds && supabaseRounds.length > 0) {
         // Convert from snake_case to camelCase for local storage
@@ -93,9 +101,17 @@ export async function syncDataFromSupabase(): Promise<void> {
     try {
       const { data: supabaseCourses, error: coursesError } = await supabase
         .from('courses')
-        .select('*')
+        .select('id, name, par, hole_count, holes')
 
-      if (coursesError) throw coursesError
+      if (coursesError) {
+        console.error('❌ Courses query error:', {
+          code: coursesError.code,
+          message: coursesError.message,
+          details: coursesError.details,
+          hint: coursesError.hint
+        })
+        throw coursesError
+      }
 
       if (supabaseCourses && supabaseCourses.length > 0) {
         // Merge with existing local courses to avoid losing unsaved/local edits
