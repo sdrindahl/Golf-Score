@@ -10,7 +10,7 @@ import PageWrapper from '@/components/PageWrapper'
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
-  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [favorites, setFavorites] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const auth = useAuth()
@@ -44,7 +44,7 @@ export default function ManageCourses() {
       // Load favorites from localStorage
       const savedFavorites = localStorage.getItem('favoriteCourses')
       const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : []
-      setFavorites(new Set(favoriteIds))
+      setFavorites(favoriteIds)
 
       setCourses(uniqueCourses)
       setLoading(false)
@@ -80,14 +80,11 @@ export default function ManageCourses() {
   }
 
   const toggleFavorite = (courseId: string) => {
-    const newFavorites = new Set(favorites)
-    if (newFavorites.has(courseId)) {
-      newFavorites.delete(courseId)
-    } else {
-      newFavorites.add(courseId)
-    }
+    const newFavorites = favorites.includes(courseId)
+      ? favorites.filter(id => id !== courseId)
+      : [...favorites, courseId]
     setFavorites(newFavorites)
-    localStorage.setItem('favoriteCourses', JSON.stringify(Array.from(newFavorites)))
+    localStorage.setItem('favoriteCourses', JSON.stringify(newFavorites))
   }
 
   if (loading) {
@@ -112,12 +109,12 @@ export default function ManageCourses() {
           </div>
 
           {/* Favorite Courses Section */}
-          {favorites.size > 0 && (
+          {favorites.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-gray-800">⭐ Favorite Courses</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
                 {courses
-                  .filter(c => favorites.has(c.id))
+                  .filter(c => favorites.includes(c.id))
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((course) => (
                     <Link key={course.id} href={`/course-details?id=${course.id}`}>
@@ -204,7 +201,7 @@ export default function ManageCourses() {
                             }}
                             className="ml-1 text-lg hover:scale-110 transition-transform"
                           >
-                            {favorites.has(course.id) ? '⭐' : '☆'}
+                            {favorites.includes(course.id) ? '⭐' : '☆'}
                           </button>
                         </div>
 
