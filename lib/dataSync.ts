@@ -67,11 +67,39 @@ export async function syncDataFromSupabase(): Promise<void> {
           notes: r.notes
         }))
 
-        // Trust Supabase as the source of truth
-        // When a round is deleted on one device, Supabase won't have it,
-        // so other devices should remove it too
-        localStorage.setItem('golfRounds', JSON.stringify(roundsInCamelCase))
-        console.log(`✅ Synced ${roundsInCamelCase.length} rounds from Supabase`)
+        // Merge with existing local rounds
+        const existingLocal = localStorage.getItem('golfRounds')
+        const localRounds = existingLocal ? JSON.parse(existingLocal) : []
+        
+        // Create a map of Supabase rounds for efficient lookup
+        const supabaseRoundMap = new Map(roundsInCamelCase.map(r => [r.id, r]))
+        
+        // Keep rounds from Supabase and new local rounds
+        const now = Date.now()
+        const fiveMinutesAgo = now - (5 * 60 * 1000) // 5 minute window for new rounds
+        
+        // Update local rounds: use Supabase version if it exists, remove if it's old and not in Supabase
+        const mergedRounds = localRounds.filter((localRound: any) => {
+          const roundId = parseInt(localRound.id)
+          const wasCreatedRecently = roundId > fiveMinutesAgo
+          const existsInSupabase = supabaseRoundMap.has(localRound.id)
+          
+          // Keep if: it's in Supabase OR it was created recently (still syncing)
+          return existsInSupabase || wasCreatedRecently
+        }).map((localRound: any) => 
+          // Use Supabase version if available (more up-to-date), otherwise keep local
+          supabaseRoundMap.get(localRound.id) || localRound
+        )
+        
+        // Add any Supabase rounds that don't exist locally
+        for (const supabaseRound of roundsInCamelCase) {
+          if (!mergedRounds.some((r: any) => r.id === supabaseRound.id)) {
+            mergedRounds.push(supabaseRound)
+          }
+        }
+        
+        localStorage.setItem('golfRounds', JSON.stringify(mergedRounds))
+        console.log(`✅ Merged rounds: ${mergedRounds.length} total (${roundsInCamelCase.length} from Supabase)`)
       } else {
         // Clear localStorage if Supabase has no rounds (prevents stale cached data)
         localStorage.setItem('golfRounds', JSON.stringify([]))
