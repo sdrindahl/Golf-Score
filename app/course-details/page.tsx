@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
+import { COURSES_DATABASE } from '@/data/courses'
 
 function CourseDetailsContent() {
   const searchParams = useSearchParams()
@@ -19,14 +20,36 @@ function CourseDetailsContent() {
   useEffect(() => {
     if (!courseId) return
 
-    const savedCourses = localStorage.getItem('golfCourses')
-    if (savedCourses) {
-      const courses = JSON.parse(savedCourses)
-      const foundCourse = courses.find((c: Course) => c.id === courseId)
-      if (foundCourse) {
-        setCourse(foundCourse)
-        setEditingHoles([...foundCourse.holes])
+    console.log('🔍 CourseDetails - Loading course with ID:', courseId)
+    
+    // First, try to find the course in COURSES_DATABASE (for new tee box structure)
+    let foundCourse = COURSES_DATABASE.find((c: Course) => c.id === courseId)
+    
+    console.log('🔍 CourseDetails - Courses in COURSES_DATABASE:', COURSES_DATABASE.map((c: any) => ({ id: c.id, name: c.name })))
+    console.log('🔍 CourseDetails - Found in COURSES_DATABASE?', !!foundCourse)
+    
+    // If not in COURSES_DATABASE, try localStorage
+    if (!foundCourse) {
+      const savedCourses = localStorage.getItem('golfCourses')
+      if (savedCourses) {
+        const courses = JSON.parse(savedCourses)
+        foundCourse = courses.find((c: Course) => c.id === courseId)
+        console.log('🔍 CourseDetails - Found in localStorage?', !!foundCourse)
       }
+    }
+    
+    if (foundCourse) {
+      console.log('✅ CourseDetails - Found course:', {
+        name: foundCourse.name,
+        id: foundCourse.id,
+        holesCount: foundCourse.holes?.length,
+        hasTeeTags: foundCourse.holes?.[0] && 'men' in foundCourse.holes[0],
+        firstHole: foundCourse.holes?.[0]
+      })
+      setCourse(foundCourse)
+      setEditingHoles([...foundCourse.holes])
+    } else {
+      console.error('❌ CourseDetails - Course not found with ID:', courseId)
     }
     setLoading(false)
   }, [courseId])
@@ -293,9 +316,9 @@ function CourseDetailsContent() {
                     </tr>
                     <tr className="hidden md:table-row border-b">
                       <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
-                      {course.holes.slice(0, 9).map((hole) => (
+                      {course.holes.slice(0, 9).map((hole: any) => (
                         <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                          {hole.yardage || '—'}
+                          {hole.men?.yardage || hole.yardage || '—'}
                         </td>
                       ))}
                     </tr>
@@ -339,9 +362,9 @@ function CourseDetailsContent() {
                       </tr>
                       <tr className="hidden md:table-row border-b">
                         <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
-                        {course.holes.slice(9, 18).map((hole) => (
+                        {course.holes.slice(9, 18).map((hole: any) => (
                           <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                            {hole.yardage || '—'}
+                            {hole.men?.yardage || hole.yardage || '—'}
                           </td>
                         ))}
                       </tr>

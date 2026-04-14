@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { DEFAULT_COURSES } from '@/lib/initializeCourses'
+import { COURSES_DATABASE } from '@/data/courses'
 import { syncDataFromSupabase } from '@/lib/dataSync'
 
 export default function CourseInitializer() {
@@ -31,17 +31,40 @@ export default function CourseInitializer() {
       const existingCourses = localStorage.getItem('golfCourses')
 
       if (!existingCourses) {
-        localStorage.setItem('golfCourses', JSON.stringify(DEFAULT_COURSES))
+        localStorage.setItem('golfCourses', JSON.stringify(COURSES_DATABASE))
       } else {
         try {
           const courses = JSON.parse(existingCourses)
           // If courses exist but are empty, reinitialize with defaults
           if (Array.isArray(courses) && courses.length === 0) {
-            localStorage.setItem('golfCourses', JSON.stringify(DEFAULT_COURSES))
+            localStorage.setItem('golfCourses', JSON.stringify(COURSES_DATABASE))
+          } else if (Array.isArray(courses)) {
+            // Migrate old courses to new tee box structure
+            const migratedCourses = courses.map((course: any) => {
+              if (!course.holes || course.holes.length === 0) return course
+              
+              const firstHole = course.holes[0]
+              // Check if holes have old structure (flat yardage) instead of tee boxes
+              if (firstHole && 'yardage' in firstHole && !('men' in firstHole)) {
+                console.log(`⚠️ CourseInitializer - Migrating course ${course.name} to new tee box structure`)
+                // Find the matching course from COURSES_DATABASE to get the proper structure
+                const sourceCourse = COURSES_DATABASE.find(c => c.id === course.id)
+                if (sourceCourse) {
+                  return sourceCourse
+                }
+              }
+              return course
+            })
+            
+            // If any migrations occurred, update localStorage
+            if (JSON.stringify(courses) !== JSON.stringify(migratedCourses)) {
+              console.log('💾 CourseInitializer - Updated courses to new structure')
+              localStorage.setItem('golfCourses', JSON.stringify(migratedCourses))
+            }
           }
         } catch (error) {
           // If localStorage is corrupted, reinitialize
-          localStorage.setItem('golfCourses', JSON.stringify(DEFAULT_COURSES))
+          localStorage.setItem('golfCourses', JSON.stringify(COURSES_DATABASE))
         }
       }
 

@@ -118,6 +118,11 @@ function RoundDetailContent() {
             <h1 className="text-3xl font-bold">{round.courseName}</h1>
             <p className="text-gray-600">{new Date(round.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             <p className="text-sm text-gray-500">Player: {round.userName}</p>
+            {round.selectedTee && (
+              <p className="text-sm text-blue-600 font-semibold mt-1">
+                Tee: {round.selectedTee.charAt(0).toUpperCase() + round.selectedTee.slice(1)}'s
+              </p>
+            )}
           </div>
           <div className="text-right">
             <div className="text-5xl font-bold text-blue-600">{round.totalScore}</div>
@@ -180,11 +185,17 @@ function RoundDetailContent() {
               </tr>
               <tr className="hidden md:table-row border-b">
                 <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
-                {course.holes.slice(0, 9).map((hole) => (
-                  <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                    {hole.yardage || '—'}
-                  </td>
-                ))}
+                {course.holes.slice(0, 9).map((hole) => {
+                  let yardage = '—'
+                  if (round.selectedTee && hole[round.selectedTee]) {
+                    yardage = hole[round.selectedTee].yardage.toString()
+                  }
+                  return (
+                    <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                      {yardage}
+                    </td>
+                  )
+                })}
               </tr>
               <tr className="hidden md:table-row">
                 <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
@@ -258,11 +269,17 @@ function RoundDetailContent() {
                 </tr>
                 <tr className="hidden md:table-row border-b">
                   <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
-                  {course.holes.slice(9, 18).map((hole) => (
-                    <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                      {hole.yardage || '—'}
-                    </td>
-                  ))}
+                  {course.holes.slice(9, 18).map((hole) => {
+                    let yardage = '—'
+                    if (round.selectedTee && hole[round.selectedTee]) {
+                      yardage = hole[round.selectedTee].yardage.toString()
+                    }
+                    return (
+                      <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
+                        {yardage}
+                      </td>
+                    )
+                  })}
                 </tr>
                 <tr className="hidden md:table-row">
                   <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
@@ -315,6 +332,9 @@ function RoundDetailContent() {
 
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">
+        <button onClick={() => window.location.href = `/track-round?id=${round.id}`} className="btn-primary flex-1 min-w-32">
+          📍 Track Round (GPS)
+        </button>
         <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="btn-primary flex-1 min-w-32">
           Exit Scorecard
         </button>

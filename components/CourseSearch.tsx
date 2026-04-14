@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
+import { COURSES_DATABASE } from '@/data/courses'
 
 export default function CourseSearch() {
   const router = useRouter()
@@ -17,6 +18,10 @@ export default function CourseSearch() {
     const savedCourses = localStorage.getItem('golfCourses')
     if (savedCourses) {
       setAllCourses(JSON.parse(savedCourses))
+    } else {
+      // Use default courses if nothing in localStorage
+      setAllCourses(COURSES_DATABASE)
+      localStorage.setItem('golfCourses', JSON.stringify(COURSES_DATABASE))
     }
   }, [])
 

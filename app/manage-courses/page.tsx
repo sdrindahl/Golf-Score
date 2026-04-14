@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { COURSES_DATABASE } from '@/data/courses'
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
@@ -20,55 +21,25 @@ export default function ManageCourses() {
 
       let coursesToDisplay: Course[] = []
 
-      // Try to fetch from Supabase first
-      if (isSupabaseConfigured() && supabase) {
-        try {
-          console.log('📥 Fetching courses from Supabase...')
-          const { data: supabaseCourses, error } = await supabase
-            .from('courses')
-            .select('*')
-
-          if (error) {
-            console.error('Error fetching courses from Supabase:', error)
-          } else if (supabaseCourses && supabaseCourses.length > 0) {
-            console.log('✅ Got courses from Supabase:', supabaseCourses.length)
-            // Convert snake_case to camelCase if needed
-            const convertedCourses = supabaseCourses.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              location: c.location || 'Unknown',
-              state: c.state || 'Unknown',
-              holeCount: c.hole_count || c.holeCount,
-              par: c.par,
-              holes: c.holes || [],
-              courseRating: 72.0,
-              slopeRating: 113,
-            }))
-            coursesToDisplay = convertedCourses
-            localStorage.setItem('golfCourses', JSON.stringify(convertedCourses))
-          } else {
-            console.log('ℹ️ No courses from Supabase, checking localStorage...')
-          }
-        } catch (error) {
-          console.error('Error syncing courses:', error)
+      // PRIORITY: Always use COURSES_DATABASE as the source of truth for course structure
+      // This ensures all courses have proper tee box data
+      console.log('✅ Using COURSES_DATABASE as primary source:', COURSES_DATABASE.length, 'courses')
+      coursesToDisplay = COURSES_DATABASE
+      
+      // Deduplicate courses by ID (keep first occurrence)
+      const seenIds = new Set<string>()
+      const uniqueCourses = coursesToDisplay.filter(course => {
+        if (seenIds.has(course.id)) {
+          console.warn(`⚠️ Removing duplicate course with ID: ${course.id}`)
+          return false
         }
-      }
+        seenIds.add(course.id)
+        return true
+      })
+      
+      localStorage.setItem('golfCourses', JSON.stringify(uniqueCourses))
 
-      // If no courses from Supabase, use localStorage
-      if (coursesToDisplay.length === 0) {
-        const savedCourses = localStorage.getItem('golfCourses')
-        if (savedCourses) {
-          try {
-            const localCourses = JSON.parse(savedCourses)
-            console.log('📱 Got courses from localStorage:', localCourses.length)
-            coursesToDisplay = localCourses
-          } catch (error) {
-            console.error('Error parsing localStorage courses:', error)
-          }
-        }
-      }
-
-      setCourses(coursesToDisplay)
+      setCourses(uniqueCourses)
       setLoading(false)
     }
 

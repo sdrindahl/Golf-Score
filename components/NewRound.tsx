@@ -10,6 +10,7 @@ import { saveRoundToSupabase } from '@/lib/dataSync'
 export default function NewRound() {
   const router = useRouter()
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
+  const [selectedTee, setSelectedTee] = useState<'men' | 'women' | 'senior' | 'championship' | ''>('')
   const [scores, setScores] = useState<number[]>([])
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [notes, setNotes] = useState('')
@@ -18,6 +19,7 @@ export default function NewRound() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
   const [savedRoundId, setSavedRoundId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const auth = useAuth()
 
   useEffect(() => {
@@ -34,15 +36,19 @@ export default function NewRound() {
         const course = JSON.parse(saved)
         console.log('✅ NewRound - Course loaded:', {
           name: course.name,
-          holesCount: course.holes?.length,
+          id: course.id,
+          holesLength: course.holes?.length,
           holeCountProperty: course.holeCount,
           hasHolesArray: Array.isArray(course.holes),
+          hasTeeTags: course.holes?.[0] && 'men' in course.holes[0],
+          firstHole: course.holes?.[0],
           courseKeys: Object.keys(course)
         })
         
         if (!course.holes || !Array.isArray(course.holes) || course.holes.length === 0) {
           console.error('❌ NewRound - Course missing holes array or empty:', course)
           alert('Error: Course data is incomplete. Please select a course again.')
+          setIsLoading(false)
           return
         }
         
@@ -56,7 +62,9 @@ export default function NewRound() {
     } else {
       console.log('⚠️ NewRound - No selectedCourse in localStorage. Show course selection screen.')
     }
-  }, [auth])
+    
+    setIsLoading(false)
+  }, [])
 
   const handleScoreChange = (holeIndex: number, score: number) => {
     const newScores = [...scores]
@@ -80,8 +88,8 @@ export default function NewRound() {
     e.preventDefault()
     setSaveError(null)
 
-    if (!selectedCourse || scores.some(s => s === 0)) {
-      alert('Please select a course and enter all scores')
+    if (!selectedCourse || !selectedTee || scores.some(s => s === 0)) {
+      alert('Please select a course, tee box, and enter all scores')
       return
     }
 
@@ -97,6 +105,7 @@ export default function NewRound() {
       userName: currentUser.name,
       courseId: selectedCourse.id,
       courseName: selectedCourse.name,
+      selectedTee: selectedTee as 'men' | 'women' | 'senior' | 'championship',
       date,
       scores,
       totalScore: scores.reduce((a, b) => a + b, 0),
@@ -178,6 +187,17 @@ export default function NewRound() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <div className="max-w-2xl mx-auto py-6">
+        <div className="card">
+          <h2 className="text-2xl font-bold mb-4">Loading...</h2>
+          <p className="text-gray-600">Setting up your round...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!selectedCourse) {
     return (
       <div className="max-w-2xl mx-auto py-6">
@@ -206,6 +226,72 @@ export default function NewRound() {
         <p className="text-gray-600 mb-4">Par {selectedCourse.par}</p>
 
         <form onSubmit={handleSubmit}>
+          {/* Tee Box Selector */}
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+            <h3 className="text-lg font-bold mb-4">Select Your Tee Box</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {selectedCourse?.holes && Array.isArray(selectedCourse.holes) && selectedCourse.holes.length > 0 && (['men', 'women', 'senior', 'championship'] as const).map((tee) => {
+                try {
+                  const teeLabel = tee.charAt(0).toUpperCase() + tee.slice(1) + "'s"
+                  const teeHole = selectedCourse?.holes?.[0]?.[tee]
+                  
+                  // Debug logging
+                  if (tee === 'men') {
+                    console.log('🔍 DEBUG - First hole structure:', selectedCourse.holes[0])
+                    console.log('🔍 DEBUG - Men teeHole:', teeHole)
+                  }
+                  
+                  // Calculate total yardage with full defensive checks
+                  const totalYardage = selectedCourse?.holes?.reduce((sum: number, hole: any) => {
+                    if (!hole || typeof hole !== 'object') return sum
+                    const teeBox = hole[tee]
+                    if (!teeBox || typeof teeBox !== 'object') return sum
+                    const yardage = Number(teeBox.yardage)
+                    return !isNaN(yardage) ? sum + yardage : sum
+                  }, 0) || 0
+                  
+                  // Extract course rating safely
+                  const courseRating = (teeHole && typeof teeHole === 'object' && 'courseRating' in teeHole) 
+                    ? Number(teeHole.courseRating) 
+                    : undefined
+                  const isValidRating = courseRating && !isNaN(courseRating)
+                
+                return (
+                  <button
+                    key={tee}
+                    type="button"
+                    onClick={() => setSelectedTee(tee)}
+                    className={`p-4 rounded-lg transition border-2 ${
+                      selectedTee === tee
+                        ? 'bg-blue-600 text-white border-blue-700 shadow-lg'
+                        : 'bg-white text-gray-800 border-gray-300 hover:bg-blue-50'
+                    }`}
+                  >
+                    <div className="font-bold text-lg">{teeLabel}</div>
+                    <div className={`text-sm mt-1 ${selectedTee === tee ? 'text-blue-100' : 'text-gray-600'}`}>
+                      {totalYardage || 0} yds
+                    </div>
+                    {isValidRating && (
+                      <div className={`text-xs mt-1 ${selectedTee === tee ? 'text-blue-100' : 'text-gray-500'}`}>
+                        {courseRating?.toFixed(1) || 'N/A'} rating
+                      </div>
+                    )}
+                  </button>
+                )
+                } catch (error) {
+                  console.error(`Error rendering tee ${tee}:`, error)
+                  return null
+                }
+              })}
+            </div>
+            {!selectedTee && (
+              <p className="text-red-600 mt-3 text-sm font-semibold">⚠️ Please select a tee box to continue</p>
+            )}
+          </div>
+
+          {/* Only show score entry if tee is selected */}
+          {selectedTee && (
+            <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-gray-600 mb-2">Date</label>
@@ -264,8 +350,13 @@ export default function NewRound() {
                 <>
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <span className="font-bold text-xl">Hole {selectedCourse.holes[currentHoleIndex].holeNumber}</span>
-                      <span className="text-gray-600 ml-3 text-lg">Par {selectedCourse.holes[currentHoleIndex].par}</span>
+                      <span className="font-bold text-xl">Hole {selectedCourse.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}</span>
+                      <span className="text-gray-600 ml-3 text-lg">Par {selectedCourse.holes[currentHoleIndex]?.par || '-'}</span>
+                      <span className="text-gray-600 ml-3 text-lg">
+                        {selectedTee && selectedCourse.holes[currentHoleIndex]?.[selectedTee]?.yardage && (
+                          <>{selectedCourse.holes[currentHoleIndex][selectedTee].yardage} yds</>
+                        )}
+                      </span>
                     </div>
                     <div className="text-right">
                       <span className="text-5xl font-bold text-blue-600">{scores[currentHoleIndex] || '—'}</span>
@@ -368,6 +459,8 @@ export default function NewRound() {
               Cancel
             </button>
           </div>
+            </>
+          )}
         </form>
       </div>
     </div>

@@ -1,3 +1,21 @@
+export interface TeeBox {
+  yardage: number
+  courseRating: number
+  slopeRating: number
+}
+
+export interface Hole {
+  holeNumber: number
+  par: number
+  handicap: number
+  greenLat: number
+  greenLng: number
+  men: TeeBox
+  women: TeeBox
+  senior: TeeBox
+  championship: TeeBox
+}
+
 export interface Course {
   id: string
   name: string
@@ -5,10 +23,7 @@ export interface Course {
   state: string
   holeCount: number
   par: number
-  courseRating: number  // e.g., 72.4
-  slopeRating: number   // e.g., 135
   holes: Hole[]
-  tees?: Tee[]
 }
 
 export interface Tee {
@@ -16,13 +31,6 @@ export interface Tee {
   color: string
   par: number
   yardage: number
-}
-
-export interface Hole {
-  holeNumber: number
-  par: number
-  handicap: number
-  yardage?: number
 }
 
 export interface User {
@@ -38,6 +46,7 @@ export interface Round {
   userName: string
   courseId: string
   courseName: string
+  selectedTee: 'men' | 'women' | 'senior' | 'championship'
   date: string
   scores: number[]
   totalScore: number
