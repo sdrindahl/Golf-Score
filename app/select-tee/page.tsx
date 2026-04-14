@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Course, Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import PageWrapper from '@/components/PageWrapper'
 
 function SelectTeeContent() {
   const router = useRouter()
@@ -40,7 +41,7 @@ function SelectTeeContent() {
     }
     
     setLoading(false)
-  }, [courseId, auth])
+  }, [courseId])
 
   const handleStartRound = () => {
     if (!course || !selectedTee || !currentUser) {
@@ -111,7 +112,7 @@ function SelectTeeContent() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
+    <PageWrapper title={course.name} userName={`Par ${course.par} • ${course.holes.length} Holes`}>
       <div className="card">
         <h1 className="text-3xl font-bold mb-2">{course.name}</h1>
         <p className="text-gray-600 mb-8">Par {course.par} • {course.holes.length} Holes</p>
@@ -161,11 +162,11 @@ function SelectTeeContent() {
             disabled={!selectedTee}
             className={`flex-1 ${selectedTee ? 'btn-primary' : 'bg-gray-300 text-gray-500 cursor-not-allowed rounded-lg py-2'}`}
           >
-            Start Round
+            ▶️ Start Round
           </button>
         </div>
       </div>
-    </div>
+    </PageWrapper>
   )
 }
 

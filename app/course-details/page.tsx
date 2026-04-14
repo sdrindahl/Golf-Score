@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
 import { COURSES_DATABASE } from '@/data/courses'
+import PageWrapper from '@/components/PageWrapper'
 
 function CourseDetailsContent() {
   const searchParams = useSearchParams()
@@ -138,94 +139,87 @@ function CourseDetailsContent() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
-      {/* Course Header */}
-      <div className="card mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-3xl font-bold">{course.name}</h1>
-            <p className="text-gray-600 text-lg">{course.location}, {course.state}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-gray-600 text-sm">Par</p>
-            <p className="text-3xl font-bold">{course.par}</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-6 mb-6">
+    <PageWrapper title={course.name} userName={`${course.location}, ${course.state}`}>
+      {/* Compact Course Header */}
+      <div className="card mb-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="text-center">
-            <p className="text-gray-600 text-sm">Holes</p>
+            <p className="text-gray-600 text-xs">Par</p>
+            <p className="text-2xl font-bold">{course.par}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-gray-600 text-xs">Holes</p>
             <p className="text-2xl font-bold">{course.holes.length}</p>
           </div>
           <div className="text-center">
-            <p className="text-gray-600 text-sm">Average Par</p>
+            <p className="text-gray-600 text-xs">Avg Par</p>
             <p className="text-2xl font-bold">{course.holes.length > 0 ? (course.holes.reduce((sum, h) => sum + h.par, 0) / course.holes.length).toFixed(1) : '—'}</p>
           </div>
           <div className="text-center">
-            <p className="text-gray-600 text-sm">Type</p>
-            <p className="text-2xl font-bold">{course.holes.length === 18 ? 'Full' : 'Executive'}</p>
+            <p className="text-gray-600 text-xs">Type</p>
+            <p className="text-2xl font-bold">{course.holes.length === 18 ? 'Full' : 'Exec'}</p>
           </div>
-        </div>
-
-        {/* Status Messages */}
-        {saved && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
-            ✅ Changes saved successfully!
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleStartRound}
-            className="btn-primary flex-1"
-          >
-            🎯 Start Round
-          </button>
-          {!isEditing ? (
-            <button
-              onClick={() => {
-                // Initialize holes if they don't exist when entering edit mode
-                if (editingHoles.length === 0 && course) {
-                  const newHoles = Array.from({ length: course.holeCount }, (_, i) => ({
-                    holeNumber: i + 1,
-                    par: 4,
-                    handicap: i + 1,
-                  }))
-                  setEditingHoles(newHoles)
-                }
-                setIsEditing(true)
-              }}
-              className="btn-secondary flex-1"
-            >
-              ✏️ Edit Holes
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={handleSaveChanges}
-                className="btn-primary flex-1"
-              >
-                💾 Save Changes
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditing(false)
-                  setEditingHoles([...course.holes])
-                }}
-                className="btn-secondary flex-1"
-              >
-                Cancel
-              </button>
-            </>
-          )}
-          <Link href="/manage-courses" className="flex-1">
-            <button className="btn-primary w-full">
-              ← Back
-            </button>
-          </Link>
         </div>
       </div>
+
+      {/* Action Buttons */}
+      <div className="flex gap-2 mb-6 min-h-[44px]">
+        <button
+          onClick={handleStartRound}
+          className="flex-1 bg-white text-gray-800 font-semibold py-2 px-2 md:px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors active:scale-95 text-sm md:text-base"
+        >
+          ▶️ Start Round
+        </button>
+        {!isEditing ? (
+          <button
+            onClick={() => {
+              // Initialize holes if they don't exist when entering edit mode
+              if (editingHoles.length === 0 && course) {
+                const newHoles = Array.from({ length: course.holeCount }, (_, i) => ({
+                  holeNumber: i + 1,
+                  par: 4,
+                  handicap: i + 1,
+                }))
+                setEditingHoles(newHoles)
+              }
+              setIsEditing(true)
+            }}
+            className="flex-1 bg-white text-gray-800 font-semibold py-2 px-2 md:px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors active:scale-95 text-sm md:text-base"
+          >
+            ✏️ Edit
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={handleSaveChanges}
+              className="flex-1 bg-white text-gray-800 font-semibold py-2 px-2 md:px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors active:scale-95 text-sm md:text-base"
+            >
+              💾 Save
+            </button>
+            <button
+              onClick={() => {
+                setIsEditing(false)
+                setEditingHoles([...course.holes])
+              }}
+              className="flex-1 bg-white text-gray-800 font-semibold py-2 px-2 md:px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors active:scale-95 text-sm md:text-base"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        <Link href="/manage-courses" className="flex-1">
+          <button className="w-full h-full bg-white text-gray-800 font-semibold py-2 px-2 md:px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors active:scale-95 text-sm md:text-base">
+            ← Back
+          </button>
+        </Link>
+      </div>
+
+      {/* Status Messages */}
+      {saved && (
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+          ✅ Changes saved successfully!
+        </div>
+      )}
 
       {/* Score Card - Editable or View Only */}
       <div className="card">
@@ -290,10 +284,10 @@ function CourseDetailsContent() {
         ) : (
           // View Only Table - Separated Front 9 and Back 9
           <>
-            {/* Front 9 Table */}
-            <div className="mb-8">
+            {/* Front 9 Card */}
+            <div className="card mb-6">
               <h3 className="text-xl font-bold mb-4">Front 9</h3>
-              <div className="overflow-x-auto mb-6">
+              <div className="overflow-x-auto">
                 <table className="w-full text-xs md:text-sm">
                   <thead className="table-header">
                     <tr>
@@ -335,11 +329,11 @@ function CourseDetailsContent() {
               </div>
             </div>
 
-            {/* Back 9 Table */}
+            {/* Back 9 Card */}
             {course.holes.length > 9 && (
-              <div className="mb-8">
+              <div className="card mb-6">
                 <h3 className="text-xl font-bold mb-4">Back 9</h3>
-                <div className="overflow-x-auto mb-6">
+                <div className="overflow-x-auto">
                   <table className="w-full text-xs md:text-sm">
                     <thead className="table-header">
                       <tr>
@@ -384,7 +378,7 @@ function CourseDetailsContent() {
           </>
         )}
       </div>
-    </div>
+    </PageWrapper>
   )
 }
 
