@@ -10,7 +10,7 @@ interface PageWrapperProps {
 
 export default function PageWrapper({ title, userName, children }: PageWrapperProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 pb-12">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 pb-32">
       {/* Header with Account Link */}
       <div className="px-6 py-8 text-white relative">
         <div className="absolute top-6 right-6">
