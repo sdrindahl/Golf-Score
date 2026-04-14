@@ -332,11 +332,8 @@ function RoundDetailContent() {
 
       {/* Actions */}
       <div className="flex gap-3 flex-wrap">
-        <button onClick={() => window.location.href = `/track-round?id=${round.id}`} className="btn-primary flex-1 min-w-32">
-          📍 Track Round (GPS)
-        </button>
         <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="btn-primary flex-1 min-w-32">
-          Exit Scorecard
+          Save Scorecard
         </button>
         {canEditRound() && (
           <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="btn-primary flex-1 min-w-32">
