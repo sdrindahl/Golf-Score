@@ -68,7 +68,6 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
               <th className="text-left p-1 md:p-3 text-xs md:text-sm">Course</th>
               <th className="text-center p-1 md:p-3 text-xs md:text-sm">Score</th>
               <th className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell">vs Par</th>
-              {!readOnly && <th className="text-center p-1 md:p-3 text-xs md:text-sm">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -78,48 +77,16 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
               const vsPalDisplay = vsPar > 0 ? `+${vsPar}` : `${vsPar}`
 
               return (
-                <tr key={round.id} className="table-row border-b">
-                  <td className="p-1 md:p-3 text-xs md:text-sm">{new Date(round.date).toLocaleDateString()}</td>
-                  <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate">{round.courseName}</td>
-                  <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm">{round.totalScore}</td>
-                  <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
-                    {vsPalDisplay}
-                  </td>
-                  {!readOnly ? (
-                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
-                      <div className="flex flex-col sm:flex-row gap-0.5 md:gap-2 justify-center">
-                        <Link href={`/round-detail?id=${round.id}`} className="inline-block">
-                          <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
-                            View
-                          </button>
-                        </Link>
-                        {canEditRound(round.userId) && (
-                          <Link href={`/edit-round?id=${round.id}`} className="inline-block">
-                            <button className="text-blue-600 hover:text-blue-800 font-semibold text-xs">
-                              Edit
-                            </button>
-                          </Link>
-                        )}
-                        {canEditRound(round.userId) && (
-                          <button
-                            onClick={() => handleDelete(round.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold text-xs"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
+                <Link key={round.id} href={`/round-detail?id=${round.id}`}>
+                  <tr className="table-row border-b hover:bg-gray-100 cursor-pointer transition-colors">
+                    <td className="p-1 md:p-3 text-xs md:text-sm">{new Date(round.date).toLocaleDateString()}</td>
+                    <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate">{round.courseName}</td>
+                    <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm">{round.totalScore}</td>
+                    <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
+                      {vsPalDisplay}
                     </td>
-                  ) : (
-                    <td className="text-center p-1 md:p-3 text-xs md:text-sm">
-                      <Link href={`/round-detail?id=${round.id}`} className="inline-block">
-                        <button className="text-green-600 hover:text-green-800 font-semibold text-xs">
-                          View Card
-                        </button>
-                      </Link>
-                    </td>
-                  )}
-                </tr>
+                  </tr>
+                </Link>
               )
             })}
           </tbody>
