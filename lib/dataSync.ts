@@ -67,27 +67,11 @@ export async function syncDataFromSupabase(): Promise<void> {
           notes: r.notes
         }))
 
-        // Merge with existing local rounds to avoid losing unsaved/unsynced rounds
-        const existingLocal = localStorage.getItem('golfRounds')
-        const localRounds = existingLocal ? JSON.parse(existingLocal) : []
-        
-        // Create a map of Supabase rounds by ID for efficient lookup
-        const supabaseRoundMap = new Map(roundsInCamelCase.map(r => [r.id, r]))
-        
-        // Keep all local rounds, but update any that exist in Supabase
-        const mergedRounds = localRounds.map((localRound: any) => 
-          supabaseRoundMap.get(localRound.id) || localRound
-        )
-        
-        // Add any Supabase rounds that don't exist locally
-        for (const supabaseRound of roundsInCamelCase) {
-          if (!localRounds.some((r: any) => r.id === supabaseRound.id)) {
-            mergedRounds.push(supabaseRound)
-          }
-        }
-        
-        localStorage.setItem('golfRounds', JSON.stringify(mergedRounds))
-        console.log(`✅ Merged rounds: ${mergedRounds.length} total (${roundsInCamelCase.length} from Supabase)`)
+        // Trust Supabase as the source of truth
+        // When a round is deleted on one device, Supabase won't have it,
+        // so other devices should remove it too
+        localStorage.setItem('golfRounds', JSON.stringify(roundsInCamelCase))
+        console.log(`✅ Synced ${roundsInCamelCase.length} rounds from Supabase`)
       } else {
         // Clear localStorage if Supabase has no rounds (prevents stale cached data)
         localStorage.setItem('golfRounds', JSON.stringify([]))
