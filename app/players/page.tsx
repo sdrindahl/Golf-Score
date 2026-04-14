@@ -186,6 +186,18 @@ export default function Players() {
                   // Regular users don't see admin users
                   return !player.is_admin
                 })
+                .sort((a, b) => {
+                  // Sort by handicap first (best/lowest first)
+                  const handicapA = playerStats[a.id]?.handicap || Infinity
+                  const handicapB = playerStats[b.id]?.handicap || Infinity
+                  
+                  if (handicapA !== handicapB) {
+                    return handicapA - handicapB
+                  }
+                  
+                  // If handicaps are equal, sort alphabetically by name
+                  return a.name.localeCompare(b.name)
+                })
                 .map(player => (
                   <Link key={player.id} href={`/player?id=${player.id}`}>
                     <div className="bg-white rounded-lg m-0.5 p-2.5 shadow-md border-l-4 border-l-green-600 cursor-pointer hover:shadow-lg transition-all active:scale-95">
