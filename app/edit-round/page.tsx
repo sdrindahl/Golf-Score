@@ -67,8 +67,26 @@ function EditRoundContent() {
 
   const handleScoreChange = (holeIndex: number, score: number) => {
     const newScores = [...scores]
-    newScores[holeIndex] = score
+    newScores[holeIndex] = Math.max(1, Math.min(13, score)) // Ensure score is between 1-13
     setScores(newScores)
+  }
+
+  const getScoreStatus = (score: number, par: number): string => {
+    const diff = score - par
+    if (diff < -1) return 'Eagle'
+    if (diff === -1) return 'Birdie'
+    if (diff === 0) return 'Par'
+    if (diff === 1) return 'Bogey'
+    if (diff === 2) return 'Double'
+    return `+${diff}`
+  }
+
+  const getScoreColor = (score: number, par: number): string => {
+    const diff = score - par
+    if (diff <= -1) return 'text-green-600'
+    if (diff === 0) return 'text-gray-600'
+    if (diff >= 1) return 'text-red-600'
+    return 'text-gray-600'
   }
 
   const handleDelete = () => {
@@ -215,24 +233,113 @@ function EditRoundContent() {
 
           <div className="mb-6">
             <h3 className="text-lg font-bold mb-4">Edit Scores by Hole</h3>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              {course.holes.map((hole, index) => (
-                <div key={hole.holeNumber} className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-sm text-gray-600 mb-2">
-                    Hole {hole.holeNumber} (Par {hole.par})
-                  </div>
-                  <input
-                    type="number"
-                    min="1"
-                    max="13"
-                    value={scores[index] || ''}
-                    onChange={(e) => handleScoreChange(index, parseInt(e.target.value) || 0)}
-                    placeholder="Score"
-                    className="w-full p-2 border border-gray-300 rounded text-center font-bold"
-                  />
+            
+            {/* Front Nine */}
+            {course.holes.length > 0 && (
+              <div className="mb-8">
+                <h4 className="text-sm font-bold text-gray-600 uppercase mb-4">Front Nine</h4>
+                <div className="space-y-3">
+                  {course.holes.slice(0, 9).map((hole, index) => {
+                    const score = scores[index] || 0
+                    const status = score > 0 ? getScoreStatus(score, hole.par) : ''
+                    const statusColor = getScoreColor(score, hole.par)
+                    
+                    return (
+                      <div key={hole.holeNumber} className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm text-gray-700">
+                            {hole.holeNumber}
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-gray-600">Par {hole.par}</span>
+                          </div>
+                          {score > 0 && (
+                            <span className={`text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-full`}>
+                              {status}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleScoreChange(index, score - 1)}
+                            disabled={score <= 1}
+                            className="bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center font-bold"
+                          >
+                            −
+                          </button>
+                          <div className="w-12 text-center">
+                            <span className="text-lg font-bold text-gray-800">{score || '−'}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleScoreChange(index, score + 1)}
+                            disabled={score >= 13}
+                            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {/* Back Nine */}
+            {course.holes.length > 9 && (
+              <div>
+                <h4 className="text-sm font-bold text-gray-600 uppercase mb-4">Back Nine</h4>
+                <div className="space-y-3">
+                  {course.holes.slice(9, 18).map((hole, index) => {
+                    const holeIndex = index + 9
+                    const score = scores[holeIndex] || 0
+                    const status = score > 0 ? getScoreStatus(score, hole.par) : ''
+                    const statusColor = getScoreColor(score, hole.par)
+                    
+                    return (
+                      <div key={hole.holeNumber} className="flex items-center gap-4 bg-gray-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center font-bold text-sm text-gray-700">
+                            {hole.holeNumber}
+                          </div>
+                          <div className="text-sm">
+                            <span className="text-gray-600">Par {hole.par}</span>
+                          </div>
+                          {score > 0 && (
+                            <span className={`text-xs font-semibold px-2 py-1 bg-green-100 text-green-700 rounded-full`}>
+                              {status}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleScoreChange(holeIndex, score - 1)}
+                            disabled={score <= 1}
+                            className="bg-gray-300 hover:bg-gray-400 disabled:opacity-50 text-gray-700 rounded-full w-8 h-8 flex items-center justify-center font-bold"
+                          >
+                            −
+                          </button>
+                          <div className="w-12 text-center">
+                            <span className="text-lg font-bold text-gray-800">{score || '−'}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleScoreChange(holeIndex, score + 1)}
+                            disabled={score >= 13}
+                            className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-blue-50 p-4 rounded-lg mb-6">
