@@ -140,8 +140,11 @@ function TrackRoundContent() {
           localStorage.setItem('golfRounds', JSON.stringify(allRounds))
           console.log('💾 Round auto-saved locally after hole', currentHoleIndex + 1)
           
-          // Also sync to Supabase so other devices see the update
+          // Update the round state so we have the latest data
           const updatedRound = allRounds[index]
+          setRound(updatedRound)
+          
+          // Also sync to Supabase so other devices see the update
           saveRoundToSupabase(updatedRound).catch(error => {
             console.error('❌ Failed to sync round to Supabase:', error.message)
             // Don't stop the app if Supabase sync fails - but log the error
