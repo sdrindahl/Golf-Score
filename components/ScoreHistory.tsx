@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Round } from '@/types'
 import { deleteRoundFromSupabase } from '@/lib/dataSync'
 import { useAuth } from '@/lib/useAuth'
@@ -13,6 +13,7 @@ interface ScoreHistoryProps {
 }
 
 export default function ScoreHistory({ rounds, onDelete, readOnly = false, userId }: ScoreHistoryProps) {
+  const router = useRouter()
   const auth = useAuth()
   const currentUser = auth.getCurrentUser()
 
@@ -77,16 +78,18 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
               const vsPalDisplay = vsPar > 0 ? `+${vsPar}` : `${vsPar}`
 
               return (
-                <Link key={round.id} href={`/round-detail?id=${round.id}`}>
-                  <tr className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                    <td className="p-1 md:p-3 text-xs md:text-sm text-gray-800">{new Date(round.date).toLocaleDateString()}</td>
-                    <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate text-gray-800">{round.courseName}</td>
-                    <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm text-gray-800">{round.totalScore}</td>
-                    <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
-                      {vsPalDisplay}
-                    </td>
-                  </tr>
-                </Link>
+                <tr 
+                  key={round.id}
+                  onClick={() => router.push(`/round-detail?id=${round.id}`)}
+                  className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <td className="p-1 md:p-3 text-xs md:text-sm text-gray-800">{new Date(round.date).toLocaleDateString()}</td>
+                  <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate text-gray-800">{round.courseName}</td>
+                  <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm text-gray-800">{round.totalScore}</td>
+                  <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
+                    {vsPalDisplay}
+                  </td>
+                </tr>
               )
             })}
           </tbody>
