@@ -58,16 +58,16 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
   const sortedRounds = [...rounds].reverse()
 
   return (
-    <div className="card">
-      <h2 className="text-xl font-bold mb-4">Recent Rounds</h2>
+    <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg border border-white/20">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Recent Rounds</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-xs md:text-base">
-          <thead className="table-header">
+          <thead className="border-b-2 border-gray-200">
             <tr>
-              <th className="text-left p-1 md:p-3 text-xs md:text-sm">Date</th>
-              <th className="text-left p-1 md:p-3 text-xs md:text-sm">Course</th>
-              <th className="text-center p-1 md:p-3 text-xs md:text-sm">Score</th>
-              <th className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell">vs Par</th>
+              <th className="text-left p-1 md:p-3 text-xs md:text-sm font-bold text-gray-700">Date</th>
+              <th className="text-left p-1 md:p-3 text-xs md:text-sm font-bold text-gray-700">Course</th>
+              <th className="text-center p-1 md:p-3 text-xs md:text-sm font-bold text-gray-700">Score</th>
+              <th className="text-center p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell font-bold text-gray-700">vs Par</th>
             </tr>
           </thead>
           <tbody>
@@ -78,10 +78,10 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
 
               return (
                 <Link key={round.id} href={`/round-detail?id=${round.id}`}>
-                  <tr className="table-row border-b hover:bg-gray-100 cursor-pointer transition-colors">
-                    <td className="p-1 md:p-3 text-xs md:text-sm">{new Date(round.date).toLocaleDateString()}</td>
-                    <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate">{round.courseName}</td>
-                    <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm">{round.totalScore}</td>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
+                    <td className="p-1 md:p-3 text-xs md:text-sm text-gray-800">{new Date(round.date).toLocaleDateString()}</td>
+                    <td className="p-1 md:p-3 text-xs md:text-sm max-w-24 md:max-w-none truncate text-gray-800">{round.courseName}</td>
+                    <td className="text-center font-bold p-1 md:p-3 text-xs md:text-sm text-gray-800">{round.totalScore}</td>
                     <td className={`text-center font-bold p-1 md:p-3 text-xs md:text-sm hidden sm:table-cell ${vsPalColor}`}>
                       {vsPalDisplay}
                     </td>
