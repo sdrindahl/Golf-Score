@@ -102,47 +102,47 @@ export default function ManageCourses() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
               {courses.sort((a, b) => a.name.localeCompare(b.name)).map((course) => (
-                <div key={course.id} className="bg-white/95 backdrop-blur rounded-xl p-3 shadow-md border border-white/20">
-                  <div className="mb-2">
+                <div key={course.id} className="bg-white/95 backdrop-blur rounded-lg p-2 shadow-md border border-white/20">
+                  <div className="mb-1">
                     <Link href={`/course-details?id=${course.id}`}>
-                      <h3 className="text-base font-bold text-green-600 hover:text-green-700 cursor-pointer mb-0.5">{course.name}</h3>
+                      <h3 className="text-sm font-bold text-green-600 hover:text-green-700 cursor-pointer mb-0.5 truncate">{course.name}</h3>
                     </Link>
-                    <p className="text-xs text-gray-600">{course.location}, {course.state}</p>
+                    <p className="text-xs text-gray-600 line-clamp-1">{course.location}, {course.state}</p>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mb-3 bg-gray-50 rounded-lg p-2">
+                  <div className="grid grid-cols-3 gap-1 mb-2 bg-gray-50 rounded-lg p-1.5">
                     <div className="text-center">
                       <p className="text-xs text-gray-500">Holes</p>
-                      <p className="text-base font-bold text-gray-800">{course.holes.length}</p>
+                      <p className="text-sm font-bold text-gray-800">{course.holes.length}</p>
                     </div>
                     <div className="text-center border-l border-r border-gray-200">
                       <p className="text-xs text-gray-500">Par</p>
-                      <p className="text-base font-bold text-gray-800">{course.par}</p>
+                      <p className="text-sm font-bold text-gray-800">{course.par}</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-gray-500">Yards</p>
-                      <p className="text-base font-bold text-gray-800">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</p>
+                      <p className="text-sm font-bold text-gray-800">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</p>
                     </div>
                   </div>
 
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1">
                     <Link href={`/course-details?id=${course.id}`} className="flex-1">
-                      <button className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors">
+                      <button className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-1.5 py-1 rounded-md transition-colors">
                         View
                       </button>
                     </Link>
                     {currentUser?.is_admin && (
                       <>
                         <Link href={`/edit-course?id=${course.id}`} className="flex-1">
-                          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors">
+                          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1.5 py-1 rounded-md transition-colors">
                             Edit
                           </button>
                         </Link>
                         <button
                           onClick={() => handleDelete(course.id)}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors"
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1.5 py-1 rounded-md transition-colors"
                         >
                           Delete
                         </button>
