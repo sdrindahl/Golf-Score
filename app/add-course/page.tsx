@@ -71,8 +71,6 @@ export default function AddCourse() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
-      courseRating,
-      slopeRating,
     }
 
     // Save to localStorage

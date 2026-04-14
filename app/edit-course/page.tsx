@@ -103,8 +103,6 @@ function EditCourseContent() {
       holeCount,
       par: holes.reduce((sum, h) => sum + h.par, 0),
       holes,
-      courseRating: validCourseRating,
-      slopeRating: validSlopeRating,
     }
 
     console.log('💾 Saving course:', updatedCourse)
