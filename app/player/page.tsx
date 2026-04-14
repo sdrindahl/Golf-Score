@@ -276,9 +276,9 @@ function PlayerProfileContent() {
         )}
 
         {/* Back Button */}
-        <Link href="/players">
+        <Link href="/">
           <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">
-            ← Back to Golfer Profiles
+            🏠 Home
           </button>
         </Link>
       </div>

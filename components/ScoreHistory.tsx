@@ -59,7 +59,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
 
   return (
     <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg border border-white/20">
-      <h2 className="text-xl font-bold mb-4 text-gray-800">Recent Rounds</h2>
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Rounds</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-xs md:text-base">
           <thead className="border-b-2 border-gray-200">
