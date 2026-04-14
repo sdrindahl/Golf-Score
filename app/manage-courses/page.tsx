@@ -86,8 +86,8 @@ export default function ManageCourses() {
   return (
     <PageWrapper title="Select Course">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg border border-white/20">
-          <div className="flex justify-between items-center gap-2 mb-6 flex-wrap">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-gray-800">Available Courses</h2>
             <Link href="/add-course">
               <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors whitespace-nowrap shadow-md">➕ Add Course</button>
@@ -95,73 +95,62 @@ export default function ManageCourses() {
           </div>
 
           {courses.length === 0 ? (
-            <div className="text-center py-10">
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
               <p className="text-gray-500 text-lg mb-4">No courses added yet</p>
               <Link href="/add-course">
                 <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">Add Your First Course</button>
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
-                <thead className="border-b-2 border-gray-200">
-                  <tr>
-                    <th className="text-left px-3 py-3 font-bold text-gray-700">Course</th>
-                    <th className="text-left px-3 py-3 font-bold text-gray-700 hidden md:table-cell">Location</th>
-                    <th className="text-center px-3 py-3 font-bold text-gray-700">Holes</th>
-                    <th className="text-center px-3 py-3 font-bold text-gray-700">Par</th>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {courses.sort((a, b) => a.name.localeCompare(b.name)).map((course) => (
+                <div key={course.id} className="bg-white/95 backdrop-blur rounded-xl p-3 shadow-md border border-white/20">
+                  <div className="mb-2">
+                    <Link href={`/course-details?id=${course.id}`}>
+                      <h3 className="text-base font-bold text-green-600 hover:text-green-700 cursor-pointer mb-0.5">{course.name}</h3>
+                    </Link>
+                    <p className="text-xs text-gray-600">{course.location}, {course.state}</p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mb-3 bg-gray-50 rounded-lg p-2">
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">Holes</p>
+                      <p className="text-base font-bold text-gray-800">{course.holes.length}</p>
+                    </div>
+                    <div className="text-center border-l border-r border-gray-200">
+                      <p className="text-xs text-gray-500">Par</p>
+                      <p className="text-base font-bold text-gray-800">{course.par}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500">Yards</p>
+                      <p className="text-base font-bold text-gray-800">{course.holes.reduce((sum, h) => sum + h.men.yardage, 0)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    <Link href={`/course-details?id=${course.id}`} className="flex-1">
+                      <button className="w-full bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors">
+                        View
+                      </button>
+                    </Link>
                     {currentUser?.is_admin && (
-                      <th className="text-center px-3 py-3 font-bold text-gray-700">Actions</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map((course) => (
-                    <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-3 py-3">
-                        <Link href={`/course-details?id=${course.id}`}>
-                          <button
-                            className="font-bold text-green-600 hover:underline text-left"
-                          >
-                            {course.name}
+                      <>
+                        <Link href={`/edit-course?id=${course.id}`} className="flex-1">
+                          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors">
+                            Edit
                           </button>
                         </Link>
-                      </td>
-                      <td className="px-3 py-3 text-gray-600 hidden md:table-cell text-sm">
-                        {course.location}, {course.state}
-                      </td>
-                      <td className="text-center px-3 py-3 font-semibold text-gray-700">
-                        {course.holes.length}
-                      </td>
-                      <td className="text-center px-3 py-3 font-semibold text-gray-700">
-                        {course.par}
-                      </td>
-                      {currentUser?.is_admin && (
-                        <td className="text-center px-3 py-3">
-                          <div className="flex gap-2 justify-center">
-                            <Link href={`/edit-course?id=${course.id}`}>
-                              <button
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-lg transition-colors"
-                              >
-                                Edit
-                              </button>
-                            </Link>
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                handleDelete(course.id)
-                              }}
-                              className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1 rounded-lg transition-colors"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <button
+                          onClick={() => handleDelete(course.id)}
+                          className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1.5 rounded-lg transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
