@@ -70,10 +70,14 @@ function SelectTeeContent() {
       rounds.push(newRound)
       localStorage.setItem('golfRounds', JSON.stringify(rounds))
 
+      const roundUrl = `/track-round?id=${newRound.id}`
       console.log('🎯 Starting round with tee:', selectedTee, 'Round ID:', newRound.id)
+      console.log('🔗 Navigating to:', roundUrl)
       
-      // Navigate to track-round with the new round ID
-      router.push(`/track-round?id=${newRound.id}`)
+      // Use replace instead of push, with a small delay to ensure localStorage is written
+      setTimeout(() => {
+        router.replace(roundUrl)
+      }, 100)
     } catch (error) {
       console.error('Error starting round:', error)
       alert('Error starting round. Please try again.')
@@ -82,7 +86,9 @@ function SelectTeeContent() {
 
   const handleBackToCourses = () => {
     console.log('📍 Going back to manage-courses')
-    router.push('/manage-courses')
+    setTimeout(() => {
+      router.replace('/manage-courses')
+    }, 50)
   }
 
   if (loading) {
