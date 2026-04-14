@@ -28,18 +28,23 @@ function SelectTeeContent() {
     // Load course from localStorage
     const savedCourses = localStorage.getItem('golfCourses')
     if (savedCourses) {
-      const courses = JSON.parse(savedCourses)
-      const found = courses.find((c: Course) => c.id === courseId)
-      if (found) {
-        setCourse(found)
+      try {
+        const courses = JSON.parse(savedCourses)
+        const found = courses.find((c: Course) => c.id === courseId)
+        if (found) {
+          setCourse(found)
+        }
+      } catch (error) {
+        console.error('Error loading course:', error)
       }
     }
     
     setLoading(false)
-  }, [auth])
+  }, [courseId, auth])
 
-  const handleStartRound = async () => {
+  const handleStartRound = () => {
     if (!course || !selectedTee || !currentUser) {
+      console.error('Missing data:', { course: !!course, selectedTee, currentUser: !!currentUser })
       alert('Please select a tee box')
       return
     }
@@ -68,7 +73,7 @@ function SelectTeeContent() {
       console.log('🎯 Starting round with tee:', selectedTee, 'Round ID:', newRound.id)
       
       // Navigate to track-round with the new round ID
-      await router.push(`/track-round?id=${newRound.id}`)
+      router.push(`/track-round?id=${newRound.id}`)
     } catch (error) {
       console.error('Error starting round:', error)
       alert('Error starting round. Please try again.')
@@ -76,6 +81,7 @@ function SelectTeeContent() {
   }
 
   const handleBackToCourses = () => {
+    console.log('📍 Going back to manage-courses')
     router.push('/manage-courses')
   }
 
