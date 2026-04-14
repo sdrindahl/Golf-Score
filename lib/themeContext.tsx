@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-export type Theme = 'light' | 'dark' | 'golf'
+export type Theme = 'light'
 
 interface ThemeContextType {
   theme: Theme
@@ -12,35 +12,19 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light')
+  const [theme] = useState<Theme>('light')
   const [mounted, setMounted] = useState(false)
 
-  // Load theme from localStorage on mount
+  // Always use light mode
   useEffect(() => {
-    const savedTheme = localStorage.getItem('golfAppTheme') as Theme | null
-    if (savedTheme && ['light', 'dark', 'golf'].includes(savedTheme)) {
-      setThemeState(savedTheme)
-      applyTheme(savedTheme)
-    } else {
-      applyTheme('light')
-    }
+    const html = document.documentElement
+    html.classList.remove('dark-mode', 'golf-mode')
+    html.classList.add('light-mode')
     setMounted(true)
   }, [])
 
-  const applyTheme = (newTheme: Theme) => {
-    const html = document.documentElement
-    
-    // Remove all theme classes
-    html.classList.remove('light-mode', 'dark-mode', 'golf-mode')
-    
-    // Add the new theme class
-    html.classList.add(`${newTheme}-mode`)
-  }
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme)
-    localStorage.setItem('golfAppTheme', newTheme)
-    applyTheme(newTheme)
+  const setTheme = () => {
+    // Theme is locked to light mode, no-op
   }
 
   if (!mounted) {

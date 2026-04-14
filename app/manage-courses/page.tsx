@@ -10,6 +10,7 @@ import PageWrapper from '@/components/PageWrapper'
 
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [favorites, setFavorites] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const auth = useAuth()
@@ -39,6 +40,11 @@ export default function ManageCourses() {
       })
       
       localStorage.setItem('golfCourses', JSON.stringify(uniqueCourses))
+
+      // Load favorites from localStorage
+      const savedFavorites = localStorage.getItem('favoriteCourses')
+      const favoriteIds = savedFavorites ? JSON.parse(savedFavorites) : []
+      setFavorites(favoriteIds)
 
       setCourses(uniqueCourses)
       setLoading(false)
@@ -73,6 +79,14 @@ export default function ManageCourses() {
     }
   }
 
+  const toggleFavorite = (courseId: string) => {
+    const newFavorites = favorites.includes(courseId)
+      ? favorites.filter(id => id !== courseId)
+      : [...favorites, courseId]
+    setFavorites(newFavorites)
+    localStorage.setItem('favoriteCourses', JSON.stringify(newFavorites))
+  }
+
   if (loading) {
     return (
       <PageWrapper title="Select Course">
@@ -86,88 +100,142 @@ export default function ManageCourses() {
   return (
     <PageWrapper title="Select Course">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg border border-white/20">
-          <div className="flex justify-between items-center gap-2 mb-6 flex-wrap">
+        <div className="space-y-4">
+          <div className="flex justify-between items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-gray-800">Available Courses</h2>
             <Link href="/add-course">
               <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors whitespace-nowrap shadow-md">➕ Add Course</button>
             </Link>
           </div>
 
-          {courses.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-gray-500 text-lg mb-4">No courses added yet</p>
-              <Link href="/add-course">
-                <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">Add Your First Course</button>
-              </Link>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
-                <thead className="border-b-2 border-gray-200">
-                  <tr>
-                    <th className="text-left px-3 py-3 font-bold text-gray-700">Course</th>
-                    <th className="text-left px-3 py-3 font-bold text-gray-700 hidden md:table-cell">Location</th>
-                    <th className="text-center px-3 py-3 font-bold text-gray-700">Holes</th>
-                    <th className="text-center px-3 py-3 font-bold text-gray-700">Par</th>
-                    {currentUser?.is_admin && (
-                      <th className="text-center px-3 py-3 font-bold text-gray-700">Actions</th>
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {courses.map((course) => (
-                    <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-3 py-3">
-                        <Link href={`/course-details?id=${course.id}`}>
-                          <button
-                            className="font-bold text-green-600 hover:underline text-left"
-                          >
-                            {course.name}
-                          </button>
-                        </Link>
-                      </td>
-                      <td className="px-3 py-3 text-gray-600 hidden md:table-cell text-sm">
-                        {course.location}, {course.state}
-                      </td>
-                      <td className="text-center px-3 py-3 font-semibold text-gray-700">
-                        {course.holes.length}
-                      </td>
-                      <td className="text-center px-3 py-3 font-semibold text-gray-700">
-                        {course.par}
-                      </td>
-                      {currentUser?.is_admin && (
-                        <td className="text-center px-3 py-3">
-                          <div className="flex gap-2 justify-center">
-                            <Link href={`/edit-course?id=${course.id}`}>
-                              <button
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1 rounded-lg transition-colors"
-                              >
+          {/* Favorite Courses Section */}
+          {favorites.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-gray-800">⭐ Favorite Courses</h3>
+              <div className="space-y-3">
+                {courses
+                  .filter(c => favorites.includes(c.id))
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((course) => (
+                    <Link key={course.id} href={`/course-details?id=${course.id}`}>
+                      <div className="bg-green-50 rounded-lg m-0.5 p-2.5 shadow-md border-l-4 border-l-green-600 cursor-pointer hover:shadow-lg transition-all active:scale-95">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 mb-1">{course.location}, {course.state}</p>
+                            <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{course.name}</p>
+                          </div>
+                          <div className="flex items-center gap-2 md:gap-3 ml-2 md:ml-4">
+                            <div className="text-right">
+                              <p className="text-base md:text-lg font-bold text-gray-800">{course.holes.length}</p>
+                              <p className="text-xs text-gray-500">Holes</p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleFavorite(course.id)
+                              }}
+                              className="text-xl md:text-2xl hover:scale-110 transition-transform flex-shrink-0"
+                            >
+                              ⭐
+                            </button>
+                          </div>
+                        </div>
+
+                        {currentUser?.is_admin && (
+                          <div className="flex gap-1.5 mt-2">
+                            <Link href={`/edit-course?id=${course.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
+                              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
                                 Edit
                               </button>
                             </Link>
                             <button
                               onClick={(e) => {
                                 e.preventDefault()
+                                e.stopPropagation()
                                 handleDelete(course.id)
                               }}
-                              className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1 rounded-lg transition-colors"
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors"
                             >
                               Delete
                             </button>
                           </div>
-                        </td>
-                      )}
-                    </tr>
+                        )}
+                      </div>
+                    </Link>
                   ))}
-                </tbody>
-              </table>
+              </div>
+            </div>
+          )}
+
+          {courses.length === 0 ? (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
+              <p className="text-gray-500 text-lg mb-4">No courses added yet</p>
+              <Link href="/add-course">
+                <button className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md">Add Your First Course</button>
+              </Link>
+            </div>
+          ) : (
+            <div>
+              <h3 className="text-lg font-bold text-gray-800 mb-4">All Courses</h3>
+              <div className="space-y-3">
+                {courses
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((course) => (
+                    <Link key={course.id} href={`/course-details?id=${course.id}`}>
+                      <div className={`rounded-lg m-0.5 p-2.5 shadow-md border-l-4 border-l-green-600 cursor-pointer hover:shadow-lg transition-all active:scale-95 ${favorites.includes(course.id) ? 'bg-green-50' : 'bg-white'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 mb-1">{course.location}, {course.state}</p>
+                            <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{course.name}</p>
+                          </div>
+                          <div className="flex items-center gap-2 md:gap-3 ml-2 md:ml-4">
+                            <div className="text-right">
+                              <p className="text-base md:text-lg font-bold text-gray-800">{course.holes.length}</p>
+                              <p className="text-xs text-gray-500">Holes</p>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleFavorite(course.id)
+                              }}
+                              className="text-xl md:text-2xl hover:scale-110 transition-transform flex-shrink-0"
+                            >
+                              {favorites.includes(course.id) ? '⭐' : '☆'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {currentUser?.is_admin && (
+                          <div className="flex gap-1.5 mt-2">
+                            <Link href={`/edit-course?id=${course.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
+                              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
+                                Edit
+                              </button>
+                            </Link>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleDelete(course.id)
+                              }}
+                              className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+              </div>
             </div>
           )}
         </div>
 
         <Link href="/">
-          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">Back to Dashboard</button>
+          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">Home</button>
         </Link>
       </div>
     </PageWrapper>
