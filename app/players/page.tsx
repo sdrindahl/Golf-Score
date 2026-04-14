@@ -233,7 +233,7 @@ export default function Players() {
         )}
 
         <Link href="/">
-          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">← Back to Home</button>
+          <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">Home</button>
         </Link>
       </div>
 
