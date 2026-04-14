@@ -276,7 +276,7 @@ function PlayerProfileContent() {
         )}
 
         {/* Back Button */}
-        <Link href="/">
+        <Link href="/" className="mt-8">
           <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">
             🏠 Home
           </button>
