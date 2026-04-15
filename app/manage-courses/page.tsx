@@ -19,6 +19,8 @@ export default function ManageCourses() {
     const loadCourses = async () => {
       // Get current user
       const user = auth.getCurrentUser()
+      console.log('👤 Current user:', user)
+      console.log('👑 Is admin?:', user?.is_admin)
       setCurrentUser(user)
 
       let coursesToDisplay: Course[] = []
