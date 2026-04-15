@@ -10,11 +10,18 @@ export default function CoursesPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
-  const [selectedTee, setSelectedTee] = useState<'men' | 'women' | 'senior' | 'championship'>('men')
+  const [selectedTee, setSelectedTee] = useState<'men' | 'women' | 'senior' | 'championship' | null>(null)
   const [displayedCourses, setDisplayedCourses] = useState<Course[]>([])
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+
+  useEffect(() => {
+    // Reset tee selection when a new course is selected
+    if (selectedCourse) {
+      setSelectedTee(null)
+    }
+  }, [selectedCourse?.id])
 
   useEffect(() => {
     // Load courses from localStorage
@@ -210,7 +217,7 @@ export default function CoursesPage() {
                         <td className="font-semibold text-gray-600 py-2 px-2 text-xs">Yds</td>
                         {course.holes.slice(0, 9).map((hole) => (
                           <td key={`yds-${hole.holeNumber}`} className="text-center px-1 py-2 text-xs">
-                            {hole[selectedTee].yardage}
+                            {hole[selectedTee || 'men'].yardage}
                           </td>
                         ))}
                       </tr>
@@ -249,7 +256,7 @@ export default function CoursesPage() {
                         <td className="font-semibold text-gray-600 py-2 px-2 text-xs">Yds</td>
                         {course.holes.slice(9, 18).map((hole) => (
                           <td key={`yds-${hole.holeNumber}`} className="text-center px-1 py-2 text-xs">
-                            {hole[selectedTee].yardage}
+                            {hole[selectedTee || 'men'].yardage}
                           </td>
                         ))}
                       </tr>
@@ -268,6 +275,10 @@ export default function CoursesPage() {
                 {/* Start Round Button */}
                 <button
                   onClick={() => {
+                    if (!selectedTee) {
+                      alert('Select Tee to Start your Round')
+                      return
+                    }
                     try {
                       localStorage.setItem('selectedCourse', JSON.stringify(course))
                       router.push('/new-round')
