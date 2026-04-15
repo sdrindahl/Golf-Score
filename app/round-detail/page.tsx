@@ -105,14 +105,20 @@ function RoundDetailContent() {
       return
     }
 
+    // Create updated scores array with the new score for the edited hole
+    const updatedScores = round.scores.map((score, idx) => idx === editingHoleIndex ? newScore : score)
+    
+    // Calculate total from the new scores array - sum all scores
+    const totalScore = updatedScores.reduce((sum, score) => {
+      const numScore = Number(score) || 0
+      return sum + numScore
+    }, 0)
+
     // Update the round locally
     const updatedRound = {
       ...round,
-      scores: round.scores.map((score, idx) => idx === editingHoleIndex ? newScore : score),
-      totalScore: round.scores.reduce((sum, score, idx) => {
-        if (idx === editingHoleIndex) return sum - (round.scores[idx] || 0) + newScore
-        return sum + (score || 0)
-      }, 0),
+      scores: updatedScores,
+      totalScore,
     }
 
     setRound(updatedRound)
@@ -278,7 +284,7 @@ function RoundDetailContent() {
                 )}
               </div>
               <div className="text-right">
-                <div className="text-4xl font-bold text-blue-600">{round.totalScore}</div>
+                <div className="text-4xl font-bold text-blue-600">{round.scores.reduce((sum, score) => sum + (Number(score) || 0), 0)}</div>
                 <div className="text-sm text-gray-600">Total Score</div>
               </div>
             </div>
