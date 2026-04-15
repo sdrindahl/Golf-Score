@@ -130,15 +130,20 @@ export async function syncDataFromSupabase(): Promise<void> {
         const existingLocal = localStorage.getItem('golfCourses')
         const localCourses = existingLocal ? JSON.parse(existingLocal) : []
         
-        // Create a map of Supabase courses by ID for efficient lookup
+        // Create maps for efficient lookup by ID
+        const localCourseMap = new Map(localCourses.map((c: any) => [c.id, c]))
         const supabaseCourseMap = new Map(supabaseCourses.map(c => [c.id, c]))
         
-        // Keep all local courses, but update any that exist in Supabase
-        const mergedCourses = localCourses.map((localCourse: any) => {
+        // Create merged array with all unique course IDs
+        const mergedCourses: any[] = []
+        const addedIds = new Set<string>()
+        
+        // First, add all local courses (updated with Supabase data if available)
+        for (const localCourse of localCourses) {
           const supabaseCourse = supabaseCourseMap.get(localCourse.id)
-          // Preserve local edits, fill in defaults for missing Supabase columns
           if (supabaseCourse) {
-            return {
+            // Update with Supabase data but preserve local fields
+            mergedCourses.push({
               id: supabaseCourse.id,
               name: supabaseCourse.name,
               location: localCourse.location ?? 'Unknown',
@@ -148,14 +153,17 @@ export async function syncDataFromSupabase(): Promise<void> {
               holes: supabaseCourse.holes || localCourse.holes,
               courseRating: localCourse.courseRating ?? 72.0,
               slopeRating: localCourse.slopeRating ?? 113,
-            }
+            })
+          } else {
+            // Keep local course as-is if not in Supabase
+            mergedCourses.push(localCourse)
           }
-          return localCourse
-        })
+          addedIds.add(localCourse.id)
+        }
         
-        // Add any Supabase courses that don't exist locally
+        // Then, add any Supabase courses that don't exist locally
         for (const supabaseCourse of supabaseCourses) {
-          if (!localCourses.some((c: any) => c.id === supabaseCourse.id)) {
+          if (!addedIds.has(supabaseCourse.id)) {
             mergedCourses.push({
               id: supabaseCourse.id,
               name: supabaseCourse.name,
@@ -167,6 +175,7 @@ export async function syncDataFromSupabase(): Promise<void> {
               courseRating: 72.0,
               slopeRating: 113,
             })
+            addedIds.add(supabaseCourse.id)
           }
         }
         
