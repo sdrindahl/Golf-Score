@@ -16,6 +16,7 @@ function TrackRoundContent() {
   const [course, setCourse] = useState<Course | null>(null)
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
   const [scores, setScores] = useState<number[]>([])
+  const [startingHoleSelected, setStartingHoleSelected] = useState(false)
   
   // GPS state
   const [userLat, setUserLat] = useState<number | null>(null)
@@ -187,12 +188,24 @@ function TrackRoundContent() {
     }
   }
 
-  const handleBackToTeeSelector = () => {
-    if (confirm('Go back to tee selector? Your current round will be saved.')) {
-      saveRound(scores)
-      router.back()
+  const handleCancelRound = () => {
+    if (confirm('Cancel this round? It will not be saved.')) {
+      try {
+        const savedRounds = localStorage.getItem('golfRounds')
+        if (savedRounds) {
+          const allRounds = JSON.parse(savedRounds) as Round[]
+          const filteredRounds = allRounds.filter((r) => r.id !== roundId)
+          localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+          console.log('🗑️ Round cancelled and deleted')
+        }
+      } catch (error) {
+        console.error('Error cancelling round:', error)
+      }
+      router.push('/')
     }
   }
+
+
 
   if (loading) {
     return (
@@ -241,16 +254,29 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title={`Hole ${currentHole.holeNumber}`} userName={`${round.courseName} • ${selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s`}>
-      {/* Back button */}
-      <button
-        onClick={handleBackToTeeSelector}
-        className="mb-4 px-3 py-1 bg-white text-gray-800 rounded text-sm hover:bg-gray-100"
-      >
-        ← Back to Tee
-      </button>
+      {/* Starting Hole Selector */}
+      {!startingHoleSelected && (
+        <div className="card mb-6">
+          <h2 className="text-xl font-bold mb-4">Select Starting Hole</h2>
+          <div className="grid grid-cols-6 gap-2">
+            {course.holes.map((hole) => (
+              <button
+                key={hole.holeNumber}
+                onClick={() => {
+                  setCurrentHoleIndex(hole.holeNumber - 1)
+                  setStartingHoleSelected(true)
+                }}
+                className="p-2 bg-white border-2 border-green-600 text-gray-800 font-semibold rounded-lg hover:bg-green-50"
+              >
+                {hole.holeNumber}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* GPS Status */}
-      {geolocationError && (
+      {startingHoleSelected && geolocationError && (
         <div className="card mb-4 bg-red-50 border-red-200">
           <p className="text-red-700 text-sm">
             <strong>⚠️ Location Error:</strong> {geolocationError}
@@ -258,6 +284,7 @@ function TrackRoundContent() {
         </div>
       )}
 
+      {startingHoleSelected && (
       <div className="card">
         {/* Distance to green - MAIN FOCUS */}
         <div className="mb-4 text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
@@ -323,7 +350,7 @@ function TrackRoundContent() {
         </div>
 
         {/* Navigation buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 mb-3">
           {currentHoleIndex > 0 && (
             <button onClick={handlePreviousHole} className="btn-secondary flex-1">
               ← Previous
@@ -356,7 +383,16 @@ function TrackRoundContent() {
             </button>
           )}
         </div>
+
+        {/* Cancel button */}
+        <button
+          onClick={handleCancelRound}
+          className="w-full py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition"
+        >
+          Cancel Round
+        </button>
       </div>
+      )}
     </PageWrapper>
   )
 }
