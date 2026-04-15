@@ -38,10 +38,16 @@ export default function Settings() {
     setNewName(user.name)
     setLoading(false)
 
-    // Fetch version info
-    fetch('/version.json', { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setVersion(data))
+    // Fetch version info with cache busting
+    fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch version')
+        return res.json()
+      })
+      .then(data => {
+        console.log('Version loaded:', data)
+        setVersion(data)
+      })
       .catch(err => console.error('Error loading version:', err))
   }, [router])
 
