@@ -26,6 +26,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [editingName, setEditingName] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [version, setVersion] = useState<{ version: string; buildDate: string; buildTime: string } | null>(null)
 
   useEffect(() => {
     const user = auth.getCurrentUser()
@@ -36,6 +37,12 @@ export default function Settings() {
     setCurrentUser(user)
     setNewName(user.name)
     setLoading(false)
+
+    // Fetch version info
+    fetch('/version.json', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => setVersion(data))
+      .catch(err => console.error('Error loading version:', err))
   }, [router])
 
   const handleUpdateName = (e: React.FormEvent) => {
@@ -312,10 +319,6 @@ export default function Settings() {
           )}
         </div>
 
-        <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
-
-        </div>
-
         <button 
           onClick={handleLogout} 
           className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20"
@@ -348,8 +351,16 @@ export default function Settings() {
         )}
 
         <Link href="/">
-          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">← Back to Home</button>
+          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20 mt-6">← Back to Home</button>
         </Link>
+
+        {/* Version Info */}
+        {version && (
+          <div className="text-center text-xs text-black font-bold py-4">
+            <p>Current version: {version.version}</p>
+            <p>Deployed {new Date(version.buildDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(`2026-01-01T${version.buildTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</p>
+          </div>
+        )}
       </div>
     </PageWrapper>
   )
