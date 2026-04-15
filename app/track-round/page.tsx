@@ -50,6 +50,7 @@ function TrackRoundContent() {
   const getScoreType = (score: number, par: number): string => {
     const diff = score - par
     if (score === 1) return 'Ace'
+    if (diff === -3) return 'Alb'
     if (diff === -2) return 'Eagle'
     if (diff === -1) return 'Birdie'
     if (diff === 0) return 'Par'
@@ -62,6 +63,7 @@ function TrackRoundContent() {
   const getScoreColor = (score: number, par: number): string => {
     const diff = score - par
     if (score === 1) return 'from-purple-500 to-purple-700'
+    if (diff === -3) return 'from-indigo-500 to-indigo-700'
     if (diff === -2) return 'from-blue-500 to-blue-700'
     if (diff === -1) return 'from-green-500 to-green-700'
     if (diff === 0) return 'from-gray-400 to-gray-600'
@@ -311,7 +313,7 @@ function TrackRoundContent() {
       // Clear the current round ID and hole index since round is finished
       localStorage.removeItem('currentRoundId')
       localStorage.removeItem(`currentHoleIndex-${roundId}`)
-      router.push(`/round-detail?id=${round.id}`)
+      router.push(`/round-detail?id=${round.id}&completed=true`)
     }
   }
 
