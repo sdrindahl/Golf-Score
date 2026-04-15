@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import PageWrapper from '@/components/PageWrapper'
 import { Course, User } from '@/types'
 import { COURSES_DATABASE } from '@/data/courses'
-import { saveRoundToSupabase } from '@/lib/dataSync'
+import { saveRoundToSupabase, deleteCourseFromSupabase } from '@/lib/dataSync'
 import { useAuth } from '@/lib/useAuth'
 
 export default function CoursesPage() {
@@ -20,6 +21,8 @@ export default function CoursesPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [deleteModal, setDeleteModal] = useState<{ courseId: string; courseName: string } | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
     // Reset tee selection when a new course is selected
@@ -103,6 +106,38 @@ export default function CoursesPage() {
   }
 
   const isFavorite = (courseId: string) => favorites.includes(courseId)
+
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!currentUser) {
+      alert('You must be logged in as an admin to delete courses')
+      return
+    }
+
+    setDeleteLoading(true)
+    try {
+      console.log(`🗑️ Admin deleting course: ${courseId}`)
+      
+      // Delete from Supabase
+      await deleteCourseFromSupabase(courseId)
+      console.log(`✅ Course deleted successfully from Supabase`)
+      
+      // Remove from local state
+      setAllCourses(allCourses.filter(c => c.id !== courseId))
+      setDisplayedCourses(displayedCourses.filter(c => c.id !== courseId))
+      
+      // Update localStorage
+      const localCourses = allCourses.filter(c => c.id !== courseId)
+      localStorage.setItem('golfCourses', JSON.stringify(localCourses))
+      
+      setDeleteModal(null)
+      alert('Course deleted successfully')
+    } catch (error: any) {
+      console.error('❌ Error deleting course:', error)
+      alert(`Error: ${error.message}`)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
 
   // Don't render until client is hydrated
   if (!isClient) {
@@ -350,6 +385,28 @@ export default function CoursesPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Admin Actions */}
+                {currentUser?.is_admin && (
+                  <div className="mt-6 pt-4 border-t border-gray-200 flex gap-2">
+                    <Link
+                      href={`/edit-course?id=${course.id}`}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-center"
+                    >
+                      ✏️ Edit Course
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setDeleteModal({ courseId: course.id, courseName: course.name })
+                      }}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                    >
+                      🗑️ Delete Course
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -364,6 +421,33 @@ export default function CoursesPage() {
         {allCourses.length === 0 && (
           <div className="card text-center text-gray-500">
             No courses added yet.
+          </div>
+        )}
+
+        {deleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+              <h2 className="text-xl font-bold mb-4 text-red-600">⚠️ Delete Course</h2>
+              <p className="text-gray-700 mb-6">
+                Are you sure you want to delete <strong>{deleteModal.courseName}</strong>? This action cannot be undone.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setDeleteModal(null)}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
+                  disabled={deleteLoading}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteCourse(deleteModal.courseId)}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+                  disabled={deleteLoading}
+                >
+                  {deleteLoading ? 'Deleting...' : 'Delete Course'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

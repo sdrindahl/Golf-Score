@@ -231,6 +231,18 @@ export default function Players() {
                             <span>{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
                             <span className="font-semibold">HCP {handicap === Infinity ? '—' : handicap.toFixed(1)}</span>
                           </div>
+                          {currentUser?.is_admin && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setDeleteModal({ userId: player.id, userName: player.name })
+                              }}
+                              className="mt-3 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1 rounded transition-colors"
+                            >
+                              🗑️ Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     </Link>

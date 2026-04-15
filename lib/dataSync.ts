@@ -509,6 +509,36 @@ export async function updateCourseInSupabase(course: Course): Promise<void> {
 }
 
 /**
+ * Delete a course from Supabase and local storage
+ */
+export async function deleteCourseFromSupabase(courseId: string): Promise<void> {
+  if (!isSupabaseConfigured() || !supabase) {
+    console.warn('Supabase not configured, course deletion local only')
+    return
+  }
+
+  try {
+    console.log(`🗑️ Deleting course ${courseId} from Supabase...`)
+    
+    // Delete from Supabase
+    const { error } = await supabase
+      .from('courses')
+      .delete()
+      .eq('id', courseId)
+
+    if (error) {
+      console.error('Supabase error deleting course:', error)
+      throw error
+    }
+    
+    console.log(`✅ Course ${courseId} successfully deleted from Supabase`)
+  } catch (error) {
+    console.error('Error deleting course from Supabase:', error)
+    throw error
+  }
+}
+
+/**
  * Sync all courses to Supabase
  */
 export async function syncCoursesToSupabase(courses: Course[]): Promise<void> {
