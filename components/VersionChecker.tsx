@@ -58,16 +58,16 @@ export default function VersionChecker() {
 
   const handleUpdate = () => {
     // Clear caches and reload
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
       if ('caches' in window) {
-        caches.keys().then((cacheNames) => {
-          Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)))
+        caches.keys().then((cacheNames: string[]) => {
+          Promise.all(cacheNames.map((cacheName: string) => caches.delete(cacheName)))
             .then(() => {
-              window.location.reload()
+              (window as any).location.reload()
             })
         })
       } else {
-        window.location.reload()
+        (window as any).location.reload()
       }
     }
   }
