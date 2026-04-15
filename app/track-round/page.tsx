@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course, Hole } from '@/types'
 import Link from 'next/link'
 import { saveRoundToSupabase } from '@/lib/dataSync'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import PageWrapper from '@/components/PageWrapper'
 
 function TrackRoundContent() {
@@ -73,16 +74,56 @@ function TrackRoundContent() {
   useEffect(() => {
     if (!roundId) return
 
-    try {
-      const savedRounds = localStorage.getItem('golfRounds')
-      if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds) as Round[]
-        const foundRound = allRounds.find((r) => r.id === roundId)
+    const loadRound = async () => {
+      try {
+        let foundRound: Round | null = null
+        
+        // First, try to find in localStorage
+        const savedRounds = localStorage.getItem('golfRounds')
+        if (savedRounds) {
+          const allRounds = JSON.parse(savedRounds) as Round[]
+          foundRound = allRounds.find((r) => r.id === roundId) || null
+        }
+
+        // If not in localStorage, try to fetch from Supabase
+        if (!foundRound && isSupabaseConfigured() && supabase) {
+          console.log('Round not in localStorage, fetching from Supabase...')
+          try {
+            const { data, error } = await supabase
+              .from('rounds')
+              .select('*')
+              .eq('id', roundId)
+              .single()
+            
+            if (!error && data) {
+              foundRound = data as Round
+              // Restore to localStorage for future access
+              const allRounds = savedRounds ? JSON.parse(savedRounds) : []
+              allRounds.push(foundRound)
+              localStorage.setItem('golfRounds', JSON.stringify(allRounds))
+              console.log('✅ Round restored from Supabase and saved to localStorage')
+            } else {
+              console.error('Could not fetch round from Supabase:', error?.message)
+            }
+          } catch (supabaseError) {
+            console.error('Supabase fetch error:', supabaseError)
+          }
+        }
+
         if (foundRound) {
           setRound(foundRound)
           setScores([...foundRound.scores])
           // Store current round ID for "Return to Round" feature
           localStorage.setItem('currentRoundId', roundId)
+
+          // Restore the hole they were on
+          const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`)
+          if (savedHoleIndex) {
+            const holeIndex = parseInt(savedHoleIndex, 10)
+            setCurrentHoleIndex(holeIndex)
+            setStartingHoleSelected(true)
+            console.log(`✅ Restored to hole ${holeIndex + 1}`)
+          }
 
           const savedCourses = localStorage.getItem('golfCourses')
           if (savedCourses) {
@@ -93,12 +134,14 @@ function TrackRoundContent() {
             }
           }
         }
+      } catch (error) {
+        console.error('Error loading round:', error)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error loading round:', error)
-    } finally {
-      setLoading(false)
     }
+
+    loadRound()
   }, [roundId])
 
   // Request geolocation
@@ -152,6 +195,13 @@ function TrackRoundContent() {
       setDistance(distanceToGreen)
     }
   }, [userLat, userLng, currentHoleIndex, course])
+
+  // Save current hole index to localStorage for round recovery
+  useEffect(() => {
+    if (roundId && startingHoleSelected) {
+      localStorage.setItem(`currentHoleIndex-${roundId}`, currentHoleIndex.toString())
+    }
+  }, [currentHoleIndex, roundId, startingHoleSelected])
 
   // Prevent navigation away if round is in progress
   useEffect(() => {
@@ -258,8 +308,9 @@ function TrackRoundContent() {
         console.error('❌ Failed to sync final round to Supabase:', error.message)
         // Still navigate even if sync fails - rounds are saved locally
       })
-      // Clear the current round ID since round is finished
+      // Clear the current round ID and hole index since round is finished
       localStorage.removeItem('currentRoundId')
+      localStorage.removeItem(`currentHoleIndex-${roundId}`)
       router.push(`/round-detail?id=${round.id}`)
     }
   }
@@ -274,8 +325,9 @@ function TrackRoundContent() {
           localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
           console.log('🗑️ Round cancelled and deleted')
         }
-        // Clear the current round ID
+        // Clear the current round ID and hole index
         localStorage.removeItem('currentRoundId')
+        localStorage.removeItem(`currentHoleIndex-${roundId}`)
       } catch (error) {
         console.error('Error cancelling round:', error)
       }

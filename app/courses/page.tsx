@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import PageWrapper from '@/components/PageWrapper'
 import { Course } from '@/types'
 import { COURSES_DATABASE } from '@/data/courses'
+import { saveRoundToSupabase } from '@/lib/dataSync'
 
 export default function CoursesPage() {
   const router = useRouter()
@@ -298,6 +299,11 @@ export default function CoursesPage() {
                       const golfRounds = savedRounds ? JSON.parse(savedRounds) : []
                       golfRounds.push(newRound)
                       localStorage.setItem('golfRounds', JSON.stringify(golfRounds))
+
+                      // Also sync to Supabase immediately so it persists across devices/sessions
+                      saveRoundToSupabase(newRound).catch(error => {
+                        console.warn('Warning: Could not save round to Supabase, but saved locally:', error.message)
+                      })
 
                       // Navigate to track-round with the new round ID
                       router.push(`/track-round?id=${newRound.id}`)
