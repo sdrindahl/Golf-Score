@@ -122,13 +122,8 @@ export default function Home() {
 
   const bestScore = calculateBestScore()
 
-  // Don't render until client is hydrated
-  if (!isClient) {
-    return <div className="min-h-screen" />
-  }
-
-  // Redirect if not authenticated
-  if (!currentUser) {
+  // Don't render until client is hydrated and auth checked
+  if (!isClient || !currentUser) {
     return null
   }
 

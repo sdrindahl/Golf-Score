@@ -95,9 +95,9 @@ export default function NavBar() {
               Golfers
             </button>
             <button
-              onClick={() => router.push('/manage-courses')}
+              onClick={() => router.push('/courses')}
               className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
-                pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
+                pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
                   ? 'bg-green-600 text-white'
                   : 'hover:bg-green-600'
               }`}
