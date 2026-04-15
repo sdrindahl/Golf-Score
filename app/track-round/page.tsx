@@ -127,6 +127,53 @@ function TrackRoundContent() {
     }
   }, [userLat, userLng, currentHoleIndex, course])
 
+  // Prevent navigation away if round is in progress
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (startingHoleSelected && currentHoleIndex < course?.holes.length! - 1) {
+        const message = 'Your round will not be saved if you don\'t finish the round.'
+        e.preventDefault()
+        e.returnValue = message
+        return message
+      }
+    }
+
+    const handlePopState = () => {
+      if (startingHoleSelected && currentHoleIndex < course?.holes.length! - 1) {
+        const message = 'Your round will not be saved if you don\'t finish the round. Do you want to leave?'
+        if (!confirm(message)) {
+          // Push the same route back to prevent navigation
+          window.history.pushState(null, '', window.location.href)
+          return
+        }
+      }
+    }
+
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest('a')
+      if (target && target.href && !target.href.includes(`?id=${roundId}`)) {
+        if (startingHoleSelected && currentHoleIndex < course?.holes.length! - 1) {
+          const message = 'Your round will not be saved if you don\'t finish the round. Do you want to leave?'
+          if (!confirm(message)) {
+            e.preventDefault()
+            e.stopPropagation()
+            return false
+          }
+        }
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('popstate', handlePopState)
+    document.addEventListener('click', handleLinkClick, true)
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('popstate', handlePopState)
+      document.removeEventListener('click', handleLinkClick, true)
+    }
+  }, [startingHoleSelected, currentHoleIndex, course, roundId])
+
   // Auto-save round after each hole
   const saveRound = (updatedScores: number[]) => {
     if (!round) return
@@ -392,25 +439,16 @@ function TrackRoundContent() {
             )}
           </div>
 
-          {/* Par and Yardage */}
-          <div className="grid grid-cols-2 gap-2 mb-2">
-            <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
-              <p className="text-gray-600 text-xs font-semibold">PAR</p>
-              <p className="text-2xl font-bold text-gray-800">{currentHole.par}</p>
-            </div>
-            <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
-              <p className="text-gray-600 text-xs font-semibold">Yardage</p>
-              <p className="text-2xl font-bold text-gray-800">{teeBox.yardage}</p>
-            </div>
-          </div>
-
           {/* Current Score */}
           <div className="mb-2 p-3 bg-white rounded-lg border-l-4 border-l-green-600 shadow-md flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-700">
                 {currentHoleIndex + 1}
               </div>
-              <span className="text-sm font-bold text-gray-700">Par {currentHole.par}</span>
+              <div>
+                <span className="text-sm font-bold text-gray-700 block">Par {currentHole.par}</span>
+                <span className="text-xs text-gray-600">{teeBox.yardage}yd</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <button
