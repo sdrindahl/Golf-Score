@@ -10,6 +10,7 @@ export default function Home() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const router = useRouter()
   const auth = useAuth()
 
@@ -30,6 +31,12 @@ export default function Home() {
       const allRounds = JSON.parse(savedRounds) as Round[]
       const userRounds = allRounds.filter(r => r.userId === user.id)
       setRounds(userRounds)
+    }
+
+    // Check if there's a current round in progress
+    const inProgressRoundId = localStorage.getItem('currentRoundId')
+    if (inProgressRoundId) {
+      setCurrentRoundId(inProgressRoundId)
     }
   }, [])
 
@@ -190,6 +197,17 @@ export default function Home() {
             <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Handicap</div>
           </div>
         </div>
+
+        {/* Return to Round Button (if round in progress) */}
+        {currentRoundId && (
+          <button
+            onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+          >
+            <span className="text-2xl">🎯</span>
+            <span className="text-lg">Return to Round</span>
+          </button>
+        )}
 
         {/* Start New Round Button */}
         <button

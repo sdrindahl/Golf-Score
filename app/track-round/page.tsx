@@ -81,6 +81,8 @@ function TrackRoundContent() {
         if (foundRound) {
           setRound(foundRound)
           setScores([...foundRound.scores])
+          // Store current round ID for "Return to Round" feature
+          localStorage.setItem('currentRoundId', roundId)
 
           const savedCourses = localStorage.getItem('golfCourses')
           if (savedCourses) {
@@ -256,6 +258,8 @@ function TrackRoundContent() {
         console.error('❌ Failed to sync final round to Supabase:', error.message)
         // Still navigate even if sync fails - rounds are saved locally
       })
+      // Clear the current round ID since round is finished
+      localStorage.removeItem('currentRoundId')
       router.push(`/round-detail?id=${round.id}`)
     }
   }
@@ -270,6 +274,8 @@ function TrackRoundContent() {
           localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
           console.log('🗑️ Round cancelled and deleted')
         }
+        // Clear the current round ID
+        localStorage.removeItem('currentRoundId')
       } catch (error) {
         console.error('Error cancelling round:', error)
       }
@@ -439,7 +445,7 @@ function TrackRoundContent() {
         {/* Hole Completion Tracker */}
         <div className="mb-3 p-2 bg-white rounded-lg border border-gray-200">
           <h3 className="text-xs font-bold text-gray-700 mb-2">Holes Completed</h3>
-          <div className="grid grid-cols-9 gap-1">
+          <div className="grid grid-cols-6 gap-2">
             {course.holes.map((hole, index) => {
               const score = scores[index]
               const isCompleted = score > 0
@@ -449,7 +455,7 @@ function TrackRoundContent() {
                 <button
                   key={hole.holeNumber}
                   onClick={() => setCurrentHoleIndex(index)}
-                  className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all ${
+                  className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative ${
                     isCurrent
                       ? 'ring-2 ring-green-800'
                       : ''
@@ -458,11 +464,16 @@ function TrackRoundContent() {
                       ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
                       : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
                   }`}
-                  title={isCompleted ? `${hole.holeNumber}: ${getScoreType(score, hole.par)}` : `Hole ${hole.holeNumber}`}
+                  title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)})` : `Hole ${hole.holeNumber}`}
                 >
-                  <span className="font-bold text-xs">{hole.holeNumber}</span>
-                  {isCompleted && (
-                    <span className="text-[10px] leading-tight font-semibold">{getScoreType(score, hole.par)}</span>
+                  {isCompleted ? (
+                    <>
+                      <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
+                      <span className="text-lg font-bold">{score}</span>
+                      <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
+                    </>
+                  ) : (
+                    <span className="font-bold text-xs">{hole.holeNumber}</span>
                   )}
                 </button>
               )
@@ -529,50 +540,48 @@ function TrackRoundContent() {
           </div>
         </div>
 
-        <div className="card">
-          {/* Navigation buttons */}
-          <div className="flex gap-2 mb-2">
-            {currentHoleIndex > 0 && (
-              <button onClick={handlePreviousHole} className="btn-secondary flex-1 py-2 text-sm font-bold rounded-lg">
-                ← Prev
-              </button>
-            )}
-            {currentHoleIndex < course.holes.length - 1 && (
-              <button 
-                onClick={handleNextHole} 
-                disabled={currentScore === 0}
-                className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
-                  currentScore === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'btn-primary'
-                }`}
-              >
-                Next →
-              </button>
-            )}
-            {currentHoleIndex === course.holes.length - 1 && (
-              <button 
-                onClick={handleFinishRound}
-                disabled={currentScore === 0}
-                className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
-                  currentScore === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'btn-primary'
-                }`}
-              >
-                Finish ✓
-              </button>
-            )}
-          </div>
-
-          {/* Cancel button */}
-          <button
-            onClick={handleCancelRound}
-            className="w-full py-2 px-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition text-sm"
-          >
-            Cancel
-          </button>
+        {/* Navigation buttons */}
+        <div className="flex gap-2 mb-2 mt-4">
+          {currentHoleIndex > 0 && (
+            <button onClick={handlePreviousHole} className="flex-1 py-2 text-sm font-bold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition">
+              ← Prev
+            </button>
+          )}
+          {currentHoleIndex < course.holes.length - 1 && (
+            <button 
+              onClick={handleNextHole} 
+              disabled={currentScore === 0}
+              className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
+                currentScore === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-300 text-gray-800 hover:bg-green-400'
+              }`}
+            >
+              Next →
+            </button>
+          )}
+          {currentHoleIndex === course.holes.length - 1 && (
+            <button 
+              onClick={handleFinishRound}
+              disabled={currentScore === 0}
+              className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
+                currentScore === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-300 text-gray-800 hover:bg-green-400'
+              }`}
+            >
+              Finish ✓
+            </button>
+          )}
         </div>
+
+        {/* Cancel button */}
+        <button
+          onClick={handleCancelRound}
+          className="w-full py-2 px-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition text-sm"
+        >
+          Cancel
+        </button>
       </>
       )}
     </PageWrapper>
