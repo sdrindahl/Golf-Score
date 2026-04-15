@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import PageWrapper from '@/components/PageWrapper'
-import { Course } from '@/types'
+import { Course, User } from '@/types'
 import { COURSES_DATABASE } from '@/data/courses'
 import { saveRoundToSupabase } from '@/lib/dataSync'
+import { useAuth } from '@/lib/useAuth'
 
 export default function CoursesPage() {
   const router = useRouter()
+  const auth = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
   const [selectedTee, setSelectedTee] = useState<'men' | 'women' | 'senior' | 'championship' | null>(null)
@@ -16,6 +18,7 @@ export default function CoursesPage() {
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
   useEffect(() => {
     // Reset tee selection when a new course is selected
@@ -23,6 +26,12 @@ export default function CoursesPage() {
       setSelectedTee(null)
     }
   }, [selectedCourse?.id])
+
+  useEffect(() => {
+    // Load current user
+    const user = auth.getCurrentUser()
+    setCurrentUser(user)
+  }, [])
 
   useEffect(() => {
     // Load courses from localStorage
@@ -175,6 +184,12 @@ export default function CoursesPage() {
                   </div>
                   <button
                     onClick={() => {
+                      // Check if user is logged in
+                      if (!currentUser) {
+                        alert('Please log in to start a round')
+                        return
+                      }
+
                       // Check if a round is already in progress
                       const currentRoundId = localStorage.getItem('currentRoundId')
                       if (currentRoundId) {
@@ -189,8 +204,8 @@ export default function CoursesPage() {
                       try {
                         const newRound = {
                           id: `round-${Date.now()}`,
-                          userId: 'user-1',
-                          userName: 'Current User',
+                          userId: currentUser.id,
+                          userName: currentUser.name,
                           courseId: course.id,
                           courseName: course.name,
                           selectedTee: selectedTee,
