@@ -16,6 +16,8 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
   const router = useRouter()
   const auth = useAuth()
   const currentUser = auth.getCurrentUser()
+  
+  // Force rebuild to clear browser cache
 
   // Determine if current user can edit a round
   const canEditRound = (roundUserId: string): boolean => {
