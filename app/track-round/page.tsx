@@ -471,12 +471,6 @@ function TrackRoundContent() {
         </div>
 
         <div className="card">
-          {/* Current Hole Header */}
-          <div className="text-center mb-2 pb-2 border-b border-gray-300">
-            <h2 className="text-3xl font-bold text-green-700">Hole {currentHoleIndex + 1}</h2>
-            <p className="text-gray-600 text-xs">of {course.holes.length}</p>
-          </div>
-
           {/* Distance to Green */}
           <div className="text-center mb-2 p-2 bg-blue-50 rounded-lg border-l-4 border-l-blue-600 border-gray-200">
             <p className="text-gray-600 text-xs font-semibold mb-1">Distance to Center of the Green</p>
