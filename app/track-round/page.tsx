@@ -45,6 +45,30 @@ function TrackRoundContent() {
     return Math.round(yards)
   }
 
+  // Helper function to get score type label
+  const getScoreType = (score: number, par: number): string => {
+    const diff = score - par
+    if (score === 1) return 'Ace'
+    if (diff === -2) return 'Eagle'
+    if (diff === -1) return 'Birdie'
+    if (diff === 0) return 'Par'
+    if (diff === 1) return 'Bogey'
+    if (diff === 2) return 'D.Bogey'
+    return 'Triple+'
+  }
+
+  // Helper function to get color for score type
+  const getScoreColor = (score: number, par: number): string => {
+    const diff = score - par
+    if (score === 1) return 'from-purple-500 to-purple-700'
+    if (diff === -2) return 'from-blue-500 to-blue-700'
+    if (diff === -1) return 'from-green-500 to-green-700'
+    if (diff === 0) return 'from-gray-400 to-gray-600'
+    if (diff === 1) return 'from-orange-500 to-orange-700'
+    if (diff === 2) return 'from-red-500 to-red-700'
+    return 'from-red-700 to-red-900'
+  }
+
   // Load round and course
   useEffect(() => {
     if (!roundId) return
@@ -412,12 +436,39 @@ function TrackRoundContent() {
           </div>
         </div>
 
-        <button
-          onClick={() => setShowScorecard(true)}
-          className="w-full mb-2 py-2 px-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg text-sm hover:from-green-600 hover:to-emerald-700 transition"
-        >
-          📋 Scorecard
-        </button>
+        {/* Hole Completion Tracker */}
+        <div className="mb-3 p-2 bg-white rounded-lg border border-gray-200">
+          <h3 className="text-xs font-bold text-gray-700 mb-2">Holes Completed</h3>
+          <div className="grid grid-cols-9 gap-1">
+            {course.holes.map((hole, index) => {
+              const score = scores[index]
+              const isCompleted = score > 0
+              const isCurrent = currentHoleIndex === index
+              
+              return (
+                <button
+                  key={hole.holeNumber}
+                  onClick={() => setCurrentHoleIndex(index)}
+                  className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all ${
+                    isCurrent
+                      ? 'ring-2 ring-green-800'
+                      : ''
+                  } ${
+                    isCompleted
+                      ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
+                      : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  title={isCompleted ? `${hole.holeNumber}: ${getScoreType(score, hole.par)}` : `Hole ${hole.holeNumber}`}
+                >
+                  <span className="font-bold text-xs">{hole.holeNumber}</span>
+                  {isCompleted && (
+                    <span className="text-[10px] leading-tight font-semibold">{getScoreType(score, hole.par)}</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
         <div className="card">
           {/* Current Hole Header */}
