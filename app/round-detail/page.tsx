@@ -51,7 +51,7 @@ function RoundDetailContent() {
     } finally {
       setLoading(false)
     }
-  }, [roundId, auth])
+  }, [roundId])
 
   // Check if user can edit this round
   const canEditRound = (): boolean => {
@@ -339,7 +339,7 @@ function RoundDetailContent() {
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
             <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="flex-1 min-w-32 bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all border border-white/20">
-              View Profile
+              ← Back
             </button>
             {canEditRound() && (
               <button onClick={() => window.location.href = `/edit-round?id=${round.id}`} className="flex-1 min-w-32 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
