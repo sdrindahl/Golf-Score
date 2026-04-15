@@ -8,6 +8,27 @@ export default function CourseInitializer() {
   useEffect(() => {
     const initializeData = async () => {
       try {
+        // Cleanup duplicates in localStorage
+        const deduplicateFlag = localStorage.getItem('_deduplicated_courses_v1')
+        if (!deduplicateFlag) {
+          const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+          const seenIds = new Set<string>()
+          const deduped = courses.filter((c: any) => {
+            if (seenIds.has(c.id)) {
+              console.log(`🧹 Removing duplicate course: ${c.name} (${c.id})`)
+              return false
+            }
+            seenIds.add(c.id)
+            return true
+          })
+          
+          if (deduped.length < courses.length) {
+            console.log(`✅ Deduplicated courses: ${courses.length} → ${deduped.length}`)
+            localStorage.setItem('golfCourses', JSON.stringify(deduped))
+          }
+          localStorage.setItem('_deduplicated_courses_v1', '1')
+        }
+
         // One-time cleanup: clear localStorage for New3 test user to prevent re-migration
         const cleanupFlag = localStorage.getItem('_cleaned_new3_test_data')
         if (!cleanupFlag) {
