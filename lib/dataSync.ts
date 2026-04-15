@@ -138,27 +138,33 @@ export async function syncDataFromSupabase(): Promise<void> {
         const mergedCourses: any[] = []
         const addedIds = new Set<string>()
         
-        // First, add all local courses (updated with Supabase data if available)
+        // First, add all local courses that also exist in Supabase (updated with Supabase data if available)
+        // This ensures we respect Supabase deletions (don't keep courses that were deleted from Supabase)
         for (const localCourse of localCourses) {
           const supabaseCourse = supabaseCourseMap.get(localCourse.id)
-          if (supabaseCourse && supabaseCourse.holes && supabaseCourse.holes.length > 0) {
-            // Update with Supabase data only if it has complete holes data
-            mergedCourses.push({
-              id: supabaseCourse.id,
-              name: supabaseCourse.name,
-              location: localCourse.location ?? 'Unknown',
-              state: localCourse.state ?? 'Unknown',
-              holeCount: supabaseCourse.hole_count || localCourse.holeCount,
-              par: supabaseCourse.par,
-              holes: supabaseCourse.holes,
-              courseRating: localCourse.courseRating ?? 72.0,
-              slopeRating: localCourse.slopeRating ?? 113,
-            })
-          } else {
-            // Keep local course as-is if Supabase doesn't have complete data
-            mergedCourses.push(localCourse)
+          
+          // Only keep local courses that exist in Supabase
+          if (supabaseCourse) {
+            if (supabaseCourse.holes && supabaseCourse.holes.length > 0) {
+              // Update with Supabase data if it has complete holes data
+              mergedCourses.push({
+                id: supabaseCourse.id,
+                name: supabaseCourse.name,
+                location: localCourse.location ?? 'Unknown',
+                state: localCourse.state ?? 'Unknown',
+                holeCount: supabaseCourse.hole_count || localCourse.holeCount,
+                par: supabaseCourse.par,
+                holes: supabaseCourse.holes,
+                courseRating: localCourse.courseRating ?? 72.0,
+                slopeRating: localCourse.slopeRating ?? 113,
+              })
+            } else {
+              // Keep local course as-is if Supabase data is incomplete
+              mergedCourses.push(localCourse)
+            }
+            addedIds.add(localCourse.id)
           }
-          addedIds.add(localCourse.id)
+          // If course doesn't exist in Supabase, skip it (it was deleted)
         }
         
         // Then, add any NEW Supabase courses that don't exist locally and have complete data
