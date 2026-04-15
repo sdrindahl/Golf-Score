@@ -198,20 +198,44 @@ export default function Players() {
                   // If handicaps are equal, sort alphabetically by name
                   return a.name.localeCompare(b.name)
                 })
-                .map(player => (
-                  <Link key={player.id} href={`/player?id=${player.id}`}>
-                    <div className="card cursor-pointer transition-all hover:shadow-lg flex items-center gap-4">
-                      <div className="text-4xl flex-shrink-0">🏌️</div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-gray-800">{player.name}</h3>
-                        <div className="mt-2 flex gap-4 text-sm text-gray-600">
-                          <span>{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
-                          <span>HCP {playerStats[player.id]?.handicap.toFixed(1) || '—'}</span>
+                .map((player, index) => {
+                  const handicap = playerStats[player.id]?.handicap || Infinity
+                  
+                  // Determine card color based on handicap
+                  let bgGradient = 'from-gray-50 to-gray-100'
+                  if (handicap <= 0) {
+                    bgGradient = 'from-blue-50 to-blue-100'
+                  } else if (handicap <= 5) {
+                    bgGradient = 'from-green-50 to-green-100'
+                  } else if (handicap <= 10) {
+                    bgGradient = 'from-yellow-50 to-yellow-100'
+                  } else if (handicap <= 15) {
+                    bgGradient = 'from-orange-50 to-orange-100'
+                  } else {
+                    bgGradient = 'from-pink-50 to-pink-100'
+                  }
+                  
+                  // Determine medal for top 3
+                  let medal = null
+                  if (index === 0) medal = '🥇'
+                  else if (index === 1) medal = '🥈'
+                  else if (index === 2) medal = '🥉'
+                  
+                  return (
+                    <Link key={player.id} href={`/player?id=${player.id}`}>
+                      <div className={`bg-gradient-to-br ${bgGradient} card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-4 border-2 border-white/40`}>
+                        <div className="text-4xl flex-shrink-0">{medal || '🏌️'}</div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-gray-800">{player.name}</h3>
+                          <div className="mt-2 flex gap-4 text-sm text-gray-600">
+                            <span>{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
+                            <span className="font-semibold">HCP {handicap === Infinity ? '—' : handicap.toFixed(1)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  )
+                })}
             </div>
           </div>
         )}
