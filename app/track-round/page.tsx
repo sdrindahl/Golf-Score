@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course, Hole } from '@/types'
 import Link from 'next/link'
-import { saveRoundToSupabase } from '@/lib/dataSync'
+import { saveRoundToSupabase, deleteRoundFromSupabase } from '@/lib/dataSync'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import PageWrapper from '@/components/PageWrapper'
 
@@ -318,12 +318,19 @@ function TrackRoundContent() {
   const handleCancelRound = () => {
     if (confirm('Cancel this round? It will not be saved.')) {
       try {
+        // Delete from localStorage
         const savedRounds = localStorage.getItem('golfRounds')
         if (savedRounds) {
           const allRounds = JSON.parse(savedRounds) as Round[]
           const filteredRounds = allRounds.filter((r) => r.id !== roundId)
           localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
-          console.log('🗑️ Round cancelled and deleted')
+          console.log('🗑️ Round cancelled and deleted from localStorage')
+        }
+        // Delete from Supabase to prevent it from being restored
+        if (roundId) {
+          deleteRoundFromSupabase(roundId).catch(error => {
+            console.warn('Could not delete round from Supabase:', error.message)
+          })
         }
         // Clear the current round ID and hole index
         localStorage.removeItem('currentRoundId')
