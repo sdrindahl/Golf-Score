@@ -77,8 +77,12 @@ function RoundDetailContent() {
         })
       }
 
-      // Redirect back home
-      router.push('/')
+      // Redirect back to player profile
+      if (round?.userId) {
+        router.push(`/player?id=${round.userId}`)
+      } else {
+        router.push('/')
+      }
     }
   }
 
