@@ -178,7 +178,7 @@ export default function Players() {
         ) : (
           <div>
             <h3 className="text-lg font-bold text-gray-800 mb-4">All Golfers</h3>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {players
                 .filter(player => {
                   // Show all players if current user is admin
@@ -200,53 +200,21 @@ export default function Players() {
                 })
                 .map(player => (
                   <Link key={player.id} href={`/player?id=${player.id}`}>
-                    <div className="bg-white rounded-lg m-0.5 p-2.5 shadow-md border-l-4 border-l-green-600 cursor-pointer hover:shadow-lg transition-all active:scale-95">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 text-sm md:text-base">{player.name}</p>
-                          <p className="text-xs text-gray-500 mt-1">ID: {player.id.slice(0, 8)}...</p>
-                        </div>
-                        <div className="flex items-center gap-3 ml-4 flex-shrink-0">
-                          <div className="text-right">
-                            <p className="text-base md:text-lg font-bold text-gray-800">{playerStats[player.id]?.roundCount || 0}</p>
-                            <p className="text-xs text-gray-500">Rounds</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-base md:text-lg font-bold text-green-600">{playerStats[player.id]?.handicap.toFixed(1) || '—'}</p>
-                            <p className="text-xs text-gray-500">HCP</p>
-                          </div>
+                    <div className="card cursor-pointer transition-all hover:shadow-lg flex items-center gap-4">
+                      <div className="text-4xl flex-shrink-0">🏌️</div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold text-gray-800">{player.name}</h3>
+                        <div className="mt-2 flex gap-4 text-sm text-gray-600">
+                          <span>{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
+                          <span>HCP {playerStats[player.id]?.handicap.toFixed(1) || '—'}</span>
                         </div>
                       </div>
-
-                      {currentUser?.is_admin && currentUser.id !== player.id && (
-                        <div className="flex gap-1.5 mt-2">
-                          <Link href={`/player?id=${player.id}`} onClick={(e) => e.stopPropagation()} className="flex-1">
-                            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors">
-                              View
-                            </button>
-                          </Link>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation()
-                              setDeleteModal({ userId: player.id, userName: player.name })
-                            }}
-                            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-1 py-0.5 rounded-sm transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </Link>
                 ))}
             </div>
           </div>
         )}
-
-        <Link href="/">
-          <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-2xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">Home</button>
-        </Link>
       </div>
 
       {deleteModal && (

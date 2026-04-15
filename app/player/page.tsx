@@ -192,7 +192,14 @@ function PlayerProfileContent() {
   return (
     <>
       <PageWrapper title={player.name} userName={isOwnProfile ? 'Your profile' : undefined}>
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6 pb-32">
+          {/* Back Button */}
+          <Link href="/players">
+            <button className="mb-4 bg-white/90 hover:bg-white text-gray-700 font-semibold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-all border border-white/20">
+              ← Back to Golfers
+            </button>
+          </Link>
+
           {/* Header Stats */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
