@@ -19,6 +19,7 @@ export default function CoursesPage() {
   const [favorites, setFavorites] = useState<string[]>([])
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
     // Reset tee selection when a new course is selected
@@ -28,7 +29,8 @@ export default function CoursesPage() {
   }, [selectedCourse?.id])
 
   useEffect(() => {
-    // Load current user
+    // Set client flag and load user
+    setIsClient(true)
     const user = auth.getCurrentUser()
     setCurrentUser(user)
   }, [])
@@ -101,6 +103,11 @@ export default function CoursesPage() {
   }
 
   const isFavorite = (courseId: string) => favorites.includes(courseId)
+
+  // Don't render until client is hydrated
+  if (!isClient) {
+    return null
+  }
 
   return (
     <PageWrapper title="Courses" userName="">
