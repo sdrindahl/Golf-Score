@@ -280,8 +280,27 @@ export default function CoursesPage() {
                       return
                     }
                     try {
-                      localStorage.setItem('selectedCourse', JSON.stringify(course))
-                      router.push('/new-round')
+                      // Create a new round
+                      const newRound = {
+                        id: `round-${Date.now()}`,
+                        userId: 'user-1', // TODO: Get from auth context
+                        userName: 'Current User', // TODO: Get from auth context
+                        courseId: course.id,
+                        courseName: course.name,
+                        selectedTee: selectedTee,
+                        date: new Date().toISOString(),
+                        scores: Array(course.holes.length).fill(0),
+                        totalScore: 0,
+                      }
+
+                      // Save the round to localStorage
+                      const savedRounds = localStorage.getItem('golfRounds')
+                      const golfRounds = savedRounds ? JSON.parse(savedRounds) : []
+                      golfRounds.push(newRound)
+                      localStorage.setItem('golfRounds', JSON.stringify(golfRounds))
+
+                      // Navigate to track-round with the new round ID
+                      router.push(`/track-round?id=${newRound.id}`)
                     } catch (error) {
                       console.error('Error starting round:', error)
                       alert('Error starting round. Please try again.')

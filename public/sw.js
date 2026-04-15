@@ -67,18 +67,23 @@ self.addEventListener('fetch', (event) => {
           if (!response || response.status !== 200) {
             return response
           }
-          // Don't cache non-basic responses
+          // Only cache basic responses
           if (response.type !== 'basic') {
             return response
           }
           // Clone and cache the response
           const responseToCache = response.clone()
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache)
-          })
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(request, responseToCache)
+            })
+            .catch((err) => {
+              console.log('Cache put error:', err)
+            })
           return response
         })
-        .catch(() => {
+        .catch((err) => {
+          console.log('Fetch error:', err)
           // Network failed, try cache
           return caches.match(request) || caches.match('/')
         })
