@@ -470,10 +470,10 @@ function TrackRoundContent() {
           </div>
         </div>
 
-        <div className="card">
-          {/* Distance to Green */}
-          <div className="text-center mb-2 p-2 bg-blue-50 rounded-lg border-l-4 border-l-blue-600 border-gray-200">
-            <p className="text-gray-600 text-xs font-semibold mb-1">Distance to Center of the Green</p>
+        {/* Distance to Green */}
+        <div className="card mb-3">
+          <div className="text-center">
+            <p className="text-gray-600 text-xs font-semibold mb-2">Distance to Center of the Green</p>
             {distance !== null ? (
               <>
                 <div className="text-4xl font-bold text-blue-600">{distance}</div>
@@ -483,11 +483,14 @@ function TrackRoundContent() {
               <p className="text-gray-500 text-xs">Getting location...</p>
             )}
           </div>
+        </div>
 
-          {/* Current Score */}
-          <div className="mb-2 p-3 bg-white rounded-lg border-l-4 border-l-green-600 shadow-md flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-700">
+        <div className="card">
+          {/* Score Entry */}
+          <div className="flex items-center justify-between">
+            {/* Hole Info */}
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center font-bold text-lg text-gray-700">
                 {currentHoleIndex + 1}
               </div>
               <div>
@@ -495,14 +498,16 @@ function TrackRoundContent() {
                 <span className="text-xs text-gray-600">{teeBox.yardage}yd</span>
               </div>
             </div>
+
+            {/* Score Buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleScoreChange(-1)}
-                className="w-10 h-10 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition active:scale-95 flex items-center justify-center"
+                className="w-12 h-12 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition active:scale-95 flex items-center justify-center text-xl"
               >
                 −
               </button>
-              <div className="w-12 text-center">
+              <div className="w-14 text-center">
                 <div className="text-3xl font-bold text-gray-800">{currentScore}</div>
                 <div className={`text-xs font-bold ${
                   parDifference < 0 ? 'text-green-600' : 
@@ -516,13 +521,15 @@ function TrackRoundContent() {
               </div>
               <button
                 onClick={() => handleScoreChange(1)}
-                className="w-10 h-10 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center"
+                className="w-12 h-12 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center text-xl"
               >
                 +
               </button>
             </div>
           </div>
+        </div>
 
+        <div className="card">
           {/* Navigation buttons */}
           <div className="flex gap-2 mb-2">
             {currentHoleIndex > 0 && (
