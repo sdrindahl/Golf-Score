@@ -13,6 +13,7 @@ function RoundDetailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const roundId = searchParams.get('id')
+  const isJustCompleted = searchParams.get('completed') === 'true'
   const auth = useAuth()
 
   const [round, setRound] = useState<Round | null>(null)
@@ -210,6 +211,7 @@ function RoundDetailContent() {
   const getScoreType = (score: number, par: number): string => {
     const diff = score - par
     if (score === 1) return 'Ace'
+    if (diff === -3) return 'Alb'
     if (diff === -2) return 'Eagle'
     if (diff === -1) return 'Birdie'
     if (diff === 0) return 'Par'
@@ -222,6 +224,7 @@ function RoundDetailContent() {
   const getScoreColor = (score: number, par: number): string => {
     const diff = score - par
     if (score === 1) return 'from-purple-500 to-purple-700'
+    if (diff === -3) return 'from-indigo-500 to-indigo-700'
     if (diff === -2) return 'from-blue-500 to-blue-700'
     if (diff === -1) return 'from-green-500 to-green-700'
     if (diff === 0) return 'from-gray-400 to-gray-600'
@@ -234,6 +237,7 @@ function RoundDetailContent() {
   const calculateScoreDistribution = () => {
     const distribution = {
       'Hole in 1': 0,
+      'Alb': 0,
       'Eagle': 0,
       'Birdie': 0,
       'Par': 0,
@@ -249,6 +253,8 @@ function RoundDetailContent() {
 
       if (score === 1) {
         distribution['Hole in 1']++
+      } else if (diff === -3) {
+        distribution['Alb']++
       } else if (diff === -2) {
         distribution['Eagle']++
       } else if (diff === -1) {
@@ -385,8 +391,12 @@ function RoundDetailContent() {
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
-            <button onClick={() => window.location.href = `/player?id=${round.userId}`} className="flex-1 min-w-32 bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all border border-white/20">
-              ← Back
+            <button onClick={() => window.location.href = `/player?id=${round.userId}`} className={`flex-1 min-w-32 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
+              isJustCompleted
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-white/90 hover:bg-white text-green-700 border border-white/20'
+            }`}>
+              {isJustCompleted ? 'Complete Round' : '← Back'}
             </button>
             {hasUnsavedChanges && canEditRound() && (
               <>
