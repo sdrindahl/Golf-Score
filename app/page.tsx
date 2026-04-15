@@ -41,7 +41,7 @@ export default function Home() {
   }, [])
 
   const calculateHandicap = (): number => {
-    if (rounds.length === 0) return 0
+    if (!isClient || rounds.length === 0) return 0
     
     let handicap = 0
     
@@ -123,7 +123,7 @@ export default function Home() {
   const handicap = calculateHandicap()
   
   const calculateBestScore = (): number | null => {
-    if (rounds.length === 0) return null
+    if (!isClient || rounds.length === 0) return null
     return Math.min(...rounds.map(r => r.totalScore))
   }
 
@@ -137,6 +137,10 @@ export default function Home() {
       'Par': 0,
       'Bogey': 0,
       'Double+': 0,
+    }
+
+    if (!isClient) {
+      return { distribution, trend: 'stable', recentBestType: 'Par' }
     }
 
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
