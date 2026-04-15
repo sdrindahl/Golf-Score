@@ -141,8 +141,8 @@ export async function syncDataFromSupabase(): Promise<void> {
         // First, add all local courses (updated with Supabase data if available)
         for (const localCourse of localCourses) {
           const supabaseCourse = supabaseCourseMap.get(localCourse.id)
-          if (supabaseCourse) {
-            // Update with Supabase data but preserve local fields
+          if (supabaseCourse && supabaseCourse.holes && supabaseCourse.holes.length > 0) {
+            // Update with Supabase data only if it has complete holes data
             mergedCourses.push({
               id: supabaseCourse.id,
               name: supabaseCourse.name,
@@ -150,20 +150,20 @@ export async function syncDataFromSupabase(): Promise<void> {
               state: localCourse.state ?? 'Unknown',
               holeCount: supabaseCourse.hole_count || localCourse.holeCount,
               par: supabaseCourse.par,
-              holes: supabaseCourse.holes || localCourse.holes,
+              holes: supabaseCourse.holes,
               courseRating: localCourse.courseRating ?? 72.0,
               slopeRating: localCourse.slopeRating ?? 113,
             })
           } else {
-            // Keep local course as-is if not in Supabase
+            // Keep local course as-is if Supabase doesn't have complete data
             mergedCourses.push(localCourse)
           }
           addedIds.add(localCourse.id)
         }
         
-        // Then, add any Supabase courses that don't exist locally
+        // Then, add any NEW Supabase courses that don't exist locally and have complete data
         for (const supabaseCourse of supabaseCourses) {
-          if (!addedIds.has(supabaseCourse.id)) {
+          if (!addedIds.has(supabaseCourse.id) && supabaseCourse.holes && supabaseCourse.holes.length > 0) {
             mergedCourses.push({
               id: supabaseCourse.id,
               name: supabaseCourse.name,
@@ -171,7 +171,7 @@ export async function syncDataFromSupabase(): Promise<void> {
               state: 'Unknown',
               holeCount: supabaseCourse.hole_count,
               par: supabaseCourse.par,
-              holes: supabaseCourse.holes || [],
+              holes: supabaseCourse.holes,
               courseRating: 72.0,
               slopeRating: 113,
             })
@@ -180,7 +180,7 @@ export async function syncDataFromSupabase(): Promise<void> {
         }
         
         localStorage.setItem('golfCourses', JSON.stringify(mergedCourses))
-        console.log(`✅ Merged courses: ${mergedCourses.length} total (${supabaseCourses.length} from Supabase)`)
+        console.log(`✅ Merged courses: ${mergedCourses.length} total (${supabaseCourses.length} from Supabase, ${mergedCourses.length - supabaseCourses.length + addedIds.size} kept from local)`)
       }
     } catch (error) {
       console.error('Error syncing courses:', error)
