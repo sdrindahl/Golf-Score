@@ -17,6 +17,7 @@ function TrackRoundContent() {
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
   const [scores, setScores] = useState<number[]>([])
   const [startingHoleSelected, setStartingHoleSelected] = useState(false)
+  const [showScorecard, setShowScorecard] = useState(false)
   
   // GPS state
   const [userLat, setUserLat] = useState<number | null>(null)
@@ -254,6 +255,57 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title={`Hole ${currentHole.holeNumber}`} userName={`${round.courseName} • ${selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s`}>
+      {/* Scorecard Modal */}
+      {showScorecard && course && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-96 overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+              <h2 className="text-xl font-bold">Scorecard</h2>
+              <button
+                onClick={() => setShowScorecard(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              {course.holes.map((hole, index) => (
+                <div key={hole.holeNumber} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold text-gray-800">Hole {hole.holeNumber}</p>
+                    <p className="text-xs text-gray-500">Par {hole.par}</p>
+                  </div>
+                  <div className="text-center">
+                    {scores[index] ? (
+                      <div>
+                        <p className="text-2xl font-bold text-green-600">{scores[index]}</p>
+                        <p className="text-xs text-gray-500">{scores[index] - hole.par > 0 ? '+' : ''}{scores[index] - hole.par}</p>
+                      </div>
+                    ) : (
+                      <p className="text-gray-400">—</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="sticky bottom-0 bg-white border-t p-4">
+              <div className="text-center mb-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-gray-600 text-sm">Total Score (Completed)</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0)}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowScorecard(false)}
+                className="w-full py-2 px-4 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Starting Hole Selector */}
       {!startingHoleSelected && (
         <div className="card mb-6">
@@ -285,113 +337,153 @@ function TrackRoundContent() {
       )}
 
       {startingHoleSelected && (
-      <div className="card">
-        {/* Distance to green - MAIN FOCUS */}
-        <div className="mb-4 text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
-          <p className="text-gray-600 text-xs mb-1">Distance to Green</p>
-          {distance !== null ? (
-            <>
-              <div className="text-5xl md:text-7xl font-bold text-blue-600">{distance}</div>
-              <p className="text-gray-600 text-sm mt-1">yards</p>
-            </>
-          ) : (
-            <p className="text-gray-500 text-sm">Getting location...</p>
-          )}
-        </div>
-
-        {/* Hole progress */}
-        <div className="mb-4 pb-3 border-b">
-          <p className="text-gray-600 text-xs">
-            Hole {currentHoleIndex + 1} of {course.holes.length}
-          </p>
-        </div>
-
-        {/* Par and Yardage */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <div className="p-2 bg-gray-50 rounded-lg">
-            <p className="text-gray-600 text-xs">Par</p>
-            <p className="text-2xl font-bold text-gray-800">{currentHole.par}</p>
+      <>
+        {/* Top Info Bar - Running Tally */}
+        <div className="grid grid-cols-3 gap-1 mb-2">
+          <div className="p-2 bg-green-50 rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
+            <p className="text-gray-700 text-xs font-semibold">SCORE</p>
+            <p className="text-2xl font-bold text-green-700">{scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0)}</p>
           </div>
-          <div className="p-2 bg-gray-50 rounded-lg">
-            <p className="text-gray-600 text-xs">Yardage</p>
-            <p className="text-2xl font-bold text-gray-800">{teeBox.yardage}</p>
+          <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-purple-600 border-gray-200">
+            <p className="text-gray-700 text-xs font-semibold">vs PAR</p>
+            <p className={`text-2xl font-bold ${
+              scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0) - scores.filter((s, i) => s > 0).reduce((sum, score, index) => sum + course.holes[index].par, 0) < 0 
+                ? 'text-green-700' 
+                : 'text-red-700'
+            }`}>
+              {(() => {
+                const totalScore = scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0)
+                const totalPar = scores.reduce((sum, score, index) => score > 0 ? sum + course.holes[index].par : sum, 0)
+                const diff = totalScore - totalPar
+                return diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff)
+              })()}
+            </p>
+          </div>
+          <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-blue-600 border-gray-200">
+            <p className="text-gray-700 text-xs font-semibold">HOLES</p>
+            <p className="text-2xl font-bold text-blue-700">{scores.filter(s => s > 0).length}/{course.holes.length}</p>
           </div>
         </div>
 
-        {/* Score entry with +/- buttons */}
-        <div className="mb-4 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
-          <p className="text-gray-600 text-xs text-center mb-3">Your Score</p>
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={() => handleScoreChange(-1)}
-              className="px-4 py-2 bg-red-500 text-white text-xl font-bold rounded-lg hover:bg-red-600"
-            >
-              −
-            </button>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-gray-800">{currentScore}</div>
-              <div className={`text-sm mt-1 font-semibold ${
-                parDifference < 0 ? 'text-green-600' : 
-                parDifference > 0 ? 'text-red-600' : 
-                'text-gray-600'
-              }`}>
-                {parDifference === 0 ? 'Even' : 
-                 parDifference < 0 ? `${Math.abs(parDifference)} under` : 
-                 `${parDifference} over`}
-              </div>
-            </div>
-            <button
-              onClick={() => handleScoreChange(1)}
-              className="px-4 py-2 bg-green-500 text-white text-xl font-bold rounded-lg hover:bg-green-600"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation buttons */}
-        <div className="flex gap-3 mb-3">
-          {currentHoleIndex > 0 && (
-            <button onClick={handlePreviousHole} className="btn-secondary flex-1">
-              ← Previous
-            </button>
-          )}
-          {currentHoleIndex < course.holes.length - 1 && (
-            <button 
-              onClick={handleNextHole} 
-              disabled={currentScore === 0}
-              className={`flex-1 font-semibold py-2 px-4 rounded-lg transition ${
-                currentScore === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'btn-primary'
-              }`}
-            >
-              Save & Next Hole →
-            </button>
-          )}
-          {currentHoleIndex === course.holes.length - 1 && (
-            <button 
-              onClick={handleFinishRound}
-              disabled={currentScore === 0}
-              className={`flex-1 font-semibold py-2 px-4 rounded-lg transition ${
-                currentScore === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'btn-primary'
-              }`}
-            >
-              Finish Round ✓
-            </button>
-          )}
-        </div>
-
-        {/* Cancel button */}
         <button
-          onClick={handleCancelRound}
-          className="w-full py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition"
+          onClick={() => setShowScorecard(true)}
+          className="w-full mb-2 py-2 px-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-lg text-sm hover:from-green-600 hover:to-emerald-700 transition"
         >
-          Cancel Round
+          📋 Scorecard
         </button>
-      </div>
+
+        <div className="card">
+          {/* Current Hole Header */}
+          <div className="text-center mb-2 pb-2 border-b border-gray-300">
+            <h2 className="text-3xl font-bold text-green-700">Hole {currentHoleIndex + 1}</h2>
+            <p className="text-gray-600 text-xs">of {course.holes.length}</p>
+          </div>
+
+          {/* Distance to Green */}
+          <div className="text-center mb-2 p-2 bg-blue-50 rounded-lg border-l-4 border-l-blue-600 border-gray-200">
+            <p className="text-gray-600 text-xs font-semibold mb-1">Distance to Center of the Green</p>
+            {distance !== null ? (
+              <>
+                <div className="text-4xl font-bold text-blue-600">{distance}</div>
+                <p className="text-gray-700 text-xs">yards</p>
+              </>
+            ) : (
+              <p className="text-gray-500 text-xs">Getting location...</p>
+            )}
+          </div>
+
+          {/* Par and Yardage */}
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
+              <p className="text-gray-600 text-xs font-semibold">PAR</p>
+              <p className="text-2xl font-bold text-gray-800">{currentHole.par}</p>
+            </div>
+            <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
+              <p className="text-gray-600 text-xs font-semibold">Yardage</p>
+              <p className="text-2xl font-bold text-gray-800">{teeBox.yardage}</p>
+            </div>
+          </div>
+
+          {/* Current Score */}
+          <div className="mb-2 p-3 bg-white rounded-lg border-l-4 border-l-green-600 shadow-md flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-700">
+                {currentHoleIndex + 1}
+              </div>
+              <span className="text-sm font-bold text-gray-700">Par {currentHole.par}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleScoreChange(-1)}
+                className="w-10 h-10 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition active:scale-95 flex items-center justify-center"
+              >
+                −
+              </button>
+              <div className="w-12 text-center">
+                <div className="text-3xl font-bold text-gray-800">{currentScore}</div>
+                <div className={`text-xs font-bold ${
+                  parDifference < 0 ? 'text-green-600' : 
+                  parDifference > 0 ? 'text-red-600' : 
+                  'text-gray-600'
+                }`}>
+                  {parDifference === 0 ? 'E' : 
+                   parDifference < 0 ? `-${Math.abs(parDifference)}` : 
+                   `+${parDifference}`}
+                </div>
+              </div>
+              <button
+                onClick={() => handleScoreChange(1)}
+                className="w-10 h-10 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Navigation buttons */}
+          <div className="flex gap-2 mb-2">
+            {currentHoleIndex > 0 && (
+              <button onClick={handlePreviousHole} className="btn-secondary flex-1 py-2 text-sm font-bold rounded-lg">
+                ← Prev
+              </button>
+            )}
+            {currentHoleIndex < course.holes.length - 1 && (
+              <button 
+                onClick={handleNextHole} 
+                disabled={currentScore === 0}
+                className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
+                  currentScore === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'btn-primary'
+                }`}
+              >
+                Next →
+              </button>
+            )}
+            {currentHoleIndex === course.holes.length - 1 && (
+              <button 
+                onClick={handleFinishRound}
+                disabled={currentScore === 0}
+                className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
+                  currentScore === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'btn-primary'
+                }`}
+              >
+                Finish ✓
+              </button>
+            )}
+          </div>
+
+          {/* Cancel button */}
+          <button
+            onClick={handleCancelRound}
+            className="w-full py-2 px-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </>
       )}
     </PageWrapper>
   )
