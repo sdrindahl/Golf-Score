@@ -167,10 +167,49 @@ export default function CoursesPage() {
             {/* Expanded Course Details */}
             {selectedCourse?.id === course.id && (
               <div className="card rounded-t-none border-t-0 space-y-4">
-                {/* Full Course Name */}
-                <div className="mb-4 pb-4 border-b border-gray-200">
-                  <h2 className="text-2xl font-bold text-gray-900">{course.name}</h2>
-                  <p className="text-gray-600 text-sm mt-1">{course.location}, {course.state}</p>
+                {/* Full Course Name with Play Button */}
+                <div className="mb-4 pb-4 border-b border-gray-200 flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-900">{course.name}</h2>
+                    <p className="text-gray-600 text-sm mt-1">{course.location}, {course.state}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (!selectedTee) {
+                        alert('Select Tee to Start your Round')
+                        return
+                      }
+                      try {
+                        const newRound = {
+                          id: `round-${Date.now()}`,
+                          userId: 'user-1',
+                          userName: 'Current User',
+                          courseId: course.id,
+                          courseName: course.name,
+                          selectedTee: selectedTee,
+                          date: new Date().toISOString(),
+                          scores: Array(course.holes.length).fill(0),
+                          totalScore: 0,
+                        }
+                        const savedRounds = localStorage.getItem('golfRounds')
+                        const golfRounds = savedRounds ? JSON.parse(savedRounds) : []
+                        golfRounds.push(newRound)
+                        localStorage.setItem('golfRounds', JSON.stringify(golfRounds))
+                        saveRoundToSupabase(newRound).catch(error => {
+                          console.warn('Warning: Could not save round to Supabase, but saved locally:', error.message)
+                        })
+                        router.push(`/track-round?id=${newRound.id}`)
+                      } catch (error) {
+                        console.error('Error starting round:', error)
+                        alert('Error starting round. Please try again.')
+                      }
+                    }}
+                    className="flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full px-4 py-3 shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2 font-semibold"
+                    title="Start Round"
+                  >
+                    <span className="text-xl">▶</span>
+                    <span className="text-sm">Start Round</span>
+                  </button>
                 </div>
 
                 {/* Tee Selection */}
@@ -282,50 +321,6 @@ export default function CoursesPage() {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Start Round Button */}
-                <button
-                  onClick={() => {
-                    if (!selectedTee) {
-                      alert('Select Tee to Start your Round')
-                      return
-                    }
-                    try {
-                      // Create a new round
-                      const newRound = {
-                        id: `round-${Date.now()}`,
-                        userId: 'user-1', // TODO: Get from auth context
-                        userName: 'Current User', // TODO: Get from auth context
-                        courseId: course.id,
-                        courseName: course.name,
-                        selectedTee: selectedTee,
-                        date: new Date().toISOString(),
-                        scores: Array(course.holes.length).fill(0),
-                        totalScore: 0,
-                      }
-
-                      // Save the round to localStorage
-                      const savedRounds = localStorage.getItem('golfRounds')
-                      const golfRounds = savedRounds ? JSON.parse(savedRounds) : []
-                      golfRounds.push(newRound)
-                      localStorage.setItem('golfRounds', JSON.stringify(golfRounds))
-
-                      // Also sync to Supabase immediately so it persists across devices/sessions
-                      saveRoundToSupabase(newRound).catch(error => {
-                        console.warn('Warning: Could not save round to Supabase, but saved locally:', error.message)
-                      })
-
-                      // Navigate to track-round with the new round ID
-                      router.push(`/track-round?id=${newRound.id}`)
-                    } catch (error) {
-                      console.error('Error starting round:', error)
-                      alert('Error starting round. Please try again.')
-                    }
-                  }}
-                  className="btn-primary w-full mt-4"
-                >
-                  Start Round
-                </button>
               </div>
             )}
           </div>
