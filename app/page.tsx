@@ -129,6 +129,84 @@ export default function Home() {
 
   const bestScore = calculateBestScore()
 
+  const calculateScoreDistribution = (): { distribution: { [key: string]: number }; trend: 'improving' | 'declining' | 'stable'; recentBestType: string } => {
+    const distribution = {
+      'Hole in 1': 0,
+      'Eagle': 0,
+      'Birdie': 0,
+      'Par': 0,
+      'Bogey': 0,
+      'Double+': 0,
+    }
+
+    const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+    
+    // Count score types across all holes in all rounds
+    for (const round of rounds) {
+      const course = courses.find((c: any) => c.id === round.courseId)
+      if (!course || !course.holes) continue
+      
+      for (let i = 0; i < course.holes.length; i++) {
+        const hole = course.holes[i]
+        const score = round.scores?.[i] || 0
+        const par = hole.par
+        const diff = score - par
+
+        if (score === 1) {
+          distribution['Hole in 1']++
+        } else if (diff <= -2) {
+          distribution['Eagle']++
+        } else if (diff === -1) {
+          distribution['Birdie']++
+        } else if (diff === 0) {
+          distribution['Par']++
+        } else if (diff === 1) {
+          distribution['Bogey']++
+        } else {
+          distribution['Double+']++
+        }
+      }
+    }
+
+    // Calculate trend - compare recent holes to overall
+    let trend: 'improving' | 'declining' | 'stable' = 'stable'
+    if (rounds.length >= 2) {
+      const recentRound = rounds[rounds.length - 1]
+      const prevRound = rounds[rounds.length - 2]
+      const recentScore = recentRound.totalScore
+      const prevScore = prevRound.totalScore
+      
+      if (recentScore < prevScore - 1) trend = 'improving'
+      else if (recentScore > prevScore + 1) trend = 'declining'
+    }
+
+    // Find best recent score type
+    let recentBestType = 'Par'
+    const recentRound = rounds[rounds.length - 1]
+    if (recentRound) {
+      const course = courses.find((c: any) => c.id === recentRound.courseId)
+      if (course?.holes) {
+        let bestDiff = 999
+        for (let i = 0; i < course.holes.length; i++) {
+          const hole = course.holes[i]
+          const score = recentRound.scores?.[i] || 0
+          const diff = score - hole.par
+          if (diff < bestDiff) {
+            bestDiff = diff
+            if (diff <= -2) recentBestType = 'Eagle'
+            else if (diff === -1) recentBestType = 'Birdie'
+            else if (diff === 0) recentBestType = 'Par'
+          }
+        }
+      }
+    }
+
+    return { distribution, trend, recentBestType }
+  }
+
+  const { distribution, trend: scoreTrend, recentBestType } = calculateScoreDistribution()
+  const maxDistribution = Math.max(...Object.values(distribution), 1)
+
   // Don't render until client is hydrated and auth checked
   if (!isClient || !currentUser) {
     return null
@@ -153,87 +231,143 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 pb-12">
       {/* Welcome Banner with Account Link */}
-      <div className="px-6 py-10 text-white relative">
-        <div className="absolute top-6 right-6">
+      <div className="px-4 sm:px-6 py-6 sm:py-8 text-white relative">
+        <div className="absolute top-4 right-4 sm:right-6">
           <Link href="/settings">
-            <button className="text-white/80 hover:text-white text-sm font-medium underline transition-colors">
+            <button className="text-white/80 hover:text-white text-xs sm:text-sm font-medium underline transition-colors">
               Account
             </button>
           </Link>
         </div>
-        <p className="text-base opacity-80 mb-1 font-medium">Welcome back</p>
-        <h1 className="text-5xl font-bold tracking-tight">{currentUser?.name || 'Golfer'}</h1>
+        <p className="text-xs sm:text-sm opacity-80 mb-1 font-medium">Welcome back</p>
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{currentUser?.name || 'Golfer'}</h1>
       </div>
 
       {/* Main Content */}
-      <div className="px-4 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-3">
+      <div className="px-4 sm:px-6 space-y-4">
+        {/* Stats Cards - 3 columns on all sizes */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {/* Rounds Card */}
           <button
             onClick={handleViewRounds}
-            className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg hover:shadow-xl hover:scale-105 transition-all cursor-pointer border border-white/20"
+            className="bg-white/95 backdrop-blur rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all cursor-pointer border border-white/20 min-h-28 sm:min-h-32 flex flex-col items-center justify-center"
           >
-            <div className="text-5xl mb-3 text-center">🏌️</div>
-            <div className="text-3xl font-bold text-center text-gray-800">{rounds.length}</div>
-            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Rounds</div>
+            <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🏌️</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-800">{rounds.length}</div>
+            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide mt-1">Rounds</div>
           </button>
 
           {/* Best Score Card */}
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-            <div className="text-5xl mb-3 text-center">🏆</div>
-            <div className="text-3xl font-bold text-center text-gray-800">
+          <div className="bg-white/95 backdrop-blur rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg border border-white/20 min-h-28 sm:min-h-32 flex flex-col items-center justify-center">
+            <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">🏆</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-800">
               {bestScore ? bestScore : '—'}
             </div>
-            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Best</div>
+            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide mt-1">Best</div>
           </div>
 
           {/* Handicap Card */}
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-            <div className="text-5xl mb-3 text-center">⛳</div>
-            <div className="text-3xl font-bold text-center text-gray-800">
+          <div className="bg-white/95 backdrop-blur rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg border border-white/20 min-h-28 sm:min-h-32 flex flex-col items-center justify-center">
+            <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">⛳</div>
+            <div className="text-xl sm:text-2xl font-bold text-gray-800">
               {handicap > 0 ? handicap : '—'}
             </div>
-            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Handicap</div>
+            <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide mt-1">Handicap</div>
           </div>
         </div>
+
+        {/* Score Distribution Chart */}
+        {rounds.length > 0 && (
+          <div className="bg-white/95 backdrop-blur rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-lg border border-white/20">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Performance Breakdown</h3>
+            {/* Column Headers */}
+            <div className="flex items-center justify-between mb-3 px-1">
+              <span className="text-xs font-semibold text-gray-600 uppercase">Type</span>
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-semibold text-gray-600 uppercase w-8 text-center">Total</span>
+                <span className="text-xs font-semibold text-gray-600 uppercase w-12 text-right">Avg/Rnd</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              {Object.entries(distribution).map(([type, count]) => {
+                const percentage = (count / maxDistribution) * 100
+                const colors: { [key: string]: string } = {
+                  'Hole in 1': 'from-purple-500 to-purple-400',
+                  'Eagle': 'from-blue-500 to-blue-400',
+                  'Birdie': 'from-green-500 to-green-400',
+                  'Par': 'from-yellow-500 to-yellow-400',
+                  'Bogey': 'from-orange-500 to-orange-400',
+                  'Double+': 'from-red-500 to-red-400',
+                }
+                const emojis: { [key: string]: string } = {
+                  'Hole in 1': '⭐',
+                  'Eagle': '🦅',
+                  'Birdie': '🐦',
+                  'Par': '✔️',
+                  'Bogey': '⚠️',
+                  'Double+': '❌',
+                }
+                return (
+                  <div key={type}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{emojis[type]}</span>
+                        <span className="text-sm font-semibold text-gray-700">{type}</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm font-bold text-gray-800 w-8 text-center">{count}</span>
+                        <span className="text-xs text-gray-600 w-12 text-right">{(count / rounds.length).toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Return to Round Button (if round in progress) */}
         {currentRoundId && (
           <button
             onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-2 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all text-sm sm:text-base"
           >
-            <span className="text-2xl">🎯</span>
-            <span className="text-lg">Return to Round</span>
+            <span className="text-lg sm:text-xl">🎯</span>
+            <span>Return to Round</span>
           </button>
         )}
 
         {/* Start New Round Button */}
         <button
           onClick={handleStartNewRound}
-          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all text-sm sm:text-base"
         >
-          <span className="text-2xl">+</span>
-          <span className="text-lg">Start New Round</span>
+          <span className="text-lg sm:text-xl">+</span>
+          <span>Start New Round</span>
         </button>
 
         {/* View Courses and Golfers */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:gap-3">
           <button
             onClick={handleViewCourses}
-            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2"
+            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2 text-xs sm:text-sm"
           >
-            <span className="text-xl">🏌️‍♂️</span>
-            <span>View Courses</span>
+            <span className="text-base sm:text-lg">⛳</span>
+            <span>Courses</span>
           </button>
 
           <button
             onClick={handleViewGolfers}
-            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2"
+            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2 text-xs sm:text-sm"
           >
-            <span className="text-xl">👥</span>
-            <span>View Golfers</span>
+            <span className="text-base sm:text-lg">👥</span>
+            <span>Golfers</span>
           </button>
         </div>
       </div>
