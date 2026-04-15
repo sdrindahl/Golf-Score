@@ -139,11 +139,11 @@ function RoundDetailContent() {
       localStorage.setItem('golfRounds', JSON.stringify(updated))
     }
 
-    // Save to Supabase - only update scores and totalScore fields
+    // Save to Supabase - only update scores field
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from('rounds')
-        .update({ scores: round.scores, totalScore: round.totalScore })
+        .update({ scores: round.scores })
         .eq('id', roundId)
         .then(({ error }) => {
           if (error) {
