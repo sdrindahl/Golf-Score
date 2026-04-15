@@ -376,6 +376,17 @@ function TrackRoundContent() {
     )
   }
 
+  // Safety check - don't render if course isn't loaded
+  if (!course) {
+    return (
+      <PageWrapper title="Loading" userName="Round Details">
+        <div className="card text-center">
+          <p className="text-gray-500">Loading course details...</p>
+        </div>
+      </PageWrapper>
+    )
+  }
+
   const currentHole: Hole = course.holes[currentHoleIndex]
   const selectedTee = round.selectedTee
   const teeBox = currentHole[selectedTee]
@@ -558,7 +569,7 @@ function TrackRoundContent() {
               </div>
               <div>
                 <span className="text-sm font-bold text-gray-700 block">Par {currentHole.par}</span>
-                <span className="text-xs text-gray-600">{teeBox.yardage}yd</span>
+                <span className="text-xs text-gray-600">{teeBox?.yardage ? `${teeBox.yardage}yd` : '—'}</span>
               </div>
             </div>
 
