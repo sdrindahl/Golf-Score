@@ -135,7 +135,7 @@ export default function Home() {
   }
 
   const handleStartNewRound = () => {
-    router.push('/manage-courses')
+    router.push('/courses')
   }
 
   const handleViewRounds = () => {
@@ -143,7 +143,7 @@ export default function Home() {
   }
 
   const handleViewCourses = () => {
-    router.push('/manage-courses')
+    router.push('/courses')
   }
 
   const handleViewGolfers = () => {

@@ -66,7 +66,9 @@ export default function CoursesPage() {
 
   const getTotalYardage = (course: Course, tee: 'men' | 'women' | 'senior' | 'championship') => {
     return course.holes.reduce((total, hole) => {
-      return total + hole[tee].yardage
+      const teeBox = hole[tee]
+      if (!teeBox || !teeBox.yardage) return total
+      return total + teeBox.yardage
     }, 0)
   }
 
@@ -216,11 +218,15 @@ export default function CoursesPage() {
                       </tr>
                       <tr className="border-b border-gray-200">
                         <td className="font-semibold text-gray-600 py-2 px-2 text-xs">Yds</td>
-                        {course.holes.slice(0, 9).map((hole) => (
-                          <td key={`yds-${hole.holeNumber}`} className="text-center px-1 py-2 text-xs">
-                            {hole[selectedTee || 'men'].yardage}
-                          </td>
-                        ))}
+                        {course.holes.slice(0, 9).map((hole) => {
+                          const teeData = hole[selectedTee || 'men']
+                          const yardage = teeData?.yardage || hole.men?.yardage || '—'
+                          return (
+                            <td key={`yds-${hole.holeNumber}`} className="text-center px-1 py-2 text-xs">
+                              {yardage}
+                            </td>
+                          )
+                        })}
                       </tr>
                       <tr className="border-b border-gray-200">
                         <td className="font-semibold text-gray-600 py-2 px-2 text-xs">Hcp</td>
@@ -255,11 +261,15 @@ export default function CoursesPage() {
                       </tr>
                       <tr className="border-b border-gray-200">
                         <td className="font-semibold text-gray-600 py-2 px-2 text-xs">Yds</td>
-                        {course.holes.slice(9, 18).map((hole) => (
-                          <td key={`yds-${hole.holeNumber}`} className="text-center px-1 py-2 text-xs">
-                            {hole[selectedTee || 'men'].yardage}
-                          </td>
-                        ))}
+                        {course.holes.slice(9, 18).map((hole) => {
+                          const teeData = hole[selectedTee || 'men']
+                          const yardage = teeData?.yardage || hole.men?.yardage || '—'
+                          return (
+                            <td key={`yds-${hole.holeNumber}`} className="text-center px-1 py-2 text-xs">
+                              {yardage}
+                            </td>
+                          )
+                        })}
                       </tr>
                       <tr>
                         <td className="font-semibold text-gray-600 py-2 px-2 text-xs">Hcp</td>
