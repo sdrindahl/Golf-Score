@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course, Hole } from '@/types'
 import Link from 'next/link'
 import { saveRoundToSupabase } from '@/lib/dataSync'
+import PageWrapper from '@/components/PageWrapper'
 
 function TrackRoundContent() {
   const router = useRouter()
@@ -195,30 +196,30 @@ function TrackRoundContent() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-6">
+      <PageWrapper title="Loading" userName="Round Details">
         <div className="card text-center">
           <p className="text-gray-500">Loading round...</p>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
   if (!round || !course) {
     return (
-      <div className="max-w-2xl mx-auto py-6">
+      <PageWrapper title="Round Not Found" userName="Error">
         <div className="card text-center">
           <p className="text-gray-500 mb-4">Round not found</p>
           <Link href="/">
             <button className="btn-primary">Back to Home</button>
           </Link>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
   if (currentHoleIndex >= course.holes.length) {
     return (
-      <div className="max-w-2xl mx-auto py-6">
+      <PageWrapper title="Round Complete" userName="🎉 Congratulations">
         <div className="card text-center">
           <h2 className="text-2xl font-bold mb-4">Round Complete! 🎉</h2>
           <p className="text-gray-600 mb-6">
@@ -228,7 +229,7 @@ function TrackRoundContent() {
             View Scorecard
           </button>
         </div>
-      </div>
+      </PageWrapper>
     )
   }
 
@@ -239,11 +240,11 @@ function TrackRoundContent() {
   const parDifference = currentScore - currentHole.par
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
+    <PageWrapper title={`Hole ${currentHole.holeNumber}`} userName={`${round.courseName} • ${selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s`}>
       {/* Back button */}
       <button
         onClick={handleBackToTeeSelector}
-        className="mb-4 px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700"
+        className="mb-4 px-3 py-1 bg-white text-gray-800 rounded text-sm hover:bg-gray-100"
       >
         ← Back to Tee
       </button>
@@ -257,64 +258,52 @@ function TrackRoundContent() {
         </div>
       )}
 
-      {userLat !== null && (
-        <div className="card mb-4 bg-green-50 border-green-200">
-          <p className="text-green-700 text-sm">
-            ✅ GPS Active • Accuracy: ±{Math.round(gpsAccuracy || 0)}m
-          </p>
-        </div>
-      )}
-
       <div className="card">
         {/* Distance to green - MAIN FOCUS */}
-        <div className="mb-8 text-center p-8 bg-blue-50 rounded-lg border-2 border-blue-200">
-          <p className="text-gray-600 text-sm mb-2">Distance to Green</p>
+        <div className="mb-4 text-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+          <p className="text-gray-600 text-xs mb-1">Distance to Green</p>
           {distance !== null ? (
             <>
-              <div className="text-7xl font-bold text-blue-600">{distance}</div>
-              <p className="text-gray-600 text-lg mt-2">yards</p>
+              <div className="text-5xl md:text-7xl font-bold text-blue-600">{distance}</div>
+              <p className="text-gray-600 text-sm mt-1">yards</p>
             </>
           ) : (
-            <p className="text-gray-500 text-lg">Getting location...</p>
+            <p className="text-gray-500 text-sm">Getting location...</p>
           )}
         </div>
 
-        {/* Hole info header */}
-        <div className="mb-6 pb-4 border-b">
-          <p className="text-gray-600 text-sm">
-            {round.courseName} • {selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s Tee
-          </p>
-          <h1 className="text-3xl font-bold mt-2">Hole {currentHole.holeNumber}</h1>
-          <p className="text-gray-600 mt-1">
+        {/* Hole progress */}
+        <div className="mb-4 pb-3 border-b">
+          <p className="text-gray-600 text-xs">
             Hole {currentHoleIndex + 1} of {course.holes.length}
           </p>
         </div>
 
         {/* Par and Yardage */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-gray-600 text-sm">Par</p>
-            <p className="text-3xl font-bold text-gray-800">{currentHole.par}</p>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <div className="p-2 bg-gray-50 rounded-lg">
+            <p className="text-gray-600 text-xs">Par</p>
+            <p className="text-2xl font-bold text-gray-800">{currentHole.par}</p>
           </div>
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-gray-600 text-sm">Yardage</p>
-            <p className="text-3xl font-bold text-gray-800">{teeBox.yardage}</p>
+          <div className="p-2 bg-gray-50 rounded-lg">
+            <p className="text-gray-600 text-xs">Yardage</p>
+            <p className="text-2xl font-bold text-gray-800">{teeBox.yardage}</p>
           </div>
         </div>
 
         {/* Score entry with +/- buttons */}
-        <div className="mb-8 p-6 bg-yellow-50 rounded-lg border-2 border-yellow-200">
-          <p className="text-gray-600 text-sm text-center mb-4">Your Score</p>
-          <div className="flex items-center justify-center gap-6">
+        <div className="mb-4 p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
+          <p className="text-gray-600 text-xs text-center mb-3">Your Score</p>
+          <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => handleScoreChange(-1)}
-              className="px-6 py-3 bg-red-500 text-white text-2xl font-bold rounded-lg hover:bg-red-600"
+              className="px-4 py-2 bg-red-500 text-white text-xl font-bold rounded-lg hover:bg-red-600"
             >
               −
             </button>
             <div className="text-center">
-              <div className="text-5xl font-bold text-gray-800">{currentScore}</div>
-              <div className={`text-lg mt-2 font-semibold ${
+              <div className="text-4xl font-bold text-gray-800">{currentScore}</div>
+              <div className={`text-sm mt-1 font-semibold ${
                 parDifference < 0 ? 'text-green-600' : 
                 parDifference > 0 ? 'text-red-600' : 
                 'text-gray-600'
@@ -326,7 +315,7 @@ function TrackRoundContent() {
             </div>
             <button
               onClick={() => handleScoreChange(1)}
-              className="px-6 py-3 bg-green-500 text-white text-2xl font-bold rounded-lg hover:bg-green-600"
+              className="px-4 py-2 bg-green-500 text-white text-xl font-bold rounded-lg hover:bg-green-600"
             >
               +
             </button>
@@ -337,22 +326,38 @@ function TrackRoundContent() {
         <div className="flex gap-3">
           {currentHoleIndex > 0 && (
             <button onClick={handlePreviousHole} className="btn-secondary flex-1">
-              ← Previous Hole
+              ← Previous
             </button>
           )}
           {currentHoleIndex < course.holes.length - 1 && (
-            <button onClick={handleNextHole} className="btn-primary flex-1">
-              Next Hole →
+            <button 
+              onClick={handleNextHole} 
+              disabled={currentScore === 0}
+              className={`flex-1 font-semibold py-2 px-4 rounded-lg transition ${
+                currentScore === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'btn-primary'
+              }`}
+            >
+              Save & Next Hole →
             </button>
           )}
           {currentHoleIndex === course.holes.length - 1 && (
-            <button onClick={handleFinishRound} className="btn-primary flex-1">
+            <button 
+              onClick={handleFinishRound}
+              disabled={currentScore === 0}
+              className={`flex-1 font-semibold py-2 px-4 rounded-lg transition ${
+                currentScore === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'btn-primary'
+              }`}
+            >
               Finish Round ✓
             </button>
           )}
         </div>
       </div>
-    </div>
+    </PageWrapper>
   )
 }
 
