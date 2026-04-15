@@ -26,7 +26,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true)
   const [editingName, setEditingName] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
-  const [version, setVersion] = useState<{ version: string; buildDate: string; buildTime: string } | null>(null)
+  const [version, setVersion] = useState<{ version: string; buildDate: string; buildTime?: string } | null>(null)
 
   useEffect(() => {
     const user = auth.getCurrentUser()
@@ -358,7 +358,7 @@ export default function Settings() {
         {version && (
           <div className="text-center text-xs text-black font-bold py-4">
             <p>Current version: {version.version}</p>
-            <p>Deployed {new Date(version.buildDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(`2026-01-01T${version.buildTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</p>
+            <p>Deployed {new Date(version.buildDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} {version.buildTime && `at ${new Date(`2026-01-01T${version.buildTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}`}</p>
           </div>
         )}
       </div>

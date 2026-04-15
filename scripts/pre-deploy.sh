@@ -20,11 +20,16 @@ NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
 # Get current date
 BUILD_DATE=$(date +"%Y-%m-%d")
 
+# Get current time in HH:MM:SS format
+BUILD_TIME=$(date +"%H:%M:%S")
+
 # Update version.json
 sed -i '' "s/\"version\": \".*\"/\"version\": \"$NEW_VERSION\"/" $VERSIONFILE
 sed -i '' "s/\"buildDate\": \".*\"/\"buildDate\": \"$BUILD_DATE\"/" $VERSIONFILE
+sed -i '' "s/\"buildTime\": \".*\"/\"buildTime\": \"$BUILD_TIME\"/" $VERSIONFILE
 
 echo "✅ Version bumped: $CURRENT_VERSION → $NEW_VERSION"
 echo "📅 Build date: $BUILD_DATE"
+echo "🕐 Build time: $BUILD_TIME"
 echo ""
 echo "Ready to deploy! Run: npm run build && npm run start"
