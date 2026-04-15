@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "pre-deploy": "bash scripts/pre-deploy.sh",
     "db:seed": "node scripts/seed-courses.js"
   },
   "dependencies": {

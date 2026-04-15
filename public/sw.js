@@ -1,11 +1,49 @@
 const CACHE_NAME = 'golf-tracker-v2'
+let currentVersion = null
+
 const urlsToCache = [
   '/',
   '/offline.html',
 ]
 
+// Fetch and store current version
+async function getCurrentVersion() {
+  try {
+    const response = await fetch('/version.json', { cache: 'no-store' })
+    if (response.ok) {
+      const data = await response.json()
+      return data.version
+    }
+  } catch (err) {
+    console.log('Error fetching version:', err)
+  }
+  return null
+}
+
+// Check for updates and notify clients
+async function checkForUpdates() {
+  const newVersion = await getCurrentVersion()
+  if (newVersion && currentVersion && newVersion !== currentVersion) {
+    console.log(`New version available: ${newVersion}`)
+    // Notify all clients about the update
+    self.clients.matchAll().then((clients) => {
+      clients.forEach((client) => {
+        client.postMessage({
+          type: 'UPDATE_AVAILABLE',
+          version: newVersion,
+          oldVersion: currentVersion
+        })
+      })
+    })
+    currentVersion = newVersion
+  }
+}
+
 // Install event - cache assets
-self.addEventListener('install', (event) => {
+self.addEventListener('install', async (event) => {
+  currentVersion = await getCurrentVersion()
+  console.log(`Installing service worker, version: ${currentVersion}`)
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
