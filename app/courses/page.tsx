@@ -175,6 +175,13 @@ export default function CoursesPage() {
                   </div>
                   <button
                     onClick={() => {
+                      // Check if a round is already in progress
+                      const currentRoundId = localStorage.getItem('currentRoundId')
+                      if (currentRoundId) {
+                        alert('You have a round in progress. Please finish or cancel it before starting a new round.')
+                        return
+                      }
+                      
                       if (!selectedTee) {
                         alert('Select Tee to Start your Round')
                         return
