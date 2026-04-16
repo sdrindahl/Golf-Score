@@ -99,19 +99,17 @@ export default function CourseInitializer() {
         localStorage.setItem('golfUsers', JSON.stringify([]))
       }
 
-      // Sync courses to Supabase to ensure they exist for foreign key constraints
+      // Sync ONLY hardcoded courses to Supabase to ensure they exist for foreign key constraints
+      // This prevents syncing stale/deleted courses back to Supabase
       try {
-        const localCoursesStr = localStorage.getItem('golfCourses')
-        if (localCoursesStr) {
-          const localCourses = JSON.parse(localCoursesStr)
-          console.log(`📤 Syncing ${localCourses.length} courses to Supabase...`)
-          for (const course of localCourses) {
-            // Fire and forget - don't wait for each one
-            saveCourseToSupabase(course).catch(error => {
-              // Courses might already exist, that's fine
-              console.log(`Note: Course ${course.id} already in Supabase or sync skipped`)
-            })
-          }
+        const hardcodedCourseIds = new Set(COURSES_DATABASE.map(c => c.id))
+        console.log(`📤 Syncing ${COURSES_DATABASE.length} hardcoded courses to Supabase...`)
+        for (const course of COURSES_DATABASE) {
+          // Fire and forget - don't wait for each one
+          saveCourseToSupabase(course).catch(error => {
+            // Courses might already exist, that's fine
+            console.log(`Note: Course ${course.id} already in Supabase or sync skipped`)
+          })
         }
       } catch (error) {
         console.error('Error syncing courses to Supabase:', error)
