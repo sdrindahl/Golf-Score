@@ -306,14 +306,27 @@ function TrackRoundContent() {
   const handleFinishRound = () => {
     if (round) {
       // Final sync to Supabase before navigating away
-      saveRoundToSupabase(round).catch(error => {
+      const finishedRound = { ...round, in_progress: false };
+      saveRoundToSupabase(finishedRound).catch(error => {
         console.error('❌ Failed to sync final round to Supabase:', error.message)
         // Still navigate even if sync fails - rounds are saved locally
-      })
+      });
+      // Also update in_progress directly in Supabase for robustness
+      if (typeof supabase !== 'undefined') {
+        supabase
+          .from('rounds')
+          .update({ in_progress: false })
+          .eq('id', round.id)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Failed to update in_progress:', error.message);
+            }
+          });
+      }
       // Clear the current round ID and hole index since round is finished
-      localStorage.removeItem('currentRoundId')
-      localStorage.removeItem(`currentHoleIndex-${roundId}`)
-      router.push(`/round-detail?id=${round.id}&completed=true`)
+      localStorage.removeItem('currentRoundId');
+      localStorage.removeItem(`currentHoleIndex-${roundId}`);
+      router.push(`/round-detail?id=${round.id}&completed=true`);
     }
   }
 
