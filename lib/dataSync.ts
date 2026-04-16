@@ -432,75 +432,36 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
   try {
     // Ensure totalScore matches the sum of scores
     const validRound = ensureValidTotalScore(round)
-    
     const supabaseRound = roundToSupabase(validRound)
     // Remove id from update object (can't update primary key)
     const { id, ...updateData } = supabaseRound
 
-    console.log('📤 Updating round in Supabase:', {
-      id: validRound.id,
-      totalScore: validRound.totalScore,
-      scores: validRound.scores,
-      updateDataKeys: Object.keys(updateData),
-      total_score_in_updateData: updateData.total_score
+    // Log payload and types
+    console.log('🟦 Supabase update payload:', {
+      updateData,
+      types: Object.fromEntries(Object.entries(updateData).map(([k, v]) => [k, typeof v]))
     })
 
-    // Try updating both fields together with select to see row count
-    try {
-      const { data, error } = await supabase
-        .from('rounds')
-        .update(updateData)
-        .eq('id', round.id)
-        .select('id, total_score, scores')
-        .single()
+    // TEST: Only update total_score
+    const { error } = await supabase
+      .from('rounds')
+      .update({ total_score: updateData.total_score })
+      .eq('id', round.id)
 
-      if (error) {
-        console.error('❌ Supabase error updating round:', {
-          error,
-          roundId: round.id,
-          code: error.code,
-          message: error.message,
-          details: error.details
-        })
-        throw error
-      }
-
-      if (!data) {
-        console.warn('⚠️ Update query returned no data - row may not exist or RLS blocked it:', {
-          roundId: round.id,
-          expectedId: validRound.id
-        })
-      } else {
-        console.log('✅ Round updated successfully in Supabase:', {
-          id: data.id,
-          totalScoreInDb: data.total_score,
-          scoresInDb: data.scores
-        })
-      }
-    } catch (innerError) {
-      // If select().single() fails due to no rows, try without select
-      console.warn('⚠️ Update with select() failed, trying without select():', innerError)
-      
-      const { error: updateError } = await supabase
-        .from('rounds')
-        .update(updateData)
-        .eq('id', round.id)
-
-      if (updateError) {
-        console.error('❌ Supabase error (second attempt):', {
-          error: updateError,
-          roundId: round.id,
-          code: updateError.code,
-          message: updateError.message
-        })
-        throw updateError
-      }
-
-      console.log('✅ Round updated successfully (without select):', {
-        id: round.id,
-        newScore: round.totalScore
+    if (error) {
+      console.error('❌ Supabase error updating ONLY total_score:', {
+        error,
+        roundId: round.id,
+        code: error.code,
+        message: error.message
       })
+      throw error
     }
+
+    console.log('✅ Only total_score updated in Supabase:', {
+      id: round.id,
+      newScore: updateData.total_score
+    })
   } catch (error) {
     console.error('❌ Error updating round in Supabase:', error)
     throw error
