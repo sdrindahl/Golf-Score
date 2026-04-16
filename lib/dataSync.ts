@@ -347,7 +347,10 @@ export async function saveRoundToSupabase(round: Round): Promise<void> {
   }
 
   try {
-    const roundData = roundToSupabase(round)
+    // Ensure totalScore matches the sum of scores
+    const validRound = ensureValidTotalScore(round)
+    
+    const roundData = roundToSupabase(validRound)
     console.log('📤 Attempting to save round to Supabase:', roundData)
     
     // Use upsert to insert if new, update if already exists
@@ -399,6 +402,25 @@ export async function deleteRoundFromSupabase(roundId: string): Promise<void> {
 }
 
 /**
+ * Ensure totalScore matches the sum of scores (data integrity check)
+ */
+function ensureValidTotalScore(round: Round): Round {
+  const calculatedTotal = round.scores.reduce((a, b) => a + b, 0)
+  if (round.totalScore !== calculatedTotal) {
+    console.warn('⚠️ Total score mismatch detected:', {
+      stored: round.totalScore,
+      calculated: calculatedTotal,
+      roundId: round.id
+    })
+    return {
+      ...round,
+      totalScore: calculatedTotal
+    }
+  }
+  return round
+}
+
+/**
  * Update a round in Supabase
  */
 export async function updateRoundInSupabase(round: Round): Promise<void> {
@@ -408,29 +430,43 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
   }
 
   try {
-    const supabaseRound = roundToSupabase(round)
+    // Ensure totalScore matches the sum of scores
+    const validRound = ensureValidTotalScore(round)
+    
+    const supabaseRound = roundToSupabase(validRound)
     // Remove id from update object (can't update primary key)
     const { id, ...updateData } = supabaseRound
 
     console.log('📤 Updating round in Supabase:', {
-      id: round.id,
-      totalScore: round.totalScore,
-      scores: round.scores,
+      id: validRound.id,
+      totalScore: validRound.totalScore,
+      scores: validRound.scores,
       updateData
     })
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('rounds')
       .update(updateData)
       .eq('id', round.id)
+      .select()
 
     if (error) {
-      console.error('❌ Supabase error:', error)
+      console.error('❌ Supabase error updating round:', {
+        error,
+        roundId: round.id,
+        code: error.code,
+        message: error.message
+      })
       throw error
     }
-    console.log('✅ Round updated successfully in Supabase:', round.id)
+    
+    console.log('✅ Round updated successfully in Supabase:', {
+      id: round.id,
+      newScore: round.totalScore,
+      rowsUpdated: data?.length || 0
+    })
   } catch (error) {
-    console.error('Error updating round in Supabase:', error)
+    console.error('❌ Error updating round in Supabase:', error)
     throw error
   }
 }

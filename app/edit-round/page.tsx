@@ -142,9 +142,10 @@ function EditRoundContent() {
     // Sync to Supabase
     try {
       await updateRoundInSupabase(updatedRound)
-      console.log('✅ Round synced to Supabase')
+      console.log('✅ Round synced to Supabase successfully')
     } catch (error) {
-      console.error('Failed to sync round to Supabase:', error)
+      console.error('❌ Failed to sync round to Supabase:', error)
+      alert('⚠️ Warning: Round saved locally but failed to sync to cloud. Please check your internet connection.')
     }
 
     setSubmitted(true)
