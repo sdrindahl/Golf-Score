@@ -429,6 +429,7 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
     return
   }
 
+  console.log('🟢 Entered updateRoundInSupabase', { round })
   try {
     // Ensure totalScore matches the sum of scores
     const validRound = ensureValidTotalScore(round)
@@ -442,11 +443,21 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
       types: Object.fromEntries(Object.entries(updateData).map(([k, v]) => [k, typeof v]))
     })
 
-    // TEST: Only update total_score
-    const { error } = await supabase
-      .from('rounds')
-      .update({ total_score: updateData.total_score })
-      .eq('id', round.id)
+    // Log before update
+    console.log('🟡 About to call supabase update', { total_score: updateData.total_score, id: round.id })
+
+    let error = undefined
+    try {
+      const result = await supabase
+        .from('rounds')
+        .update({ total_score: updateData.total_score })
+        .eq('id', round.id)
+      error = result.error
+      console.log('🟣 Supabase update result:', result)
+    } catch (updateErr) {
+      console.error('❌ Exception thrown during supabase update:', updateErr)
+      throw updateErr
+    }
 
     if (error) {
       console.error('❌ Supabase error updating ONLY total_score:', {
