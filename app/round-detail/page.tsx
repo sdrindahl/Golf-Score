@@ -287,6 +287,7 @@ function RoundDetailContent() {
     // Count score types across all holes in this round
     for (let i = 0; i < round.scores.length; i++) {
       const score = round.scores[i]
+      if (score === 0) continue; // Ignore unplayed holes
       const hole = course.holes[i]
       const diff = score - hole.par
 
