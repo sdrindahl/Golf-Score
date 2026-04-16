@@ -112,6 +112,7 @@ function EditRoundContent() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    alert('🟢 Save handler fired!')
     console.log('🟠 TEST LOG: handleSubmit called')
     e.preventDefault()
 
