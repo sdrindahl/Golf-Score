@@ -67,6 +67,8 @@ export async function syncDataFromSupabase(): Promise<void> {
           notes: r.notes
         }))
 
+        console.log(`📊 Synced ${roundsInCamelCase.length} rounds from Supabase`, roundsInCamelCase)
+
         // Merge with existing local rounds
         const existingLocal = localStorage.getItem('golfRounds')
         const localRounds = existingLocal ? JSON.parse(existingLocal) : []
@@ -401,6 +403,7 @@ export async function deleteRoundFromSupabase(roundId: string): Promise<void> {
  */
 export async function updateRoundInSupabase(round: Round): Promise<void> {
   if (!isSupabaseConfigured() || !supabase) {
+    console.warn('⚠️ Supabase not configured, skipping update')
     return
   }
 
@@ -409,15 +412,26 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
     // Remove id from update object (can't update primary key)
     const { id, ...updateData } = supabaseRound
 
+    console.log('📤 Updating round in Supabase:', {
+      id: round.id,
+      totalScore: round.totalScore,
+      scores: round.scores,
+      updateData
+    })
+
     const { error } = await supabase
       .from('rounds')
       .update(updateData)
       .eq('id', round.id)
 
-    if (error) throw error
-    console.log('Round updated in Supabase:', round.id)
+    if (error) {
+      console.error('❌ Supabase error:', error)
+      throw error
+    }
+    console.log('✅ Round updated successfully in Supabase:', round.id)
   } catch (error) {
     console.error('Error updating round in Supabase:', error)
+    throw error
   }
 }
 

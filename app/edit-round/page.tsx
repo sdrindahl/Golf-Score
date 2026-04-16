@@ -111,7 +111,7 @@ function EditRoundContent() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!round || !course || scores.some(s => s === 0)) {
@@ -140,9 +140,12 @@ function EditRoundContent() {
     }
 
     // Sync to Supabase
-    updateRoundInSupabase(updatedRound).catch(error => {
+    try {
+      await updateRoundInSupabase(updatedRound)
+      console.log('✅ Round synced to Supabase')
+    } catch (error) {
       console.error('Failed to sync round to Supabase:', error)
-    })
+    }
 
     setSubmitted(true)
   }

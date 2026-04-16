@@ -25,13 +25,32 @@ function PlayerProfileContent() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
+        console.log('🔄 Page became visible, refreshing data...')
         setRefreshKey(prev => prev + 1)
       }
     }
 
+    // Also check if we just navigated to this page from somewhere else
+    const handleBeforeUnload = () => {
+      // Mark that we're about to navigate away
+      sessionStorage.setItem('navigating', 'true')
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
+
+  // Force refresh on initial load and whenever the search params change
+  useEffect(() => {
+    console.log('🔄 Profile page dependencies changed, triggering refresh:', { playerId, refreshKey })
+    // Reset the navigating flag
+    sessionStorage.removeItem('navigating')
+  }, [playerId, refreshKey])
 
   useEffect(() => {
     if (!playerId) return
