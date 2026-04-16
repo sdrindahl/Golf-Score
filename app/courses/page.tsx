@@ -168,6 +168,10 @@ export default function CoursesPage() {
                     const filteredRounds = allRounds.filter((r: any) => r.id !== currentRoundId)
                     localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
                   }
+                  // Remove round from Supabase if it exists
+                  import('@/lib/dataSync').then(({ deleteRoundFromSupabase }) => {
+                    deleteRoundFromSupabase(currentRoundId)
+                  })
                   // Remove round progress
                   localStorage.removeItem('currentRoundId')
                   localStorage.removeItem(`currentHoleIndex-${currentRoundId}`)
