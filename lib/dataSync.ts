@@ -442,29 +442,46 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
       totalScore: validRound.totalScore,
       scores: validRound.scores,
       updateDataKeys: Object.keys(updateData),
-      updateData: updateData,
       total_score_in_updateData: updateData.total_score
     })
 
-    const { error } = await supabase
+    // Update scores and total_score separately to isolate any RLS issues
+    const { error: scoresError } = await supabase
       .from('rounds')
-      .update(updateData)
+      .update({ scores: updateData.scores })
       .eq('id', round.id)
 
-    if (error) {
-      console.error('❌ Supabase error updating round:', {
-        error,
+    if (scoresError) {
+      console.error('❌ Supabase error updating scores:', {
+        error: scoresError,
         roundId: round.id,
-        code: error.code,
-        message: error.message
+        code: scoresError.code,
+        message: scoresError.message
       })
-      throw error
+      throw scoresError
+    }
+
+    console.log('✅ Scores updated successfully')
+
+    // Now update total_score
+    const { error: totalError } = await supabase
+      .from('rounds')
+      .update({ total_score: updateData.total_score })
+      .eq('id', round.id)
+
+    if (totalError) {
+      console.error('❌ Supabase error updating total_score:', {
+        error: totalError,
+        roundId: round.id,
+        code: totalError.code,
+        message: totalError.message
+      })
+      throw totalError
     }
     
-    console.log('✅ Round updated successfully in Supabase:', {
+    console.log('✅ Total score updated successfully in Supabase:', {
       id: round.id,
-      newScore: round.totalScore,
-      updatedFields: Object.keys(updateData)
+      newScore: round.totalScore
     })
   } catch (error) {
     console.error('❌ Error updating round in Supabase:', error)
