@@ -312,7 +312,7 @@ function TrackRoundContent() {
         // Still navigate even if sync fails - rounds are saved locally
       });
       // Also update in_progress directly in Supabase for robustness
-      if (typeof supabase !== 'undefined') {
+      if (supabase) {
         supabase
           .from('rounds')
           .update({ in_progress: false })
