@@ -215,6 +215,13 @@ function EditRoundContent() {
 
   return (
     <div className="max-w-4xl mx-auto py-6">
+      <button
+        type="button"
+        className="btn-primary mb-4"
+        onClick={() => alert('🟢 Test button fired!')}
+      >
+        Test Client Button
+      </button>
       <div className="card mb-6">
         <h2 className="text-2xl font-bold mb-2">{course.name}</h2>
         <p className="text-gray-600 mb-4">Par {course.par}</p>
