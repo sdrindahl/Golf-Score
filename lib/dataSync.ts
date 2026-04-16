@@ -126,61 +126,55 @@ export async function syncDataFromSupabase(): Promise<void> {
       }
 
       if (supabaseCourses && supabaseCourses.length > 0) {
-        // Merge with existing local courses to avoid losing unsaved/local edits
+        // Merge with existing local courses, but remove courses that were deleted in Supabase
         const existingLocal = localStorage.getItem('golfCourses')
         const localCourses = existingLocal ? JSON.parse(existingLocal) : []
         
         // Create maps for efficient lookup by ID
-        const localCourseMap = new Map(localCourses.map((c: any) => [c.id, c]))
         const supabaseCourseMap = new Map(supabaseCourses.map(c => [c.id, c]))
         
-        // Create merged array with all unique course IDs
+        // Create merged array - prioritize Supabase courses, remove locally-deleted ones
         const mergedCourses: any[] = []
-        const addedIds = new Set<string>()
         
-        // First, add all local courses (updated with Supabase data if available)
-        for (const localCourse of localCourses) {
-          const supabaseCourse = supabaseCourseMap.get(localCourse.id)
-          if (supabaseCourse && supabaseCourse.holes && supabaseCourse.holes.length > 0) {
-            // Update with Supabase data only if it has complete holes data
+        // First, add all Supabase courses (these are the source of truth)
+        for (const supabaseCourse of supabaseCourses) {
+          if (supabaseCourse.holes && supabaseCourse.holes.length > 0) {
+            // Find local version to preserve any user edits to non-core fields
+            const localCourse = localCourses.find((c: any) => c.id === supabaseCourse.id)
             mergedCourses.push({
               id: supabaseCourse.id,
               name: supabaseCourse.name,
-              location: localCourse.location ?? 'Unknown',
-              state: localCourse.state ?? 'Unknown',
-              holeCount: supabaseCourse.hole_count || localCourse.holeCount,
+              location: localCourse?.location ?? 'Unknown',
+              state: localCourse?.state ?? 'Unknown',
+              holeCount: supabaseCourse.hole_count || localCourse?.holeCount,
               par: supabaseCourse.par,
               holes: supabaseCourse.holes,
-              courseRating: localCourse.courseRating ?? 72.0,
-              slopeRating: localCourse.slopeRating ?? 113,
+              courseRating: localCourse?.courseRating ?? 72.0,
+              slopeRating: localCourse?.slopeRating ?? 113,
             })
-          } else {
-            // Keep local course as-is if Supabase doesn't have complete data
-            mergedCourses.push(localCourse)
           }
-          addedIds.add(localCourse.id)
         }
         
-        // Then, add any NEW Supabase courses that don't exist locally and have complete data
-        for (const supabaseCourse of supabaseCourses) {
-          if (!addedIds.has(supabaseCourse.id) && supabaseCourse.holes && supabaseCourse.holes.length > 0) {
-            mergedCourses.push({
-              id: supabaseCourse.id,
-              name: supabaseCourse.name,
-              location: 'Unknown',
-              state: 'Unknown',
-              holeCount: supabaseCourse.hole_count,
-              par: supabaseCourse.par,
-              holes: supabaseCourse.holes,
-              courseRating: 72.0,
-              slopeRating: 113,
-            })
-            addedIds.add(supabaseCourse.id)
+        // Then, add any local courses that don't exist in Supabase (newly created, not yet synced)
+        // Only keep these if they were recently added (within 5 minutes - timestamp-based IDs)
+        const now = Date.now()
+        const fiveMinutesAgo = now - (5 * 60 * 1000)
+        
+        for (const localCourse of localCourses) {
+          if (!supabaseCourseMap.has(localCourse.id)) {
+            const courseId = parseInt(localCourse.id, 10)
+            // Only keep if it's a recent numeric ID (timestamp-based), not an old string ID
+            if (!isNaN(courseId) && courseId > fiveMinutesAgo) {
+              console.log(`💾 Keeping newly created local course: ${localCourse.name} (${localCourse.id})`)
+              mergedCourses.push(localCourse)
+            } else {
+              console.log(`🗑️ Removing deleted course: ${localCourse.name} (${localCourse.id}) - not in Supabase`)
+            }
           }
         }
         
         localStorage.setItem('golfCourses', JSON.stringify(mergedCourses))
-        console.log(`✅ Merged courses: ${mergedCourses.length} total (${supabaseCourses.length} from Supabase, ${mergedCourses.length - supabaseCourses.length + addedIds.size} kept from local)`)
+        console.log(`✅ Merged courses: ${mergedCourses.length} total (${supabaseCourses.length} from Supabase)`)
       }
     } catch (error) {
       console.error('Error syncing courses:', error)
