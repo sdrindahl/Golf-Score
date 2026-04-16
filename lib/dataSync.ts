@@ -444,11 +444,10 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
       updateData
     })
 
-    const { error, data } = await supabase
+    const { error } = await supabase
       .from('rounds')
       .update(updateData)
       .eq('id', round.id)
-      .select()
 
     if (error) {
       console.error('❌ Supabase error updating round:', {
@@ -462,8 +461,7 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
     
     console.log('✅ Round updated successfully in Supabase:', {
       id: round.id,
-      newScore: round.totalScore,
-      rowsUpdated: data?.length || 0
+      newScore: round.totalScore
     })
   } catch (error) {
     console.error('❌ Error updating round in Supabase:', error)
