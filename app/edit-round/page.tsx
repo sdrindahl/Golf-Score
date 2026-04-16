@@ -112,6 +112,7 @@ function EditRoundContent() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🟠 TEST LOG: handleSubmit called')
     e.preventDefault()
 
     if (!round || !course || scores.some(s => s === 0)) {
