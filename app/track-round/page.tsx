@@ -95,17 +95,19 @@ function TrackRoundContent() {
               .from('rounds')
               .select('*')
               .eq('id', roundId)
-              .single()
-            
-            if (!error && data) {
-              foundRound = data as Round
-              // Restore to localStorage for future access
-              const allRounds = savedRounds ? JSON.parse(savedRounds) : []
-              allRounds.push(foundRound)
-              localStorage.setItem('golfRounds', JSON.stringify(allRounds))
-              console.log('✅ Round restored from Supabase and saved to localStorage')
-            } else {
+              .maybeSingle();
+
+            if (error) {
               console.error('Could not fetch round from Supabase:', error?.message)
+            } else if (data) {
+              foundRound = data as Round;
+              // Restore to localStorage for future access
+              const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
+              allRounds.push(foundRound);
+              localStorage.setItem('golfRounds', JSON.stringify(allRounds));
+              console.log('✅ Round restored from Supabase and saved to localStorage');
+            } else {
+              console.warn('No round found in Supabase for id', roundId);
             }
           } catch (supabaseError) {
             console.error('Supabase fetch error:', supabaseError)
