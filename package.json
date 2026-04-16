@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "pre-deploy": "bash scripts/pre-deploy.sh",
-    "db:seed": "node scripts/seed-courses.js"
+    "db:seed": "node scripts/seed-courses.js",
+    "update-version": "node scripts/update-version-json.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.0",
