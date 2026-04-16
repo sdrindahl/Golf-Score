@@ -333,7 +333,8 @@ function roundToSupabase(round: Round) {
     date: round.date,
     scores: round.scores,
     total_score: round.totalScore,
-    notes: round.notes || null
+    notes: round.notes || null,
+    in_progress: round.in_progress !== undefined ? round.in_progress : true,
   }
 }
 

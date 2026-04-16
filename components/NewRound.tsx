@@ -110,6 +110,7 @@ export default function NewRound() {
       scores,
       totalScore: scores.reduce((a, b) => a + b, 0),
       notes,
+      in_progress: true,
     }
 
     const savedRounds = localStorage.getItem('golfRounds')

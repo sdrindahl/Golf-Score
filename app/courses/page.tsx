@@ -288,6 +288,7 @@ export default function CoursesPage() {
                           date: new Date().toISOString(),
                           scores: Array(course.holes.length).fill(0),
                           totalScore: 0,
+                          in_progress: true,
                         }
                         const savedRounds = localStorage.getItem('golfRounds')
                         const golfRounds = savedRounds ? JSON.parse(savedRounds) : []

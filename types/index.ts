@@ -51,4 +51,5 @@ export interface Round {
   scores: number[]
   totalScore: number
   notes?: string
+  in_progress?: boolean
 }
