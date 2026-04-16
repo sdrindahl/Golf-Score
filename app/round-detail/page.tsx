@@ -129,8 +129,46 @@ function RoundDetailContent() {
   }
 
   const handleSaveAllChanges = () => {
-    alert('🟢 Save Changes handler fired!')
-    if (!round) return
+    console.log('🟢 Save Changes handler fired!')
+    if (!round) {
+      console.log('❌ No round found, aborting save.')
+      return
+    }
+
+    // Save to localStorage
+    const savedRounds = localStorage.getItem('golfRounds')
+    if (savedRounds) {
+      const allRounds = JSON.parse(savedRounds)
+      const updated = allRounds.map(r => r.id === roundId ? round : r)
+      localStorage.setItem('golfRounds', JSON.stringify(updated))
+      console.log('✅ Updated round in localStorage:', round)
+    } else {
+      console.log('⚠️ No savedRounds found in localStorage')
+    }
+
+    // Save to Supabase - only update scores field
+    if (isSupabaseConfigured() && supabase) {
+      console.log('🔄 Attempting to update Supabase:', { id: roundId, scores: round.scores })
+      supabase
+        .from('rounds')
+        .update({ scores: round.scores })
+        .eq('id', roundId)
+        .then(({ error }) => {
+          if (error) {
+            console.log('❌ Could not update in Supabase:', error)
+            alert('Error saving changes to Supabase')
+          } else {
+            console.log('✅ Supabase update successful')
+            setHasUnsavedChanges(false)
+            // Redirect to player profile
+            window.location.href = `/player?id=${round.userId}`
+          }
+        })
+    } else {
+      console.log('⚠️ Supabase not configured, skipping cloud update')
+      setHasUnsavedChanges(false)
+      window.location.href = `/player?id=${round.userId}`
+    }
 
     // Save to localStorage
     const savedRounds = localStorage.getItem('golfRounds')
