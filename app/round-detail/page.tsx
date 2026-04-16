@@ -129,6 +129,7 @@ function RoundDetailContent() {
   }
 
   const handleSaveAllChanges = () => {
+    alert('🟢 Save Changes handler fired!')
     if (!round) return
 
     // Save to localStorage
