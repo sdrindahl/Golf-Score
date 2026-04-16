@@ -419,18 +419,29 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
       updateData
     })
 
-    const { error } = await supabase
+    const { error, data } = await supabase
       .from('rounds')
       .update(updateData)
       .eq('id', round.id)
+      .select()
 
     if (error) {
-      console.error('❌ Supabase error:', error)
+      console.error('❌ Supabase error updating round:', {
+        error,
+        roundId: round.id,
+        code: error.code,
+        message: error.message
+      })
       throw error
     }
-    console.log('✅ Round updated successfully in Supabase:', round.id)
+    
+    console.log('✅ Round updated successfully in Supabase:', {
+      id: round.id,
+      newScore: round.totalScore,
+      rowsUpdated: data?.length || 0
+    })
   } catch (error) {
-    console.error('Error updating round in Supabase:', error)
+    console.error('❌ Error updating round in Supabase:', error)
     throw error
   }
 }
