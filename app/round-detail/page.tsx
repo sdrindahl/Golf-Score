@@ -24,39 +24,75 @@ function RoundDetailContent() {
   const [editScore, setEditScore] = useState<number | string>('')
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
+  // Polling interval in ms
+  const REFRESH_INTERVAL = 5000; // 5 seconds
+
   useEffect(() => {
-    if (!roundId) return
+    if (!roundId) return;
 
-    // Get current user for permission checking
-    const user = auth.getCurrentUser()
-    setCurrentUser(user)
+    let isMounted = true;
+    let intervalId: NodeJS.Timeout | null = null;
 
-    try {
-      // Get round from localStorage
-      const savedRounds = localStorage.getItem('golfRounds')
-      if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds) as Round[]
-        const foundRound = allRounds.find(r => r.id === roundId)
-        if (foundRound) {
-          setRound(foundRound)
+    const fetchRound = async () => {
+      // Get current user for permission checking
+      const user = auth.getCurrentUser();
+      if (isMounted) setCurrentUser(user);
 
-          // Get course data
-          const savedCourses = localStorage.getItem('golfCourses')
-          if (savedCourses) {
-            const allCourses = JSON.parse(savedCourses) as Course[]
-            const foundCourse = allCourses.find(c => c.id === foundRound.courseId)
-            if (foundCourse) {
-              setCourse(foundCourse)
+      try {
+        if (isSupabaseConfigured() && supabase) {
+          const { data, error } = await supabase
+            .from('rounds')
+            .select('*')
+            .eq('id', roundId)
+            .maybeSingle();
+          if (error) {
+            console.error('Error fetching round from Supabase:', error.message);
+            if (isMounted) setRound(null);
+          } else if (data) {
+            // Convert snake_case to camelCase
+            const camelRound: Round = {
+              id: data.id,
+              userId: data.user_id,
+              userName: data.user_name,
+              courseId: data.course_id,
+              courseName: data.course_name,
+              selectedTee: data.selected_tee,
+              date: data.date,
+              scores: data.scores,
+              totalScore: data.total_score,
+              notes: data.notes,
+              in_progress: data.in_progress,
+            };
+            if (isMounted) setRound(camelRound);
+
+            // Fetch course info from localStorage (for now)
+            const savedCourses = localStorage.getItem('golfCourses');
+            if (savedCourses) {
+              const allCourses = JSON.parse(savedCourses) as Course[];
+              const foundCourse = allCourses.find(c => c.id === camelRound.courseId);
+              if (foundCourse && isMounted) {
+                setCourse(foundCourse);
+              }
             }
+          } else {
+            if (isMounted) setRound(null);
           }
         }
+      } catch (error) {
+        console.error('Error loading round detail:', error);
+      } finally {
+        if (isMounted) setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading round detail:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [roundId])
+    };
+
+    fetchRound();
+    intervalId = setInterval(fetchRound, REFRESH_INTERVAL);
+
+    return () => {
+      isMounted = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [roundId]);
 
   // Check if user can edit this round
   const canEditRound = (): boolean => {
