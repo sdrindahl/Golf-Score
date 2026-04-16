@@ -468,7 +468,7 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
       if (!data) {
         console.warn('⚠️ Update query returned no data - row may not exist or RLS blocked it:', {
           roundId: round.id,
-          expectedId: updateData.id
+          expectedId: validRound.id
         })
       } else {
         console.log('✅ Round updated successfully in Supabase:', {
