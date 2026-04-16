@@ -138,8 +138,8 @@ function RoundDetailContent() {
     // Save to localStorage
     const savedRoundsStr = localStorage.getItem('golfRounds')
     if (savedRoundsStr) {
-      const allRounds = JSON.parse(savedRoundsStr)
-      const updated = allRounds.map(r => r.id === roundId ? round : r)
+      const allRounds = JSON.parse(savedRoundsStr) as Round[]
+      const updated = allRounds.map((r: Round) => r.id === roundId ? round : r)
       localStorage.setItem('golfRounds', JSON.stringify(updated))
       console.log('✅ Updated round in localStorage:', round)
     } else {
