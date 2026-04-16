@@ -1,6 +1,8 @@
+
 const CACHE_NAME = 'golf-tracker-v2'
 let currentVersion = null
 
+// Only cache files that exist. Remove /offline.html if not present.
 const urlsToCache = [
   '/',
   '/offline.html',
@@ -39,19 +41,21 @@ async function checkForUpdates() {
   }
 }
 
+
 // Install event - cache assets
-self.addEventListener('install', async (event) => {
-  currentVersion = await getCurrentVersion()
-  console.log(`Installing service worker, version: ${currentVersion}`)
-  
-  event.waitUntil(
-    caches.open(CACHE_NAME)
+self.addEventListener('install', (event) => {
+  // Don't use await here, use promise directly in waitUntil
+  const installPromise = getCurrentVersion().then((version) => {
+    currentVersion = version
+    console.log(`Installing service worker, version: ${currentVersion}`)
+    return caches.open(CACHE_NAME)
       .then((cache) => {
         return cache.addAll(urlsToCache).catch((err) => {
           console.log('Cache addAll error:', err)
         })
       })
-  )
+  })
+  event.waitUntil(installPromise)
   self.skipWaiting()
 })
 
@@ -72,91 +76,66 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+
 // Fetch event
 self.addEventListener('fetch', (event) => {
   const { request } = event
   const url = new URL(request.url)
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
-    return
-  }
+  // Only handle GET requests
+  if (request.method !== 'GET') return
 
   // Don't cache manifest.json, sw.js, or API calls - always fetch fresh
-  if (url.pathname.includes('manifest.json') || 
-      url.pathname.includes('sw.js') ||
-      url.pathname.startsWith('/api/')) {
+  if (url.pathname.includes('manifest.json') || url.pathname.includes('sw.js') || url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match('/') || new Response('Offline')
-      })
+      fetch(request).catch(() =>
+        new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/html' } })
+      )
     )
     return
   }
 
-  // HTML pages: Network-first (always try to get latest)
-  if (request.headers.get('accept')?.includes('text/html') || 
-      url.pathname === '/' || 
-      !url.pathname.includes('.')) {
+  // HTML pages: Network-first
+  if (request.headers.get('accept')?.includes('text/html') || url.pathname === '/' || !url.pathname.includes('.')) {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Don't cache error responses
-          if (!response || response.status !== 200) {
-            return response
-          }
-          // Only cache basic responses
-          if (response.type !== 'basic') {
-            return response
-          }
-          // Clone and cache the response
+          if (!response || response.status !== 200 || response.type !== 'basic') return response
           const responseToCache = response.clone()
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(request, responseToCache)
-            })
-            .catch((err) => {
-              console.log('Cache put error:', err)
-            })
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache)
+          }).catch((err) => {
+            console.log('Cache put error:', err)
+          })
           return response
         })
         .catch((err) => {
           console.log('Fetch error:', err)
-          // Network failed, try cache
-          return caches.match(request) || caches.match('/')
+          return caches.match(request).then((cached) =>
+            cached || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/html' } })
+          )
         })
     )
     return
   }
 
-  // Assets (JS, CSS, images, fonts): Cache-first
+  // Assets: Cache-first
   event.respondWith(
     caches.match(request)
       .then((response) => {
-        if (response) {
-          return response
-        }
-
+        if (response) return response
         return fetch(request)
           .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response
-            }
-
-            // Clone and cache the response
+            if (!response || response.status !== 200 || response.type !== 'basic') return response
             const responseToCache = response.clone()
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(request, responseToCache)
-              })
-
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache)
+            })
             return response
           })
-          .catch(() => {
-            // Return offline fallback for assets
-            return caches.match('/') || new Response('Offline')
-          })
+          .catch(() =>
+            new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/html' } })
+          )
       })
   )
 })

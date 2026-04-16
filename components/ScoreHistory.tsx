@@ -77,7 +77,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">{new Date(round.date).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-500 mb-1">{new Date(round.date).toISOString().slice(0, 10)}</p>
                   <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{round.courseName}</p>
                 </div>
                 <div className="flex items-center gap-4 ml-4">

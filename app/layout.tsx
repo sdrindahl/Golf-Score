@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import CourseInitializer from '@/components/CourseInitializer'
 import VersionChecker from '@/components/VersionChecker'
@@ -56,17 +57,15 @@ export default function RootLayout({
             {children}
           </main>
         </ThemeProvider>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(err => {
-                  console.log('Service Worker registration failed:', err)
-                })
-              }
-            `,
-          }}
-        />
+        <Script id="register-sw" strategy="afterInteractive">
+          {`
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.register('/sw.js').catch(err => {
+                console.log('Service Worker registration failed:', err)
+              })
+            }
+          `}
+        </Script>
       </body>
     </html>
   )
