@@ -23,6 +23,13 @@ export default function CoursesPage() {
   const [isClient, setIsClient] = useState(false)
   const [deleteModal, setDeleteModal] = useState<{ courseId: string; courseName: string } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+  const [showRoundInProgressMsg, setShowRoundInProgressMsg] = useState(false)
+  useEffect(() => {
+    // Check for round in progress
+    const roundId = localStorage.getItem('currentRoundId')
+    setCurrentRoundId(roundId)
+  }, [])
 
   useEffect(() => {
     // Reset tee selection when a new course is selected
@@ -147,6 +154,34 @@ export default function CoursesPage() {
   return (
     <PageWrapper title="Courses" userName="">
       <div className="space-y-4">
+
+        {/* Stop Round in Progress Button */}
+        {currentRoundId && (
+          <div className="mb-4">
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to stop and discard the round in progress? This cannot be undone.')) {
+                  // Remove current round from localStorage
+                  const savedRounds = localStorage.getItem('golfRounds')
+                  if (savedRounds) {
+                    const allRounds = JSON.parse(savedRounds)
+                    const filteredRounds = allRounds.filter((r: any) => r.id !== currentRoundId)
+                    localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+                  }
+                  // Remove round progress
+                  localStorage.removeItem('currentRoundId')
+                  localStorage.removeItem(`currentHoleIndex-${currentRoundId}`)
+                  setCurrentRoundId(null)
+                  alert('Round in progress has been stopped and removed.')
+                }
+              }}
+              className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all text-base mb-2"
+            >
+              <span className="text-lg">🛑</span>
+              <span>Stop Round in Progress</span>
+            </button>
+          </div>
+        )}
         {/* Search Bar */}
         <div className="mb-6">
           <input
@@ -233,12 +268,11 @@ export default function CoursesPage() {
                       }
 
                       // Check if a round is already in progress
-                      const currentRoundId = localStorage.getItem('currentRoundId')
                       if (currentRoundId) {
-                        alert('You have a round in progress. Please finish or cancel it before starting a new round.')
+                        setShowRoundInProgressMsg(true)
                         return
                       }
-                      
+
                       if (!selectedTee) {
                         alert('Select Tee to Start your Round')
                         return
@@ -262,6 +296,8 @@ export default function CoursesPage() {
                         saveRoundToSupabase(newRound).catch(error => {
                           console.warn('Warning: Could not save round to Supabase, but saved locally:', error.message)
                         })
+                        localStorage.setItem('currentRoundId', newRound.id)
+                        setCurrentRoundId(newRound.id)
                         router.push(`/track-round?id=${newRound.id}`)
                       } catch (error) {
                         console.error('Error starting round:', error)
@@ -274,6 +310,45 @@ export default function CoursesPage() {
                     <span className="text-xl">▶</span>
                     <span className="text-sm">Start Round</span>
                   </button>
+                                {/* Round in Progress Message */}
+                                {showRoundInProgressMsg && (
+                                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                                    <div className="bg-white rounded-2xl shadow-2xl max-w-xs w-full p-6 flex flex-col items-center border border-gray-200">
+                                      <div className="text-4xl mb-2">⛳</div>
+                                      <h2 className="text-lg font-bold mb-2 text-gray-800 text-center">Round In Progress</h2>
+                                      <p className="text-gray-700 text-center mb-4">You have a round currently in progress. You must stop it before starting a new round.</p>
+                                      <button
+                                        onClick={() => {
+                                          if (window.confirm('Are you sure you want to stop and discard the round in progress? This cannot be undone.')) {
+                                            // Remove current round from localStorage
+                                            const savedRounds = localStorage.getItem('golfRounds')
+                                            if (savedRounds) {
+                                              const allRounds = JSON.parse(savedRounds)
+                                              const filteredRounds = allRounds.filter((r: any) => r.id !== currentRoundId)
+                                              localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+                                            }
+                                            // Remove round progress
+                                            localStorage.removeItem('currentRoundId')
+                                            localStorage.removeItem(`currentHoleIndex-${currentRoundId}`)
+                                            setCurrentRoundId(null)
+                                            setShowRoundInProgressMsg(false)
+                                            alert('Round in progress has been stopped and removed.')
+                                          }
+                                        }}
+                                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all text-base mb-3"
+                                      >
+                                        <span className="text-lg">🛑</span>
+                                        <span>Stop Round in Progress</span>
+                                      </button>
+                                      <button
+                                        onClick={() => setShowRoundInProgressMsg(false)}
+                                        className="w-full py-2 rounded-lg text-gray-500 hover:text-gray-700 text-sm font-semibold border border-gray-200 bg-gray-50"
+                                      >
+                                        Dismiss
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                 </div>
 
                 {/* Tee Selection */}

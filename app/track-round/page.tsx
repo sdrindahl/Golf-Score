@@ -317,32 +317,6 @@ function TrackRoundContent() {
     }
   }
 
-  const handleCancelRound = () => {
-    if (confirm('Cancel this round? It will not be saved.')) {
-      try {
-        // Delete from localStorage
-        const savedRounds = localStorage.getItem('golfRounds')
-        if (savedRounds) {
-          const allRounds = JSON.parse(savedRounds) as Round[]
-          const filteredRounds = allRounds.filter((r) => r.id !== roundId)
-          localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
-          console.log('🗑️ Round cancelled and deleted from localStorage')
-        }
-        // Delete from Supabase to prevent it from being restored
-        if (roundId) {
-          deleteRoundFromSupabase(roundId).catch(error => {
-            console.warn('Could not delete round from Supabase:', error.message)
-          })
-        }
-        // Clear the current round ID and hole index
-        localStorage.removeItem('currentRoundId')
-        localStorage.removeItem(`currentHoleIndex-${roundId}`)
-      } catch (error) {
-        console.error('Error cancelling round:', error)
-      }
-      router.push('/')
-    }
-  }
 
 
 
@@ -647,12 +621,33 @@ function TrackRoundContent() {
           )}
         </div>
 
-        {/* Cancel button */}
+
+
+        {/* Stop Round in Progress button */}
         <button
-          onClick={handleCancelRound}
-          className="w-full py-2 px-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition text-sm"
+          onClick={() => {
+            if (window.confirm('Are you sure you want to stop and discard this round in progress? This cannot be undone.')) {
+              if (roundId) {
+                // Remove current round from localStorage
+                const savedRounds = localStorage.getItem('golfRounds')
+                if (savedRounds) {
+                  const allRounds = JSON.parse(savedRounds)
+                  const filteredRounds = allRounds.filter((r: any) => r.id !== roundId)
+                  localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+                }
+                // Remove round progress
+                localStorage.removeItem('currentRoundId')
+                localStorage.removeItem(`currentHoleIndex-${roundId}`)
+                // Optionally, delete from Supabase as well
+                deleteRoundFromSupabase(roundId).catch(() => {})
+                alert('Round in progress has been stopped and removed.')
+                router.push('/')
+              }
+            }
+          }}
+          className="w-full py-2 px-2 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-900 transition text-sm"
         >
-          Cancel
+          🛑 Stop Round in Progress
         </button>
       </>
       )}
