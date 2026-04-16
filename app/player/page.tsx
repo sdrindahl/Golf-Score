@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ScoreHistory from '@/components/ScoreHistory'
 import PageWrapper from '@/components/PageWrapper'
@@ -11,6 +11,7 @@ import { syncDataFromSupabase } from '@/lib/dataSync'
 
 function PlayerProfileContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const playerId = searchParams.get('id')
   const auth = useAuth()
 
@@ -18,6 +19,19 @@ function PlayerProfileContent() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  // Refresh data when returning to this page
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setRefreshKey(prev => prev + 1)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   useEffect(() => {
     if (!playerId) return
@@ -60,7 +74,7 @@ function PlayerProfileContent() {
     }
 
     loadPlayerData()
-  }, [playerId])
+  }, [playerId, refreshKey])
 
   if (loading) {
     return (
