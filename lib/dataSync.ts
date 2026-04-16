@@ -441,7 +441,9 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
       id: validRound.id,
       totalScore: validRound.totalScore,
       scores: validRound.scores,
-      updateData
+      updateDataKeys: Object.keys(updateData),
+      updateData: updateData,
+      total_score_in_updateData: updateData.total_score
     })
 
     const { error } = await supabase
@@ -461,7 +463,8 @@ export async function updateRoundInSupabase(round: Round): Promise<void> {
     
     console.log('✅ Round updated successfully in Supabase:', {
       id: round.id,
-      newScore: round.totalScore
+      newScore: round.totalScore,
+      updatedFields: Object.keys(updateData)
     })
   } catch (error) {
     console.error('❌ Error updating round in Supabase:', error)
