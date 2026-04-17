@@ -34,6 +34,9 @@ function RoundDetailContent() {
     let intervalId: NodeJS.Timeout | null = null;
 
     const fetchRound = async () => {
+      // Don't fetch if editing or there are unsaved changes
+      if (editingHoleIndex !== null || hasUnsavedChanges) return;
+
       // Get current user for permission checking
       const user = auth.getCurrentUser();
       if (isMounted) setCurrentUser(user);
@@ -92,7 +95,7 @@ function RoundDetailContent() {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [roundId]);
+  }, [roundId, editingHoleIndex, hasUnsavedChanges]);
 
   // Check if user can edit this round
   const canEditRound = (): boolean => {
@@ -182,12 +185,12 @@ function RoundDetailContent() {
       console.log('⚠️ No savedRounds found in localStorage')
     }
 
-    // Save to Supabase - only update scores field
+    // Save to Supabase - update both scores and total_score fields
     if (isSupabaseConfigured() && supabase) {
-      console.log('🔄 Attempting to update Supabase:', { id: roundId, scores: round.scores })
+      console.log('🔄 Attempting to update Supabase:', { id: roundId, scores: round.scores, totalScore: round.totalScore })
       supabase
         .from('rounds')
-        .update({ scores: round.scores })
+        .update({ scores: round.scores, total_score: round.totalScore })
         .eq('id', roundId)
         .then(({ error }) => {
           if (error) {

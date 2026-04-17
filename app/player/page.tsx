@@ -7,7 +7,7 @@ import ScoreHistory from '@/components/ScoreHistory'
 import PageWrapper from '@/components/PageWrapper'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { syncDataFromSupabase } from '@/lib/dataSync'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 function PlayerProfileContent() {
   const searchParams = useSearchParams()
@@ -53,47 +53,63 @@ function PlayerProfileContent() {
   }, [playerId, refreshKey])
 
   useEffect(() => {
-    if (!playerId) return
+    if (!playerId) return;
 
     const loadPlayerData = async () => {
       try {
-        // Sync from Supabase first to get latest rounds
-        console.log('📥 Syncing data from Supabase...')
-        await syncDataFromSupabase()
-        console.log('✅ Sync complete')
-      } catch (error) {
-        console.error('Error syncing data:', error)
-      }
+        // Get current user
+        const user = auth.getCurrentUser();
+        setCurrentUser(user);
 
-      // Get current user
-      const user = auth.getCurrentUser()
-      setCurrentUser(user)
+        // Find the player
+        const allUsers = auth.getAllUsers();
+        const foundPlayer = allUsers.find(u => u.id === playerId);
 
-      // Find the player
-      const allUsers = auth.getAllUsers()
-      const foundPlayer = allUsers.find(u => u.id === playerId)
+        if (foundPlayer) {
+          setPlayer(foundPlayer);
 
-      if (foundPlayer) {
-        setPlayer(foundPlayer)
-
-        // Load player's rounds from synced localStorage
-        const savedRounds = localStorage.getItem('golfRounds')
-        if (savedRounds) {
-          const allRounds = JSON.parse(savedRounds) as Round[]
-          const playerRounds = allRounds.filter(r => r.userId === playerId)
-          console.log(`📊 Found ${playerRounds.length} rounds for player ${foundPlayer.name}`)
-          console.log('Player ID:', playerId)
-          setRounds(playerRounds)
+          // Fetch player's rounds directly from Supabase
+          if (isSupabaseConfigured() && supabase) {
+            const { data, error } = await supabase
+              .from('rounds')
+              .select('*')
+              .eq('user_id', playerId)
+              .order('date', { ascending: false });
+            if (error) {
+              console.error('Error fetching rounds from Supabase:', error.message);
+              setRounds([]);
+            } else if (data) {
+              // Convert snake_case to camelCase for each round
+              const playerRounds: Round[] = data.map((r: any) => ({
+                id: r.id,
+                userId: r.user_id,
+                userName: r.user_name,
+                courseId: r.course_id,
+                courseName: r.course_name,
+                selectedTee: r.selected_tee,
+                date: r.date,
+                scores: r.scores,
+                totalScore: r.total_score,
+                notes: r.notes,
+                in_progress: r.in_progress,
+              }));
+              setRounds(playerRounds);
+            }
+          } else {
+            setRounds([]);
+          }
+        } else {
+          setPlayer(null);
         }
-      } else {
-        setPlayer(null)
+      } catch (error) {
+        console.error('Error loading player data:', error);
+        setRounds([]);
       }
+      setLoading(false);
+    };
 
-      setLoading(false)
-    }
-
-    loadPlayerData()
-  }, [playerId, refreshKey])
+    loadPlayerData();
+  }, [playerId, refreshKey]);
 
   if (loading) {
     return (
