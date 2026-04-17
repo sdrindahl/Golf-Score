@@ -8,6 +8,8 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { COURSES_DATABASE } from '@/data/courses'
 import PageWrapper from '@/components/PageWrapper'
 
+import { useRouter } from 'next/navigation'
+
 export default function ManageCourses() {
   const [courses, setCourses] = useState<Course[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
@@ -99,9 +101,16 @@ export default function ManageCourses() {
     )
   }
 
+  // Navigation handlers for bottom nav
+  const handleViewRounds = () => router.push('/')
+  const handleViewCourses = () => router.push('/courses')
+  const handleViewGolfers = () => router.push('/players')
+  const handleSettings = () => router.push('/settings')
+
   return (
-    <PageWrapper title="Select Course">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col pb-24">
+      <PageWrapper title="Select Course">
+        <div className="max-w-6xl mx-auto space-y-6">
         <div className="space-y-4">
           <div className="flex justify-between items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold text-gray-800">Available Courses</h2>
@@ -178,9 +187,29 @@ export default function ManageCourses() {
               </Link>
             </div>
           ) : (
-            <div>
-              <h3 className="text-lg font-bold text-gray-800 mb-4">All Courses</h3>
-              <div className="space-y-3">
+            </div>
+            </PageWrapper>
+
+            {/* iOS-style Bottom Navigation */}
+            <nav className="ios-bottom-nav fixed bottom-0 left-0 right-0 z-50">
+              <button onClick={handleViewRounds} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+                <span className="text-xl">🏌️</span>
+                <span className="text-xs">Rounds</span>
+              </button>
+              <button onClick={handleViewCourses} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+                <span className="text-xl">⛳</span>
+                <span className="text-xs">Courses</span>
+              </button>
+              <button onClick={handleViewGolfers} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+                <span className="text-xl">👥</span>
+                <span className="text-xs">Golfers</span>
+              </button>
+              <button onClick={handleSettings} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+                <span className="text-xl">⚙️</span>
+                <span className="text-xs">Settings</span>
+              </button>
+            </nav>
+          </div>
                 {courses
                   .sort((a, b) => a.name.localeCompare(b.name))
                   .map((course) => (

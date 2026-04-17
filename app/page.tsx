@@ -237,66 +237,59 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 pb-12">
-      {/* Welcome Banner with Account Link */}
-      <div className="px-4 sm:px-6 py-6 sm:py-8 text-white relative">
-        <div className="absolute top-4 right-4 sm:right-6">
-          <Link href="/settings">
-            <button className="text-white/80 hover:text-white text-xs sm:text-sm font-medium underline transition-colors">
-              Account
-            </button>
-          </Link>
-        </div>
-        <p className="text-xs sm:text-sm opacity-80 mb-1 font-medium">Welcome back</p>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{currentUser?.name || 'Golfer'}</h1>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 flex flex-col pb-24">
+      {/* Welcome Banner */}
+      <div className="px-4 pt-8 pb-4">
+        <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">{currentUser?.name || 'Golfer'}</h1>
       </div>
 
       {/* Main Content */}
-      <div className="px-4 sm:px-6 space-y-4">
-        {/* Stats Cards - 3 columns on all sizes */}
-        <div className="grid grid-cols-3 gap-1 sm:gap-2">
+      <div className="px-4 space-y-4 max-w-md w-full mx-auto pt-8">
+        {/* Stats Cards */}
+        <div className="flex gap-2 justify-between">
           {/* Rounds Card */}
           <button
             onClick={handleViewRounds}
-            className="bg-white/95 backdrop-blur rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-md hover:shadow-lg transition-all cursor-pointer border border-white/20 min-h-20 sm:min-h-24 flex flex-col items-center justify-center"
+            className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg transition-all"
           >
-            <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1">🏌️</div>
-            <div className="text-lg sm:text-xl font-bold text-gray-800">{rounds.length}</div>
-            <div className="text-[10px] sm:text-xs text-gray-600 text-center font-semibold uppercase tracking-wide mt-0.5">Rounds</div>
+            <div className="text-2xl mb-0.5">🏌️</div>
+            <div className="text-lg font-bold">{rounds.length}</div>
+            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Rounds</div>
           </button>
 
           {/* Current Active Rounds Card */}
           <button
             onClick={() => router.push('/rounds-in-progress')}
-            className="bg-white/95 backdrop-blur rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-md border border-white/20 min-h-20 sm:min-h-24 flex flex-col items-center justify-center hover:shadow-lg transition-all cursor-pointer"
+            className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg transition-all"
           >
-            <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1">⏱️</div>
-            <div className="text-sm sm:text-base font-bold text-blue-700 leading-tight text-center">
-              Current Active<br className="hidden sm:block" />Golfers
+            <div className="text-2xl mb-0.5">⏱️</div>
+            <div className="text-sm font-bold text-[var(--accent-color)] leading-tight text-center">
+              Current<br />Golfers
             </div>
-            <div className="text-[10px] sm:text-xs text-blue-600 text-center font-semibold uppercase tracking-wide mt-0.5">View Live</div>
+            <div className="text-[10px] text-[var(--accent-color)] text-center font-semibold uppercase tracking-wide mt-0.5">View Live</div>
           </button>
 
           {/* Handicap Card */}
-          <div className="bg-white/95 backdrop-blur rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-md border border-white/20 min-h-20 sm:min-h-24 flex flex-col items-center justify-center">
-            <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1">⛳</div>
-            <div className="text-lg sm:text-xl font-bold text-gray-800">
+          <div className="card flex-1 flex flex-col items-center justify-center gap-1">
+            <div className="text-2xl mb-0.5">⛳</div>
+            <div className="text-lg font-bold">
               {handicap > 0 ? handicap : '—'}
             </div>
-            <div className="text-[10px] sm:text-xs text-gray-600 text-center font-semibold uppercase tracking-wide mt-0.5">Handicap</div>
+            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Handicap</div>
           </div>
         </div>
 
         {/* Score Distribution Chart */}
         {rounds.length > 0 && (
-          <div className="bg-white/95 backdrop-blur rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-lg border border-white/20">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Performance Breakdown</h3>
+          <div className="card p-4">
+            <h3 className="text-lg font-bold mb-4">Performance Breakdown</h3>
             {/* Column Headers */}
             <div className="flex items-center justify-between mb-3 px-1">
-              <span className="text-xs font-semibold text-gray-600 uppercase">Type</span>
+              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</span>
               <div className="flex items-center gap-4">
-                <span className="text-xs font-semibold text-gray-600 uppercase w-8 text-center">Total</span>
-                <span className="text-xs font-semibold text-gray-600 uppercase w-12 text-right">Avg/Rnd</span>
+                <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-8 text-center">Total</span>
+                <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-12 text-right">Avg/Rnd</span>
               </div>
             </div>
             <div className="space-y-2">
@@ -323,11 +316,11 @@ export default function Home() {
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{emojis[type]}</span>
-                        <span className="text-sm font-semibold text-gray-700">{type}</span>
+                        <span className="text-sm font-semibold">{type}</span>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-sm font-bold text-gray-800 w-8 text-center">{count}</span>
-                        <span className="text-xs text-gray-600 w-12 text-right">{(count / rounds.length).toFixed(2)}</span>
+                        <span className="text-sm font-bold w-8 text-center">{count}</span>
+                        <span className="text-xs w-12 text-right">{(count / rounds.length).toFixed(2)}</span>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -347,9 +340,9 @@ export default function Home() {
         {currentRoundId && (
           <button
             onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
-            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-2 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all text-sm sm:text-base"
+            className="btn-danger w-full flex items-center justify-center gap-2 mt-2"
           >
-            <span className="text-lg sm:text-xl">🎯</span>
+            <span className="text-lg">🎯</span>
             <span>Return to Round</span>
           </button>
         )}
@@ -357,32 +350,51 @@ export default function Home() {
         {/* Start New Round Button */}
         <button
           onClick={handleStartNewRound}
-          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-2 sm:py-3 rounded-lg sm:rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all text-sm sm:text-base"
+          className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
         >
-          <span className="text-lg sm:text-xl">+</span>
+          <span className="text-lg">+</span>
           <span>Start New Round</span>
         </button>
 
-
         {/* View Courses and Golfers */}
-        <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 gap-2 mt-2">
           <button
             onClick={handleViewCourses}
-            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2 text-xs sm:text-sm"
+            className="btn-secondary flex items-center justify-center gap-2 text-xs font-semibold py-2"
           >
-            <span className="text-base sm:text-lg">⛳</span>
+            <span className="text-base">⛳</span>
             <span>Courses</span>
           </button>
 
           <button
             onClick={handleViewGolfers}
-            className="bg-white/90 hover:bg-white text-green-700 font-semibold py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all border border-white/20 flex items-center justify-center gap-2 text-xs sm:text-sm"
+            className="btn-secondary flex items-center justify-center gap-2 text-xs font-semibold py-2"
           >
-            <span className="text-base sm:text-lg">👥</span>
+            <span className="text-base">👥</span>
             <span>Golfers</span>
           </button>
         </div>
       </div>
+
+      {/* iOS-style Bottom Navigation */}
+      <nav className="ios-bottom-nav fixed bottom-0 left-0 right-0 z-50">
+        <button onClick={handleViewRounds} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+          <span className="text-xl">🏠</span>
+          <span className="text-xs">Home</span>
+        </button>
+        <button onClick={handleViewCourses} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+          <span className="text-xl">⛳</span>
+          <span className="text-xs">Courses</span>
+        </button>
+        <button onClick={handleViewGolfers} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+          <span className="text-xl">👥</span>
+          <span className="text-xs">Golfers</span>
+        </button>
+        <button onClick={() => router.push('/settings')} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+          <span className="text-xl">⚙️</span>
+          <span className="text-xs">Settings</span>
+        </button>
+      </nav>
     </div>
   )
 }
