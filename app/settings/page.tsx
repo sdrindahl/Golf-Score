@@ -178,7 +178,7 @@ export default function Settings() {
       <nav className="ios-bottom-nav fixed bottom-0 left-0 right-0 z-50">
         <button onClick={() => router.push("/")} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
           <span className="text-xl">🏌️</span>
-          <span className="text-xs">Rounds</span>
+          <span className="text-xs">Home</span>
         </button>
         <button onClick={() => router.push("/courses") } className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
           <span className="text-xl">⛳</span>
