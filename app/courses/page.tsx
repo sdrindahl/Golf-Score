@@ -177,7 +177,7 @@ export default function CoursesPage() {
                   // Remove current round from localStorage
                   const savedRounds = localStorage.getItem('golfRounds');
                   if (savedRounds && currentRoundId) {
-                    const allRounds = JSON.parse(savedRounds);
+                    const allRounds = JSON.parse(savedRounds) as { id: string }[];
                     const filteredRounds = allRounds.filter((r) => r.id !== currentRoundId);
                     localStorage.setItem('golfRounds', JSON.stringify(filteredRounds));
                   }
@@ -296,7 +296,7 @@ export default function CoursesPage() {
                   <h3 className="text-base font-bold text-gray-900 truncate" style={{maxWidth:'7.5rem'}}>{course.name}</h3>
                   <span className="text-xs text-gray-600">{course.location}, {course.state}</span>
                   <span className="text-xs font-semibold text-gray-600">Par {course.par}</span>
-                  <span className="text-xs text-gray-600">{course.holeCount} holes</span>
+                  <span className="text-xs text-gray-600">{course.holes.length} holes</span>
                   <span className="text-xs text-gray-600">{getTotalYardage(course, 'men').toLocaleString()} yds</span>
                 </div>
                 <div className="flex-shrink-0">
