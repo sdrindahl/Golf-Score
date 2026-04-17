@@ -294,10 +294,14 @@ export default function CoursesPage() {
                 </button>
                 <div className="flex-1 min-w-0 flex items-center gap-2">
                   <h3 className="text-base font-bold text-gray-900 truncate" style={{maxWidth:'7.5rem'}}>{course.name}</h3>
-                  <span className="text-xs text-gray-600">{course.location}, {course.state}</span>
-                  <span className="text-xs font-semibold text-gray-600">Par {course.par}</span>
-                  <span className="text-xs text-gray-600">{course.holes.length} holes</span>
-                  <span className="text-xs text-gray-600">{getTotalYardage(course, 'men').toLocaleString()} yds</span>
+                  {course.location && course.state &&
+                    course.location !== 'Unknown' &&
+                    course.state !== 'Unknown' && (
+                      <span className="text-xs text-gray-600">{course.location}, {course.state}</span>
+                  )}
+                  {course.par && <span className="text-xs font-semibold text-gray-600">Par {course.par}</span>}
+                  {course.holes && <span className="text-xs text-gray-600">{course.holes.length} holes</span>}
+                  {course.holes && <span className="text-xs text-gray-600">{getTotalYardage(course, 'men').toLocaleString()} yds</span>}
                 </div>
                 <div className="flex-shrink-0">
                   <span className={`text-xl transition-transform ${selectedCourse?.id === course.id ? 'transform rotate-180' : ''}`}>
