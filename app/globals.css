@@ -1,84 +1,151 @@
+.btn-success {
+  @apply font-semibold py-2 px-4 md:px-4 transition-colors text-sm md:text-base;
+  background-color: #22c55e; /* Tailwind green-500 */
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(34,197,94,0.08);
+}
+
+.btn-success:hover {
+  filter: brightness(0.95);
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* iOS/iPhone-inspired global styles */
+
+html {
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* Light Mode Only */
+
 :root {
-  --bg-primary: #f3f4f6;
+  --bg-primary: #f8f9fa;
   --bg-secondary: #ffffff;
-  --text-primary: #000000;
-  --text-secondary: #4b5563;
-  --border-color: #d1d5db;
-  --accent-color: #16a34a;
+  --text-primary: #111111;
+  --text-secondary: #636366;
+  --border-color: #e5e5ea;
+  --accent-color: #007aff; /* iOS blue */
+  --danger-color: #ff3b30;
+  --card-radius: 20px;
+  --card-shadow: 0 4px 16px rgba(60,60,67,0.07);
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s cubic-bezier(.4,0,.2,1), color 0.3s cubic-bezier(.4,0,.2,1);
+  font-family: inherit;
+  min-height: 100vh;
 }
+
 
 .card {
-  @apply rounded-lg shadow-md p-4 md:p-6;
+  @apply p-4 md:p-6;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 2px solid #22c55e; /* Tailwind green-500 */
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 }
+
 
 .btn-primary {
-  @apply font-semibold py-2 px-4 md:px-4 rounded-lg transition-colors text-sm md:text-base;
+  @apply font-semibold py-2 px-4 md:px-4 transition-colors text-sm md:text-base;
   background-color: var(--accent-color);
-  color: #ffffff;
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.08);
 }
+
 
 .btn-primary:hover {
-  filter: brightness(0.9);
+  filter: brightness(0.95);
 }
+
 
 .btn-secondary {
-  @apply font-semibold py-2 px-4 md:px-4 rounded-lg transition-colors text-sm md:text-base;
-  background-color: var(--accent-color);
-  color: #ffffff;
+  @apply font-semibold py-2 px-4 md:px-4 transition-colors text-sm md:text-base;
+  background-color: #f2f2f7;
+  color: var(--accent-color);
+  border-radius: 12px;
+  border: 1px solid var(--accent-color);
 }
+
 
 .btn-secondary:hover {
-  filter: brightness(0.9);
+  background-color: #e5e5ea;
 }
+
 
 .btn-danger {
-  @apply font-semibold py-2 px-4 md:px-4 rounded-lg transition-colors text-sm md:text-base;
-  background-color: var(--accent-color);
-  color: #ffffff;
+  @apply font-semibold py-2 px-4 md:px-4 transition-colors text-sm md:text-base;
+  background-color: var(--danger-color);
+  color: #fff;
+  border-radius: 12px;
 }
+
 
 .btn-danger:hover {
-  filter: brightness(0.9);
+  filter: brightness(0.95);
 }
 
+
 .input-field {
-  @apply w-full px-3 py-2 border-2 rounded-lg focus:outline-none focus:ring-2 text-sm font-semibold;
+  @apply w-full px-3 py-2 border-2 focus:outline-none focus:ring-2 text-sm font-semibold;
   background-color: var(--bg-secondary);
   border-color: var(--border-color);
   color: var(--text-primary);
+  border-radius: 12px;
+  transition: border-color 0.2s cubic-bezier(.4,0,.2,1);
 }
+
 
 .input-field:focus {
   --tw-ring-color: var(--accent-color);
+  border-color: var(--accent-color);
 }
+
 
 .label {
   @apply block font-semibold mb-2;
   color: var(--text-primary);
+  letter-spacing: 0.01em;
 }
+
 
 /* Table header styling */
 .table-header {
   background-color: var(--bg-secondary);
   border-bottom: 2px solid var(--border-color);
   color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
+
 
 /* Table row hover effect */
 .table-row:hover {
-  background-color: var(--border-color);
+  background-color: #f2f2f7;
+}
+
+/* iOS-style modal */
+.ios-modal {
+  @apply p-6;
+  background: var(--bg-secondary);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -2px 24px rgba(60,60,67,0.12);
+}
+
+/* iOS-style bottom nav */
+.ios-bottom-nav {
+  @apply flex justify-around items-center py-2 px-4;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5ea;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -2px 16px rgba(60,60,67,0.07);
 }

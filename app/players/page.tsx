@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/useAuth'
 import { syncDataFromSupabase } from '@/lib/dataSync'
 import PageWrapper from '@/components/PageWrapper'
 
+import { useRouter } from 'next/navigation'
+
 export default function Players() {
   const [players, setPlayers] = useState<User[]>([])
   const [playerStats, setPlayerStats] = useState<Record<string, { roundCount: number; handicap: number }>>({})
@@ -158,127 +160,204 @@ export default function Players() {
     }
   }
 
-  return (
-    <PageWrapper title="👥 Golfers" userName="View player profiles and statistics">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {currentUser?.is_admin && (
-          <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
-            <p className="text-sm text-blue-700 font-semibold">👨‍💼 Admin privileges enabled</p>
-          </div>
-        )}
+  const router = useRouter()
 
-        {loading ? (
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
-            <p className="text-gray-500 text-lg">Loading golfers...</p>
-          </div>
-        ) : players.length === 0 ? (
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
-            <p className="text-gray-500 text-lg">No players yet</p>
-          </div>
-        ) : (
-          <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">All Golfers</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {players
+  // Navigation handlers for bottom nav
+  const handleViewRounds = () => router.push('/')
+  const handleViewCourses = () => router.push('/courses')
+  const handleViewGolfers = () => router.push('/players')
+  const handleSettings = () => router.push('/settings')
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col pb-24">
+      <PageWrapper title="👥 Golfers" userName="View player profiles and statistics">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {currentUser?.is_admin && (
+            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+              <p className="text-sm text-blue-700 font-semibold">👨‍💼 Admin privileges enabled</p>
+            </div>
+          )}
+
+          {deleteModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg p-6 max-w-sm w-full">
+                <h2 className="text-xl font-bold mb-4 text-red-600">⚠️ Delete User</h2>
+                <p className="text-gray-700 mb-6">
+                  Are you sure you want to delete <strong>{deleteModal.userName}</strong>? This action cannot be undone.
+                </p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setDeleteModal(null)}
+                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
+                    disabled={deleteLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => handleDeleteUser(deleteModal.userId)}
+                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? 'Deleting...' : 'Delete User'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* iOS-style Bottom Navigation */}
+          <nav className="ios-bottom-nav fixed bottom-0 left-0 right-0 z-50">
+            <button onClick={handleViewRounds} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+              <span className="text-xl">🏌️</span>
+              <span className="text-xs">Home</span>
+            </button>
+            <button onClick={handleViewCourses} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+              <span className="text-xl">⛳</span>
+              <span className="text-xs">Courses</span>
+            </button>
+            <button onClick={handleViewGolfers} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+                <span className="text-xl">👥</span>
+                <span className="text-xs">Golfers</span>
+              </button>
+              <button onClick={handleSettings} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
+                <span className="text-xl">⚙️</span>
+                <span className="text-xs">Settings</span>
+              </button>
+            </nav>
+
+          {players.length === 0 ? (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
+              <p className="text-gray-500 text-lg">No players yet</p>
+            </div>
+          ) : (
+            (() => {
+              // Filter and sort players by handicap (lowest first)
+              const filteredPlayers = players
                 .filter(player => {
-                  // Show all players if current user is admin
                   if (currentUser?.is_admin) return true
-                  // Regular users don't see admin users
                   return !player.is_admin
                 })
+                .map(player => ({
+                  ...player,
+                  handicap: playerStats[player.id]?.handicap ?? Infinity
+                }))
                 .sort((a, b) => {
-                  // Sort by handicap first (best/lowest first)
-                  const handicapA = playerStats[a.id]?.handicap || Infinity
-                  const handicapB = playerStats[b.id]?.handicap || Infinity
-                  
-                  if (handicapA !== handicapB) {
-                    return handicapA - handicapB
-                  }
-                  
-                  // If handicaps are equal, sort alphabetically by name
+                  if (a.handicap !== b.handicap) return a.handicap - b.handicap
                   return a.name.localeCompare(b.name)
                 })
-                .map((player, index) => {
-                  const handicap = playerStats[player.id]?.handicap || Infinity
-                  
-                  // Determine card color based on handicap
-                  let bgGradient = 'from-gray-50 to-gray-100'
-                  if (handicap <= 0) {
-                    bgGradient = 'from-blue-50 to-blue-100'
-                  } else if (handicap <= 5) {
-                    bgGradient = 'from-green-50 to-green-100'
-                  } else if (handicap <= 10) {
-                    bgGradient = 'from-yellow-50 to-yellow-100'
-                  } else if (handicap <= 15) {
-                    bgGradient = 'from-orange-50 to-orange-100'
-                  } else {
-                    bgGradient = 'from-pink-50 to-pink-100'
-                  }
-                  
-                  // Determine medal for top 3
-                  let medal = null
-                  if (index === 0) medal = '🥇'
-                  else if (index === 1) medal = '🥈'
-                  else if (index === 2) medal = '🥉'
-                  
-                  return (
-                    <Link key={player.id} href={`/player?id=${player.id}`}>
-                      <div className={`bg-gradient-to-br ${bgGradient} card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-4 border-2 border-white/40`}>
-                        <div className="text-4xl flex-shrink-0">{medal || '🏌️'}</div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-gray-800">{player.name}</h3>
-                          <div className="mt-2 flex gap-4 text-sm text-gray-600">
-                            <span>{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
-                            <span className="font-semibold">HCP {handicap === Infinity ? '—' : handicap.toFixed(1)}</span>
-                          </div>
-                          {currentUser?.is_admin && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                setDeleteModal({ userId: player.id, userName: player.name })
-                              }}
-                              className="mt-3 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1 rounded transition-colors"
-                            >
-                              🗑️ Delete
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
-            </div>
-          </div>
-        )}
-      </div>
 
-      {deleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h2 className="text-xl font-bold mb-4 text-red-600">⚠️ Delete User</h2>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete <strong>{deleteModal.userName}</strong> and all their golf rounds? This action cannot be undone.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setDeleteModal(null)}
-                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded"
-                disabled={deleteLoading}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDeleteUser(deleteModal.userId)}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded disabled:opacity-50"
-                disabled={deleteLoading}
-              >
-                {deleteLoading ? 'Deleting...' : 'Delete User'}
-              </button>
-            </div>
-          </div>
+              const topThree = filteredPlayers.slice(0, 3)
+              const rest = filteredPlayers.slice(3)
+
+              return (
+                <>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">Top 3 Golfers</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    {topThree.map((player, index) => {
+                      let bgGradient = 'from-gray-50 to-gray-100'
+                      let borderColor = 'border-white/40'
+                      let shadow = ''
+                      let medal = null
+                      if (index === 0) {
+                        bgGradient = 'from-yellow-300 via-yellow-400 to-yellow-500'
+                        borderColor = 'border-yellow-400'
+                        shadow = 'shadow-[0_0_0_4px_rgba(250,204,21,0.3)]'
+                        medal = '🥇'
+                      } else if (index === 1) {
+                        bgGradient = 'from-gray-300 via-gray-400 to-gray-500'
+                        borderColor = 'border-gray-400'
+                        shadow = 'shadow-[0_0_0_4px_rgba(156,163,175,0.3)]'
+                        medal = '🥈'
+                      } else if (index === 2) {
+                        bgGradient = 'from-amber-700 via-orange-400 to-yellow-300'
+                        borderColor = 'border-amber-700'
+                        shadow = 'shadow-[0_0_0_4px_rgba(251,191,36,0.3)]'
+                        medal = '🥉'
+                      }
+                      return (
+                        <Link key={player.id} href={`/player?id=${player.id}`}>
+                          <div className={`bg-gradient-to-br ${bgGradient} card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
+                            <div className="text-2xl flex-shrink-0">{medal}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
+                                <span className="text-xs text-gray-600">{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
+                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap === Infinity ? '—' : player.handicap.toFixed(1)}</span>
+                              </div>
+                              {currentUser?.is_admin && (
+                                <button
+                                  onClick={e => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setDeleteModal({ userId: player.id, userName: player.name })
+                                  }}
+                                  className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-2">All Golfers</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {rest.map((player, index) => {
+                      let bgGradient = 'from-gray-50 to-gray-100'
+                      let borderColor = 'border-white/40'
+                      let shadow = ''
+                      if (player.handicap <= 0) {
+                        bgGradient = 'from-blue-100 to-blue-200'
+                        borderColor = 'border-blue-400'
+                      } else if (player.handicap <= 5) {
+                        bgGradient = 'from-green-100 to-green-200'
+                        borderColor = 'border-green-400'
+                      } else if (player.handicap <= 10) {
+                        bgGradient = 'from-yellow-100 to-yellow-200'
+                        borderColor = 'border-yellow-300'
+                      } else if (player.handicap <= 15) {
+                        bgGradient = 'from-orange-100 to-orange-200'
+                        borderColor = 'border-orange-300'
+                      } else {
+                        bgGradient = 'from-pink-100 to-pink-200'
+                        borderColor = 'border-pink-300'
+                      }
+                      return (
+                        <Link key={player.id} href={`/player?id=${player.id}`}>
+                          <div className={`bg-gradient-to-br ${bgGradient} card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
+                            <div className="text-2xl flex-shrink-0">🏌️</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
+                                <span className="text-xs text-gray-600">{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
+                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap === Infinity ? '—' : player.handicap.toFixed(1)}</span>
+                              </div>
+                              {currentUser?.is_admin && (
+                                <button
+                                  onClick={e => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setDeleteModal({ userId: player.id, userName: player.name })
+                                  }}
+                                  className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </>
+              )
+            })()
+          )}
         </div>
-      )}
-    </PageWrapper>
-  )
+      </PageWrapper>
+    </div>
+  );
 }

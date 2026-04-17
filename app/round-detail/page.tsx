@@ -470,11 +470,21 @@ function RoundDetailContent() {
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
-            <button onClick={() => window.location.href = `/player?id=${round.userId}`} className={`flex-1 min-w-32 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
-              isJustCompleted
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-white/90 hover:bg-white text-green-700 border border-white/20'
-            }`}>
+            <button
+              onClick={() => {
+                const from = searchParams.get('from');
+                if (from === 'rounds-in-progress') {
+                  router.push('/rounds-in-progress');
+                } else {
+                  router.push(`/player?id=${round.userId}`);
+                }
+              }}
+              className={`flex-1 min-w-32 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
+                isJustCompleted
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-white/90 hover:bg-white text-green-700 border border-white/20'
+              }`}
+            >
               {isJustCompleted ? 'Complete Round' : '← Back'}
             </button>
             {hasUnsavedChanges && canEditRound() && (
