@@ -1,5 +1,7 @@
+/* Vikings Theme */
 .vikings-mode {
-  /* Vikings: purple, gold, white */
+  --bg-primary: #f3e7c9;
+  --bg-secondary: #f9eab7;
   --green-bg: linear-gradient(120deg, #4f2683 0%, #ffc62f 60%, #ffffff 100%);
 }
 .btn-success {
@@ -42,8 +44,10 @@ html {
   --green-bg: linear-gradient(to bottom right, #059669, #22c55e, #14b8a6); /* default green gradient */
 }
 
+/* Wolves Theme */
 .wolves-mode {
-  /* Deep blue, neon green, cyan/teal */
+  --bg-primary: #d0e7f7;
+  --bg-secondary: #b3e6e6;
   --green-bg: linear-gradient(120deg, #0a1833 0%, #00ff87 60%, #00cfff 100%);
 }
 

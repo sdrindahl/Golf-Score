@@ -1,7 +1,5 @@
 "use client";
-export const dynamic = "force-dynamic";
 import { useState, useEffect, FormEvent } from "react";
-import { useTheme } from "../../lib/themeContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../lib/useAuth";
@@ -11,7 +9,6 @@ import { User } from "../../types";
 type VersionInfo = { version: string; buildDate: string; buildTime?: string };
 
 export default function Settings() {
-  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const auth = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -24,7 +21,6 @@ export default function Settings() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [deleteError, setDeleteError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -56,7 +52,6 @@ export default function Settings() {
   }
   if (!currentUser) return null;
 
-  // Handler stubs for demonstration
   function handleUpdateName(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     // ...implement name update logic...
@@ -76,43 +71,12 @@ export default function Settings() {
     <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col pb-24">
       <PageWrapper title="Account Settings">
         <div className="max-w-xl mx-auto space-y-4">
-          {/* Theme Selector */}
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
-            <h2 className="text-lg font-bold mb-2 text-gray-800">Theme</h2>
-            <div className="flex gap-3 mt-2">
-              <button
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors border-2 ${theme === 'light' ? 'bg-[var(--accent-color)] text-white border-[var(--accent-color)]' : 'bg-gray-100 text-gray-800 border-gray-300'}`}
-                onClick={() => setTheme('light')}
-              >
-                iOS Light
-              </button>
-              <button
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors border-2 ${theme === 'wolves' ? '' : 'bg-gray-100 text-gray-800 border-gray-300'}`}
-                style={theme === 'wolves' ? {
-                  background: 'linear-gradient(120deg, #0a1833 0%, #00ff87 60%, #00cfff 100%)',
-                  color: '#fff',
-                  borderColor: '#00ff87',
-                  boxShadow: '0 2px 8px rgba(0,255,135,0.15)'
-                } : {}}
-                onClick={() => setTheme('wolves')}
-              >
-                MN TWolves
-              </button>
-              <button
-                className={`flex-1 py-2 rounded-lg font-semibold transition-colors border-2 ${theme === 'vikings' ? '' : 'bg-gray-100 text-gray-800 border-gray-300'}`}
-                style={theme === 'vikings' ? {
-                  background: 'linear-gradient(120deg, #4f2683 0%, #ffc62f 60%, #ffffff 100%)',
-                  color: '#4f2683',
-                  borderColor: '#ffc62f',
-                  boxShadow: '0 2px 8px rgba(79,38,131,0.15)'
-                } : {}}
-                onClick={() => setTheme('vikings')}
-              >
-                MN Vikings
-              </button>
-            </div>
+          <div className="flex flex-col gap-4">
+            <Link href="/themes">
+              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-2xl shadow-lg transition-all">🎨 Themes</button>
+            </Link>
           </div>
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20 mt-6">
             <div className="flex items-center justify-between gap-2">
               <div className="font-bold text-lg text-gray-800">{currentUser.name}</div>
               {!editingName && (
@@ -131,15 +95,15 @@ export default function Settings() {
               </form>
             )}
           </div>
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20 mt-6">
             {!showPasswordForm ? (
               <button onClick={() => { setShowPasswordForm(true); setPasswordError(""); setPasswordSuccess(""); setCurrentPassword(""); setNewPassword(""); setConfirmPassword(""); }} className="w-full text-left text-base font-bold text-gray-800 hover:text-blue-600">🔒 Change Password</button>
             ) : (
               <form onSubmit={handleChangePassword} className="space-y-3">
-                <input type={showPassword ? "text" : "password"} value={currentPassword} onChange={e => setCurrentPassword(e.target.value.slice(0, 4))} placeholder="Current Password" maxLength={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono" />
-                <input type={showPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value.slice(0, 4))} placeholder="New Password" maxLength={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono" />
-                <input type={showPassword ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value.slice(0, 4))} placeholder="Confirm Password" maxLength={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-gray-600 text-xs">{showPassword ? "Hide" : "Show"} Password</button>
+                <input type={showPasswordForm ? "text" : "password"} value={currentPassword} onChange={e => setCurrentPassword(e.target.value.slice(0, 4))} placeholder="Current Password" maxLength={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono" />
+                <input type={showPasswordForm ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value.slice(0, 4))} placeholder="New Password" maxLength={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono" />
+                <input type={showPasswordForm ? "text" : "password"} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value.slice(0, 4))} placeholder="Confirm Password" maxLength={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 text-center text-lg tracking-widest font-mono" />
+                <button type="button" onClick={() => setShowPasswordForm(!showPasswordForm)} className="text-gray-600 text-xs">{showPasswordForm ? "Hide" : "Show"} Password</button>
                 {passwordError && <div className="bg-red-100 text-red-700 p-3 rounded-lg text-xs font-semibold">{passwordError}</div>}
                 {passwordSuccess && <div className="bg-green-100 text-green-700 p-3 rounded-lg text-xs font-semibold">✅ {passwordSuccess}</div>}
                 <div className="flex gap-2">
@@ -149,9 +113,9 @@ export default function Settings() {
               </form>
             )}
           </div>
-          <button onClick={handleLogout} className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">🚪 Logout</button>
+          <button onClick={handleLogout} className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-3 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20 mt-6">🚪 Logout</button>
           {currentUser.is_admin && (
-            <div className="bg-red-50 backdrop-blur rounded-3xl p-6 shadow-lg border-2 border-red-200">
+            <div className="bg-red-50 backdrop-blur rounded-3xl p-6 shadow-lg border-2 border-red-200 mt-6">
               <h2 className="text-lg font-bold mb-2 text-red-600">⚠️ Delete Account</h2>
               <p className="text-gray-600 text-xs mb-4">Permanently delete an account and all golf rounds.</p>
               {deleteError && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-3 text-xs font-semibold">{deleteError}</div>}
