@@ -43,7 +43,7 @@ export default function NavBar() {
   return (
     <>
       {/* Desktop Top Navigation */}
-      <nav className="hidden md:block bg-green-700 text-white p-4 sticky top-0 z-50">
+      <nav className="hidden md:block text-white p-4 sticky top-0 z-50" style={{ background: 'var(--green-bg)' }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
             <h1 
@@ -72,7 +72,7 @@ export default function NavBar() {
 
       {/* Mobile Bottom Navigation */}
       {!loading && currentUser && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-green-700 text-white border-t border-green-600 z-50">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 text-white border-t border-green-600 z-50" style={{ background: 'var(--green-bg)' }}>
           <div className="flex justify-around">
             <button
               onClick={() => router.push('/')}

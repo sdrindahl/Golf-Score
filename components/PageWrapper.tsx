@@ -10,7 +10,7 @@ interface PageWrapperProps {
 
 export default function PageWrapper({ title, userName, children }: PageWrapperProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 pb-32">
+    <div className="min-h-screen pb-32" style={{ background: 'var(--green-bg)' }}>
       {/* Header */}
       <div className="px-6 py-8 text-white">
         <h1 className="text-4xl font-bold tracking-tight">{title}</h1>

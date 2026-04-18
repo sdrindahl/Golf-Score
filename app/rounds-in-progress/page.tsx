@@ -47,7 +47,7 @@ export default function RoundsInProgressPage() {
   const handleSettings = () => router.push('/settings')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 flex flex-col pb-24">
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 drop-shadow-lg text-center">Rounds in Progress</h1>
         {rounds.length === 0 && (

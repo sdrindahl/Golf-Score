@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import { useTheme } from "@/lib/themeContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/useAuth";
@@ -10,6 +11,8 @@ import { User } from "@/types";
 type VersionInfo = { version: string; buildDate: string; buildTime?: string };
 
 export default function Settings() {
+  // Theme selector
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const auth = useAuth();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -115,6 +118,42 @@ export default function Settings() {
     <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col pb-24">
       <PageWrapper title="Account Settings">
         <div className="max-w-xl mx-auto space-y-4">
+          {/* Theme Selector */}
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
+            <h2 className="text-lg font-bold mb-2 text-gray-800">Theme</h2>
+            <div className="flex gap-3 mt-2">
+              <button
+                className={`flex-1 py-2 rounded-lg font-semibold transition-colors border-2 ${theme === 'light' ? 'bg-[var(--accent-color)] text-white border-[var(--accent-color)]' : 'bg-gray-100 text-gray-800 border-gray-300'}`}
+                onClick={() => setTheme('light')}
+              >
+                iOS Light
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg font-semibold transition-colors border-2 ${theme === 'wolves' ? '' : 'bg-gray-100 text-gray-800 border-gray-300'}`}
+                style={theme === 'wolves' ? {
+                  background: 'linear-gradient(120deg, #0a1833 0%, #00ff87 60%, #00cfff 100%)',
+                  color: '#fff',
+                  borderColor: '#00ff87',
+                  boxShadow: '0 2px 8px rgba(0,255,135,0.15)'
+                } : {}}
+                onClick={() => setTheme('wolves')}
+              >
+                MN TWolves
+              </button>
+              <button
+                className={`flex-1 py-2 rounded-lg font-semibold transition-colors border-2 ${theme === 'vikings' ? '' : 'bg-gray-100 text-gray-800 border-gray-300'}`}
+                style={theme === 'vikings' ? {
+                  background: 'linear-gradient(120deg, #4f2683 0%, #ffc62f 60%, #ffffff 100%)',
+                  color: '#4f2683',
+                  borderColor: '#ffc62f',
+                  boxShadow: '0 2px 8px rgba(79,38,131,0.15)'
+                } : {}}
+                onClick={() => setTheme('vikings')}
+              >
+                MN Vikings
+              </button>
+            </div>
+          </div>
           <div className="bg-white/95 backdrop-blur rounded-3xl p-6 shadow-lg border border-white/20">
             <div className="flex items-center justify-between gap-2">
               <div className="font-bold text-lg text-gray-800">{currentUser.name}</div>
