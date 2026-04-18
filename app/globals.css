@@ -158,10 +158,4 @@ body {
 }
 
 /* iOS-style bottom nav */
-.ios-bottom-nav {
-  @apply flex justify-around items-center py-2 px-4;
-  background: #f9f9f9;
-  border-top: 1px solid #e5e5ea;
-  border-radius: 20px 20px 0 0;
-  box-shadow: 0 -2px 16px rgba(60,60,67,0.07);
-}
+

@@ -205,25 +205,7 @@ export default function Players() {
             </div>
           )}
 
-          {/* iOS-style Bottom Navigation */}
-          <nav className="ios-bottom-nav fixed bottom-0 left-0 right-0 z-50">
-            <button onClick={handleViewRounds} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
-              <span className="text-xl">🏌️</span>
-              <span className="text-xs">Home</span>
-            </button>
-            <button onClick={handleViewCourses} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
-              <span className="text-xl">⛳</span>
-              <span className="text-xs">Courses</span>
-            </button>
-            <button onClick={handleViewGolfers} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
-                <span className="text-xl">👥</span>
-                <span className="text-xs">Golfers</span>
-              </button>
-              <button onClick={handleSettings} className="flex flex-col items-center text-[var(--accent-color)] focus:outline-none">
-                <span className="text-xl">⚙️</span>
-                <span className="text-xs">Settings</span>
-              </button>
-            </nav>
+
 
           {players.length === 0 ? (
             <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
