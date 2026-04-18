@@ -61,7 +61,8 @@ export default function Settings() {
     // ...implement password change logic...
   }
   function handleLogout() {
-    // ...implement logout logic...
+    auth.logoutUser();
+    router.push('/login');
   }
   function handleDeleteAccount() {
     // ...implement delete account logic...
