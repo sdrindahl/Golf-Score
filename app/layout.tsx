@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import './globals.css'
-import CourseInitializer from '@/components/CourseInitializer'
-import VersionChecker from '@/components/VersionChecker'
-import NavBar from '@/components/NavBar'
-import { ThemeProvider } from '@/lib/themeContext'
+import ClientLayout from './ClientLayout'
 
 export const metadata: Metadata = {
   title: 'Golf Score Tracker',
@@ -49,14 +46,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Golf Tracker" />
       </head>
       <body>
-        <ThemeProvider>
-          <CourseInitializer />
-          <VersionChecker />
-          <NavBar />
-          <main className="max-w-6xl mx-auto p-3 md:p-4 lg:p-6 pb-24 md:pb-6">
-            {children}
-          </main>
-        </ThemeProvider>
+        <ClientLayout>{children}</ClientLayout>
         <Script id="register-sw" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {

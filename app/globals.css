@@ -1,3 +1,9 @@
+/* Vikings Theme */
+.vikings-mode {
+  --bg-primary: #f3e7c9;
+  --bg-secondary: #f9eab7;
+  --green-bg: linear-gradient(120deg, #4f2683 0%, #ffc62f 60%, #ffffff 100%);
+}
 .btn-success {
   @apply font-semibold py-2 px-4 md:px-4 transition-colors text-sm md:text-base;
   background-color: #22c55e; /* Tailwind green-500 */
@@ -23,6 +29,8 @@ html {
 
 /* Light Mode Only */
 
+
+
 :root {
   --bg-primary: #f8f9fa;
   --bg-secondary: #ffffff;
@@ -33,6 +41,14 @@ html {
   --danger-color: #ff3b30;
   --card-radius: 20px;
   --card-shadow: 0 4px 16px rgba(60,60,67,0.07);
+  --green-bg: linear-gradient(to bottom right, #059669, #22c55e, #14b8a6); /* default green gradient */
+}
+
+/* Wolves Theme */
+.wolves-mode {
+  --bg-primary: #d0e7f7;
+  --bg-secondary: #b3e6e6;
+  --green-bg: linear-gradient(120deg, #0a1833 0%, #00ff87 60%, #00cfff 100%);
 }
 
 body {

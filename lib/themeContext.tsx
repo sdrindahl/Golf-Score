@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-export type Theme = 'light'
+export type Theme = 'light' | 'wolves' | 'vikings'
 
 interface ThemeContextType {
   theme: Theme
@@ -12,30 +12,40 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme] = useState<Theme>('light')
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('theme') as Theme) || 'light';
+    }
+    return 'light';
+  });
   const [mounted, setMounted] = useState(false)
 
-  // Always use light mode
   useEffect(() => {
-    const html = document.documentElement
-    html.classList.remove('dark-mode', 'golf-mode')
-    html.classList.add('light-mode')
-    setMounted(true)
-  }, [])
+    const html = document.documentElement;
+    const body = document.body;
+    html.classList.remove('light-mode', 'wolves-mode', 'vikings-mode');
+    body.classList.remove('light-mode', 'wolves-mode', 'vikings-mode');
+    if (theme === 'wolves') {
+      html.classList.add('wolves-mode');
+      body.classList.add('wolves-mode');
+    } else if (theme === 'vikings') {
+      html.classList.add('vikings-mode');
+      body.classList.add('vikings-mode');
+    } else {
+      html.classList.add('light-mode');
+      body.classList.add('light-mode');
+    }
+    setMounted(true);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
-  const setTheme = () => {
-    // Theme is locked to light mode, no-op
-  }
 
-  if (!mounted) {
-    return <>{children}</>
-  }
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
-  )
+  );
 }
 
 export function useTheme() {

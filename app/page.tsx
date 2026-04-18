@@ -237,7 +237,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 flex flex-col pb-24">
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       {/* Welcome Banner */}
       <div className="px-4 pt-8 pb-4">
         <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>

@@ -10,7 +10,7 @@ import { deleteRoundFromSupabase, updateRoundInSupabase } from '@/lib/dataSync'
 function EditRoundContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const roundId = searchParams.get('id')
+  const roundId = searchParams ? searchParams.get('id') : null
   const auth = useAuth()
 
   const [round, setRound] = useState<Round | null>(null)
