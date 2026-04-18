@@ -11,7 +11,7 @@ import PageWrapper from '@/components/PageWrapper'
 function TrackRoundContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const roundId = searchParams.get('id')
+  const roundId = searchParams ? searchParams.get('id') : null
 
   const [round, setRound] = useState<Round | null>(null)
   const [course, setCourse] = useState<Course | null>(null)

@@ -10,7 +10,7 @@ import PageWrapper from '@/components/PageWrapper'
 function CourseDetailsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const courseId = searchParams.get('id')
+  const courseId = searchParams ? searchParams.get('id') : null
 
   const [course, setCourse] = useState<Course | null>(null)
   const [editingHoles, setEditingHoles] = useState<any[]>([])

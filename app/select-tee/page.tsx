@@ -9,7 +9,7 @@ import PageWrapper from '@/components/PageWrapper'
 function SelectTeeContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const courseId = searchParams.get('courseId')
+  const courseId = searchParams ? searchParams.get('courseId') : null
   
   const [course, setCourse] = useState<Course | null>(null)
   const [selectedTee, setSelectedTee] = useState<'men' | 'women' | 'senior' | 'championship' | ''>('')

@@ -12,7 +12,7 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 function PlayerProfileContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const playerId = searchParams.get('id')
+  const playerId = searchParams ? searchParams.get('id') : null
   const auth = useAuth()
 
   const [player, setPlayer] = useState<User | null>(null)

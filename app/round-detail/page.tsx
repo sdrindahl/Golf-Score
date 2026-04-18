@@ -12,8 +12,8 @@ import PageWrapper from '@/components/PageWrapper'
 function RoundDetailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const roundId = searchParams.get('id')
-  const isJustCompleted = searchParams.get('completed') === 'true'
+  const roundId = searchParams ? searchParams.get('id') : null
+  const isJustCompleted = searchParams ? searchParams.get('completed') === 'true' : false
   const auth = useAuth()
 
   const [round, setRound] = useState<Round | null>(null)
@@ -472,7 +472,7 @@ function RoundDetailContent() {
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => {
-                const from = searchParams.get('from');
+                const from = searchParams ? searchParams.get('from') : null;
                 if (from === 'rounds-in-progress') {
                   router.push('/rounds-in-progress');
                 } else {

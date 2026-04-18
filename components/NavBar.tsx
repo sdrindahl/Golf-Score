@@ -19,12 +19,18 @@ export default function NavBar() {
     setLoading(false)
 
     // If not logged in and not on login page, redirect to login
-    if (!user && pathname !== '/login' && !pathname.startsWith('/player') && pathname !== '/settings') {
+    if (
+      !user &&
+      pathname !== '/login' &&
+      pathname && pathname.startsWith('/player') === false &&
+      pathname !== '/settings'
+    ) {
       router.push('/login')
     }
   }, [pathname, router])
 
   const isActive = (path: string) => {
+    if (!pathname) return false
     if (path === '/' && pathname === '/') return true
     if (path !== '/' && pathname.startsWith(path)) return true
     return false

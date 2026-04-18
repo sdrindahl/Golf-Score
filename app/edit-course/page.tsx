@@ -9,7 +9,7 @@ import { updateCourseInSupabase } from '@/lib/dataSync'
 function EditCourseContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const courseId = searchParams.get('id')
+  const courseId = searchParams ? searchParams.get('id') : null
 
   const [courseName, setCourseName] = useState('')
   const [location, setLocation] = useState('')
