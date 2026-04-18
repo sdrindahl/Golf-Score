@@ -5,6 +5,16 @@ import { useState, useEffect, FormEvent } from "react";
 import { useTheme } from "@/lib/themeContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+"use client";
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect, FormEvent } from "react";
+import { useTheme } from "@/lib/themeContext";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/lib/useAuth";
+import PageWrapper from "@/components/PageWrapper";
+import { User } from "@/types";
 import { useAuth } from "@/lib/useAuth";
 import PageWrapper from "@/components/PageWrapper";
 import { User } from "@/types";
