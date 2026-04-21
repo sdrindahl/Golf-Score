@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Course } from '@/types'
-import { updateCourseInSupabase } from '@/lib/dataSync'
 
 function EditCourseContent() {
   const router = useRouter()
@@ -121,8 +120,7 @@ function EditCourseContent() {
           console.log('  Saved courseRating:', courses[index].courseRating)
           console.log('  Saved slopeRating:', courses[index].slopeRating)
           
-          // Also save to Supabase so changes persist across devices
-          await updateCourseInSupabase(updatedCourse)
+          // TODO: If you want to sync to Supabase, call your API route here.
           
           setSubmitted(true)
           // Redirect after a short delay
