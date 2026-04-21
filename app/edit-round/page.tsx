@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { deleteRoundFromSupabase, updateRoundInSupabase } from '@/lib/dataSync'
 
 function EditRoundContent() {
   const router = useRouter()
@@ -115,12 +114,7 @@ function EditRoundContent() {
         localStorage.setItem('golfRounds', JSON.stringify(updated))
       }
       
-      // Delete from Supabase
-      if (roundId) {
-        deleteRoundFromSupabase(roundId).catch((error: unknown) => {
-          console.log('Could not delete from Supabase:', error)
-        })
-      }
+      // TODO: If you want to delete from Supabase, call your API route here.
       
       // Redirect back home
       router.push('/')
