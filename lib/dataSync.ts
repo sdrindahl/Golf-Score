@@ -2,7 +2,7 @@
  * Insert course links for a round into round_courses join table
  */
 async function insertRoundCourses(roundId: string, courseIds: string[]): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) return;
+  if (!supabase) return;
   if (!roundId || !courseIds || courseIds.length === 0) return;
 
   // Remove any existing links for this round (idempotent)
