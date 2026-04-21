@@ -647,7 +647,11 @@ function TrackRoundContent() {
               </div>
               <div>
                 <span className="text-sm font-bold text-gray-700 block">Par {currentHole.par}</span>
-                <span className="text-xs text-gray-600">{teeBox?.yardage ? `${teeBox.yardage}yd` : '—'}</span>
+                <span className="text-xs text-gray-600">{
+                  teeBox && typeof teeBox === 'object' && 'yardage' in teeBox && teeBox.yardage
+                    ? `${teeBox.yardage}yd`
+                    : '—'
+                }</span>
               </div>
             </div>
 
