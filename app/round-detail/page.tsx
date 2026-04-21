@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { deleteRoundFromSupabase } from '@/lib/dataSync'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import PageWrapper from '@/components/PageWrapper'
 
 function RoundDetailContent() {
@@ -34,58 +32,76 @@ function RoundDetailContent() {
     let intervalId: NodeJS.Timeout | null = null;
 
     const fetchRound = async () => {
-      // Don't fetch if editing or there are unsaved changes
-      if (editingHoleIndex !== null || hasUnsavedChanges) return;
+        // Don't fetch if editing or there are unsaved changes
+        if (editingHoleIndex !== null || hasUnsavedChanges) return;
 
-      // Get current user for permission checking
-      const user = auth.getCurrentUser();
-      if (isMounted) setCurrentUser(user);
+        // Get current user for permission checking
+        const user = auth.getCurrentUser();
+        if (isMounted) setCurrentUser(user);
 
-      try {
-        if (isSupabaseConfigured() && supabase) {
-          const { data, error } = await supabase
-            .from('rounds')
-            .select('*')
-            .eq('id', roundId)
-            .maybeSingle();
-          if (error) {
-            console.error('Error fetching round from Supabase:', error.message);
+        try {
+          const res = await fetch(`/api/get-round?id=${roundId}`)
+          if (!res.ok) {
             if (isMounted) setRound(null);
-          } else if (data) {
-            // Convert snake_case to camelCase
-            const camelRound: Round = {
-              id: data.id,
-              userId: data.user_id,
-              userName: data.user_name,
-              courseId: data.course_id,
-              courseName: data.course_name,
-              selectedTee: data.selected_tee,
-              date: data.date,
-              scores: data.scores,
-              totalScore: data.total_score,
-              notes: data.notes,
-              in_progress: data.in_progress,
-            };
-            if (isMounted) setRound(camelRound);
-
-            // Fetch course info from localStorage (for now)
-            const savedCourses = localStorage.getItem('golfCourses');
-            if (savedCourses) {
-              const allCourses = JSON.parse(savedCourses) as Course[];
-              const foundCourse = allCourses.find(c => c.id === camelRound.courseId);
-              if (foundCourse && isMounted) {
-                setCourse(foundCourse);
-              }
-            }
           } else {
-            if (isMounted) setRound(null);
+            const { round: data, courses: apiCourses } = await res.json()
+            if (data) {
+              let courseIds: string[] = [];
+              if (apiCourses && apiCourses.length > 0) {
+                courseIds = apiCourses.map((c: any) => c.id)
+              } else if (data.course_id) {
+                courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+              }
+              // Convert snake_case to camelCase
+              const camelRound: Round = {
+                id: data.id,
+                userId: data.user_id,
+                userName: data.user_name,
+                courseId: courseIds.join(','),
+                courseName: data.course_name,
+                selectedTee: data.selected_tee,
+                date: data.date,
+                scores: data.scores,
+                totalScore: data.total_score,
+                notes: data.notes,
+                in_progress: data.in_progress,
+              };
+              if (isMounted) setRound(camelRound);
+
+              // Fetch course info from localStorage (for now)
+              const savedCourses = localStorage.getItem('golfCourses');
+              if (savedCourses) {
+                const allCourses = JSON.parse(savedCourses) as Course[];
+                const courseIdsArr = courseIds;
+                let foundCourse: Course | null = null;
+                if (courseIdsArr.length > 1) {
+                  const selectedCourses = allCourses.filter(c => courseIdsArr.includes(c.id));
+                  if (selectedCourses.length > 0) {
+                    foundCourse = {
+                      ...selectedCourses[0],
+                      id: courseIdsArr.join(','),
+                      name: camelRound.courseName,
+                      holes: selectedCourses.flatMap(c => c.holes),
+                      holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
+                      par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
+                    };
+                  }
+                } else {
+                  foundCourse = allCourses.find(c => c.id === camelRound.courseId) || null;
+                }
+                if (foundCourse && isMounted) {
+                  setCourse(foundCourse);
+                }
+              }
+            } else {
+              if (isMounted) setRound(null);
+            }
           }
+        } catch (error) {
+          console.error('Error loading round detail:', error);
+        } finally {
+          if (isMounted) setLoading(false);
         }
-      } catch (error) {
-        console.error('Error loading round detail:', error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
     };
 
     fetchRound();
@@ -104,7 +120,7 @@ function RoundDetailContent() {
     return currentUser.id === round.userId
   }
 
-  const handleDeleteRound = () => {
+  const handleDeleteRound = async () => {
     if (confirm('Are you sure you want to delete this round? This action cannot be undone.')) {
       // Delete from localStorage
       const savedRounds = localStorage.getItem('golfRounds')
@@ -114,11 +130,17 @@ function RoundDetailContent() {
         localStorage.setItem('golfRounds', JSON.stringify(updated))
       }
 
-      // Delete from Supabase
+      // Delete from Supabase via API
       if (roundId) {
-        deleteRoundFromSupabase(roundId).catch(error => {
+        try {
+          await fetch('/api/delete-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roundId }),
+          })
+        } catch (error) {
           console.log('Could not delete from Supabase:', error)
-        })
+        }
       }
 
       // Redirect back to player profile
@@ -167,7 +189,7 @@ function RoundDetailContent() {
     setEditScore('')
   }
 
-  const handleSaveAllChanges = () => {
+  const handleSaveAllChanges = async () => {
     console.log('🟢 Save Changes handler fired!')
     if (!round) {
       console.log('❌ No round found, aborting save.')
@@ -185,56 +207,17 @@ function RoundDetailContent() {
       console.log('⚠️ No savedRounds found in localStorage')
     }
 
-    // Save to Supabase - update both scores and total_score fields
-    if (isSupabaseConfigured() && supabase) {
-      console.log('🔄 Attempting to update Supabase:', { id: roundId, scores: round.scores, totalScore: round.totalScore })
-      supabase
-        .from('rounds')
-        .update({ scores: round.scores, total_score: round.totalScore })
-        .eq('id', roundId)
-        .then(({ error }) => {
-          if (error) {
-            console.log('❌ Could not update in Supabase:', error)
-            alert('Error saving changes to Supabase')
-          } else {
-            console.log('✅ Supabase update successful')
-            setHasUnsavedChanges(false)
-            // Redirect to player profile
-            window.location.href = `/player?id=${round.userId}`
-          }
-        })
-    } else {
-      console.log('⚠️ Supabase not configured, skipping cloud update')
+    // Save to Supabase via API
+    try {
+      await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(round),
+      })
       setHasUnsavedChanges(false)
       window.location.href = `/player?id=${round.userId}`
-    }
-
-    // Save to localStorage
-    const savedRounds = localStorage.getItem('golfRounds')
-    if (savedRounds) {
-      const allRounds = JSON.parse(savedRounds) as Round[]
-      const updated = allRounds.map(r => r.id === roundId ? round : r)
-      localStorage.setItem('golfRounds', JSON.stringify(updated))
-    }
-
-    // Save to Supabase - only update scores field
-    if (isSupabaseConfigured() && supabase) {
-      supabase
-        .from('rounds')
-        .update({ scores: round.scores })
-        .eq('id', roundId)
-        .then(({ error }) => {
-          if (error) {
-            console.log('Could not update in Supabase:', error)
-            alert('Error saving changes to Supabase')
-          } else {
-            setHasUnsavedChanges(false)
-            // Redirect to player profile
-            window.location.href = `/player?id=${round.userId}`
-          }
-        })
-    } else {
-      // If Supabase is not configured, redirect immediately
+    } catch (error) {
+      alert('Error saving changes to Supabase')
       setHasUnsavedChanges(false)
       window.location.href = `/player?id=${round.userId}`
     }
@@ -257,6 +240,23 @@ function RoundDetailContent() {
     }
     setHasUnsavedChanges(false)
   }
+
+  // Compute nines for multi-nine support (mirroring track-round logic)
+  const [nines, setNines] = useState<{ name: string; holes: typeof course.holes }[]>([]);
+  useEffect(() => {
+    if (!course) return;
+    // Multi-nine: split holes by course if possible
+    const courseIds = (round?.courseId || '').split(',');
+    const savedCourses = localStorage.getItem('golfCourses');
+    if (savedCourses && courseIds.length > 1) {
+      const allCourses = JSON.parse(savedCourses);
+      const selectedCourses = allCourses.filter((c: any) => courseIds.includes(c.id));
+      const ninesArr = selectedCourses.map((c: any) => ({ name: c.name, holes: c.holes }));
+      setNines(ninesArr);
+    } else {
+      setNines([{ name: course.name, holes: course.holes }]);
+    }
+  }, [course, round]);
 
   if (loading) {
     return (
@@ -381,34 +381,45 @@ function RoundDetailContent() {
             )}
           </div>
 
-          {/* All Holes Grid */}
+          {/* All Holes Grid - Grouped by Nines */}
           <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
             <h2 className="text-lg font-bold mb-3 text-gray-800">Holes Completed</h2>
-            <div className="grid grid-cols-6 gap-2">
-              {course.holes.map((hole, index) => {
-                const score = round.scores[index]
-                const isCompleted = score > 0
-                
+            <div className="space-y-4">
+              {nines.map((nine, nineIdx) => {
+                // Find the starting index for this nine's holes in the flat course.holes array
+                const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
                 return (
-                  <div
-                    key={hole.holeNumber}
-                    onClick={() => handleHoleEdit(index)}
-                    className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative cursor-pointer hover:opacity-80 ${
-                      isCompleted
-                        ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
-                        : 'bg-gray-100 border border-gray-300 text-gray-700'
-                    }`}
-                    title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)}) - Click to edit` : `Hole ${hole.holeNumber} - Click to edit`}
-                  >
-                    {isCompleted ? (
-                      <>
-                        <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
-                        <span className="text-lg font-bold">{score}</span>
-                        <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
-                      </>
-                    ) : (
-                      <span className="font-bold text-xs">{hole.holeNumber}</span>
-                    )}
+                  <div key={nineIdx}>
+                    <div className="font-semibold text-green-700 mb-1 text-xs pl-1">{nine.name}</div>
+                    <div className="grid grid-cols-6 gap-2">
+                      {nine.holes.map((hole, idx) => {
+                        const flatIdx = startIdx + idx
+                        const score = round.scores[flatIdx]
+                        const isCompleted = score > 0
+                        return (
+                          <div
+                            key={hole.holeNumber + '-' + nineIdx}
+                            onClick={() => handleHoleEdit(flatIdx)}
+                            className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative cursor-pointer hover:opacity-80 ${
+                              isCompleted
+                                ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
+                                : 'bg-gray-100 border border-gray-300 text-gray-700'
+                            }`}
+                            title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)}) - Click to edit` : `Hole ${hole.holeNumber} - Click to edit`}
+                          >
+                            {isCompleted ? (
+                              <>
+                                <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
+                                <span className="text-lg font-bold">{score}</span>
+                                <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
+                              </>
+                            ) : (
+                              <span className="font-bold text-xs">{hole.holeNumber}</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               })}

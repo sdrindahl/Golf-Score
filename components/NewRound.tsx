@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Course, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { saveRoundToSupabase } from '@/lib/dataSync'
 
 export default function NewRound() {
   const router = useRouter()
@@ -85,6 +84,7 @@ export default function NewRound() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault()
     setSaveError(null)
 
@@ -95,6 +95,15 @@ export default function NewRound() {
 
     if (!currentUser) {
       alert('Please log in first')
+      return
+    }
+
+    // Prevent multiple in-progress rounds for the same user
+    const savedRounds = localStorage.getItem('golfRounds')
+    const rounds = savedRounds ? JSON.parse(savedRounds) : []
+    const inProgress = rounds.find((r: any) => r.userId === currentUser.id && r.in_progress)
+    if (inProgress) {
+      alert('You already have a round in progress. Please finish or discard it before starting a new one.')
       return
     }
 
@@ -112,9 +121,6 @@ export default function NewRound() {
       notes,
       in_progress: true,
     }
-
-    const savedRounds = localStorage.getItem('golfRounds')
-    const rounds = savedRounds ? JSON.parse(savedRounds) : []
     rounds.push(round)
     localStorage.setItem('golfRounds', JSON.stringify(rounds))
 
@@ -129,12 +135,18 @@ export default function NewRound() {
 
     // Also save to Supabase
     try {
-      await saveRoundToSupabase(round)
-      console.log('✅ Round successfully saved to Supabase')
+      const response = await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(round),
+      });
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Unknown error');
+      console.log('✅ Round successfully saved to Supabase');
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-      console.error('❌ Failed to save round to Supabase:', errorMsg)
-      setSaveError(errorMsg)
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ Failed to save round to Supabase:', errorMsg);
+      setSaveError(errorMsg);
     }
 
     setSavedRoundId(round.id)

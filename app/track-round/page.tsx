@@ -4,8 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Round, Course, Hole } from '@/types'
 import Link from 'next/link'
-import { saveRoundToSupabase, deleteRoundFromSupabase } from '@/lib/dataSync'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import PageWrapper from '@/components/PageWrapper'
 
 function TrackRoundContent() {
@@ -14,6 +12,8 @@ function TrackRoundContent() {
   const roundId = searchParams ? searchParams.get('id') : null
 
   const [round, setRound] = useState<Round | null>(null)
+  // For multi-nine, store array of { name, holes } for each nine
+  const [nines, setNines] = useState<{ name: string; holes: Hole[] }[]>([])
   const [course, setCourse] = useState<Course | null>(null)
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
   const [scores, setScores] = useState<number[]>([])
@@ -76,10 +76,12 @@ function TrackRoundContent() {
   useEffect(() => {
     if (!roundId) return
 
+
     const loadRound = async () => {
       try {
+        console.log('[DEBUG] Looking for roundId:', roundId)
         let foundRound: Round | null = null
-        
+
         // First, try to find in localStorage
         const savedRounds = localStorage.getItem('golfRounds')
         if (savedRounds) {
@@ -87,32 +89,50 @@ function TrackRoundContent() {
           foundRound = allRounds.find((r) => r.id === roundId) || null
         }
 
-        // If not in localStorage, try to fetch from Supabase
-        if (!foundRound && isSupabaseConfigured() && supabase) {
-          console.log('Round not in localStorage, fetching from Supabase...')
-          try {
-            const { data, error } = await supabase
-              .from('rounds')
-              .select('*')
-              .eq('id', roundId)
-              .maybeSingle();
 
-            if (error) {
-              console.error('Could not fetch round from Supabase:', error?.message)
-            } else if (data) {
-              foundRound = data as Round;
-              // Restore to localStorage for future access
-              const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
-              allRounds.push(foundRound);
-              localStorage.setItem('golfRounds', JSON.stringify(allRounds));
-              console.log('✅ Round restored from Supabase and saved to localStorage');
-            } else {
-              console.warn('No round found in Supabase for id', roundId);
+        // If not in localStorage, try to fetch from Supabase
+          if (!foundRound) {
+            console.log('[DEBUG] Round not in localStorage, fetching from API...')
+            try {
+              const res = await fetch(`/api/get-round?id=${roundId}`)
+              if (!res.ok) {
+                console.warn('[DEBUG] No round found in API for id', roundId)
+              } else {
+                const { round: data, courses: apiCourses } = await res.json()
+                if (data) {
+                  let courseIds: string[] = [];
+                  if (apiCourses && apiCourses.length > 0) {
+                    courseIds = apiCourses.map((c: any) => c.id)
+                  } else if (data.course_id) {
+                    courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+                  }
+                  foundRound = {
+                    id: data.id,
+                    userId: data.user_id,
+                    userName: data.user_name,
+                    courseId: courseIds.join(','),
+                    courseName: data.course_name,
+                    selectedTee: data.selected_tee,
+                    date: data.date,
+                    scores: data.scores,
+                    totalScore: data.total_score,
+                    notes: data.notes,
+                    in_progress: data.in_progress,
+                    startingHole: data.starting_hole // if present
+                  };
+                  // Restore to localStorage for future access
+                  const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
+                  allRounds.push(foundRound);
+                  localStorage.setItem('golfRounds', JSON.stringify(allRounds));
+                  console.log('[DEBUG] ✅ Round restored from API and saved to localStorage:', foundRound)
+                }
+              }
+            } catch (apiError) {
+              console.error('[DEBUG] API fetch error:', apiError)
             }
-          } catch (supabaseError) {
-            console.error('Supabase fetch error:', supabaseError)
           }
-        }
+
+        console.log('[DEBUG] foundRound:', foundRound)
 
         if (foundRound) {
           setRound(foundRound)
@@ -120,26 +140,50 @@ function TrackRoundContent() {
           // Store current round ID for "Return to Round" feature
           localStorage.setItem('currentRoundId', roundId)
 
-          // Restore the hole they were on
-          const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`)
-          if (savedHoleIndex) {
-            const holeIndex = parseInt(savedHoleIndex, 10)
-            setCurrentHoleIndex(holeIndex)
-            setStartingHoleSelected(true)
-            console.log(`✅ Restored to hole ${holeIndex + 1}`)
-          }
-
+          // Multi-nine support: combine holes from all selected nines
           const savedCourses = localStorage.getItem('golfCourses')
+          let foundCourse: Course | null = null
           if (savedCourses) {
             const allCourses = JSON.parse(savedCourses) as Course[]
-            const foundCourse = allCourses.find((c) => c.id === foundRound.courseId)
-            if (foundCourse) {
-              setCourse(foundCourse)
+            const courseIds = (foundRound.courseId || '').split(',')
+            if (courseIds.length > 1) {
+              // Multi-nine: keep array of { name, holes }
+              const selectedCourses = allCourses.filter(c => courseIds.includes(c.id))
+              const ninesArr = selectedCourses.map(c => ({ name: c.name, holes: c.holes }))
+              setNines(ninesArr)
+              // For backward compatibility, still set course as a flat version
+              foundCourse = {
+                ...selectedCourses[0],
+                id: courseIds.join(','),
+                name: foundRound.courseName,
+                holes: selectedCourses.flatMap(c => c.holes),
+                holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
+                par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
+              }
+            } else {
+              foundCourse = allCourses.find((c) => c.id === String(foundRound.courseId)) || null
+              if (foundCourse) setNines([{ name: foundCourse.name, holes: foundCourse.holes }])
             }
           }
+          console.log('[DEBUG] foundCourse:', foundCourse)
+          if (foundCourse) {
+            setCourse(foundCourse)
+          }
+
+          // Restore the hole they were on, or use startingHole from round
+          let holeIndex = 0;
+          const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`)
+          if (savedHoleIndex) {
+            holeIndex = parseInt(savedHoleIndex, 10)
+          } else if (foundRound.startingHole) {
+            holeIndex = Math.max(0, foundRound.startingHole - 1)
+          }
+          setCurrentHoleIndex(holeIndex)
+          setStartingHoleSelected(true)
+          console.log(`[DEBUG] ✅ Restored to hole ${holeIndex + 1}`)
         }
       } catch (error) {
-        console.error('Error loading round:', error)
+        console.error('[DEBUG] Error loading round:', error)
       } finally {
         setLoading(false)
       }
@@ -275,7 +319,11 @@ function TrackRoundContent() {
           setRound(updatedRound)
           
           // Also sync to Supabase so other devices see the update
-          saveRoundToSupabase(updatedRound).catch(error => {
+          fetch('/api/save-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedRound),
+          }).catch(error => {
             console.error('❌ Failed to sync round to Supabase:', error.message)
             // Don't stop the app if Supabase sync fails - but log the error
           })
@@ -309,22 +357,15 @@ function TrackRoundContent() {
     if (round) {
       // Final sync to Supabase before navigating away
       const finishedRound = { ...round, in_progress: false };
-      saveRoundToSupabase(finishedRound).catch(error => {
+      fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finishedRound),
+      }).catch(error => {
         console.error('❌ Failed to sync final round to Supabase:', error.message)
         // Still navigate even if sync fails - rounds are saved locally
       });
-      // Also update in_progress directly in Supabase for robustness
-      if (supabase) {
-        supabase
-          .from('rounds')
-          .update({ in_progress: false })
-          .eq('id', round.id)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Failed to update in_progress:', error.message);
-            }
-          });
-      }
+      // All updates now handled via /api/save-round
       // Clear the current round ID and hole index since round is finished
       localStorage.removeItem('currentRoundId');
       localStorage.removeItem(`currentHoleIndex-${roundId}`);
@@ -345,7 +386,7 @@ function TrackRoundContent() {
     )
   }
 
-  if (!round || !course) {
+  if (!loading && (!round || !course)) {
     return (
       <PageWrapper title="Round Not Found" userName="Error">
         <div className="card text-center">
@@ -386,13 +427,17 @@ function TrackRoundContent() {
   }
 
   const currentHole: Hole = course.holes[currentHoleIndex]
-  const selectedTee = round.selectedTee
+  const selectedTee = round?.selectedTee || ''
   const teeBox = currentHole[selectedTee]
   const currentScore = scores[currentHoleIndex] || 0
   const parDifference = currentScore - currentHole.par
 
+  // Safely format tee name
+  const teeDisplay = selectedTee ? selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1) : ''
+  const courseNameDisplay = round?.courseName || ''
+
   return (
-    <PageWrapper title={`Hole ${currentHole.holeNumber}`} userName={`${round.courseName} • ${selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s`}>
+    <PageWrapper title={`Hole ${currentHole.holeNumber}`} userName={`${courseNameDisplay}${teeDisplay ? ` • ${teeDisplay}'s` : ''}`}>
       {/* Scorecard Modal */}
       {showScorecard && course && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -506,37 +551,48 @@ function TrackRoundContent() {
         {/* Hole Completion Tracker */}
         <div className="mb-3 p-2 bg-white rounded-lg border border-gray-200">
           <h3 className="text-xs font-bold text-gray-700 mb-2">Holes Completed</h3>
-          <div className="grid grid-cols-6 gap-2">
-            {course.holes.map((hole, index) => {
-              const score = scores[index]
-              const isCompleted = score > 0
-              const isCurrent = currentHoleIndex === index
-              
+          <div className="space-y-4">
+            {nines.map((nine, nineIdx) => {
+              // Find the starting index for this nine's holes in the flat course.holes array
+              const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
               return (
-                <button
-                  key={hole.holeNumber}
-                  onClick={() => setCurrentHoleIndex(index)}
-                  className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative ${
-                    isCurrent
-                      ? 'ring-2 ring-green-800'
-                      : ''
-                  } ${
-                    isCompleted
-                      ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
-                      : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)})` : `Hole ${hole.holeNumber}`}
-                >
-                  {isCompleted ? (
-                    <>
-                      <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
-                      <span className="text-lg font-bold">{score}</span>
-                      <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
-                    </>
-                  ) : (
-                    <span className="font-bold text-xs">{hole.holeNumber}</span>
-                  )}
-                </button>
+                <div key={nineIdx}>
+                  <div className="font-semibold text-green-700 mb-1 text-xs pl-1">{nine.name}</div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {nine.holes.map((hole, idx) => {
+                      const flatIdx = startIdx + idx
+                      const score = scores[flatIdx]
+                      const isCompleted = score > 0
+                      const isCurrent = currentHoleIndex === flatIdx
+                      return (
+                        <button
+                          key={hole.holeNumber + '-' + nineIdx}
+                          onClick={() => setCurrentHoleIndex(flatIdx)}
+                          className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative ${
+                            isCurrent
+                              ? 'ring-2 ring-green-800'
+                              : ''
+                          } ${
+                            isCompleted
+                              ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
+                              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
+                          }`}
+                          title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)})` : `Hole ${hole.holeNumber}`}
+                        >
+                          {isCompleted ? (
+                            <>
+                              <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
+                              <span className="text-lg font-bold">{score}</span>
+                              <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
+                            </>
+                          ) : (
+                            <span className="font-bold text-xs">{hole.holeNumber}</span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               )
             })}
           </div>
@@ -654,7 +710,8 @@ function TrackRoundContent() {
                 localStorage.removeItem('currentRoundId')
                 localStorage.removeItem(`currentHoleIndex-${roundId}`)
                 // Optionally, delete from Supabase as well
-                deleteRoundFromSupabase(roundId).catch(() => {})
+                // TODO: Implement /api/delete-round endpoint and call it here
+                // deleteRoundFromSupabase(roundId).catch(() => {})
                 alert('Round in progress has been stopped and removed.')
                 router.push('/')
               }

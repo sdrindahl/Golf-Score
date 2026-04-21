@@ -51,11 +51,27 @@ function EditRoundContent() {
         setDate(foundRound.date)
         setNotes(foundRound.notes || '')
 
-        // Load the course for this round
+        // Load the course(s) for this round (multi-nine support)
         const savedCourses = localStorage.getItem('golfCourses')
         if (savedCourses) {
           const courses = JSON.parse(savedCourses)
-          const foundCourse = courses.find((c: Course) => c.id === foundRound.courseId)
+          const courseIds = (foundRound.courseId || '').split(',')
+          let foundCourse: Course | null = null
+          if (courseIds.length > 1) {
+            const selectedCourses = courses.filter((c: Course) => courseIds.includes(c.id))
+            if (selectedCourses.length > 0) {
+              foundCourse = {
+                ...selectedCourses[0],
+                id: courseIds.join(','),
+                name: foundRound.courseName,
+                holes: selectedCourses.flatMap((c: Course) => c.holes),
+                holeCount: selectedCourses.reduce((sum: number, c: Course) => sum + (c.holes?.length || 0), 0),
+                par: selectedCourses.reduce((sum: number, c: Course) => sum + (c.par || 0), 0),
+              }
+            }
+          } else {
+            foundCourse = courses.find((c: Course) => c.id === foundRound.courseId) || null
+          }
           if (foundCourse) {
             setCourse(foundCourse)
           }

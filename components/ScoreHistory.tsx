@@ -1,8 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { Round } from '@/types'
-import { deleteRoundFromSupabase } from '@/lib/dataSync'
 import { useAuth } from '@/lib/useAuth'
 
 interface ScoreHistoryProps {
@@ -34,7 +34,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
     return canEdit
   }
 
-  const handleDelete = (roundId: string) => {
+  const handleDelete = async (roundId: string) => {
     if (confirm('Are you sure you want to Delete This?')) {
       if (onDelete) {
         onDelete(roundId)
@@ -48,9 +48,16 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
           window.location.reload()
         }
       }
-      
-      // Also delete from Supabase
-      deleteRoundFromSupabase(roundId)
+      // Also delete from Supabase via API route
+      try {
+        await fetch('/api/delete-round', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roundId }),
+        })
+      } catch (e) {
+        // ignore
+      }
     }
   }
 
@@ -59,6 +66,44 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
   }
 
   const sortedRounds = [...rounds].reverse()
+
+  // Load courses from localStorage (if available)
+  const [courses, setCourses] = useState<any[]>([]);
+  useEffect(() => {
+    async function loadCourses() {
+      let loadedCourses: any[] = [];
+      if (typeof window !== 'undefined') {
+        const savedCourses = localStorage.getItem('golfCourses');
+        if (savedCourses) {
+          loadedCourses = JSON.parse(savedCourses);
+        }
+      }
+      // If not found in localStorage, fetch from Supabase
+      if (!loadedCourses.length && typeof window !== 'undefined') {
+        try {
+          const { createClient } = await import('@supabase/supabase-js');
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+          const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+          if (supabaseUrl && supabaseKey) {
+            const supabase = createClient(supabaseUrl, supabaseKey);
+            const { data, error } = await supabase.from('courses').select('*');
+            if (!error && data) {
+              loadedCourses = data;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+      setCourses(loadedCourses);
+    }
+    loadCourses();
+  }, []);
+
+  // Always display the course name from the round object
+  const getDisplayCourseName = (round: Round): string => {
+    return round.courseName || '';
+  };
 
   return (
     <div>
@@ -75,15 +120,18 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
               onClick={() => router.push(`/round-detail?id=${round.id}`)}
               className="bg-white/95 backdrop-blur rounded-2xl p-5 shadow-md border border-white/20 cursor-pointer transition-all active:scale-95 active:shadow-lg"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">{new Date(round.date).toISOString().slice(0, 10)}</p>
-                  <p className="font-semibold text-gray-800 truncate text-sm md:text-base">{round.courseName}</p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
+                <div className="flex flex-row items-center gap-3 flex-1 min-w-0">
+                  <span className="text-xs text-gray-500 whitespace-nowrap">{new Date(round.date).toISOString().slice(0, 10)}</span>
+                  <span className="text-xs text-gray-400">|</span>
+                  {getDisplayCourseName(round) && (
+                    <span className="font-semibold text-gray-800 truncate text-sm md:text-base max-w-[120px] sm:max-w-[200px]">{getDisplayCourseName(round)}</span>
+                  )}
                 </div>
-                <div className="flex items-center gap-4 ml-4">
+                <div className="flex items-center gap-4 ml-0 sm:ml-4">
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-800">{round.totalScore}</p>
-                    <p className={`text-xs ${vsPalColor}`}>{vsPalDisplay}</p>
+                    <span className="text-2xl font-bold text-gray-800">{round.totalScore}</span>
+                    <span className={`text-xs ml-2 ${vsPalColor}`}>{vsPalDisplay}</span>
                   </div>
                   <div className="text-2xl text-gray-400">→</div>
                 </div>
