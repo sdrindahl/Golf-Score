@@ -2,52 +2,25 @@ import { Round } from '@/types';
 /**
 
 
-/**
- * Migrate localStorage rounds to Supabase (client-only)
- */
-export async function migrateLocalStorageRoundsToSupabase(userIdMap: Map<string, string>, roundToSupabase: (r: any) => any, supabase: any, supabaseRoundIds: Set<string>) {
-  if (typeof window === 'undefined') return;
-  // All localStorage access must be inside this block
-  const localStorageRounds = JSON.parse(window.localStorage.getItem('golfRounds') || '[]');
-  const updatedLocalStorageRounds: any[] = [];
-  for (const round of localStorageRounds) {
-    try {
-      // Update the userId reference if it changed during migration
-      const updatedRound = {
-        ...round,
-        userId: userIdMap.get(round.userId) || round.userId
-      };
-      // Convert to Supabase format (without ID, let it generate)
-      const { id, ...roundWithoutId } = roundToSupabase(updatedRound);
-      // Insert without ID and let Supabase generate UUID
-      const { data, error } = await supabase
-        .from('rounds')
-        .insert([roundWithoutId])
-        .select();
-      if (error) throw error;
-      if (data && data.length > 0) {
-        updatedLocalStorageRounds.push({ ...updatedRound, id: data[0].id });
-        console.log(`Migrated round to Supabase: ${round.id}`);
-        supabaseRoundIds.add(data[0].id);
-      }
-    } catch (error) {
-      console.error(`Error migrating round ${round.id}:`, error);
-      // Keep original if migration fails
-      updatedLocalStorageRounds.push(round);
-    }
+
+// All Supabase/server-only code has been moved to lib/dataSync.server.ts or API routes.
+// Only client-safe helpers or localStorage logic should remain here.
+
+// Example: get rounds from localStorage
+export function getLocalRounds(): Round[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    return JSON.parse(window.localStorage.getItem('golfRounds') || '[]');
+  } catch {
+    return [];
   }
-  // Update localStorage with corrected round IDs from Supabase
-  if (updatedLocalStorageRounds.length > 0) {
-    window.localStorage.setItem('golfRounds', JSON.stringify(updatedLocalStorageRounds));
-  }
-  console.log('Local storage migration to Supabase complete');
 }
 
 /**
  * Save a round to Supabase
  */
 export async function saveRoundToSupabase(round: Round): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
+  if (!supabase) {
     console.warn('Supabase not configured, round will not sync to other devices')
     return
   }
