@@ -50,39 +50,6 @@ function ensureValidTotalScore(round: Round): Round {
 /**
  * Save a course to Supabase
  */
-export async function saveCourseToSupabase(course: Course): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return
-  }
-
-  try {
-    // Only send fields that exist in Supabase courses table
-    // Supabase uses snake_case for column names
-    const courseData = {
-      id: course.id,
-      name: course.name,
-      par: course.par,
-      hole_count: course.holeCount,
-      holes: course.holes,
-      // Note: location, state, course_rating, slope_rating not synced if not in schema
-    }
-
-    // Use upsert to insert if new, update if already exists
-    const { error } = await supabase
-      .from('courses')
-      .upsert([courseData], { onConflict: 'id' })
-
-    if (error) {
-      console.error('Error saving course to Supabase:', error)
-      // Don't throw - let app continue if Supabase sync fails
-      return
-    }
-    console.log('Course saved to Supabase:', course.id)
-  } catch (error) {
-    console.error('Error saving course to Supabase:', error)
-    // Don't throw - let app continue if Supabase sync fails
-  }
-}
 
 /**
  * Update a course in Supabase
