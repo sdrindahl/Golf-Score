@@ -8,55 +8,51 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
   // Remove any existing links for this round (idempotent)
   await supabase.from('round_courses').delete().eq('round_id', roundId);
 
-  // Insert new links
-  const rows = courseIds.map((courseId, idx) => ({
+  // Insert new links (no-op for localStorage here)
+  // All Supabase/server-only code has been moved to lib/dataSync.server.ts
+  // Only client-safe helpers or localStorage logic should remain here.
+  // If you need to migrate localStorage rounds, call migrateLocalStorageRoundsToSupabase() from a client-only context.
 
-    // All Supabase/server-only code has been moved to lib/dataSync.server.ts
-    // Only client-safe helpers or localStorage logic should remain here.
-    // Migrate rounds - don't send ID, let Supabase generate it
-    const updatedLocalStorageRounds: Round[] = []
-    
-    for (const round of localStorageRounds) {
-      try {
-        // Update the userId reference if it changed during migration
-        const updatedRound = {
-          ...round,
-          userId: userIdMap.get(round.userId) || round.userId
-        }
-        
-        // Convert to Supabase format (without ID, let it generate)
-        const { id, ...roundWithoutId } = roundToSupabase(updatedRound)
-        
-        // Insert without ID and let Supabase generate UUID
-        const { data, error } = await supabase
-          .from('rounds')
-          .insert([roundWithoutId])
-          .select()
 
-        if (error) throw error
-        
-        if (data && data.length > 0) {
-          updatedLocalStorageRounds.push({ ...updatedRound, id: data[0].id })
-          console.log(`Migrated round to Supabase: ${round.id}`)
-          supabaseRoundIds.add(data[0].id)
-        }
-      } catch (error) {
-        console.error(`Error migrating round ${round.id}:`, error)
-        // Keep original if migration fails
-        updatedLocalStorageRounds.push(round)
+/**
+ * Migrate localStorage rounds to Supabase (client-only)
+ */
+export async function migrateLocalStorageRoundsToSupabase(userIdMap: Map<string, string>, roundToSupabase: (r: any) => any, supabase: any, supabaseRoundIds: Set<string>) {
+  if (typeof window === 'undefined') return;
+  const localStorageRounds = JSON.parse(localStorage.getItem('golfRounds') || '[]');
+  const updatedLocalStorageRounds: any[] = [];
+  for (const round of localStorageRounds) {
+    try {
+      // Update the userId reference if it changed during migration
+      const updatedRound = {
+        ...round,
+        userId: userIdMap.get(round.userId) || round.userId
+      };
+      // Convert to Supabase format (without ID, let it generate)
+      const { id, ...roundWithoutId } = roundToSupabase(updatedRound);
+      // Insert without ID and let Supabase generate UUID
+      const { data, error } = await supabase
+        .from('rounds')
+        .insert([roundWithoutId])
+        .select();
+      if (error) throw error;
+      if (data && data.length > 0) {
+        updatedLocalStorageRounds.push({ ...updatedRound, id: data[0].id });
+        console.log(`Migrated round to Supabase: ${round.id}`);
+        supabaseRoundIds.add(data[0].id);
       }
+    } catch (error) {
+      console.error(`Error migrating round ${round.id}:`, error);
+      // Keep original if migration fails
+      updatedLocalStorageRounds.push(round);
     }
-    
-    // Update localStorage with corrected round IDs from Supabase
-    if (updatedLocalStorageRounds.length > 0) {
-      localStorage.setItem('golfRounds', JSON.stringify(updatedLocalStorageRounds))
-    }
-
-    console.log('Local storage migration to Supabase complete')
-  } catch (error) {
-    console.error('Error during local storage migration:', error)
   }
-
+  // Update localStorage with corrected round IDs from Supabase
+  if (updatedLocalStorageRounds.length > 0) {
+    localStorage.setItem('golfRounds', JSON.stringify(updatedLocalStorageRounds));
+  }
+  console.log('Local storage migration to Supabase complete');
+}
 
 /**
  * Save a round to Supabase
