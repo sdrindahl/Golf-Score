@@ -1,19 +1,4 @@
 /**
- * Insert course links for a round into round_courses join table
- */
-async function insertRoundCourses(roundId: string, courseIds: string[]): Promise<void> {
-  if (!supabase) return;
-  if (!roundId || !courseIds || courseIds.length === 0) return;
-
-  // Remove any existing links for this round (idempotent)
-  await supabase.from('round_courses').delete().eq('round_id', roundId);
-
-  // Insert new links (no-op for localStorage here)
-  // All Supabase/server-only code has been moved to lib/dataSync.server.ts
-  // Only client-safe helpers or localStorage logic should remain here.
-  // If you need to migrate localStorage rounds, call migrateLocalStorageRoundsToSupabase() from a client-only context.
-  return;
-}
 
 
 /**
