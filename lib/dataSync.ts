@@ -46,61 +46,6 @@ function ensureValidTotalScore(round: Round): Round {
 /**
  * Update a round in Supabase
  */
-export async function updateRoundInSupabase(round: Round): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
-    console.warn('⚠️ Supabase not configured, skipping update')
-    return
-  }
-
-  console.log('🟢 Entered updateRoundInSupabase', { round })
-  try {
-    // Ensure totalScore matches the sum of scores
-    const validRound = ensureValidTotalScore(round)
-    const supabaseRound = roundToSupabase(validRound)
-    // Remove id from update object (can't update primary key)
-    const { id, ...updateData } = supabaseRound
-
-    // Log payload and types
-    console.log('🟦 Supabase update payload:', {
-      updateData,
-      types: Object.fromEntries(Object.entries(updateData).map(([k, v]) => [k, typeof v]))
-    })
-
-    // Log before update
-    console.log('🟡 About to call supabase update', { total_score: updateData.total_score, id: round.id })
-
-    let error = undefined
-    try {
-      const result = await supabase
-        .from('rounds')
-        .update({ total_score: updateData.total_score })
-        .eq('id', round.id)
-      error = result.error
-      console.log('🟣 Supabase update result:', result)
-    } catch (updateErr) {
-      console.error('❌ Exception thrown during supabase update:', updateErr)
-      throw updateErr
-    }
-
-    if (error) {
-      console.error('❌ Supabase error updating ONLY total_score:', {
-        error,
-        roundId: round.id,
-        code: error.code,
-        message: error.message
-      })
-      throw error
-    }
-
-    console.log('✅ Only total_score updated in Supabase:', {
-      id: round.id,
-      newScore: updateData.total_score
-    })
-  } catch (error) {
-    console.error('❌ Error updating round in Supabase:', error)
-    throw error
-  }
-}
 
 /**
  * Save a course to Supabase
