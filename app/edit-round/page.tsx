@@ -117,7 +117,7 @@ function EditRoundContent() {
       
       // Delete from Supabase
       if (roundId) {
-        deleteRoundFromSupabase(roundId).catch(error => {
+        deleteRoundFromSupabase(roundId).catch((error: unknown) => {
           console.log('Could not delete from Supabase:', error)
         })
       }

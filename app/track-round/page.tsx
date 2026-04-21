@@ -2,7 +2,10 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Round, Course, Hole } from '@/types'
+import { Round as BaseRound, Course, Hole } from '@/types'
+
+// Extend Round type locally to allow startingHole (for legacy/compat)
+type Round = BaseRound & { startingHole?: number }
 import Link from 'next/link'
 import PageWrapper from '@/components/PageWrapper'
 
@@ -118,7 +121,7 @@ function TrackRoundContent() {
                     totalScore: data.total_score,
                     notes: data.notes,
                     in_progress: data.in_progress,
-                    startingHole: data.starting_hole // if present
+                    startingHole: data.starting_hole, // if present
                   };
                   // Restore to localStorage for future access
                   const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
@@ -175,8 +178,8 @@ function TrackRoundContent() {
           const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`)
           if (savedHoleIndex) {
             holeIndex = parseInt(savedHoleIndex, 10)
-          } else if (foundRound.startingHole) {
-            holeIndex = Math.max(0, foundRound.startingHole - 1)
+          } else if ((foundRound as Round).startingHole) {
+            holeIndex = Math.max(0, ((foundRound as Round).startingHole ?? 1) - 1)
           }
           setCurrentHoleIndex(holeIndex)
           setStartingHoleSelected(true)
@@ -362,7 +365,7 @@ function TrackRoundContent() {
       const savedRounds = localStorage.getItem('golfRounds');
       if (savedRounds) {
         const allRounds = JSON.parse(savedRounds);
-        const index = allRounds.findIndex((r) => r.id === roundId);
+        const index = allRounds.findIndex((r: Round) => r.id === roundId);
         if (index >= 0) {
           allRounds[index] = finishedRound;
           localStorage.setItem('golfRounds', JSON.stringify(allRounds));
@@ -375,7 +378,11 @@ function TrackRoundContent() {
           body: JSON.stringify(finishedRound),
         });
       } catch (error) {
-        console.error('❌ Failed to sync final round to Supabase:', error.message);
+        if (error instanceof Error) {
+          console.error('❌ Failed to sync final round to Supabase:', error.message);
+        } else {
+          console.error('❌ Failed to sync final round to Supabase:', error);
+        }
         // Still navigate even if sync fails - rounds are saved locally
       }
       // All updates now handled via /api/save-round
@@ -412,13 +419,13 @@ function TrackRoundContent() {
     )
   }
 
-  if (currentHoleIndex >= course.holes.length) {
+  if (course && currentHoleIndex >= course.holes.length) {
     return (
       <PageWrapper title="Round Complete" userName="🎉 Congratulations">
         <div className="card text-center">
           <h2 className="text-2xl font-bold mb-4">Round Complete! 🎉</h2>
           <p className="text-gray-600 mb-6">
-            You've finished all {course.holes.length} holes!
+            You've finished all {course ? course.holes.length : 0} holes!
           </p>
           <button onClick={handleFinishRound} className="btn-primary">
             View Scorecard
@@ -441,7 +448,11 @@ function TrackRoundContent() {
 
   const currentHole: Hole = course.holes[currentHoleIndex]
   const selectedTee = round?.selectedTee || ''
-  const teeBox = currentHole[selectedTee]
+  // Only allow known tee keys
+  const allowedTees: Array<keyof Hole> = ['men', 'women', 'senior', 'championship']
+  const teeBox = allowedTees.includes(selectedTee as keyof Hole)
+    ? currentHole[selectedTee as keyof Hole]
+    : undefined
   const currentScore = scores[currentHoleIndex] || 0
   const parDifference = currentScore - currentHole.par
 

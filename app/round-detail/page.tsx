@@ -242,7 +242,7 @@ function RoundDetailContent() {
   }
 
   // Compute nines for multi-nine support (mirroring track-round logic)
-  const [nines, setNines] = useState<{ name: string; holes: typeof course.holes }[]>([]);
+  const [nines, setNines] = useState<{ name: string; holes: import('@/types').Hole[] }[]>([]);
   useEffect(() => {
     if (!course) return;
     // Multi-nine: split holes by course if possible

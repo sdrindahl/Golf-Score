@@ -12,6 +12,8 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
   // All Supabase/server-only code has been moved to lib/dataSync.server.ts
   // Only client-safe helpers or localStorage logic should remain here.
   // If you need to migrate localStorage rounds, call migrateLocalStorageRoundsToSupabase() from a client-only context.
+  return;
+}
 
 
 /**
@@ -19,7 +21,8 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
  */
 export async function migrateLocalStorageRoundsToSupabase(userIdMap: Map<string, string>, roundToSupabase: (r: any) => any, supabase: any, supabaseRoundIds: Set<string>) {
   if (typeof window === 'undefined') return;
-  const localStorageRounds = JSON.parse(localStorage.getItem('golfRounds') || '[]');
+  // All localStorage access must be inside this block
+  const localStorageRounds = JSON.parse(window.localStorage.getItem('golfRounds') || '[]');
   const updatedLocalStorageRounds: any[] = [];
   for (const round of localStorageRounds) {
     try {
@@ -49,7 +52,7 @@ export async function migrateLocalStorageRoundsToSupabase(userIdMap: Map<string,
   }
   // Update localStorage with corrected round IDs from Supabase
   if (updatedLocalStorageRounds.length > 0) {
-    localStorage.setItem('golfRounds', JSON.stringify(updatedLocalStorageRounds));
+    window.localStorage.setItem('golfRounds', JSON.stringify(updatedLocalStorageRounds));
   }
   console.log('Local storage migration to Supabase complete');
 }

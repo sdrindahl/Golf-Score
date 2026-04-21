@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Course, User } from '@/types'
+import { Course, User, Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 
 export default function NewRound() {
@@ -114,7 +114,7 @@ try {
     if (savedRounds) {
       let rounds = JSON.parse(savedRounds);
       let changed = false;
-      rounds = rounds.map((r) => {
+      rounds = rounds.map((r: Round) => {
         if (r.userId === currentUser.id && r.in_progress) {
           changed = true;
           return { ...r, in_progress: false };
