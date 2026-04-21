@@ -54,46 +54,6 @@ function ensureValidTotalScore(round: Round): Round {
 /**
  * Update a course in Supabase
  */
-export async function updateCourseInSupabase(course: Course): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
-    console.warn('Supabase not configured, course changes saved locally only')
-    return
-  }
-
-  try {
-    console.log('💾 Updating course in Supabase:', course.id)
-    
-    // Only send fields that Supabase table has
-    // location, state, course_rating and slope_rating may not exist in your schema
-    const courseData: any = {
-      id: course.id,
-      name: course.name,
-      par: course.par,
-      hole_count: course.holeCount,
-      holes: course.holes,
-    }
-
-    const { error } = await supabase
-      .from('courses')
-      .update(courseData)
-      .eq('id', course.id)
-
-    if (error) {
-      // If error is about missing columns, that's okay - data is still in localStorage
-      if (error.message?.includes('Could not find')) {
-        console.log('⚠️ Supabase columns missing (course_rating/slope_rating) - data saved locally')
-        return
-      }
-      console.error('Supabase error:', error)
-      throw error
-    }
-    
-    console.log('✅ Course successfully updated in Supabase')
-  } catch (error) {
-    console.warn('⚠️ Could not sync to Supabase, but data is saved locally:', error)
-    // Continue anyway - data is still saved locally
-  }
-}
 
 /**
  * Delete a course from Supabase and local storage
