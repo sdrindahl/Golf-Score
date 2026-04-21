@@ -151,13 +151,18 @@ function EditRoundContent() {
       }
     }
 
-    // Sync to Supabase
+    // Sync to Supabase via API route
     try {
-      await updateRoundInSupabase(updatedRound)
-      console.log('✅ Round synced to Supabase successfully')
+      const response = await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      });
+      if (!response.ok) throw new Error('API error');
+      console.log('✅ Round synced to Supabase successfully');
     } catch (error) {
-      console.error('❌ Failed to sync round to Supabase:', error)
-      alert('⚠️ Warning: Round saved locally but failed to sync to cloud. Please check your internet connection.')
+      console.error('❌ Failed to sync round to Supabase:', error);
+      alert('⚠️ Warning: Round saved locally but failed to sync to cloud. Please check your internet connection.');
     }
 
     setSubmitted(true)
