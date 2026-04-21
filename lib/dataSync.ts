@@ -19,50 +19,6 @@ export function getLocalRounds(): Round[] {
 /**
  * Save a round to Supabase
  */
-export async function saveRoundToSupabase(round: Round): Promise<void> {
-  if (!supabase) {
-    console.warn('Supabase not configured, round will not sync to other devices')
-    return
-  }
-
-  try {
-    // Ensure totalScore matches the sum of scores
-    const validRound = ensureValidTotalScore(round);
-    const roundData = roundToSupabase(validRound);
-    console.log('📤 Attempting to save round to Supabase:', roundData);
-
-    // Use upsert to insert if new, update if already exists
-    const { data, error } = await supabase
-      .from('rounds')
-      .upsert([roundData], { onConflict: 'id' })
-      .select();
-
-    if (error) {
-      console.error('❌ Supabase upsert error response:', error);
-      throw new Error(`Supabase error: ${error.message}`);
-    }
-
-    // Insert into round_courses join table
-    // Accepts comma-separated or array courseId
-    let courseIds: string[] = [];
-    if (Array.isArray(validRound.courseId)) {
-      courseIds = validRound.courseId;
-    } else if (typeof validRound.courseId === 'string') {
-      courseIds = validRound.courseId.split(',').map((id: string) => id.trim()).filter(Boolean);
-    }
-    await insertRoundCourses(validRound.id, courseIds);
-
-    if (data && data.length > 0) {
-      console.log('✅ Round successfully saved to Supabase:', data[0]);
-    } else {
-      console.warn('⚠️ Upsert returned no data:', data);
-    }
-  } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('❌ Error saving round to Supabase:', errorMsg);
-    throw error;
-  }
-}
 
 /**
  * Delete a round from Supabase
