@@ -23,23 +23,6 @@ export function getLocalRounds(): Round[] {
 /**
  * Delete a round from Supabase
  */
-export async function deleteRoundFromSupabase(roundId: string): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return
-  }
-
-  try {
-    const { error } = await supabase
-      .from('rounds')
-      .delete()
-      .eq('id', roundId)
-
-    if (error) throw error
-    console.log('Round deleted from Supabase:', roundId)
-  } catch (error) {
-    console.error('Error deleting round from Supabase:', error)
-  }
-}
 
 /**
  * Ensure totalScore matches the sum of scores (data integrity check)
