@@ -56,62 +56,21 @@ function ensureValidTotalScore(round: Round): Round {
  */
 
 /**
- * Delete a course from Supabase and local storage
+ * Delete a course (client stub)
+ *
+ * This function is now a stub. All Supabase logic must be handled via API routes or server files.
  */
 export async function deleteCourseFromSupabase(courseId: string): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
-    console.warn('Supabase not configured, course deletion local only')
-    return
-  }
-
-  try {
-    console.log(`🗑️ Deleting course ${courseId} from Supabase...`)
-    
-    // Delete from Supabase
-    const { error } = await supabase
-      .from('courses')
-      .delete()
-      .eq('id', courseId)
-
-    if (error) {
-      console.error('Supabase error deleting course:', error)
-      throw error
-    }
-    
-    console.log(`✅ Course ${courseId} successfully deleted from Supabase`)
-  } catch (error) {
-    console.error('Error deleting course from Supabase:', error)
-    throw error
-  }
+  // No-op: Supabase logic removed from client bundle
+  console.warn('deleteCourseFromSupabase is a client stub. Use API route for server actions.')
 }
 
 /**
- * Sync all courses to Supabase
+ * Sync all courses (client stub)
+ *
+ * This function is now a stub. All Supabase logic must be handled via API routes or server files.
  */
-export async function syncCoursesToSupabase(courses: Course[]): Promise<void> {
-  if (!isSupabaseConfigured() || !supabase) {
-    return
-  }
-
-  try {
-    for (const course of courses) {
-      // Only send fields that exist in Supabase table
-      const courseData = {
-        id: course.id,
-        name: course.name,
-        par: course.par,
-        hole_count: course.holeCount,
-        holes: course.holes,
-      }
-      
-      const { error } = await supabase
-        .from('courses')
-        .upsert([courseData])
-
-      if (error) throw error
-    }
-    console.log(`Synced ${courses.length} courses to Supabase`)
-  } catch (error) {
-    console.error('Error syncing courses to Supabase:', error)
-  }
+export async function syncCoursesToSupabase(courses: any[]): Promise<void> {
+  // No-op: Supabase logic removed from client bundle
+  console.warn('syncCoursesToSupabase is a client stub. Use API route for server actions.')
 }
