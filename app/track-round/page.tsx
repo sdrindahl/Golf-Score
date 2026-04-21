@@ -94,7 +94,7 @@ function TrackRoundContent() {
           if (!foundRound) {
             console.log('[DEBUG] Round not in localStorage, fetching from API...')
             try {
-              const res = await fetch(`/api/get-round?id=${roundId}`)
+              const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
               if (!res.ok) {
                 console.warn('[DEBUG] No round found in API for id', roundId)
               } else {
@@ -353,18 +353,31 @@ function TrackRoundContent() {
     }
   }
 
-  const handleFinishRound = () => {
+  const handleFinishRound = async () => {
     if (round) {
-      // Final sync to Supabase before navigating away
-      const finishedRound = { ...round, in_progress: false };
-      fetch('/api/save-round', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(finishedRound),
-      }).catch(error => {
-        console.error('❌ Failed to sync final round to Supabase:', error.message)
+      // Ensure all scores are at least 1 (no zeros for completed holes)
+      const fixedScores = scores.map((s, idx) => (s && s > 0 ? s : 1));
+      const finishedRound = { ...round, in_progress: false, scores: fixedScores, totalScore: fixedScores.reduce((a, b) => a + b, 0) };
+      // Save to localStorage
+      const savedRounds = localStorage.getItem('golfRounds');
+      if (savedRounds) {
+        const allRounds = JSON.parse(savedRounds);
+        const index = allRounds.findIndex((r) => r.id === roundId);
+        if (index >= 0) {
+          allRounds[index] = finishedRound;
+          localStorage.setItem('golfRounds', JSON.stringify(allRounds));
+        }
+      }
+      try {
+        await fetch('/api/save-round', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(finishedRound),
+        });
+      } catch (error) {
+        console.error('❌ Failed to sync final round to Supabase:', error.message);
         // Still navigate even if sync fails - rounds are saved locally
-      });
+      }
       // All updates now handled via /api/save-round
       // Clear the current round ID and hole index since round is finished
       localStorage.removeItem('currentRoundId');
@@ -525,7 +538,7 @@ function TrackRoundContent() {
         <div className="grid grid-cols-3 gap-1 mb-2">
           <div className="p-2 bg-green-50 rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">SCORE</p>
-            <p className="text-2xl font-bold text-green-700">{scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0)}</p>
+            <p className="text-2xl font-bold text-green-700">{scores.reduce((sum, score) => sum + score, 0)}</p>
           </div>
           <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-purple-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">vs PAR</p>
@@ -544,7 +557,7 @@ function TrackRoundContent() {
           </div>
           <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-blue-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">HOLES</p>
-            <p className="text-2xl font-bold text-blue-700">{scores.filter(s => s > 0).length}/{course.holes.length}</p>
+            <p className="text-2xl font-bold text-blue-700">{scores.filter(s => s >= 1).length}/{course.holes.length}</p>
           </div>
         </div>
 

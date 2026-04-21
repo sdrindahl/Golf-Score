@@ -40,7 +40,7 @@ function RoundDetailContent() {
         if (isMounted) setCurrentUser(user);
 
         try {
-          const res = await fetch(`/api/get-round?id=${roundId}`)
+          const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
           if (!res.ok) {
             if (isMounted) setRound(null);
           } else {

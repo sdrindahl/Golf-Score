@@ -98,14 +98,46 @@ export default function NewRound() {
       return
     }
 
-    // Prevent multiple in-progress rounds for the same user
-    const savedRounds = localStorage.getItem('golfRounds')
-    const rounds = savedRounds ? JSON.parse(savedRounds) : []
-    const inProgress = rounds.find((r: any) => r.userId === currentUser.id && r.in_progress)
-    if (inProgress) {
-      alert('You already have a round in progress. Please finish or discard it before starting a new one.')
-      return
+    // --- AUTO-CLEANUP STALE IN-PROGRESS ROUNDS ---
+let supabaseHasInProgress = false;
+try {
+  const response = await fetch('/api/get-in-progress-rounds', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: currentUser.id })
+  });
+  const result = await response.json();
+  supabaseHasInProgress = Array.isArray(result.rounds) && result.rounds.length > 0;
+  if (!supabaseHasInProgress) {
+    // If none in Supabase, clear all local in-progress rounds for this user
+    const savedRounds = localStorage.getItem('golfRounds');
+    if (savedRounds) {
+      let rounds = JSON.parse(savedRounds);
+      let changed = false;
+      rounds = rounds.map((r) => {
+        if (r.userId === currentUser.id && r.in_progress) {
+          changed = true;
+          return { ...r, in_progress: false };
+        }
+        return r;
+      });
+      if (changed) {
+        localStorage.setItem('golfRounds', JSON.stringify(rounds));
+        localStorage.removeItem('currentRoundId');
+      }
     }
+  }
+} catch (err) {
+  console.warn('Could not check Supabase for in-progress rounds:', err);
+}
+// Now check localStorage again
+const savedRounds = localStorage.getItem('golfRounds');
+const rounds = savedRounds ? JSON.parse(savedRounds) : [];
+const inProgress = rounds.find((r: any) => r.userId === currentUser.id && r.in_progress);
+if (inProgress || supabaseHasInProgress) {
+  alert('You already have a round in progress. Please finish or discard it before starting a new one.');
+  return;
+}
 
     // Save the round with user info
     const round = {

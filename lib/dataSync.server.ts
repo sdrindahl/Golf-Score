@@ -1,9 +1,37 @@
+// --- Helpers for round validation and DB shape ---
+
+/**
+ * Ensures totalScore matches the sum of scores in the round.
+ */
+export function ensureValidTotalScore(round: any): any {
+  if (!round || !Array.isArray(round.scores)) return round;
+  const total = round.scores.reduce((sum: number, n: number) => sum + (typeof n === 'number' ? n : 0), 0);
+  if (typeof round.totalScore !== 'number' || round.totalScore !== total) {
+    return { ...round, totalScore: total };
+  }
+  return round;
+}
+
+/**
+ * Converts a Round object to the DB shape (snake_case, only valid fields).
+ */
+export function roundToSupabase(round: any): any {
+  return {
+    id: round.id,
+    user_id: round.userId,
+    user_name: round.userName,
+    date: round.date,
+    scores: round.scores,
+    total_score: round.totalScore,
+    notes: round.notes,
+    in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
+  };
+}
 /**
  * Server-only Supabase sync logic for rounds/courses.
  * This file must only be imported by API routes or server components.
  */
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
-import { ensureValidTotalScore, roundToSupabase } from '@/lib/golfApi'
 
 // --- Insert your server-only helpers here ---
 

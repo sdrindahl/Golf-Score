@@ -40,7 +40,20 @@ export default function Home() {
     // Check if there's a current round in progress
     const inProgressRoundId = localStorage.getItem('currentRoundId')
     if (inProgressRoundId) {
-      setCurrentRoundId(inProgressRoundId)
+      // Check if the round actually exists in localStorage
+      const savedRounds = localStorage.getItem('golfRounds')
+      let found = false
+      if (savedRounds) {
+        const allRounds = JSON.parse(savedRounds)
+        found = allRounds.some((r: any) => r.id === inProgressRoundId)
+      }
+      if (found) {
+        setCurrentRoundId(inProgressRoundId)
+      } else {
+        // Stale currentRoundId, clear it
+        localStorage.removeItem('currentRoundId')
+        setCurrentRoundId(null)
+      }
     }
   }, [isClient])
 
