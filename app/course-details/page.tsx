@@ -28,7 +28,10 @@ function CourseDetailsContent() {
       const flat: Course[] = []
       for (const c of courses) {
         flat.push(c)
-        if (Array.isArray(c.children)) flat.push(...c.children)
+        // Only push children if property exists and is an array
+        if ('children' in c && Array.isArray((c as any).children)) {
+          flat.push(...(c as any).children)
+        }
       }
       return flat
     }
