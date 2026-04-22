@@ -350,15 +350,29 @@ export default function Home() {
         )}
 
         {/* Return to Round Button (if round in progress) */}
-        {currentRoundId && (
-          <button
-            onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
-            className="btn-danger w-full flex items-center justify-center gap-2 mt-2"
-          >
-            <span className="text-lg">🎯</span>
-            <span>Return to Round</span>
-          </button>
-        )}
+        {(() => {
+          if (!currentRoundId) return null;
+          // Find the round in localStorage
+          const savedRounds = typeof window !== 'undefined' ? localStorage.getItem('golfRounds') : null;
+          let foundRound = null;
+          if (savedRounds) {
+            const allRounds = JSON.parse(savedRounds);
+            foundRound = allRounds.find((r: any) => r.id === currentRoundId);
+          }
+          // Only show if round is in progress and has a valid courseId
+          if (foundRound && foundRound.in_progress && foundRound.courseId && foundRound.courseId !== '') {
+            return (
+              <button
+                onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
+                className="btn-danger w-full flex items-center justify-center gap-2 mt-2"
+              >
+                <span className="text-lg">🎯</span>
+                <span>Return to Round</span>
+              </button>
+            );
+          }
+          return null;
+        })()}
 
         {/* Start New Round Button */}
         <button

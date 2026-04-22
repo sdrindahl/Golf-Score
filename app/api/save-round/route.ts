@@ -47,6 +47,7 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
 export async function POST(req: NextRequest) {
   try {
     const round: Round = await req.json();
+    console.log('[DEBUG] Incoming round payload:', JSON.stringify(round));
     const validRound = ensureValidTotalScore(round);
     // Only include fields that exist in the rounds table, using snake_case
     const roundData = {
@@ -59,12 +60,16 @@ export async function POST(req: NextRequest) {
       notes: validRound.notes,
       in_progress: typeof validRound.in_progress === 'boolean' ? validRound.in_progress : true,
     };
+    console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
     // Upsert round (only safe fields)
     const { data, error } = await supabase
       .from('rounds')
       .upsert([roundData], { onConflict: 'id' })
       .select();
-    if (error) throw error;
+    if (error) {
+      console.error('[DEBUG] Upsert error:', error);
+      throw error;
+    }
     // Insert into round_courses join table
     let courseIds: string[] = [];
     if (Array.isArray(round.courseId)) {
@@ -72,15 +77,22 @@ export async function POST(req: NextRequest) {
     } else if (typeof round.courseId === 'string') {
       courseIds = round.courseId.split(',').map((id: string) => id.trim()).filter(Boolean);
     }
+    console.log('[DEBUG] Inserting into round_courses with roundId:', validRound.id, 'courseIds:', courseIds);
     await insertRoundCourses(validRound.id, courseIds);
     return NextResponse.json({ success: true, data });
   } catch (error) {
     // Improved error logging
-    console.error('API /api/save-round error:', error);
+    let errorMsg = 'Unknown error';
+    if (error) {
+      if (typeof error === 'string') errorMsg = error;
+      else if (error instanceof Error && error.message) errorMsg = error.message;
+      else try { errorMsg = JSON.stringify(error); } catch {}
+    }
+    console.error('API /api/save-round error:', errorMsg, error);
     if (error && typeof error === 'object') {
       try { console.error('Error (JSON):', JSON.stringify(error)); } catch {}
       if ('stack' in error) console.error('Error stack:', (error as any).stack);
     }
-    return NextResponse.json({ success: false, error: (error instanceof Error ? error.message : String(error)) }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
   }
 }

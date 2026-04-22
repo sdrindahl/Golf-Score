@@ -148,7 +148,13 @@ function TrackRoundContent() {
           let foundCourse: Course | null = null
           if (savedCourses) {
             const allCourses = JSON.parse(savedCourses) as Course[]
-            const courseIds = (foundRound.courseId || '').split(',')
+            // Accept courseId as array or string
+            let courseIds: string[] = []
+            if (Array.isArray(foundRound.courseId)) {
+              courseIds = foundRound.courseId
+            } else if (typeof foundRound.courseId === 'string') {
+              courseIds = foundRound.courseId.split(',').map((id) => id.trim()).filter(Boolean)
+            }
             if (courseIds.length > 1) {
               // Multi-nine: keep array of { name, holes }
               const selectedCourses = allCourses.filter(c => courseIds.includes(c.id))

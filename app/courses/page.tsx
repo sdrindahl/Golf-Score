@@ -50,12 +50,6 @@ export default function CoursesPage() {
 
   // Helper to get parent and child courses
   const parentCourses = displayedCourses.filter(course => !course.parent_id);
-  const getChildCourses = (parentId: string) =>
-    allCourses.filter(course => course.parent_id === parentId);
-
-  const [expandedParent, setExpandedParent] = useState<string | null>(null);
-  const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
-  const [teeSelection, setTeeSelection] = useState<'men' | 'women' | 'senior' | 'championship' | null>(null);
 
   return (
     <PageWrapper title="Courses">
@@ -91,8 +85,8 @@ export default function CoursesPage() {
           parentCourses.map((parent) => (
             <div key={parent.id}>
               <div
-                className={`card cursor-pointer transition-all ${expandedParent === parent.id ? 'ring-2 ring-green-500 bg-green-50' : ''}`}
-                onClick={() => setExpandedParent(expandedParent === parent.id ? null : parent.id)}
+                className="card cursor-pointer transition-all hover:ring-2 hover:ring-green-500 hover:bg-green-50"
+                onClick={() => router.push(`/course-nines?id=${parent.id}`)}
               >
                 <h3 className="text-lg font-bold">{parent.name}</h3>
                 <div className="mt-2 flex gap-4 text-sm">
@@ -100,86 +94,6 @@ export default function CoursesPage() {
                   {parent.par && <span>📍 Par {parent.par}</span>}
                 </div>
               </div>
-              {expandedParent === parent.id && (
-                <div className="ml-6 mt-2 space-y-2">
-                  {getChildCourses(parent.id).map(child => {
-                    const isSelected = selectedChildIds.includes(child.id);
-                    return (
-                      <div key={child.id} className={`flex items-center gap-2 card bg-green-100 hover:bg-green-200 transition-all p-2 mb-2`}>
-                        <div>
-                          <h4 className="text-base font-semibold">{child.name}</h4>
-                          <div className="mt-1 flex gap-4 text-xs">
-                            <span>⛳ {child.holeCount} Holes</span>
-                            {child.par && <span>📍 Par {child.par}</span>}
-                          </div>
-                        </div>
-                        <button
-                          className={`ml-auto px-3 py-1 rounded ${isSelected ? 'bg-red-400 text-white' : 'bg-blue-500 text-white'} disabled:opacity-50`}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedChildIds(selectedChildIds.filter(id => id !== child.id));
-                            } else if (selectedChildIds.length < 2) {
-                              setSelectedChildIds([...selectedChildIds, child.id]);
-                            }
-                          }}
-                          disabled={!isSelected && selectedChildIds.length >= 2}
-                          type="button"
-                        >
-                          {isSelected ? 'Deselect' : 'Select'}
-                        </button>
-                      </div>
-                    );
-                  })}
-                  {/* Tee selection and Start Round button */}
-                  {selectedChildIds.length > 0 && selectedChildIds.length <= 2 && (
-                    <div className="mt-4">
-                      {/* Course detail table */}
-                      <div className="bg-white rounded shadow p-4 mt-4">
-                        {selectedChildIds.map((childId, idx) => {
-                          const course = allCourses.find(c => c.id === childId);
-                          if (!course) return null;
-                          const nineLabel = idx === 0 ? 'Front 9' : 'Back 9';
-                          return (
-                            <div key={childId} className="mb-4">
-                              <div className="font-bold mb-2">{nineLabel}: {course.name}</div>
-                              <table className="w-full text-xs mb-2">
-                                <thead>
-                                  <tr>
-                                    <th className="text-left">Hole</th>
-                                    {course.holes.map(h => <th key={h.holeNumber}>{h.holeNumber}</th>)}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr>
-                                    <td>Par</td>
-                                    {course.holes.map(h => <td key={h.holeNumber}>{h.par}</td>)}
-                                  </tr>
-                                  <tr>
-                                    <td>Hcp</td>
-                                    {course.holes.map(h => <td key={h.holeNumber}>{h.handicap}</td>)}
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <button
-                        className={`btn btn-primary mt-2 w-full`}
-                        disabled={selectedChildIds.length === 0}
-                        onClick={() => {
-                          // Route to tee selection page, passing selected nines as query param
-                          const ninesParam = selectedChildIds.join(',');
-                          router.push(`/select-tee?nines=${ninesParam}`);
-                        }}
-                        type="button"
-                      >
-                        Start Round
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           ))
         )}

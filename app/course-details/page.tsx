@@ -22,31 +22,35 @@ function CourseDetailsContent() {
     if (!courseId) return
 
     console.log('🔍 CourseDetails - Loading course with ID:', courseId)
-    
-    // First, try to find the course in COURSES_DATABASE (for new tee box structure)
-    let foundCourse = COURSES_DATABASE.find((c: Course) => c.id === courseId)
-    
-    console.log('🔍 CourseDetails - Courses in COURSES_DATABASE:', COURSES_DATABASE.map((c: any) => ({ id: c.id, name: c.name })))
+
+    // Helper to flatten parent/child structure
+    function flattenCourses(courses: Course[]): Course[] {
+      const flat: Course[] = []
+      for (const c of courses) {
+        flat.push(c)
+        if (Array.isArray(c.children)) flat.push(...c.children)
+      }
+      return flat
+    }
+
+    // Try to find the course in COURSES_DATABASE (parent or child)
+    let foundCourse = flattenCourses(COURSES_DATABASE).find((c: Course) => c.id === courseId)
+
+    console.log('🔍 CourseDetails - Courses in COURSES_DATABASE:', flattenCourses(COURSES_DATABASE).map((c: any) => ({ id: c.id, name: c.name })))
     console.log('🔍 CourseDetails - Found in COURSES_DATABASE?', !!foundCourse)
-    
-    // If not in COURSES_DATABASE, try localStorage
+
+    // If not in COURSES_DATABASE, try localStorage (parent or child)
     if (!foundCourse) {
       const savedCourses = localStorage.getItem('golfCourses')
       if (savedCourses) {
         const courses = JSON.parse(savedCourses)
-        foundCourse = courses.find((c: Course) => c.id === courseId)
+        foundCourse = flattenCourses(courses).find((c: Course) => c.id === courseId)
         console.log('🔍 CourseDetails - Found in localStorage?', !!foundCourse)
       }
     }
-    
+
     if (foundCourse) {
-      console.log('✅ CourseDetails - Found course:', {
-        name: foundCourse.name,
-        id: foundCourse.id,
-        holesCount: foundCourse.holes?.length,
-        hasTeeTags: foundCourse.holes?.[0] && 'men' in foundCourse.holes[0],
-        firstHole: foundCourse.holes?.[0]
-      })
+      console.log('✅ CourseDetails - Found course:', foundCourse)
       setCourse(foundCourse)
       setEditingHoles([...foundCourse.holes])
     } else {
@@ -90,28 +94,19 @@ function CourseDetailsContent() {
   }
 
   const handleStartRound = async () => {
-    if (course) {
+    if (course && course.id && course.name && Array.isArray(course.holes) && course.holes.length > 0) {
       try {
-        console.log('🎯 CourseDetails - Starting round with course:', {
-          name: course.name,
-          id: course.id,
-          holesLength: course.holes?.length,
-          hasHoles: Array.isArray(course.holes),
-        })
-        
-        // Store course in localStorage
+        console.log('🎯 CourseDetails - Starting round with course:', course)
         localStorage.setItem('selectedCourse', JSON.stringify(course))
-        console.log('✅ CourseDetails - Course saved to localStorage. Navigating to /select-tee')
-        
-        // Navigate to tee selection instead of new-round
+        console.log('✅ CourseDetails - Course saved to localStorage:', localStorage.getItem('selectedCourse'))
         router.push(`/select-tee?courseId=${course.id}`)
       } catch (error) {
         console.error('❌ CourseDetails - Error starting round:', error)
         alert('Error starting round. Please try again.')
       }
     } else {
-      console.error('❌ CourseDetails - No course object available!')
-      alert('Course data is missing. Please refresh and try again.')
+      console.error('❌ CourseDetails - No valid course object available!', course)
+      alert('Course data is missing or invalid. Please refresh and try again.')
     }
   }
 
@@ -167,6 +162,8 @@ function CourseDetailsContent() {
         <button
           onClick={handleStartRound}
           className="flex-1 bg-white text-gray-800 font-semibold py-2 px-2 md:px-4 rounded-lg shadow-md hover:bg-gray-100 transition-colors active:scale-95 text-sm md:text-base"
+          disabled={!course || !course.id || !course.name || !Array.isArray(course.holes) || course.holes.length === 0}
+          style={{ opacity: (!course || !course.id || !course.name || !Array.isArray(course.holes) || course.holes.length === 0) ? 0.5 : 1 }}
         >
           ▶️ Start Round
         </button>
