@@ -124,8 +124,8 @@ export default function Settings() {
             </div>
           )}
           {version && (
-            <div className="text-center text-xs text-gray-400 mt-6">
-              <div>Version: {version.version}</div>
+            <div className="text-center text-xs mt-6">
+              <div className="text-black">Version: {version.version}</div>
               <div>Build Date: {version.buildDate}{version.buildTime ? `, ${version.buildTime}` : ''}</div>
             </div>
           )}
