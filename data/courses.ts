@@ -169,13 +169,24 @@ export const COURSES_DATABASE: any[] = [
           { holeNumber: 18, par: 5, handicap: 14, greenLat: 44.73717363448703, greenLng: -92.96940886976186, men: { yardage: 532, courseRating: 71.9, slopeRating: 129 }, women: { yardage: 452, courseRating: 68.8, slopeRating: 117 }, senior: { yardage: 454, courseRating: 70.5, slopeRating: 124 }, championship: { yardage: 554, courseRating: 73.6, slopeRating: 132 } },
         ],
       },
+  // Parent for Lost Spur
   {
-    id: '11',
+    id: 'LS',
     name: 'Lost Spur Golf Course',
     location: 'Lost Spur',
     state: 'MN',
     holeCount: 9,
+    holes: [],
+  },
+  // Lost Spur 9 holes as child
+  {
+    id: '11',
+    name: 'Lost Spur 9',
+    location: 'Lost Spur',
+    state: 'MN',
+    holeCount: 9,
     par: 34,
+    parent_id: 'LS',
     holes: [
       { holeNumber: 1, par: 4, handicap: 1, greenLat: 0, greenLng: 0, men: { yardage: 346, courseRating: 72.1, slopeRating: 131 }, women: { yardage: 280, courseRating: 69.0, slopeRating: 120 }, senior: { yardage: 315, courseRating: 70.6, slopeRating: 126 }, championship: { yardage: 365, courseRating: 73.8, slopeRating: 135 } },
       { holeNumber: 2, par: 4, handicap: 15, greenLat: 0, greenLng: 0, men: { yardage: 253, courseRating: 72.1, slopeRating: 131 }, women: { yardage: 215, courseRating: 69.0, slopeRating: 120 }, senior: { yardage: 235, courseRating: 70.6, slopeRating: 126 }, championship: { yardage: 270, courseRating: 73.8, slopeRating: 135 } },
@@ -188,13 +199,24 @@ export const COURSES_DATABASE: any[] = [
       { holeNumber: 9, par: 4, handicap: 17, greenLat: 0, greenLng: 0, men: { yardage: 230, courseRating: 72.1, slopeRating: 131 }, women: { yardage: 195, courseRating: 69.0, slopeRating: 120 }, senior: { yardage: 210, courseRating: 70.6, slopeRating: 126 }, championship: { yardage: 250, courseRating: 73.8, slopeRating: 135 } },
     ],
   },
+  // Parent for Birnamwood
   {
-    id: '12',
+    id: 'BW',
     name: 'Birnamwood Golf Course',
     location: 'Burnsville',
     state: 'MN',
     holeCount: 9,
+    holes: [],
+  },
+  // Birnamwood 9 holes as child
+  {
+    id: '12',
+    name: 'Birnamwood 9',
+    location: 'Burnsville',
+    state: 'MN',
+    holeCount: 9,
     par: 27,
+    parent_id: 'BW',
     holes: [
       { holeNumber: 1, par: 3, handicap: 15, greenLat: 0, greenLng: 0, men: { yardage: 122, courseRating: 71.9, slopeRating: 130 }, women: { yardage: 95, courseRating: 68.9, slopeRating: 118 }, senior: { yardage: 110, courseRating: 70.4, slopeRating: 125 }, championship: { yardage: 135, courseRating: 73.5, slopeRating: 136 } },
       { holeNumber: 2, par: 3, handicap: 13, greenLat: 0, greenLng: 0, men: { yardage: 123, courseRating: 71.9, slopeRating: 130 }, women: { yardage: 98, courseRating: 68.9, slopeRating: 118 }, senior: { yardage: 112, courseRating: 70.4, slopeRating: 125 }, championship: { yardage: 138, courseRating: 73.5, slopeRating: 136 } },
