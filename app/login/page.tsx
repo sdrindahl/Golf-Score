@@ -17,19 +17,19 @@ export default function Login() {
   const [newUserInfo, setNewUserInfo] = useState<{ name: string; password: string } | null>(null)
   const [showPassword, setShowPassword] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
     try {
-      auth.loginUser(name, password)
+      await auth.loginUser(name, password)
       router.push('/')
     } catch (err) {
       setError((err as Error).message)
     }
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -50,13 +50,13 @@ export default function Login() {
 
     try {
       // Register with user-provided password
-      auth.registerUser(name, password)
+      await auth.registerUser(name, password)
       setNewUserInfo({ name, password })
       setName('')
       setPassword('')
       
       // Auto-login the new user
-      auth.loginUser(name, password)
+      await auth.loginUser(name, password)
       
       setTimeout(() => {
         router.push('/')
