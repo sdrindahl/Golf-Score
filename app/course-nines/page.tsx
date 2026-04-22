@@ -2,7 +2,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageWrapper from "@/components/PageWrapper";
-import { COURSES_DATABASE } from "@/data/courses";
 
 export default function CourseNinesPage() {
   const router = useRouter();
@@ -13,9 +12,11 @@ export default function CourseNinesPage() {
 
   useEffect(() => {
     if (!parentId) return;
-    // Find all nines for this parent
-    const nines = COURSES_DATABASE.filter((c) => c.parent_id === parentId);
-    setChildCourses(nines);
+    // Dynamically import COURSES_DATABASE only on client
+    import("@/data/courses").then((mod) => {
+      const nines = mod.COURSES_DATABASE.filter((c: any) => c.parent_id === parentId);
+      setChildCourses(nines);
+    });
   }, [parentId]);
 
   return (
