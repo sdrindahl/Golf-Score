@@ -17,13 +17,14 @@ export interface Hole {
 }
 
 export interface Course {
-  id: string
-  name: string
-  location: string
-  state: string
-  holeCount: number
-  par: number
-  holes: Hole[]
+  id: string;
+  name: string;
+  location: string;
+  state: string;
+  holeCount: number;
+  par: number;
+  holes: Hole[];
+  parent_id?: string;
 }
 
 export interface Tee {

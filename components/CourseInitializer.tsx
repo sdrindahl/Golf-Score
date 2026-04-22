@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { COURSES_DATABASE } from '@/data/courses'
-import { syncDataFromSupabase, saveCourseToSupabase } from '@/lib/dataSync'
 
 export default function CourseInitializer() {
   useEffect(() => {
@@ -42,8 +41,8 @@ export default function CourseInitializer() {
           localStorage.setItem('_cleaned_new3_test_data', '1')
         }
 
-        // First, sync data from Supabase (if available)
-        await syncDataFromSupabase()
+        // First, sync data from Supabase (if available) via API route
+        await fetch('/api/sync', { method: 'POST' })
       } catch (error) {
         console.error('Error syncing from Supabase:', error)
       }
@@ -106,10 +105,10 @@ export default function CourseInitializer() {
         console.log(`📤 Syncing ${COURSES_DATABASE.length} hardcoded courses to Supabase...`)
         for (const course of COURSES_DATABASE) {
           // Fire and forget - don't wait for each one
-          saveCourseToSupabase(course).catch(error => {
-            // Courses might already exist, that's fine
-            console.log(`Note: Course ${course.id} already in Supabase or sync skipped`)
-          })
+          // saveCourseToSupabase(course).catch(error => {
+          //   // Courses might already exist, that's fine
+          //   console.log(`Note: Course ${course.id} already in Supabase or sync skipped`)
+          // })
         }
       } catch (error) {
         console.error('Error syncing courses to Supabase:', error)

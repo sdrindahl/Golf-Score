@@ -52,64 +52,83 @@ function PlayerProfileContent() {
     sessionStorage.removeItem('navigating')
   }, [playerId, refreshKey])
 
-  useEffect(() => {
-    if (!playerId) return;
+    useEffect(() => {
+      if (!playerId) return;
 
-    const loadPlayerData = async () => {
-      try {
-        // Get current user
-        const user = auth.getCurrentUser();
-        setCurrentUser(user);
+      const loadPlayerData = async () => {
+        try {
+          // Get current user
+          const user = auth.getCurrentUser();
+          setCurrentUser(user);
 
-        // Find the player
-        const allUsers = auth.getAllUsers();
-        const foundPlayer = allUsers.find(u => u.id === playerId);
+          // Find the player locally first
+          let allUsers = auth.getAllUsers();
+          let foundPlayer = allUsers.find(u => u.id === playerId);
 
-        if (foundPlayer) {
-          setPlayer(foundPlayer);
-
-          // Fetch player's rounds directly from Supabase
-          if (isSupabaseConfigured() && supabase) {
+          // If not found locally, try Supabase
+          if (!foundPlayer && isSupabaseConfigured() && supabase) {
             const { data, error } = await supabase
-              .from('rounds')
+              .from('users')
               .select('*')
-              .eq('user_id', playerId)
-              .order('date', { ascending: false });
-            if (error) {
-              console.error('Error fetching rounds from Supabase:', error.message);
+              .eq('id', playerId)
+              .single();
+            if (!error && data) {
+              foundPlayer = {
+                id: data.id,
+                name: data.name,
+                password: '',
+                is_admin: data.is_admin
+              };
+              // Optionally add to local cache here
+            }
+          }
+
+          if (foundPlayer) {
+            setPlayer(foundPlayer);
+
+            // Fetch player's rounds directly from Supabase
+            if (isSupabaseConfigured() && supabase) {
+              const { data, error } = await supabase
+                .from('rounds')
+                .select('*')
+                .eq('user_id', playerId)
+                .order('date', { ascending: false });
+              if (error) {
+                console.error('Error fetching rounds from Supabase:', error.message);
+                setRounds([]);
+              } else if (data) {
+                console.log('[DEBUG] Fetched rounds from Supabase:', data);
+                // Convert snake_case to camelCase for each round
+                const playerRounds: Round[] = data.map((r: any) => ({
+                  id: r.id,
+                  userId: r.user_id,
+                  userName: r.user_name,
+                  courseId: r.course_id,
+                  courseName: r.course_name,
+                  selectedTee: r.selected_tee,
+                  date: r.date,
+                  scores: r.scores,
+                  totalScore: r.total_score,
+                  notes: r.notes,
+                  in_progress: r.in_progress,
+                }));
+                setRounds(playerRounds);
+              }
+            } else {
               setRounds([]);
-            } else if (data) {
-              // Convert snake_case to camelCase for each round
-              const playerRounds: Round[] = data.map((r: any) => ({
-                id: r.id,
-                userId: r.user_id,
-                userName: r.user_name,
-                courseId: r.course_id,
-                courseName: r.course_name,
-                selectedTee: r.selected_tee,
-                date: r.date,
-                scores: r.scores,
-                totalScore: r.total_score,
-                notes: r.notes,
-                in_progress: r.in_progress,
-              }));
-              setRounds(playerRounds);
             }
           } else {
-            setRounds([]);
+            setPlayer(null);
           }
-        } else {
-          setPlayer(null);
+        } catch (error) {
+          console.error('Error loading player data:', error);
+          setRounds([]);
         }
-      } catch (error) {
-        console.error('Error loading player data:', error);
-        setRounds([]);
-      }
-      setLoading(false);
-    };
+        setLoading(false);
+      };
 
-    loadPlayerData();
-  }, [playerId, refreshKey]);
+      loadPlayerData();
+    }, [playerId, refreshKey]);
 
   if (loading) {
     return (

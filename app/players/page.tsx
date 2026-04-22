@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { User, Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { syncDataFromSupabase } from '@/lib/dataSync'
 import PageWrapper from '@/components/PageWrapper'
 
 import { useRouter } from 'next/navigation'
@@ -21,8 +20,8 @@ export default function Players() {
   useEffect(() => {
     const loadPlayers = async () => {
       try {
-        // Sync from Supabase first to get latest rounds
-        await syncDataFromSupabase()
+        // Sync from Supabase first to get latest rounds (via API route)
+        await fetch('/api/sync-players', { method: 'POST' })
 
         // Get current user
         const user = auth.getCurrentUser()

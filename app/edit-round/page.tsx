@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import { deleteRoundFromSupabase, updateRoundInSupabase } from '@/lib/dataSync'
 
 function EditRoundContent() {
   const router = useRouter()
@@ -51,11 +50,27 @@ function EditRoundContent() {
         setDate(foundRound.date)
         setNotes(foundRound.notes || '')
 
-        // Load the course for this round
+        // Load the course(s) for this round (multi-nine support)
         const savedCourses = localStorage.getItem('golfCourses')
         if (savedCourses) {
           const courses = JSON.parse(savedCourses)
-          const foundCourse = courses.find((c: Course) => c.id === foundRound.courseId)
+          const courseIds = (foundRound.courseId || '').split(',')
+          let foundCourse: Course | null = null
+          if (courseIds.length > 1) {
+            const selectedCourses = courses.filter((c: Course) => courseIds.includes(c.id))
+            if (selectedCourses.length > 0) {
+              foundCourse = {
+                ...selectedCourses[0],
+                id: courseIds.join(','),
+                name: foundRound.courseName,
+                holes: selectedCourses.flatMap((c: Course) => c.holes),
+                holeCount: selectedCourses.reduce((sum: number, c: Course) => sum + (c.holes?.length || 0), 0),
+                par: selectedCourses.reduce((sum: number, c: Course) => sum + (c.par || 0), 0),
+              }
+            }
+          } else {
+            foundCourse = courses.find((c: Course) => c.id === foundRound.courseId) || null
+          }
           if (foundCourse) {
             setCourse(foundCourse)
           }
@@ -99,12 +114,7 @@ function EditRoundContent() {
         localStorage.setItem('golfRounds', JSON.stringify(updated))
       }
       
-      // Delete from Supabase
-      if (roundId) {
-        deleteRoundFromSupabase(roundId).catch(error => {
-          console.log('Could not delete from Supabase:', error)
-        })
-      }
+      // TODO: If you want to delete from Supabase, call your API route here.
       
       // Redirect back home
       router.push('/')
@@ -141,13 +151,18 @@ function EditRoundContent() {
       }
     }
 
-    // Sync to Supabase
+    // Sync to Supabase via API route
     try {
-      await updateRoundInSupabase(updatedRound)
-      console.log('✅ Round synced to Supabase successfully')
+      const response = await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      });
+      if (!response.ok) throw new Error('API error');
+      console.log('✅ Round synced to Supabase successfully');
     } catch (error) {
-      console.error('❌ Failed to sync round to Supabase:', error)
-      alert('⚠️ Warning: Round saved locally but failed to sync to cloud. Please check your internet connection.')
+      console.error('❌ Failed to sync round to Supabase:', error);
+      alert('⚠️ Warning: Round saved locally but failed to sync to cloud. Please check your internet connection.');
     }
 
     setSubmitted(true)
