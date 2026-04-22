@@ -2,11 +2,12 @@
 export const dynamic = "force-dynamic";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import PageWrapper from "@/components/PageWrapper";
 import type { ChildCourse } from "@/types/api";
 
-export default function CourseNinesPage() {
+
+function CourseNinesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const parentId = searchParams?.get("id");
@@ -76,5 +77,13 @@ export default function CourseNinesPage() {
         </button>
       </div>
     </PageWrapper>
+  );
+}
+
+export default function CourseNinesPage() {
+  return (
+    <Suspense>
+      <CourseNinesPageInner />
+    </Suspense>
   );
 }
