@@ -1,23 +1,23 @@
 "use client";
 export const dynamic = "force-dynamic";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageWrapper from "@/components/PageWrapper";
+import type { ChildCourse } from "@/types/api";
 
 export default function CourseNinesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const parentId = searchParams?.get("id");
-  const [childCourses, setChildCourses] = useState<any[]>([]);
+  const [childCourses, setChildCourses] = useState<ChildCourse[]>([]);
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (!parentId) return;
-    // Dynamically import COURSES_DATABASE only on client
-    import("@/data/courses").then((mod) => {
-      const nines = mod.COURSES_DATABASE.filter((c: any) => c.parent_id === parentId);
-      setChildCourses(nines);
-    });
+    fetch(`/api/get-child-courses?parentId=${parentId}`)
+      .then((res) => res.json())
+      .then((data) => setChildCourses(data));
   }, [parentId]);
 
   return (
