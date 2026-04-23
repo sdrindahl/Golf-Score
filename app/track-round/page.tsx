@@ -13,6 +13,25 @@ import Link from 'next/link'
 import PageWrapper from '@/components/PageWrapper'
 
 function TrackRoundContent() {
+    const [stopRoundLoading, setStopRoundLoading] = useState(false);
+
+    // Helper to delete round from Supabase
+    async function deleteRoundFromSupabase(roundId: string) {
+      try {
+        const res = await fetch('/api/delete-round', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roundId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Failed to delete round from Supabase');
+        }
+        return true;
+      } catch (err: any) {
+        throw new Error(err.message || 'Failed to delete round from Supabase');
+      }
+    }
   const router = useRouter()
   const searchParams = useSearchParams()
   const roundId = searchParams ? searchParams.get('id') : null
@@ -946,30 +965,38 @@ function TrackRoundContent() {
 
         {/* Stop Round in Progress button */}
         <button
-          onClick={() => {
+          onClick={async () => {
+            if (stopRoundLoading) return;
             if (window.confirm('Are you sure you want to stop and discard this round in progress? This cannot be undone.')) {
-              if (roundId) {
-                // Remove current round from localStorage
-                const savedRounds = localStorage.getItem('golfRounds')
-                if (savedRounds) {
-                  const allRounds = JSON.parse(savedRounds)
-                  const filteredRounds = allRounds.filter((r: any) => r.id !== roundId)
-                  localStorage.setItem('golfRounds', JSON.stringify(filteredRounds))
+              setStopRoundLoading(true);
+              try {
+                if (roundId) {
+                  // Remove current round from localStorage
+                  const savedRounds = localStorage.getItem('golfRounds');
+                  if (savedRounds) {
+                    const allRounds = JSON.parse(savedRounds);
+                    const filteredRounds = allRounds.filter((r: any) => r.id !== roundId);
+                    localStorage.setItem('golfRounds', JSON.stringify(filteredRounds));
+                  }
+                  // Remove round progress
+                  localStorage.removeItem('currentRoundId');
+                  localStorage.removeItem(`currentHoleIndex-${roundId}`);
+                  // Delete from Supabase
+                  await deleteRoundFromSupabase(roundId);
+                  alert('Round in progress has been stopped and removed.');
+                  router.push('/');
                 }
-                // Remove round progress
-                localStorage.removeItem('currentRoundId')
-                localStorage.removeItem(`currentHoleIndex-${roundId}`)
-                // Optionally, delete from Supabase as well
-                // TODO: Implement /api/delete-round endpoint and call it here
-                // deleteRoundFromSupabase(roundId).catch(() => {})
-                alert('Round in progress has been stopped and removed.')
-                router.push('/')
+              } catch (err: any) {
+                alert('Failed to fully delete round: ' + (err.message || err));
+              } finally {
+                setStopRoundLoading(false);
               }
             }
           }}
-          className="w-full py-2 px-2 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-900 transition text-sm"
+          className={`w-full py-2 px-2 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-900 transition text-sm${stopRoundLoading ? ' opacity-60 cursor-not-allowed' : ''}`}
+          disabled={stopRoundLoading}
         >
-          🛑 Stop Round in Progress
+          {stopRoundLoading ? 'Stopping...' : '🛑 Stop Round in Progress'}
         </button>
       </>
       )}
