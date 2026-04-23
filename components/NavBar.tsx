@@ -12,6 +12,9 @@ export default function NavBar() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // State for current round in progress
+  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+
   useEffect(() => {
     // Get current user
     const user = auth.getCurrentUser()
@@ -26,6 +29,29 @@ export default function NavBar() {
       pathname !== '/settings'
     ) {
       router.push('/login')
+    }
+    // Check for round in progress for current user
+    if (user) {
+      const inProgressRoundId = localStorage.getItem('currentRoundId');
+      if (inProgressRoundId) {
+        // Validate the round exists and is in progress
+        const savedRounds = localStorage.getItem('golfRounds');
+        let found = false;
+        if (savedRounds) {
+          const allRounds = JSON.parse(savedRounds);
+          found = allRounds.some((r: any) => r.id === inProgressRoundId && r.in_progress && r.userId === user.id);
+        }
+        if (found) {
+          setCurrentRoundId(inProgressRoundId);
+        } else {
+          localStorage.removeItem('currentRoundId');
+          setCurrentRoundId(null);
+        }
+      } else {
+        setCurrentRoundId(null);
+      }
+    } else {
+      setCurrentRoundId(null);
     }
   }, [pathname, router])
 
@@ -43,8 +69,11 @@ export default function NavBar() {
 
   // Don't show navbar on login page
   if (pathname === '/login') {
-    return null
+    return null;
   }
+
+  // Don't show Return to Round button on track-round page
+  const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
 
   return (
     <>
@@ -100,6 +129,17 @@ export default function NavBar() {
               <span className="text-lg mb-1">👥</span>
               Golfers
             </button>
+            {/* Return to Round Button (middle position) */}
+            {currentRoundId && !isTrackRoundPage && (
+              <button
+                onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
+                className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition bg-red-600 hover:bg-red-700 text-white shadow-lg rounded"
+                style={{ minWidth: '0' }}
+              >
+                <span className="text-lg mb-1">🎯</span>
+                Return to Round
+              </button>
+            )}
             <button
               onClick={() => router.push('/courses')}
               className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
