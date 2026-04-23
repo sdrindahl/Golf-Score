@@ -21,6 +21,13 @@ function PlayerProfileContent() {
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // ...existing code...
+
+  // Helper: is this the logged-in user's profile?
+  const isOwnProfile = currentUser?.id === player?.id;
+  // Show Golf Costs button only for the logged-in user viewing their own profile
+  const showGolfCostsButton = isOwnProfile;
+
   // Refresh data when returning to this page
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -249,7 +256,6 @@ function PlayerProfileContent() {
   }
 
   const handicap = calculateHandicap()
-  const isOwnProfile = currentUser?.id === player.id
 
   const handleDeleteRound = (roundId: string) => {
     const updated = rounds.filter(r => r.id !== roundId)
@@ -292,6 +298,15 @@ function PlayerProfileContent() {
               {/* Best 18-Hole Round */}
               {(() => {
                 const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+
+                      {/* Track Golfing Costs Button */}
+                      {showGolfCostsButton && (
+                        <Link href="/golf-costs">
+                          <button className="mb-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all border border-green-700/20">
+                            💸 Track Golfing Costs
+                          </button>
+                        </Link>
+                      )}
                 const rounds18 = rounds.filter(r => {
                   const course = courses.find((c: any) => c.id === r.courseId)
                   return course && course.holes.length === 18
