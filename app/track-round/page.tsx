@@ -755,7 +755,7 @@ function TrackRoundContent() {
                   let pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
                   pd.length = numPutts;
                   for (let i = 0; i < numPutts; i++) {
-                    if (typeof pd[i] !== 'number' || isNaN(pd[i])) pd[i] = 0;
+                    if (typeof pd[i] !== 'number' || isNaN(pd[i])) pd[i] = 1;
                   }
                   stats[currentHoleIndex].puttDistances = pd;
                   setRound(r => r ? { ...r, perHoleStats: stats } : r);
@@ -777,7 +777,7 @@ function TrackRoundContent() {
                     if (numPutts === 0) return <div className="text-gray-400 text-sm">No putts recorded for this hole (optional).</div>;
                     const quickJumps = [5, 10, 20, 50];
                     return Array.from({ length: Math.min(Math.max(numPutts, 1), 4) }).map((_, idx) => {
-                      const value = puttDistances[idx] || 1;
+                      const value = (puttDistances[idx] == null ? 1 : puttDistances[idx]);
                       return (
                         <div key={idx} className="flex flex-col gap-1 mb-2">
                           <div className="flex items-center gap-2">
@@ -833,7 +833,16 @@ function TrackRoundContent() {
                                 <span className="ml-1 text-xs text-gray-500">feet</span>
                                 <button
                                   className="ml-2 px-3 py-1 text-sm font-semibold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
-                                  onClick={() => setActivePutt(null)}
+                                  onClick={() => {
+                                    // Always save the current value to puttDistances
+                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                                    pd[idx] = value;
+                                    stats[currentHoleIndex].puttDistances = pd;
+                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                                    setActivePutt(null);
+                                  }}
                                 >
                                   Done
                                 </button>
@@ -843,7 +852,7 @@ function TrackRoundContent() {
                                 className="border px-3 py-1 rounded bg-white text-gray-800 text-sm hover:bg-blue-50"
                                 onClick={() => setActivePutt(idx)}
                               >
-                                {puttDistances[idx] ? `${puttDistances[idx]} ft` : 'Enter feet'}
+                                {(puttDistances[idx] != null) ? `${puttDistances[idx]} ft` : 'Enter feet'}
                               </button>
                             )}
                           </div>
