@@ -41,6 +41,15 @@ export interface User {
   is_admin?: boolean
 }
 
+export interface PerHoleStats {
+  /**
+   * Fairway in Regulation: 'hit' (✓), 'L' (missed left), 'R' (missed right), or undefined (not set)
+   */
+  fairwayHit?: 'hit' | 'L' | 'R';
+  gir?: boolean;
+  puttDistances?: number[]; // feet, e.g. [first, second, third, ...]
+}
+
 export interface Round {
   id: string
   userId: string
@@ -53,4 +62,5 @@ export interface Round {
   totalScore: number
   notes?: string
   in_progress?: boolean
+  perHoleStats?: PerHoleStats[] // Array, one per hole (optional)
 }

@@ -1,4 +1,7 @@
+
 'use client'
+import React from 'react';
+// ...existing code...
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -22,15 +25,15 @@ function TrackRoundContent() {
   const [scores, setScores] = useState<number[]>([])
   const [startingHoleSelected, setStartingHoleSelected] = useState(false)
   const [showScorecard, setShowScorecard] = useState(false)
-  
   // GPS state
   const [userLat, setUserLat] = useState<number | null>(null)
   const [userLng, setUserLng] = useState<number | null>(null)
   const [distance, setDistance] = useState<number | null>(null)
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
   const [geolocationError, setGeolocationError] = useState<string | null>(null)
-  
   const [loading, setLoading] = useState(true)
+  // Track which putt's wheel picker is active
+  const [activePutt, setActivePutt] = useState<number | null>(null)
 
   // Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
@@ -308,47 +311,50 @@ function TrackRoundContent() {
   }, [startingHoleSelected, currentHoleIndex, course, roundId])
 
   // Auto-save round after each hole
-  const saveRound = (updatedScores: number[]) => {
-    if (!round) return
-
+  // Save round with scores and per-hole stats
+  const saveRound = (updatedScores: number[], updatedStats?: any) => {
+    if (!round) return;
     try {
-      const savedRounds = localStorage.getItem('golfRounds')
+      const savedRounds = localStorage.getItem('golfRounds');
       if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds) as Round[]
-        const index = allRounds.findIndex((r) => r.id === roundId)
+        const allRounds = JSON.parse(savedRounds) as Round[];
+        const index = allRounds.findIndex((r) => r.id === roundId);
         if (index >= 0) {
-          const totalScore = updatedScores.reduce((sum, score) => sum + score, 0)
-          allRounds[index].scores = updatedScores
-          allRounds[index].totalScore = totalScore
-          localStorage.setItem('golfRounds', JSON.stringify(allRounds))
-          console.log('💾 Round auto-saved locally after hole', currentHoleIndex + 1)
-          
+          const totalScore = updatedScores.reduce((sum, score) => sum + score, 0);
+          allRounds[index].scores = updatedScores;
+          allRounds[index].totalScore = totalScore;
+          if (updatedStats) {
+            allRounds[index].perHoleStats = updatedStats;
+          } else if (round.perHoleStats) {
+            allRounds[index].perHoleStats = round.perHoleStats;
+          }
+          localStorage.setItem('golfRounds', JSON.stringify(allRounds));
+          console.log('💾 Round auto-saved locally after hole', currentHoleIndex + 1);
           // Update the round state so we have the latest data
-          const updatedRound = allRounds[index]
-          setRound(updatedRound)
-          
+          const updatedRound = allRounds[index];
+          setRound(updatedRound);
           // Also sync to Supabase so other devices see the update
           fetch('/api/save-round', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatedRound),
           }).catch(error => {
-            console.error('❌ Failed to sync round to Supabase:', error.message)
+            console.error('❌ Failed to sync round to Supabase:', error.message);
             // Don't stop the app if Supabase sync fails - but log the error
-          })
+          });
         }
       }
     } catch (error) {
-      console.error('Error saving round:', error)
+      console.error('Error saving round:', error);
     }
-  }
+  };
 
   const handleScoreChange = (delta: number) => {
-    const newScores = [...scores]
-    newScores[currentHoleIndex] = Math.max(0, newScores[currentHoleIndex] + delta)
-    setScores(newScores)
-    saveRound(newScores)
-  }
+    const newScores = [...scores];
+    newScores[currentHoleIndex] = Math.max(0, newScores[currentHoleIndex] + delta);
+    setScores(newScores);
+    saveRound(newScores, round?.perHoleStats);
+  };
 
   const handleNextHole = () => {
     if (course && currentHoleIndex < course.holes.length - 1) {
@@ -643,7 +649,8 @@ function TrackRoundContent() {
           </div>
         </div>
 
-        <div className="card">
+
+        <div className="card mb-3">
           {/* Score Entry */}
           <div className="flex items-center justify-between">
             {/* Hole Info */}
@@ -689,6 +696,206 @@ function TrackRoundContent() {
               </button>
             </div>
           </div>
+
+          {/* Fairway, GIR, and Putt Count Tracking */}
+          <div className="flex gap-4 mt-4 items-center flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">FIR:</span>
+              {['hit', 'L', 'R'].map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`px-2 py-1 rounded border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 transition
+                    ${
+                      (round?.perHoleStats?.[currentHoleIndex]?.fairwayHit === option)
+                        ? 'bg-green-500 text-white border-green-600' : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
+                    }
+                  `}
+                  onClick={() => {
+                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                    stats[currentHoleIndex].fairwayHit =
+                      (stats[currentHoleIndex].fairwayHit === option)
+                        ? undefined
+                        : option as 'hit' | 'L' | 'R';
+                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                  }}
+                  aria-label={option === 'hit' ? 'Fairway Hit' : option === 'L' ? 'Missed Left' : 'Missed Right'}
+                >
+                  {option === 'hit' ? '✓' : option}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={round?.perHoleStats?.[currentHoleIndex]?.gir || false}
+                onChange={e => {
+                  const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                  if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                  stats[currentHoleIndex].gir = e.target.checked;
+                  setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                }}
+              />
+              <span className="text-sm">GIR</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <span className="text-sm">Putts:</span>
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={(() => {
+                  const pd = round?.perHoleStats?.[currentHoleIndex]?.puttDistances || [];
+                  // Default to 0 if not set
+                  return pd.length > 0 ? pd.length : 0;
+                })()}
+                onChange={e => {
+                  const numPutts = parseInt(e.target.value, 10);
+                  const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                  if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                  let pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                  pd.length = numPutts;
+                  for (let i = 0; i < numPutts; i++) {
+                    if (typeof pd[i] !== 'number' || isNaN(pd[i])) pd[i] = 0;
+                  }
+                  stats[currentHoleIndex].puttDistances = pd;
+                  setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                }}
+              >
+                <option key={0} value={0}>0</option>
+                {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          </div>
+
+
+                {/* Putt Distance Entry - moved to its own card */}
+                <div className="card mb-3 mt-4">
+                  <div className="mb-2 font-semibold text-gray-700">Putt Distance to the Cup.</div>
+                  {(() => {
+                    const puttDistances = round?.perHoleStats?.[currentHoleIndex]?.puttDistances || [];
+                    const numPutts = puttDistances.length > 0 ? puttDistances.length : 0;
+                    if (numPutts === 0) return <div className="text-gray-400 text-sm">No putts recorded for this hole (optional).</div>;
+                    const quickJumps = [5, 10, 20, 50];
+                    return Array.from({ length: Math.min(Math.max(numPutts, 1), 4) }).map((_, idx) => {
+                      const value = puttDistances[idx] || 1;
+                      return (
+                        <div key={idx} className="flex flex-col gap-1 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">Putt {idx + 1}:</span>
+                            {activePutt === idx ? (
+                              <div className="flex items-center gap-2 z-10 relative w-full">
+                                <button
+                                  className="w-8 h-8 rounded bg-gray-200 text-lg font-bold flex items-center justify-center hover:bg-gray-300"
+                                  onClick={() => {
+                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                                    pd[idx] = Math.max(1, value - 1);
+                                    stats[currentHoleIndex].puttDistances = pd;
+                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                                  }}
+                                  aria-label="Decrease feet"
+                                >
+                                  −
+                                </button>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={99}
+                                  value={value}
+                                  onChange={e => {
+                                    let val = parseInt(e.target.value, 10);
+                                    if (isNaN(val)) val = 1;
+                                    val = Math.max(1, Math.min(99, val));
+                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                                    pd[idx] = val;
+                                    stats[currentHoleIndex].puttDistances = pd;
+                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                                  }}
+                                  className="w-16 px-2 py-1 border rounded text-center text-sm"
+                                />
+                                <button
+                                  className="w-8 h-8 rounded bg-gray-200 text-lg font-bold flex items-center justify-center hover:bg-gray-300"
+                                  onClick={() => {
+                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                                    pd[idx] = Math.min(99, value + 1);
+                                    stats[currentHoleIndex].puttDistances = pd;
+                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                                  }}
+                                  aria-label="Increase feet"
+                                >
+                                  +
+                                </button>
+                                <span className="ml-1 text-xs text-gray-500">feet</span>
+                                <button
+                                  className="ml-2 px-3 py-1 text-sm font-semibold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
+                                  onClick={() => setActivePutt(null)}
+                                >
+                                  Done
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                className="border px-3 py-1 rounded bg-white text-gray-800 text-sm hover:bg-blue-50"
+                                onClick={() => setActivePutt(idx)}
+                              >
+                                {puttDistances[idx] ? `${puttDistances[idx]} ft` : 'Enter feet'}
+                              </button>
+                            )}
+                          </div>
+                          {activePutt === idx && (
+                            <>
+                              <div className="flex items-center gap-2 mt-2">
+                                <input
+                                  type="range"
+                                  min={1}
+                                  max={99}
+                                  value={value}
+                                  onChange={e => {
+                                    let val = parseInt(e.target.value, 10);
+                                    if (isNaN(val)) val = 1;
+                                    val = Math.max(1, Math.min(99, val));
+                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                                    pd[idx] = val;
+                                    stats[currentHoleIndex].puttDistances = pd;
+                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                                  }}
+                                  className="w-40 mx-2"
+                                />
+                                <span className="text-xs text-gray-500">{value} ft</span>
+                              </div>
+                              <div className="flex gap-2 mt-2">
+                                {quickJumps.map(jump => (
+                                  <button
+                                    key={jump}
+                                    className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold hover:bg-blue-200 border border-blue-200"
+                                    onClick={() => {
+                                      const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
+                                      if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
+                                      const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
+                                      pd[idx] = jump;
+                                      stats[currentHoleIndex].puttDistances = pd;
+                                      setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                                    }}
+                                  >
+                                    {jump} ft
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
+                </div
+                >
         </div>
 
         {/* Navigation buttons */}
