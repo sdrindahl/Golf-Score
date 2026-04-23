@@ -13,6 +13,47 @@ import Link from 'next/link'
 import PageWrapper from '@/components/PageWrapper'
 
 function TrackRoundContent() {
+          // Haversine formula to calculate distance between two lat/lng points in yards
+          function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+            const toRad = (value: number) => (value * Math.PI) / 180;
+            const R = 6371000; // Radius of Earth in meters
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distanceMeters = R * c;
+            const distanceYards = distanceMeters * 1.09361;
+            return Math.round(distanceYards);
+          }
+        // Helper function to get color for score type
+        const getScoreColor = (score: number, par: number): string => {
+          const diff = score - par;
+          if (score === 1) return 'from-purple-500 to-purple-700';
+          if (diff === -3) return 'from-indigo-500 to-indigo-700';
+          if (diff === -2) return 'from-blue-500 to-blue-700';
+          if (diff === -1) return 'from-green-500 to-green-700';
+          if (diff === 0) return 'from-gray-400 to-gray-600';
+          if (diff === 1) return 'from-orange-500 to-orange-700';
+          if (diff === 2) return 'from-red-500 to-red-700';
+          return 'from-gray-400 to-gray-600';
+        };
+
+        // Helper function to get score type label
+        const getScoreType = (score: number, par: number): string => {
+          const diff = score - par;
+          if (score === 1) return 'Ace';
+          if (diff === -3) return 'Alb';
+          if (diff === -2) return 'Eagle';
+          if (diff === -1) return 'Birdie';
+          if (diff === 0) return 'Par';
+          if (diff === 1) return 'Bogey';
+          if (diff === 2) return 'D.Bogey';
+          return 'Triple+';
+        };
+      const [showLoadingRound, setShowLoadingRound] = useState(false);
     const [stopRoundLoading, setStopRoundLoading] = useState(false);
 
     // Helper to delete round from Supabase
@@ -53,135 +94,89 @@ function TrackRoundContent() {
   const [loading, setLoading] = useState(true)
   // Track which putt's wheel picker is active
   const [activePutt, setActivePutt] = useState<number | null>(null)
-
-  // Haversine formula
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-    const R = 6371 // Earth's radius in km
-    const dLat = ((lat2 - lat1) * Math.PI) / 180
-    const dLon = ((lon2 - lon1) * Math.PI) / 180
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-    const km = R * c
-    const yards = km * 1093.61
-    return Math.round(yards)
-  }
-
-  // Helper function to get score type label
-  const getScoreType = (score: number, par: number): string => {
-    const diff = score - par
-    if (score === 1) return 'Ace'
-    if (diff === -3) return 'Alb'
-    if (diff === -2) return 'Eagle'
-    if (diff === -1) return 'Birdie'
-    if (diff === 0) return 'Par'
-    if (diff === 1) return 'Bogey'
-    if (diff === 2) return 'D.Bogey'
-    return 'Triple+'
-  }
-
-  // Helper function to get color for score type
-  const getScoreColor = (score: number, par: number): string => {
-    const diff = score - par
-    if (score === 1) return 'from-purple-500 to-purple-700'
-    if (diff === -3) return 'from-indigo-500 to-indigo-700'
-    if (diff === -2) return 'from-blue-500 to-blue-700'
-    if (diff === -1) return 'from-green-500 to-green-700'
-    if (diff === 0) return 'from-gray-400 to-gray-600'
-    if (diff === 1) return 'from-orange-500 to-orange-700'
-    if (diff === 2) return 'from-red-500 to-red-700'
-    return 'from-red-700 to-red-900'
-  }
-
-  // Load round and course
+  // Load round and course (only on roundId change)
   useEffect(() => {
-    if (!roundId) return
-
+    if (!roundId) return;
 
     const loadRound = async () => {
       try {
-        console.log('[DEBUG] Looking for roundId:', roundId)
-        let foundRound: Round | null = null
+        console.log('[DEBUG] Looking for roundId:', roundId);
+        let foundRound: Round | null = null;
 
         // First, try to find in localStorage
-        const savedRounds = localStorage.getItem('golfRounds')
+        const savedRounds = localStorage.getItem('golfRounds');
         if (savedRounds) {
-          const allRounds = JSON.parse(savedRounds) as Round[]
-          foundRound = allRounds.find((r) => r.id === roundId) || null
+          const allRounds = JSON.parse(savedRounds) as Round[];
+          foundRound = allRounds.find((r) => r.id === roundId) || null;
         }
 
-
         // If not in localStorage, try to fetch from Supabase
-          if (!foundRound) {
-            console.log('[DEBUG] Round not in localStorage, fetching from API...')
-            try {
-              const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
-              if (!res.ok) {
-                console.warn('[DEBUG] No round found in API for id', roundId)
-              } else {
-                const { round: data, courses: apiCourses } = await res.json()
-                if (data) {
-                  let courseIds: string[] = [];
-                  if (apiCourses && apiCourses.length > 0) {
-                    courseIds = apiCourses.map((c: any) => c.id)
-                  } else if (data.course_id) {
-                    courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-                  }
-                  foundRound = {
-                    id: data.id,
-                    userId: data.user_id,
-                    userName: data.user_name,
-                    courseId: courseIds.join(','),
-                    courseName: data.course_name,
-                    selectedTee: data.selected_tee,
-                    date: data.date,
-                    scores: data.scores,
-                    totalScore: data.total_score,
-                    notes: data.notes,
-                    in_progress: data.in_progress,
-                    startingHole: data.starting_hole, // if present
-                  };
-                  // Restore to localStorage for future access
-                  const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
-                  allRounds.push(foundRound);
-                  localStorage.setItem('golfRounds', JSON.stringify(allRounds));
-                  console.log('[DEBUG] ✅ Round restored from API and saved to localStorage:', foundRound)
+        if (!foundRound) {
+          console.log('[DEBUG] Round not in localStorage, fetching from API...');
+          try {
+            const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' });
+            if (!res.ok) {
+              console.warn('[DEBUG] No round found in API for id', roundId);
+            } else {
+              const { round: data, courses: apiCourses } = await res.json();
+              if (data) {
+                let courseIds: string[] = [];
+                if (apiCourses && apiCourses.length > 0) {
+                  courseIds = apiCourses.map((c: any) => c.id);
+                } else if (data.course_id) {
+                  courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
                 }
+                foundRound = {
+                  id: data.id,
+                  userId: data.user_id,
+                  userName: data.user_name,
+                  courseId: courseIds.join(','),
+                  courseName: data.course_name,
+                  selectedTee: data.selected_tee,
+                  date: data.date,
+                  scores: data.scores,
+                  totalScore: data.total_score,
+                  notes: data.notes,
+                  in_progress: data.in_progress,
+                  startingHole: data.starting_hole, // if present
+                };
+                // Restore to localStorage for future access
+                const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
+                allRounds.push(foundRound);
+                localStorage.setItem('golfRounds', JSON.stringify(allRounds));
+                console.log('[DEBUG] ✅ Round restored from API and saved to localStorage:', foundRound);
               }
-            } catch (apiError) {
-              console.error('[DEBUG] API fetch error:', apiError)
             }
+          } catch (apiError) {
+            console.error('[DEBUG] API fetch error:', apiError);
           }
+        }
 
-        console.log('[DEBUG] foundRound:', foundRound)
+        console.log('[DEBUG] foundRound:', foundRound);
 
         if (foundRound) {
-          setRound(foundRound)
-          setScores([...foundRound.scores])
+          setRound(foundRound);
+          setScores([...foundRound.scores]);
           // Store current round ID for "Return to Round" feature
-          localStorage.setItem('currentRoundId', roundId)
+          localStorage.setItem('currentRoundId', roundId);
 
           // Multi-nine support: combine holes from all selected nines
-          const savedCourses = localStorage.getItem('golfCourses')
-          let foundCourse: Course | null = null
+          const savedCourses = localStorage.getItem('golfCourses');
+          let foundCourse: Course | null = null;
           if (savedCourses) {
-            const allCourses = JSON.parse(savedCourses) as Course[]
+            const allCourses = JSON.parse(savedCourses) as Course[];
             // Accept courseId as array or string
-            let courseIds: string[] = []
+            let courseIds: string[] = [];
             if (Array.isArray(foundRound.courseId)) {
-              courseIds = foundRound.courseId
+              courseIds = foundRound.courseId;
             } else if (typeof foundRound.courseId === 'string') {
-              courseIds = foundRound.courseId.split(',').map((id) => id.trim()).filter(Boolean)
+              courseIds = foundRound.courseId.split(',').map((id) => id.trim()).filter(Boolean);
             }
             if (courseIds.length > 1) {
               // Multi-nine: keep array of { name, holes }
-              const selectedCourses = allCourses.filter(c => courseIds.includes(c.id))
-              const ninesArr = selectedCourses.map(c => ({ name: c.name, holes: c.holes }))
-              setNines(ninesArr)
+              const selectedCourses = allCourses.filter(c => courseIds.includes(c.id));
+              const ninesArr = selectedCourses.map(c => ({ name: c.name, holes: c.holes }));
+              setNines(ninesArr);
               // For backward compatibility, still set course as a flat version
               foundCourse = {
                 ...selectedCourses[0],
@@ -190,38 +185,46 @@ function TrackRoundContent() {
                 holes: selectedCourses.flatMap(c => c.holes),
                 holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
                 par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
-              }
+              };
             } else {
-              foundCourse = allCourses.find((c) => c.id === String(foundRound.courseId)) || null
-              if (foundCourse) setNines([{ name: foundCourse.name, holes: foundCourse.holes }])
+              foundCourse = allCourses.find((c) => c.id === String(foundRound.courseId)) || null;
+              if (foundCourse) setNines([{ name: foundCourse.name, holes: foundCourse.holes }]);
             }
           }
-          console.log('[DEBUG] foundCourse:', foundCourse)
+          console.log('[DEBUG] foundCourse:', foundCourse);
           if (foundCourse) {
-            setCourse(foundCourse)
+            setCourse(foundCourse);
           }
 
           // Restore the hole they were on, or use startingHole from round
           let holeIndex = 0;
-          const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`)
+          const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`);
           if (savedHoleIndex) {
-            holeIndex = parseInt(savedHoleIndex, 10)
+            holeIndex = parseInt(savedHoleIndex, 10);
           } else if ((foundRound as Round).startingHole) {
-            holeIndex = Math.max(0, ((foundRound as Round).startingHole ?? 1) - 1)
+            holeIndex = Math.max(0, ((foundRound as Round).startingHole ?? 1) - 1);
           }
-          setCurrentHoleIndex(holeIndex)
-          setStartingHoleSelected(true)
-          console.log(`[DEBUG] ✅ Restored to hole ${holeIndex + 1}`)
+          setCurrentHoleIndex(holeIndex);
+          setStartingHoleSelected(true);
+          console.log(`[DEBUG] ✅ Restored to hole ${holeIndex + 1}`);
         }
       } catch (error) {
-        console.error('[DEBUG] Error loading round:', error)
+        console.error('[DEBUG] Error loading round:', error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadRound()
-  }, [roundId])
+    loadRound();
+  }, [roundId]);
+
+  // Hide loading spinner when round and course are loaded
+  useEffect(() => {
+    if (startingHoleSelected && course && round) {
+      setShowLoadingRound(false);
+    }
+  }, [startingHoleSelected, course, round]);
+// (Removed duplicate/invalid code block)
 
   // Request geolocation
   useEffect(() => {
@@ -370,7 +373,8 @@ function TrackRoundContent() {
 
   const handleScoreChange = (delta: number) => {
     const newScores = [...scores];
-    newScores[currentHoleIndex] = Math.max(0, newScores[currentHoleIndex] + delta);
+    // Allow score to go to zero, but not below
+    newScores[currentHoleIndex] = Math.max(0, (newScores[currentHoleIndex] || 0) + delta);
     setScores(newScores);
     saveRound(newScores, round?.perHoleStats);
   };
@@ -389,9 +393,8 @@ function TrackRoundContent() {
 
   const handleFinishRound = async () => {
     if (round) {
-      // Ensure all scores are at least 1 (no zeros for completed holes)
-      const fixedScores = scores.map((s, idx) => (s && s > 0 ? s : 1));
-      const finishedRound = { ...round, in_progress: false, scores: fixedScores, totalScore: fixedScores.reduce((a, b) => a + b, 0) };
+      // Allow zero as a valid score (no forced minimum)
+      const finishedRound = { ...round, in_progress: false, scores: scores, totalScore: scores.reduce((a, b) => a + b, 0) };
       // Save to localStorage
       const savedRounds = localStorage.getItem('golfRounds');
       if (savedRounds) {
@@ -514,13 +517,13 @@ function TrackRoundContent() {
                     <p className="text-xs text-gray-500">Par {hole.par}</p>
                   </div>
                   <div className="text-center">
-                    {scores[index] ? (
+                    {typeof scores[index] === 'number' ? (
                       <div>
                         <p className="text-2xl font-bold text-green-600">{scores[index]}</p>
                         <p className="text-xs text-gray-500">{scores[index] - hole.par > 0 ? '+' : ''}{scores[index] - hole.par}</p>
                       </div>
                     ) : (
-                      <p className="text-gray-400">—</p>
+                      <p className="text-gray-400">0</p>
                     )}
                   </div>
                 </div>
@@ -553,8 +556,9 @@ function TrackRoundContent() {
               <button
                 key={hole.holeNumber}
                 onClick={() => {
-                  setCurrentHoleIndex(hole.holeNumber - 1)
-                  setStartingHoleSelected(true)
+                  setShowLoadingRound(true);
+                  setCurrentHoleIndex(hole.holeNumber - 1);
+                  setStartingHoleSelected(true);
                 }}
                 className="p-2 bg-white border-2 border-green-600 text-gray-800 font-semibold rounded-lg hover:bg-green-50"
               >
@@ -564,7 +568,18 @@ function TrackRoundContent() {
           </div>
         </div>
       )}
-
+      {/* Loading Round Modal/Spinner */}
+      {showLoadingRound && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center">
+            <svg className="animate-spin h-8 w-8 text-green-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            </svg>
+            <div className="text-lg font-semibold text-gray-700">Loading Round...</div>
+          </div>
+        </div>
+      )}
       {/* GPS Status */}
       {startingHoleSelected && geolocationError && (
         <div className="card mb-4 bg-red-50 border-red-200">
