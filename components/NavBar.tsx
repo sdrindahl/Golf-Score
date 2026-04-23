@@ -39,7 +39,7 @@ export default function NavBar() {
         let found = false;
         if (savedRounds) {
           const allRounds = JSON.parse(savedRounds);
-          found = allRounds.some((r) => r.id === inProgressRoundId && r.in_progress && r.userId === user.id);
+          found = allRounds.some((r: any) => r.id === inProgressRoundId && r.in_progress && r.userId === user.id);
         }
         if (found) {
           setCurrentRoundId(inProgressRoundId);
