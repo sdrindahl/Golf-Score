@@ -755,7 +755,7 @@ function TrackRoundContent() {
                   let pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
                   pd.length = numPutts;
                   for (let i = 0; i < numPutts; i++) {
-                    if (typeof pd[i] !== 'number' || isNaN(pd[i])) pd[i] = null;
+                    if (typeof pd[i] !== 'number' || isNaN(pd[i])) pd[i] = 1;
                   }
                   stats[currentHoleIndex].puttDistances = pd;
                   setRound(r => r ? { ...r, perHoleStats: stats } : r);
