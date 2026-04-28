@@ -47,9 +47,32 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
 export async function POST(req: NextRequest) {
   try {
     const round: Round = await req.json();
-    console.log('[DEBUG] Incoming round payload:', JSON.stringify(round));
+    console.log('[DEBUG] Raw incoming round payload:', round);
+    console.log('[DEBUG] Incoming round payload (stringified):', JSON.stringify(round));
     const validRound = ensureValidTotalScore(round);
+    // Debug log for in_progress value and type
+    console.log('[DEBUG] Received in_progress:', validRound.in_progress, 'Type:', typeof validRound.in_progress);
+
+    // 2: Backend validation for selectedTee (robust)
+    // Accept selectedTee from validRound, or selected_tee from raw round, or ''
+    let selectedTeeFinal = validRound.selectedTee && typeof validRound.selectedTee === 'string' && validRound.selectedTee.trim()
+      ? validRound.selectedTee.trim()
+      : (typeof (round as any).selected_tee === 'string' && (round as any).selected_tee.trim() ? (round as any).selected_tee.trim() : '');
+    if (!selectedTeeFinal) {
+      return NextResponse.json({ success: false, error: 'selectedTee is required and cannot be empty.' }, { status: 400 });
+    }
+
     // Only include fields that exist in the rounds table, using snake_case
+    // Coerce in_progress to boolean, default to true only if missing
+    let inProgressValue = true;
+    if (typeof validRound.in_progress === 'boolean') {
+      inProgressValue = validRound.in_progress;
+    } else if (typeof validRound.in_progress === 'string') {
+      // Accept string 'false' or 'true' from legacy or buggy clients
+      inProgressValue = validRound.in_progress === 'true';
+    }
+    // Debug log for coerced value
+    console.log('[DEBUG] Coerced in_progress to:', inProgressValue, 'Type:', typeof inProgressValue);
     const roundData = {
       id: validRound.id,
       user_id: validRound.userId,
@@ -58,14 +81,15 @@ export async function POST(req: NextRequest) {
       scores: validRound.scores,
       total_score: validRound.totalScore,
       notes: validRound.notes,
-      in_progress: typeof validRound.in_progress === 'boolean' ? validRound.in_progress : true,
+      in_progress: inProgressValue,
       course_id: Array.isArray(validRound.courseId)
         ? validRound.courseId.join(',')
         : validRound.courseId || null,
-      selected_tee: validRound.selectedTee,
+      selected_tee: selectedTeeFinal,
       per_hole_stats: (validRound as any).perHoleStats || [],
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
+    console.log('[DEBUG] selected_tee value being sent to Supabase:', roundData.selected_tee);
     // Upsert round (only safe fields)
     const { data, error } = await supabase
       .from('rounds')

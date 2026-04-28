@@ -151,8 +151,11 @@ if (inProgress || supabaseHasInProgress) {
       scores,
       totalScore: scores.reduce((a, b) => a + b, 0),
       notes,
-      in_progress: true,
-    }
+      in_progress: true, // Always boolean
+    };
+    // Remove any snake_case fields if present (defensive)
+    if ('selected_tee' in round) delete (round as any).selected_tee;
+    if ('inProgress' in round) delete (round as any).inProgress;
     rounds.push(round)
     localStorage.setItem('golfRounds', JSON.stringify(rounds))
 
