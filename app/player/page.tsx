@@ -86,7 +86,6 @@ function PlayerProfileContent() {
                 password: '',
                 is_admin: data.is_admin
               };
-              // Optionally add to local cache here
             }
           }
 
@@ -101,11 +100,8 @@ function PlayerProfileContent() {
                 .eq('user_id', playerId)
                 .order('date', { ascending: false });
               if (error) {
-                console.error('Error fetching rounds from Supabase:', error.message);
                 setRounds([]);
               } else if (data) {
-                console.log('[DEBUG] Fetched rounds from Supabase:', data);
-                // Convert snake_case to camelCase for each round
                 const playerRounds: Round[] = data.map((r: any) => ({
                   id: r.id,
                   userId: r.user_id,
@@ -128,7 +124,6 @@ function PlayerProfileContent() {
             setPlayer(null);
           }
         } catch (error) {
-          console.error('Error loading player data:', error);
           setRounds([]);
         }
         setLoading(false);
@@ -137,32 +132,32 @@ function PlayerProfileContent() {
       loadPlayerData();
     }, [playerId, refreshKey]);
 
-  if (loading) {
-    return (
-      <PageWrapper title="Player Profile">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
-            <p className="text-gray-500">Loading profile...</p>
+    if (loading) {
+      return (
+        <PageWrapper title="Player Profile">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
+              <p className="text-gray-500">Loading profile...</p>
+            </div>
           </div>
-        </div>
-      </PageWrapper>
-    )
-  }
+        </PageWrapper>
+      );
+    }
 
-  if (!player) {
-    return (
-      <PageWrapper title="Player Profile">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
-            <p className="text-gray-500">Player not found</p>
-            <Link href="/">
-              <button className="btn-primary mt-4">Back to Home</button>
-            </Link>
+    if (!player) {
+      return (
+        <PageWrapper title="Player Profile">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
+              <p className="text-gray-500">Player not found</p>
+              <Link href="/">
+                <button className="btn-primary mt-4">Back to Home</button>
+              </Link>
+            </div>
           </div>
-        </div>
-      </PageWrapper>
-    )
-  }
+        </PageWrapper>
+      );
+    }
 
   const calculateHandicap = (): number => {
     if (rounds.length === 0) return 0
@@ -289,73 +284,80 @@ function PlayerProfileContent() {
           </div>
 
           {/* Statistics */}
-          {rounds.length > 0 && (
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg border border-white/20">
-              <h2 className="text-lg font-bold mb-3 text-gray-800">Best Rounds</h2>
-              
-              <div className="space-y-2">
-              
-              {/* Best 18-Hole Round */}
-              {(() => {
-                const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-
-                      {/* Track Golfing Costs Button */}
-                      {showGolfCostsButton && (
-                        <Link href="/golf-costs">
-                          <button className="mb-4 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-all border border-green-700/20">
-                            💸 Track Golfing Costs
-                          </button>
-                        </Link>
-                      )}
-                const rounds18 = rounds.filter(r => {
-                  const course = courses.find((c: any) => c.id === r.courseId)
-                  return course && course.holes.length === 18
-                })
-                
-                if (rounds18.length === 0) return null
-                
-                const best18 = rounds18.reduce((best, current) => 
-                  current.totalScore < best.totalScore ? current : best
-                )
-                
-                return (
-                  <div className="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg text-sm">
-                    <span className="text-gray-700 font-medium">18-Hole:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-600">{best18.courseName}</span>
-                      <span className="font-bold text-green-600">{best18.totalScore}</span>
-                    </div>
+          {rounds.length > 0 && (() => {
+            // Find best 18-hole round
+            const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]');
+            const rounds18 = rounds.filter(r => {
+              // Support multi-child rounds (comma-separated courseId)
+              const courseIds = r.courseId.split(',');
+              // Find all matching courses
+              const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
+              // If any child course has 18 holes, treat as 18-hole round
+              if (childCourses.length > 0) {
+                const totalHoles = childCourses.reduce((sum: number, c: any) => sum + (c.holes?.length || 0), 0);
+                return totalHoles === 18;
+              }
+              // fallback: single course logic
+              const course = courses.find((c: any) => c.id === r.courseId);
+              return course && course.holes.length === 18;
+            });
+            if (rounds18.length === 0) return null;
+            const best18 = rounds18.reduce((best, current) =>
+              current.totalScore < best.totalScore ? current : best
+            );
+            // Parent/child display logic (copied from ScoreHistory)
+            let parentName = '';
+            let childNames: string[] = [];
+            if (courses && courses.length && best18.courseId) {
+              const courseIds = typeof best18.courseId === 'string' ? best18.courseId.split(',') : [];
+              const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
+              if (childCourses.length > 0) {
+                const parentId = childCourses[0].parent_id;
+                if (parentId) {
+                  const parent = courses.find((c: any) => c.id === parentId);
+                  if (parent) parentName = parent.name;
+                }
+                childNames = childCourses.map((c: any) => c.name);
+              } else {
+                const course = courses.find((c: any) => c.id === best18.courseId);
+                if (course && course.parent_id) {
+                  const parent = courses.find((c: any) => c.id === course.parent_id);
+                  if (parent) parentName = parent.name;
+                  childNames = [course.name];
+                } else if (course) {
+                  childNames = [course.name];
+                }
+              }
+            } else if (best18.courseName) {
+              childNames = [best18.courseName];
+            }
+            const dateStr = best18.date ? new Date(best18.date).toLocaleDateString() : '';
+            return (
+              <div
+                className="bg-gradient-to-r from-green-100 via-emerald-50 to-green-200 rounded-2xl shadow border border-green-200/60 mb-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg"
+                style={{ padding: '0.5rem 0.5rem 0.5rem 1.25rem', minHeight: 0 }}
+                onClick={() => router.push(`/round-detail?id=${best18.id}`)}
+                title="View this round"
+              >
+                <div className="flex flex-row items-center justify-between relative" style={{ minHeight: 0 }}>
+                  <div className="flex flex-col justify-center py-1">
+                    <h2 className="text-base font-bold mb-1 text-emerald-800">Best 18 Hole Round</h2>
+                    {parentName && (
+                      <span className="font-semibold text-gray-800 text-xs md:text-sm leading-tight">{parentName}</span>
+                    )}
+                    {childNames.map((name, idx) => (
+                      <span key={idx} className="text-xs text-gray-600 mt-0.5">{name}</span>
+                    ))}
                   </div>
-                )
-              })()}
-              
-              {/* Best 9-Hole Round */}
-              {(() => {
-                const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-                const rounds9 = rounds.filter(r => {
-                  const course = courses.find((c: any) => c.id === r.courseId)
-                  return course && course.holes.length === 9
-                })
-                
-                if (rounds9.length === 0) return null
-                
-                const best9 = rounds9.reduce((best, current) => 
-                  current.totalScore < best.totalScore ? current : best
-                )
-                
-                return (
-                  <div className="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg text-sm">
-                    <span className="text-gray-700 font-medium">9-Hole:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-600">{best9.courseName}</span>
-                      <span className="font-bold text-green-600">{best9.totalScore}</span>
-                    </div>
+                  <div className="flex flex-col items-end ml-auto pl-2">
+                    <span className="text-lg font-bold text-gray-800">{best18.totalScore}</span>
+                    <span className="absolute top-1 right-2 text-xs text-gray-500">{dateStr}</span>
                   </div>
-                )
-              })()}
+                  <div className="text-xl text-emerald-400 ml-2">→</div>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Recent Rounds */}
           {rounds.length > 0 ? (
@@ -376,8 +378,9 @@ function PlayerProfileContent() {
           </button>
         </Link>
       </div>
+
     </>
-  )
+  );
 }
 
 export default function PlayerProfile() {

@@ -1,1022 +1,777 @@
-
 'use client'
-import React from 'react';
-// ...existing code...
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Round as BaseRound, Course, Hole } from '@/types'
+import { useState, useEffect, useRef, Suspense } from 'react';
 
-// Extend Round type locally to allow startingHole (for legacy/compat)
-type Round = BaseRound & { startingHole?: number }
-import Link from 'next/link'
-import PageWrapper from '@/components/PageWrapper'
+function getDistanceYards(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const R = 6371000; // meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const meters = R * c;
+  return meters * 1.09361; // convert to yards
+}
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Round, Course } from '@/types';
+import { useAuth } from '@/lib/useAuth';
+import PageWrapper from '@/components/PageWrapper';
+import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 
 function TrackRoundContent() {
-          // Haversine formula to calculate distance between two lat/lng points in yards
-          function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-            const toRad = (value: number) => (value * Math.PI) / 180;
-            const R = 6371000; // Radius of Earth in meters
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            const a =
-              Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const distanceMeters = R * c;
-            const distanceYards = distanceMeters * 1.09361;
-            return Math.round(distanceYards);
-          }
-        // Helper function to get color for score type
-        const getScoreColor = (score: number, par: number): string => {
-          const diff = score - par;
-          if (score === 1) return 'from-purple-500 to-purple-700';
-          if (diff === -3) return 'from-indigo-500 to-indigo-700';
-          if (diff === -2) return 'from-blue-500 to-blue-700';
-          if (diff === -1) return 'from-green-500 to-green-700';
-          if (diff === 0) return 'from-gray-400 to-gray-600';
-          if (diff === 1) return 'from-orange-500 to-orange-700';
-          if (diff === 2) return 'from-red-500 to-red-700';
-          return 'from-gray-400 to-gray-600';
-        };
 
-        // Helper function to get score type label
-        const getScoreType = (score: number, par: number): string => {
-          const diff = score - par;
-          if (score === 1) return 'Ace';
-          if (diff === -3) return 'Alb';
-          if (diff === -2) return 'Eagle';
-          if (diff === -1) return 'Birdie';
-          if (diff === 0) return 'Par';
-          if (diff === 1) return 'Bogey';
-          if (diff === 2) return 'D.Bogey';
-          return 'Triple+';
-        };
-      const [showLoadingRound, setShowLoadingRound] = useState(false);
-    const [stopRoundLoading, setStopRoundLoading] = useState(false);
+  // State declarations (must be before usage)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const roundId = searchParams ? searchParams.get('id') : null;
+  const auth = useAuth();
+  const [round, setRound] = useState<Round | null>(null);
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+  const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
+  const [scores, setScores] = useState<number[]>([]);
+  // Per-hole stats: FIR, GIR, puttDistances
+  const [perHoleStats, setPerHoleStats] = useState<{
+    fairwayHit?: 'hit' | 'L' | 'R';
+    gir?: boolean;
+    puttDistances?: number[];
+    puttExpanded?: number | null; // index of expanded putt, or null if all collapsed
+  }[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
+  const [finishing, setFinishing] = useState(false);
 
-    // Helper to delete round from Supabase
-    async function deleteRoundFromSupabase(roundId: string) {
-      try {
-        const res = await fetch('/api/delete-round', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roundId }),
-        });
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Failed to delete round from Supabase');
-        }
-        return true;
-      } catch (err: any) {
-        throw new Error(err.message || 'Failed to delete round from Supabase');
-      }
-    }
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const roundId = searchParams ? searchParams.get('id') : null
+  // --- All state/vars must be declared before this point ---
 
-  const [round, setRound] = useState<Round | null>(null)
-  // For multi-nine, store array of { name, holes } for each nine
-  const [nines, setNines] = useState<{ name: string; holes: Hole[] }[]>([])
-  const [course, setCourse] = useState<Course | null>(null)
-  const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
-  const [scores, setScores] = useState<number[]>([])
-  const [startingHoleSelected, setStartingHoleSelected] = useState(false)
-  const [showScorecard, setShowScorecard] = useState(false)
-  // GPS state
-  const [userLat, setUserLat] = useState<number | null>(null)
-  const [userLng, setUserLng] = useState<number | null>(null)
-  const [distance, setDistance] = useState<number | null>(null)
-  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
-  const [geolocationError, setGeolocationError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  // Track which putt's wheel picker is active
-  const [activePutt, setActivePutt] = useState<number | null>(null)
-  // Load round and course (only on roundId change)
-  useEffect(() => {
-    if (!roundId) return;
+  // Helper: check if all holes are scored
+  const allScored = scores.length === course?.holes?.length && scores.every(s => s !== null && s !== undefined && s > 0);
 
-    const loadRound = async () => {
-      try {
-        console.log('[DEBUG] Looking for roundId:', roundId);
-        let foundRound: Round | null = null;
-
-        // First, try to find in localStorage
+  // Save/finish round handler
+  const handleFinishRound = async () => {
+    setFinishing(true);
+    setShowIncompleteWarning(false);
+    try {
+      const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+      const updatedRound = {
+        ...round,
+        scores,
+        in_progress: false,
+        completed_at: new Date().toISOString(),
+        userId: round?.userId || user?.id,
+        userName: round?.userName || user?.name,
+        courseId: round?.courseId || course?.id,
+        courseName: round?.courseName || course?.name,
+      };
+      await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      });
+      // Remove or update round in localStorage so it's not in progress
+      if (typeof window !== 'undefined' && round) {
         const savedRounds = localStorage.getItem('golfRounds');
         if (savedRounds) {
-          const allRounds = JSON.parse(savedRounds) as Round[];
-          foundRound = allRounds.find((r) => r.id === roundId) || null;
-        }
-
-        // If not in localStorage, try to fetch from Supabase
-        if (!foundRound) {
-          console.log('[DEBUG] Round not in localStorage, fetching from API...');
+          let allRounds = [];
           try {
-            const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' });
-            if (!res.ok) {
-              console.warn('[DEBUG] No round found in API for id', roundId);
-            } else {
-              const { round: data, courses: apiCourses } = await res.json();
-              if (data) {
-                let courseIds: string[] = [];
-                if (apiCourses && apiCourses.length > 0) {
-                  courseIds = apiCourses.map((c: any) => c.id);
-                } else if (data.course_id) {
-                  courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-                }
-                foundRound = {
-                  id: data.id,
-                  userId: data.user_id,
-                  userName: data.user_name,
-                  courseId: courseIds.join(','),
-                  courseName: data.course_name,
-                  selectedTee: data.selected_tee,
-                  date: data.date,
-                  scores: data.scores,
-                  totalScore: data.total_score,
-                  notes: data.notes,
-                  in_progress: data.in_progress,
-                  startingHole: data.starting_hole, // if present
-                };
-                // Restore to localStorage for future access
-                const allRounds = savedRounds ? JSON.parse(savedRounds) : [];
-                allRounds.push(foundRound);
-                localStorage.setItem('golfRounds', JSON.stringify(allRounds));
-                console.log('[DEBUG] ✅ Round restored from API and saved to localStorage:', foundRound);
-              }
-            }
-          } catch (apiError) {
-            console.error('[DEBUG] API fetch error:', apiError);
-          }
-        }
-
-        console.log('[DEBUG] foundRound:', foundRound);
-
-        if (foundRound) {
-          setRound(foundRound);
-          setScores([...foundRound.scores]);
-          // Store current round ID for "Return to Round" feature
-          localStorage.setItem('currentRoundId', roundId);
-
-          // Multi-nine support: combine holes from all selected nines
-          const savedCourses = localStorage.getItem('golfCourses');
-          let foundCourse: Course | null = null;
-          if (savedCourses) {
-            const allCourses = JSON.parse(savedCourses) as Course[];
-            // Accept courseId as array or string
-            let courseIds: string[] = [];
-            if (Array.isArray(foundRound.courseId)) {
-              courseIds = foundRound.courseId;
-            } else if (typeof foundRound.courseId === 'string') {
-              courseIds = foundRound.courseId.split(',').map((id) => id.trim()).filter(Boolean);
-            }
-            if (courseIds.length > 1) {
-              // Multi-nine: keep array of { name, holes }
-              const selectedCourses = allCourses.filter(c => courseIds.includes(c.id));
-              const ninesArr = selectedCourses.map(c => ({ name: c.name, holes: c.holes }));
-              setNines(ninesArr);
-              // For backward compatibility, still set course as a flat version
-              foundCourse = {
-                ...selectedCourses[0],
-                id: courseIds.join(','),
-                name: foundRound.courseName,
-                holes: selectedCourses.flatMap(c => c.holes),
-                holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
-                par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
-              };
-            } else {
-              foundCourse = allCourses.find((c) => c.id === String(foundRound.courseId)) || null;
-              if (foundCourse) setNines([{ name: foundCourse.name, holes: foundCourse.holes }]);
-            }
-          }
-          console.log('[DEBUG] foundCourse:', foundCourse);
-          if (foundCourse) {
-            setCourse(foundCourse);
-          }
-
-          // Restore the hole they were on, or use startingHole from round
-          let holeIndex = 0;
-          const savedHoleIndex = localStorage.getItem(`currentHoleIndex-${roundId}`);
-          if (savedHoleIndex) {
-            holeIndex = parseInt(savedHoleIndex, 10);
-          } else if ((foundRound as Round).startingHole) {
-            holeIndex = Math.max(0, ((foundRound as Round).startingHole ?? 1) - 1);
-          }
-          setCurrentHoleIndex(holeIndex);
-          setStartingHoleSelected(true);
-          console.log(`[DEBUG] ✅ Restored to hole ${holeIndex + 1}`);
-        }
-      } catch (error) {
-        console.error('[DEBUG] Error loading round:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadRound();
-  }, [roundId]);
-
-  // Hide loading spinner when round and course are loaded
-  useEffect(() => {
-    if (startingHoleSelected && course && round) {
-      setShowLoadingRound(false);
-    }
-  }, [startingHoleSelected, course, round]);
-// (Removed duplicate/invalid code block)
-
-  // Request geolocation
-  useEffect(() => {
-    if (!loading && round) {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            setUserLat(position.coords.latitude)
-            setUserLng(position.coords.longitude)
-            setGpsAccuracy(position.coords.accuracy)
-            setGeolocationError(null)
-          },
-          (error) => {
-            let errorMsg = 'Unable to get location'
-            if (error.code === error.PERMISSION_DENIED) {
-              errorMsg = 'Location permission denied. Please enable location services.'
-            }
-            setGeolocationError(errorMsg)
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        )
-
-        // Watch position for continuous updates
-        const id = navigator.geolocation.watchPosition(
-          (position) => {
-            setUserLat(position.coords.latitude)
-            setUserLng(position.coords.longitude)
-            setGpsAccuracy(position.coords.accuracy)
-            setGeolocationError(null)
-          },
-          () => {},
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        )
-
-        return () => navigator.geolocation.clearWatch(id)
-      }
-    }
-  }, [loading, round])
-
-  // Calculate distance to current hole
-  useEffect(() => {
-    if (
-      userLat !== null &&
-      userLng !== null &&
-      course &&
-      currentHoleIndex < course.holes.length
-    ) {
-      const hole = course.holes[currentHoleIndex]
-      const distanceToGreen = calculateDistance(userLat, userLng, hole.greenLat, hole.greenLng)
-      setDistance(distanceToGreen)
-    }
-  }, [userLat, userLng, currentHoleIndex, course])
-
-  // Save current hole index to localStorage for round recovery
-  useEffect(() => {
-    if (roundId && startingHoleSelected) {
-      localStorage.setItem(`currentHoleIndex-${roundId}`, currentHoleIndex.toString())
-    }
-  }, [currentHoleIndex, roundId, startingHoleSelected])
-
-  // Prevent navigation away if round is in progress
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (startingHoleSelected && currentHoleIndex < course?.holes.length! - 1) {
-        const message = 'Your round will not be saved if you don\'t finish the round.'
-        e.preventDefault()
-        e.returnValue = message
-        return message
-      }
-    }
-
-    const handlePopState = () => {
-      if (startingHoleSelected && currentHoleIndex < course?.holes.length! - 1) {
-        const message = 'Your round will not be saved if you don\'t finish the round. Do you want to leave?'
-        if (!confirm(message)) {
-          // Push the same route back to prevent navigation
-          window.history.pushState(null, '', window.location.href)
-          return
-        }
-      }
-    }
-
-    const handleLinkClick = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('a')
-      if (target && target.href && !target.href.includes(`?id=${roundId}`)) {
-        if (startingHoleSelected && currentHoleIndex < course?.holes.length! - 1) {
-          const message = 'Your round will not be saved if you don\'t finish the round. Do you want to leave?'
-          if (!confirm(message)) {
-            e.preventDefault()
-            e.stopPropagation()
-            return false
+            allRounds = JSON.parse(savedRounds);
+          } catch {}
+          // Remove or update the finished round
+          const updatedRounds = allRounds.map((r: any) =>
+            r.id === round.id ? { ...r, in_progress: false } : r
+          );
+          localStorage.setItem('golfRounds', JSON.stringify(updatedRounds));
+          // Optionally, remove currentRoundId if it matches
+          const currentRoundId = localStorage.getItem('currentRoundId');
+          if (currentRoundId && currentRoundId === round.id) {
+            localStorage.removeItem('currentRoundId');
           }
         }
       }
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    window.addEventListener('popstate', handlePopState)
-    document.addEventListener('click', handleLinkClick, true)
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('popstate', handlePopState)
-      document.removeEventListener('click', handleLinkClick, true)
-    }
-  }, [startingHoleSelected, currentHoleIndex, course, roundId])
-
-  // Auto-save round after each hole
-  // Save round with scores and per-hole stats
-  const saveRound = (updatedScores: number[], updatedStats?: any) => {
-    if (!round) return;
-    try {
-      const savedRounds = localStorage.getItem('golfRounds');
-      if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds) as Round[];
-        const index = allRounds.findIndex((r) => r.id === roundId);
-        if (index >= 0) {
-          const totalScore = updatedScores.reduce((sum, score) => sum + score, 0);
-          allRounds[index].scores = updatedScores;
-          allRounds[index].totalScore = totalScore;
-          if (updatedStats) {
-            allRounds[index].perHoleStats = updatedStats;
-          } else if (round.perHoleStats) {
-            allRounds[index].perHoleStats = round.perHoleStats;
-          }
-          localStorage.setItem('golfRounds', JSON.stringify(allRounds));
-          console.log('💾 Round auto-saved locally after hole', currentHoleIndex + 1);
-          // Update the round state so we have the latest data
-          const updatedRound = allRounds[index];
-          setRound(updatedRound);
-          // Also sync to Supabase so other devices see the update
-          fetch('/api/save-round', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedRound),
-          }).catch(error => {
-            console.error('❌ Failed to sync round to Supabase:', error.message);
-            // Don't stop the app if Supabase sync fails - but log the error
-          });
-        }
+      // Redirect to round details page
+      if (round) {
+        router.push(`/round-detail?id=${round.id}`);
+      } else {
+        router.push('/');
       }
-    } catch (error) {
-      console.error('Error saving round:', error);
+    } catch (e) {
+      alert('Failed to save round.');
+    } finally {
+      setFinishing(false);
     }
   };
 
-  const handleScoreChange = (delta: number) => {
+  // End round early handler
+  const handleEndEarly = () => {
+    if (allScored) {
+      handleFinishRound();
+    } else {
+      if (confirm("You haven't entered scores for all holes. End round early?")) {
+        handleFinishRound();
+      } else {
+        setShowIncompleteWarning(true);
+      }
+    }
+  };
+    useEffect(() => {
+      if (!('geolocation' in navigator)) return;
+      function success(pos: GeolocationPosition) {
+        console.log('[GeoLocation Debug] Success:', {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy
+        });
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      }
+      function error(err: GeolocationPositionError) {
+        console.log('[GeoLocation Debug] Error:', err);
+      }
+      watchIdRef.current = navigator.geolocation.watchPosition(success, error, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+      return () => {
+        if (watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+        }
+      };
+    }, []);
+  // ...existing code...
+
+  // ...existing code...
+
+  // Debug logs for loading issues
+  useEffect(() => {
+    console.log('[TrackRoundContent] auth:', auth);
+    try {
+      const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+      console.log('[TrackRoundContent] auth.user:', user);
+    } catch (e) {
+      console.log('[TrackRoundContent] auth.user: error', e);
+    }
+    console.log('[TrackRoundContent] round:', round);
+    console.log('[TrackRoundContent] course:', course);
+  }, [auth, round, course]);
+  // ...existing code...
+
+  // Real-time sync subscription
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || !roundId) return;
+    let subscription: any;
+    getRoundsInProgress().then(data => {
+      const found = data?.find((r: any) => r.id === roundId);
+      setRound(found || null);
+      setScores(found?.scores || []);
+      // Initialize perHoleStats if not set
+      if (found && found.scores) {
+        setPerHoleStats((prev) => prev.length === found.scores.length ? prev : Array(found.scores.length).fill({}));
+      }
+      setLoading(false);
+      subscription = subscribeToRoundsInProgress(() => {
+        getRoundsInProgress().then(data => {
+          const updated = data?.find((r: any) => r.id === roundId);
+          setRound(updated || null);
+          setScores(updated?.scores || []);
+          if (updated && updated.scores) {
+            setPerHoleStats((prev) => prev.length === updated.scores.length ? prev : Array(updated.scores.length).fill({}));
+          }
+        });
+      });
+    }).catch(() => setLoading(false));
+    return () => {
+      if (subscription && subscription.unsubscribe) subscription.unsubscribe();
+    };
+  }, [isClient, roundId]);
+
+  // Load course info from localStorage (as in round-detail)
+  useEffect(() => {
+    if (!round) return;
+    const savedCourses = localStorage.getItem('golfCourses');
+    if (savedCourses) {
+      const allCourses = JSON.parse(savedCourses) as Course[];
+      // Support both camelCase (courseId) and snake_case (course_id) for compatibility
+      const rawCourseId = (round as any).courseId || (round as any).course_id;
+      const courseIds = Array.isArray(rawCourseId)
+        ? rawCourseId
+        : typeof rawCourseId === 'string'
+          ? rawCourseId.split(',').map((id: string) => id.trim()).filter(Boolean)
+          : [];
+      console.log('Looking for courseIds:', courseIds, 'in', allCourses.map(c => c.id));
+      const foundCourses = allCourses.filter(c => courseIds.includes(c.id));
+      console.log('Found courses:', foundCourses);
+      if (foundCourses.length > 0) {
+        // Merge holes for multi-nine support
+        const mergedCourse: Course = {
+          ...foundCourses[0],
+          id: courseIds.join(','),
+          name: round.courseName,
+          holes: foundCourses.flatMap(c => c.holes),
+          holeCount: foundCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
+          par: foundCourses.reduce((sum, c) => sum + (c.par || 0), 0),
+        };
+        setCourse(mergedCourse);
+      } else {
+        setCourse(null);
+      }
+    }
+  }, [round]);
+
+  const handleScoreChange = async (score: number) => {
+    if (!round) return;
+    const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+    if (!auth || !user) {
+      console.error('[handleScoreChange] Blocked: user not loaded');
+      return;
+    }
+    if (!course) {
+      console.error('[handleScoreChange] Blocked: course not loaded');
+      return;
+    }
     const newScores = [...scores];
-    // Allow score to go to zero, but not below
-    newScores[currentHoleIndex] = Math.max(0, (newScores[currentHoleIndex] || 0) + delta);
+    newScores[currentHoleIndex] = score;
     setScores(newScores);
-    saveRound(newScores, round?.perHoleStats);
+    // Live sync to Supabase
+    try {
+      // Ensure all required fields are present and valid
+      const userId = round.userId || user?.id;
+      const userName = round.userName || user?.name;
+      const courseName = round.courseName || course.name;
+      const updatedRound = {
+        id: round.id,
+        userId,
+        userName,
+        courseId: round.courseId || course.id,
+        courseName,
+        selectedTee: round.selectedTee || 'men',
+        date: round.date || new Date().toISOString(),
+        scores: newScores,
+        totalScore: newScores.reduce((a, b) => a + b, 0),
+        notes: round.notes || '',
+        in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
+        startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
+      };
+      // Debug log outgoing payload
+      console.log('[handleScoreChange] Sending updatedRound:', updatedRound);
+      await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      });
+    } catch (e) {
+      // Optionally: show error or retry
+      console.error('Failed to sync score to Supabase', e);
+    }
   };
 
   const handleNextHole = () => {
-    if (course && currentHoleIndex < course.holes.length - 1) {
-      setCurrentHoleIndex(currentHoleIndex + 1)
+    if (!course) return;
+    if (currentHoleIndex < course.holes.length - 1) {
+      setCurrentHoleIndex(currentHoleIndex + 1);
     }
-  }
+  };
 
   const handlePreviousHole = () => {
     if (currentHoleIndex > 0) {
-      setCurrentHoleIndex(currentHoleIndex - 1)
+      setCurrentHoleIndex(currentHoleIndex - 1);
     }
-  }
+  };
 
-  const handleFinishRound = async () => {
-    if (round) {
-      // Allow zero as a valid score (no forced minimum)
-      const finishedRound = { ...round, in_progress: false, scores: scores, totalScore: scores.reduce((a, b) => a + b, 0) };
-      // Save to localStorage
-      const savedRounds = localStorage.getItem('golfRounds');
-      if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds);
-        const index = allRounds.findIndex((r: Round) => r.id === roundId);
-        if (index >= 0) {
-          allRounds[index] = finishedRound;
-          localStorage.setItem('golfRounds', JSON.stringify(allRounds));
-        }
-      }
-      try {
-        await fetch('/api/save-round', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(finishedRound),
-        });
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error('❌ Failed to sync final round to Supabase:', error.message);
-        } else {
-          console.error('❌ Failed to sync final round to Supabase:', error);
-        }
-        // Still navigate even if sync fails - rounds are saved locally
-      }
-      // All updates now handled via /api/save-round
-      // Clear the current round ID and hole index since round is finished
-      localStorage.removeItem('currentRoundId');
-      localStorage.removeItem(`currentHoleIndex-${roundId}`);
-      router.push(`/round-detail?id=${round.id}&completed=true`);
+
+  // Delete round handler
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteRound = async () => {
+    if (deleting) return;
+    if (!round) return;
+    if (!confirm('Are you sure you want to delete this round? This action cannot be undone.')) return;
+    setDeleting(true);
+    // Remove from localStorage
+    const savedRounds = localStorage.getItem('golfRounds');
+    if (savedRounds) {
+      const allRounds = JSON.parse(savedRounds);
+      const updated = allRounds.filter((r: any) => r.id !== round.id);
+      localStorage.setItem('golfRounds', JSON.stringify(updated));
     }
-  }
+    // Remove from Supabase
+    try {
+      const res = await fetch('/api/delete-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundId: round.id }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert('Failed to delete from server: ' + (data.error || 'Unknown error'));
+        setDeleting(false);
+        return;
+      }
+    } catch (e) {
+      alert('Network error while deleting round.');
+      setDeleting(false);
+      return;
+    }
+    // Redirect home
+    router.push('/');
+  };
 
-
-
-
-  if (loading) {
-    return (
-      <PageWrapper title="Loading" userName="Round Details">
-        <div className="card text-center">
-          <p className="text-gray-500">Loading round...</p>
-        </div>
-      </PageWrapper>
-    )
-  }
-
-  if (!loading && (!round || !course)) {
-    return (
-      <PageWrapper title="Round Not Found" userName="Error">
-        <div className="card text-center">
-          <p className="text-gray-500 mb-4">Round not found</p>
-          <Link href="/">
-            <button className="btn-primary">Back to Home</button>
-          </Link>
-        </div>
-      </PageWrapper>
-    )
-  }
-
-  if (course && currentHoleIndex >= course.holes.length) {
-    return (
-      <PageWrapper title="Round Complete" userName="🎉 Congratulations">
-        <div className="card text-center">
-          <h2 className="text-2xl font-bold mb-4">Round Complete! 🎉</h2>
-          <p className="text-gray-600 mb-6">
-            You've finished all {course ? course.holes.length : 0} holes!
-          </p>
-          <button onClick={handleFinishRound} className="btn-primary">
-            View Scorecard
-          </button>
-        </div>
-      </PageWrapper>
-    )
-  }
-
-  // Safety check - don't render if course isn't loaded
-  if (!course) {
-    return (
-      <PageWrapper title="Loading" userName="Round Details">
-        <div className="card text-center">
-          <p className="text-gray-500">Loading course details...</p>
-        </div>
-      </PageWrapper>
-    )
-  }
-
-  const currentHole: Hole = course.holes[currentHoleIndex]
-  const selectedTee = round?.selectedTee || ''
-  // Only allow known tee keys
-  const allowedTees: Array<keyof Hole> = ['men', 'women', 'senior', 'championship']
-  const teeBox = allowedTees.includes(selectedTee as keyof Hole)
-    ? currentHole[selectedTee as keyof Hole]
-    : undefined
-  const currentScore = scores[currentHoleIndex] || 0
-  const parDifference = currentScore - currentHole.par
-
-  // Safely format tee name
-  const teeDisplay = selectedTee ? selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1) : ''
-  const courseNameDisplay = round?.courseName || ''
+  const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+  if (loading || !auth || !user) return <div className="p-8 text-center">Loading user and round data...</div>;
+  if (!round || !course) return <div className="p-8 text-center">Round or course not found.</div>;
 
   return (
-    <PageWrapper title={`Hole ${currentHole.holeNumber}`} userName={`${courseNameDisplay}${teeDisplay ? ` • ${teeDisplay}'s` : ''}`}>
-      {/* Scorecard Modal */}
-      {showScorecard && course && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-96 overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-              <h2 className="text-xl font-bold">Scorecard</h2>
-              <button
-                onClick={() => setShowScorecard(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-4 space-y-2">
-              {course.holes.map((hole, index) => (
-                <div key={hole.holeNumber} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-semibold text-gray-800">Hole {hole.holeNumber}</p>
-                    <p className="text-xs text-gray-500">Par {hole.par}</p>
-                  </div>
-                  <div className="text-center">
-                    {typeof scores[index] === 'number' ? (
-                      <div>
-                        <p className="text-2xl font-bold text-green-600">{scores[index]}</p>
-                        <p className="text-xs text-gray-500">{scores[index] - hole.par > 0 ? '+' : ''}{scores[index] - hole.par}</p>
-                      </div>
-                    ) : (
-                      <p className="text-gray-400">0</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="sticky bottom-0 bg-white border-t p-4">
-              <div className="text-center mb-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-gray-600 text-sm">Total Score (Completed)</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0)}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowScorecard(false)}
-                className="w-full py-2 px-4 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
+    <PageWrapper title="" userName={round.userName}>
+      <div className="max-w-2xl mx-auto py-4">
+        {/* Custom condensed header */}
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-black text-center mb-2">Score Round</h1>
         </div>
-      )}
-
-      {/* Starting Hole Selector */}
-      {!startingHoleSelected && (
-        <div className="card mb-6">
-          <h2 className="text-xl font-bold mb-4">Select Starting Hole</h2>
-          <div className="grid grid-cols-6 gap-2">
-            {course.holes.map((hole) => (
-              <button
-                key={hole.holeNumber}
-                onClick={() => {
-                  setShowLoadingRound(true);
-                  setCurrentHoleIndex(hole.holeNumber - 1);
-                  setStartingHoleSelected(true);
-                }}
-                className="p-2 bg-white border-2 border-green-600 text-gray-800 font-semibold rounded-lg hover:bg-green-50"
-              >
-                {hole.holeNumber}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {/* Loading Round Modal/Spinner */}
-      {showLoadingRound && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center">
-            <svg className="animate-spin h-8 w-8 text-green-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-            </svg>
-            <div className="text-lg font-semibold text-gray-700">Loading Round...</div>
-          </div>
-        </div>
-      )}
-      {/* GPS Status */}
-      {startingHoleSelected && geolocationError && (
-        <div className="card mb-4 bg-red-50 border-red-200">
-          <p className="text-red-700 text-sm">
-            <strong>⚠️ Location Error:</strong> {geolocationError}
-          </p>
-        </div>
-      )}
-
-      {startingHoleSelected && (
-      <>
-        {/* Top Info Bar - Running Tally */}
-        <div className="grid grid-cols-3 gap-1 mb-2">
+        {/* Summary Bar */}
+        <div className="grid grid-cols-3 gap-2 mb-6">
           <div className="p-2 bg-green-50 rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">SCORE</p>
-            <p className="text-2xl font-bold text-green-700">{scores.reduce((sum, score) => sum + score, 0)}</p>
+            <p className="text-2xl font-bold text-green-700">
+              {scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0)}
+            </p>
           </div>
           <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-purple-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">vs PAR</p>
             <p className={`text-2xl font-bold ${
-              scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0) - scores.filter((s, i) => s > 0).reduce((sum, score, index) => sum + course.holes[index].par, 0) < 0 
-                ? 'text-green-700' 
-                : 'text-red-700'
+              (() => {
+                const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
+                const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
+                const diff = totalScore - totalPar;
+                return diff < 0 ? 'text-green-700' : diff > 0 ? 'text-red-700' : 'text-gray-700';
+              })()
             }`}>
               {(() => {
-                const totalScore = scores.filter(s => s > 0).reduce((sum, score) => sum + score, 0)
-                const totalPar = scores.reduce((sum, score, index) => score > 0 ? sum + course.holes[index].par : sum, 0)
-                const diff = totalScore - totalPar
-                return diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff)
+                const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
+                const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
+                const diff = totalScore - totalPar;
+                return diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff);
               })()}
             </p>
           </div>
           <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-blue-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">HOLES</p>
-            <p className="text-2xl font-bold text-blue-700">{scores.filter(s => s >= 1).length}/{course.holes.length}</p>
+            <p className="text-2xl font-bold text-blue-700">
+              {scores.filter(s => s > 0).length}/{course.holes.length}
+            </p>
           </div>
         </div>
 
-        {/* Hole Completion Tracker */}
-        <div className="mb-3 p-2 bg-white rounded-lg border border-gray-200">
-          <h3 className="text-xs font-bold text-gray-700 mb-2">Holes Completed</h3>
-          <div className="space-y-4">
-            {nines.map((nine, nineIdx) => {
-              // Find the starting index for this nine's holes in the flat course.holes array
-              const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
-              return (
-                <div key={nineIdx}>
-                  <div className="font-semibold text-green-700 mb-1 text-xs pl-1">{nine.name}</div>
-                  <div className="grid grid-cols-6 gap-2">
-                    {nine.holes.map((hole, idx) => {
-                      const flatIdx = startIdx + idx
-                      const score = scores[flatIdx]
-                      const isCompleted = score > 0
-                      const isCurrent = currentHoleIndex === flatIdx
-                      return (
-                        <button
-                          key={hole.holeNumber + '-' + nineIdx}
-                          onClick={() => setCurrentHoleIndex(flatIdx)}
-                          className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative ${
-                            isCurrent
-                              ? 'ring-2 ring-green-800'
-                              : ''
-                          } ${
-                            isCompleted
-                              ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
-                              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200'
-                          }`}
-                          title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)})` : `Hole ${hole.holeNumber}`}
-                        >
-                          {isCompleted ? (
-                            <>
-                              <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
-                              <span className="text-lg font-bold">{score}</span>
-                              <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
-                            </>
-                          ) : (
-                            <span className="font-bold text-xs">{hole.holeNumber}</span>
-                          )}
-                        </button>
-                      )
-                    })}
+        {/* Distance to Center of the Green label and compact card */}
+        <div className="mb-1 font-semibold text-green-900 text-base text-center">Distance to Center of the Green</div>
+        <div className="mb-4 flex justify-center">
+          <div className="rounded-xl border-2 border-green-600 bg-green-50 flex items-center justify-center w-52 h-20 px-4 overflow-hidden">
+            <span className="text-4xl font-extrabold text-blue-700 leading-none truncate w-full text-center">
+              {(() => {
+                const hole = course.holes[currentHoleIndex];
+                // Debug log for distance calculation
+                console.log('[Distance Debug]', {
+                  hole,
+                  userLocation,
+                  greenLat: hole?.greenLat,
+                  greenLng: hole?.greenLng
+                });
+                if (!hole || !userLocation || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
+                const dist = getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng);
+                return Math.round(dist) + ' yd';
+              })()}
+            </span>
+          </div>
+        </div>
+
+        {/* Holes Completed Card (responsive grid, never runs off card) */}
+                {/* Incomplete warning */}
+                {showIncompleteWarning && !allScored && (
+                  <div className="mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded">
+                    You haven&apos;t entered scores for all holes.
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )}
+        <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+          <div className="font-semibold text-green-900 mb-2 text-base">Holes Completed</div>
+            {(() => {
+              const holes = course.holes;
+              const getResultLabel = (score: number, par: number) => {
+                if (!score) return '';
+                const diff = score - par;
+                if (score === 1) return 'Ace';
+                if (diff <= -3) return 'Alb.';
+                if (diff === -2) return 'Eagle';
+                if (diff === -1) return 'Birdie';
+                if (diff === 0) return 'Par';
+                if (diff === 1) return 'Bogey';
+                if (diff === 2) return 'D. Bogey';
+                if (diff > 2) return `${diff} Over`;
+                return '';
+              };
+              const getColorClass = (score: number, par: number, isCurrent: boolean) => {
+                if (!score) return 'bg-gray-50 border-gray-300 text-gray-700';
+                const diff = score - par;
+                if (score === 1) return 'bg-purple-600 text-white';
+                if (diff <= -3) return 'bg-blue-900 text-white';
+                if (diff === -2) return 'bg-blue-600 text-white';
+                if (diff === -1) return 'bg-green-600 text-white';
+                if (diff === 0) return 'bg-gray-500 text-white';
+                if (diff === 1) return 'bg-orange-500 text-white';
+                if (diff === 2) return 'bg-red-600 text-white';
+                if (diff > 2) return 'bg-red-800 text-white';
+                return 'bg-gray-50 border-gray-300 text-gray-700';
+              };
+              // Responsive grid for holes
+              const renderHoleSquare = (hole: import('@/types').Hole, idx: number) => {
+                const score = scores[idx];
+                const par = hole.par;
+                const isCurrent = currentHoleIndex === idx;
+                const label = getResultLabel(score, par);
+                const colorClass = getColorClass(score, par, isCurrent);
+                return (
+                  <button
+                    key={hole.holeNumber}
+                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl border font-bold text-xl sm:text-2xl transition p-0 ${colorClass} ${isCurrent ? 'ring-2 ring-green-600' : ''}`}
+                    style={{ minWidth: '4rem', minHeight: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+                    onClick={() => setCurrentHoleIndex(idx)}
+                  >
+                    <span className="absolute top-1 left-1 text-sm font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{`H${hole.holeNumber}`}</span>
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-2xl sm:text-3xl font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
+                    </span>
+                    <span className="absolute bottom-1 left-0 right-0 text-xs font-medium break-words text-center w-full">{score > 0 ? label : ''}</span>
+                  </button>
+                );
+              };
+              // Front 9
+              const frontNine = holes.slice(0, 9);
+              // Back 9
+              const backNine = holes.slice(9, 18);
+              return (
+                <>
+                  <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Front 9</div>
+                  <div className="grid grid-cols-6 gap-2 mb-1 w-full">
+                    {frontNine.map((hole, idx) => renderHoleSquare(hole, idx))}
+                  </div>
+                  <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Back 9</div>
+                  <div className="grid grid-cols-6 gap-2 mb-1 w-full">
+                    {backNine.map((hole, idx) => renderHoleSquare(hole, 9 + idx))}
+                  </div>
+                </>
+              );
+            })()}
         </div>
 
-        {/* Distance to Green */}
-        <div className="card mb-3">
-          <div className="text-center">
-            <p className="text-gray-600 text-xs font-semibold mb-2">Distance to Center of the Green</p>
-            {distance !== null ? (
-              <>
-                <div className="text-4xl font-bold text-blue-600">{distance}</div>
-                <p className="text-gray-700 text-xs">yards</p>
-              </>
-            ) : (
-              <p className="text-gray-500 text-xs">Getting location...</p>
-            )}
-          </div>
-        </div>
-
-
-        <div className="card mb-3">
-          {/* Score Entry */}
-          <div className="flex items-center justify-between">
-            {/* Hole Info */}
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center font-bold text-lg text-gray-700">
-                {currentHoleIndex + 1}
-              </div>
-              <div>
-                <span className="text-sm font-bold text-gray-700 block">Par {currentHole.par}</span>
-                <span className="text-xs text-gray-600">{
-                  teeBox && typeof teeBox === 'object' && 'yardage' in teeBox && teeBox.yardage
-                    ? `${teeBox.yardage}yd`
-                    : '—'
-                }</span>
-              </div>
-            </div>
-
-            {/* Score Buttons */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleScoreChange(-1)}
-                className="w-12 h-12 bg-gray-400 text-white font-bold rounded-lg hover:bg-gray-500 transition active:scale-95 flex items-center justify-center text-xl"
-              >
-                −
-              </button>
-              <div className="w-14 text-center">
-                <div className="text-3xl font-bold text-gray-800">{currentScore}</div>
-                <div className={`text-xs font-bold ${
-                  parDifference < 0 ? 'text-green-600' : 
-                  parDifference > 0 ? 'text-red-600' : 
-                  'text-gray-600'
-                }`}>
-                  {parDifference === 0 ? 'E' : 
-                   parDifference < 0 ? `-${Math.abs(parDifference)}` : 
-                   `+${parDifference}`}
+        {/* Per-Hole Entry Card (styled, advanced stats, production layout) */}
+        <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+          {course.holes[currentHoleIndex] && (
+            <>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex-1">
+                  <span className="font-bold text-xl">Hole {course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}</span>
+                  <span className="text-gray-600 ml-3 text-lg">Par {course.holes[currentHoleIndex]?.par || '-'}</span>
+                  <span className="text-gray-500 ml-3 text-base">
+                    {(() => {
+                      const hole = course.holes[currentHoleIndex];
+                      if (!hole) return '-';
+                      // Robust tee selection: camelCase, snake_case, fallback to 'men'
+                      const tee = round.selectedTee || (round as any).selected_tee || 'men';
+                      const teeBox = hole[tee];
+                      const yardage = teeBox?.yardage;
+                      // Remove debug log for production
+                      return typeof yardage === 'number' ? `${yardage}yd` : '-';
+                    })()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleScoreChange(Math.max(1, (scores[currentHoleIndex] || 0) - 1))}
+                    className="w-12 h-12 rounded-lg bg-gray-200 text-3xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 transition"
+                  >
+                    −
+                  </button>
+                  <span className="text-4xl font-extrabold w-10 text-center text-blue-700">
+                    {scores[currentHoleIndex] || 0}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleScoreChange((scores[currentHoleIndex] || 0) + 1)}
+                    className="w-12 h-12 rounded-lg bg-green-500 text-3xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
+                  >
+                    +
+                  </button>
+                </div>
+                {/* Score vs Par */}
+                <div className="ml-4 text-xl font-bold">
+                  <span className={(() => {
+                    const score = scores[currentHoleIndex] || 0;
+                    const par = course.holes[currentHoleIndex]?.par || 0;
+                    const diff = score - par;
+                    return diff < 0 ? 'text-green-700' : diff > 0 ? 'text-red-700' : 'text-gray-700';
+                  })()}>
+                    {(() => {
+                      const score = scores[currentHoleIndex] || 0;
+                      const par = course.holes[currentHoleIndex]?.par || 0;
+                      const diff = score - par;
+                      return diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff);
+                    })()}
+                  </span>
                 </div>
               </div>
-              <button
-                onClick={() => handleScoreChange(1)}
-                className="w-12 h-12 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition active:scale-95 flex items-center justify-center text-xl"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {/* Fairway, GIR, and Putt Count Tracking */}
-          <div className="flex gap-4 mt-4 items-center flex-wrap">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">FIR:</span>
-              {['hit', 'L', 'R'].map(option => (
-                <button
-                  key={option}
-                  type="button"
-                  className={`px-2 py-1 rounded border text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 transition
-                    ${
-                      (round?.perHoleStats?.[currentHoleIndex]?.fairwayHit === option)
-                        ? 'bg-green-500 text-white border-green-600' : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
-                    }
-                  `}
-                  onClick={() => {
-                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                    stats[currentHoleIndex].fairwayHit =
-                      (stats[currentHoleIndex].fairwayHit === option)
-                        ? undefined
-                        : option as 'hit' | 'L' | 'R';
-                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                  }}
-                  aria-label={option === 'hit' ? 'Fairway Hit' : option === 'L' ? 'Missed Left' : 'Missed Right'}
-                >
-                  {option === 'hit' ? '✓' : option}
-                </button>
-              ))}
-            </div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={round?.perHoleStats?.[currentHoleIndex]?.gir || false}
-                onChange={e => {
-                  const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                  if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                  stats[currentHoleIndex].gir = e.target.checked;
-                  setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                }}
-              />
-              <span className="text-sm">GIR</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <span className="text-sm">Putts:</span>
-              <select
-                className="border rounded px-2 py-1 text-sm"
-                value={(() => {
-                  const pd = round?.perHoleStats?.[currentHoleIndex]?.puttDistances || [];
-                  // Default to 0 if not set
-                  return pd.length > 0 ? pd.length : 0;
-                })()}
-                onChange={e => {
-                  const numPutts = parseInt(e.target.value, 10);
-                  const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                  if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                  let pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                  pd.length = numPutts;
-                  for (let i = 0; i < numPutts; i++) {
-                    if (typeof pd[i] !== 'number' || isNaN(pd[i])) pd[i] = 1;
-                  }
-                  stats[currentHoleIndex].puttDistances = pd;
-                  setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                }}
-              >
-                <option key={0} value={0}>0</option>
-                {[1,2,3,4].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </label>
-          </div>
-
-
-                {/* Putt Distance Entry - moved to its own card */}
-                <div className="card mb-3 mt-4">
-                  <div className="mb-2 font-semibold text-gray-700">Putt Distance to the Cup.</div>
-                  {(() => {
-                    const puttDistances = round?.perHoleStats?.[currentHoleIndex]?.puttDistances || [];
-                    const numPutts = puttDistances.length > 0 ? puttDistances.length : 0;
-                    if (numPutts === 0) return <div className="text-gray-400 text-sm">No putts recorded for this hole (optional).</div>;
-                    const quickJumps = [5, 10, 20, 50];
-                    return Array.from({ length: Math.min(Math.max(numPutts, 1), 4) }).map((_, idx) => {
-                      const value = (puttDistances[idx] == null ? 1 : puttDistances[idx]);
-                      return (
-                        <div key={idx} className="flex flex-col gap-1 mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">Putt {idx + 1}:</span>
-                            {activePutt === idx ? (
-                              <div className="flex items-center gap-2 z-10 relative w-full">
-                                <button
-                                  className="w-8 h-8 rounded bg-gray-200 text-lg font-bold flex items-center justify-center hover:bg-gray-300"
-                                  onClick={() => {
-                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                                    pd[idx] = Math.max(1, value - 1);
-                                    stats[currentHoleIndex].puttDistances = pd;
-                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                                  }}
-                                  aria-label="Decrease feet"
-                                >
-                                  −
-                                </button>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  max={99}
-                                  value={value}
-                                  onChange={e => {
-                                    let val = parseInt(e.target.value, 10);
-                                    if (isNaN(val)) val = 1;
-                                    val = Math.max(1, Math.min(99, val));
-                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                                    pd[idx] = val;
-                                    stats[currentHoleIndex].puttDistances = pd;
-                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                                  }}
-                                  className="w-16 px-2 py-1 border rounded text-center text-sm"
-                                />
-                                <button
-                                  className="w-8 h-8 rounded bg-gray-200 text-lg font-bold flex items-center justify-center hover:bg-gray-300"
-                                  onClick={() => {
-                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                                    pd[idx] = Math.min(99, value + 1);
-                                    stats[currentHoleIndex].puttDistances = pd;
-                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                                  }}
-                                  aria-label="Increase feet"
-                                >
-                                  +
-                                </button>
-                                <span className="ml-1 text-xs text-gray-500">feet</span>
-                                <button
-                                  className="ml-2 px-3 py-1 text-sm font-semibold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
-                                  onClick={() => {
-                                    // Always save the current value to puttDistances
-                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                                    pd[idx] = value;
-                                    stats[currentHoleIndex].puttDistances = pd;
-                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                                    setActivePutt(null);
-                                  }}
-                                >
-                                  Done
-                                </button>
-                              </div>
-                            ) : (
+              {/* Advanced Stats Row */}
+              <div className="flex items-center gap-4 mb-4">
+                {/* FIR */}
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">FIR:</span>
+                  {['hit', 'L', 'R'].map((val, idx) => (
+                    <button
+                      key={val}
+                      className={`w-8 h-8 rounded border font-bold ${perHoleStats[currentHoleIndex]?.fairwayHit === val ? (val === 'hit' ? 'bg-green-200 border-green-600' : 'bg-blue-200 border-blue-600') : 'bg-white border-gray-400'} ${val === 'hit' ? '' : ''}`}
+                      onClick={() => {
+                        setPerHoleStats(stats => {
+                          const updated = [...stats];
+                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: updated[currentHoleIndex]?.fairwayHit === val ? undefined : val as 'hit' | 'L' | 'R' };
+                          return updated;
+                        });
+                      }}
+                      type="button"
+                    >
+                      {val === 'hit' ? '✓' : val}
+                    </button>
+                  ))}
+                </div>
+                {/* GIR */}
+                <div className="flex items-center gap-2 ml-2">
+                  <span className="font-semibold">GIR</span>
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5"
+                    checked={!!perHoleStats[currentHoleIndex]?.gir}
+                    onChange={e => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: e.target.checked };
+                        return updated;
+                      });
+                    }}
+                  />
+                </div>
+                {/* Putts */}
+                <div className="flex items-center gap-2 min-w-[120px] flex-shrink-0">
+                  <span className="font-semibold">Putts:</span>
+                  <select
+                    className="border rounded px-2 py-1 min-w-[48px]"
+                    value={perHoleStats[currentHoleIndex]?.puttDistances?.length || 0}
+                    onChange={e => {
+                      const count = parseInt(e.target.value, 10);
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        const prev = updated[currentHoleIndex]?.puttDistances || [];
+                        updated[currentHoleIndex] = {
+                          ...updated[currentHoleIndex],
+                          puttDistances: Array(count).fill(0).map((v, i) => prev[i] || 0),
+                          puttExpanded: count > 0 ? 0 : null // expand first putt if any
+                        };
+                        return updated;
+                      });
+                    }}
+                  >
+                    {[0,1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              </div>
+              {/* Putt Distance Entry */}
+              {perHoleStats[currentHoleIndex]?.puttDistances && perHoleStats[currentHoleIndex].puttDistances.length > 0 && (
+                <div className="mt-4 p-4 rounded-xl border-2 border-green-600 bg-white">
+                  <div className="font-semibold mb-2">Putt Distance to the Cup.</div>
+                  {perHoleStats[currentHoleIndex].puttDistances.map((dist, idx) => {
+                    const expanded = perHoleStats[currentHoleIndex]?.puttExpanded === idx;
+                    return (
+                      <div key={idx} className="mb-4">
+                        {expanded ? (
+                          <>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-semibold">Putt {idx + 1}:</span>
+                              {/* - button */}
                               <button
-                                className="border px-3 py-1 rounded bg-white text-gray-800 text-sm hover:bg-blue-50"
-                                onClick={() => setActivePutt(idx)}
+                                type="button"
+                                className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                                onClick={() => {
+                                  setPerHoleStats(stats => {
+                                    const updated = [...stats];
+                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                    puttDistances[idx] = Math.max(0, (puttDistances[idx] || 0) - 1);
+                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                    return updated;
+                                  });
+                                }}
                               >
-                                {(puttDistances[idx] != null) ? `${puttDistances[idx]} ft` : 'Enter feet'}
+                                −
                               </button>
-                            )}
-                          </div>
-                          {activePutt === idx && (
-                            <>
-                              <div className="flex items-center gap-2 mt-2">
-                                <input
-                                  type="range"
-                                  min={1}
-                                  max={99}
-                                  value={value}
-                                  onChange={e => {
-                                    let val = parseInt(e.target.value, 10);
-                                    if (isNaN(val)) val = 1;
-                                    val = Math.max(1, Math.min(99, val));
-                                    const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                                    if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                                    const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                                    pd[idx] = val;
-                                    stats[currentHoleIndex].puttDistances = pd;
-                                    setRound(r => r ? { ...r, perHoleStats: stats } : r);
+                              {/* Number input */}
+                              <input
+                                type="number"
+                                min={0}
+                                className="border rounded px-2 py-1 w-16 text-center"
+                                value={dist}
+                                onChange={e => {
+                                  const val = parseInt(e.target.value, 10) || 0;
+                                  setPerHoleStats(stats => {
+                                    const updated = [...stats];
+                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                    puttDistances[idx] = val;
+                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                    return updated;
+                                  });
+                                }}
+                              />
+                              <span>feet</span>
+                              {/* + button */}
+                              <button
+                                type="button"
+                                className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                                onClick={() => {
+                                  setPerHoleStats(stats => {
+                                    const updated = [...stats];
+                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                    puttDistances[idx] = (puttDistances[idx] || 0) + 1;
+                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                    return updated;
+                                  });
+                                }}
+                              >
+                                +
+                              </button>
+                              {/* Done button: collapse this putt, expand next if any */}
+                              <button
+                                type="button"
+                                className="ml-2 px-4 py-1 rounded bg-blue-600 text-white font-semibold"
+                                onClick={() => {
+                                  setPerHoleStats(stats => {
+                                    const updated = [...stats];
+                                    const puttCount = updated[currentHoleIndex]?.puttDistances?.length || 0;
+                                    // If not last putt, expand next; else collapse all
+                                    updated[currentHoleIndex] = {
+                                      ...updated[currentHoleIndex],
+                                      puttExpanded: (idx + 1 < puttCount) ? idx + 1 : null
+                                    };
+                                    return updated;
+                                  });
+                                }}
+                              >Done</button>
+                            </div>
+                            {/* Slider */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                value={dist}
+                                onChange={e => {
+                                  const val = parseInt(e.target.value, 10) || 0;
+                                  setPerHoleStats(stats => {
+                                    const updated = [...stats];
+                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                    puttDistances[idx] = val;
+                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                    return updated;
+                                  });
+                                }}
+                              />
+                              <span>{dist} ft</span>
+                            </div>
+                            {/* Quick select buttons */}
+                            <div className="flex gap-2 mb-2">
+                              {[5, 10, 15, 20, 50].map(q => (
+                                <button
+                                  key={q}
+                                  type="button"
+                                  className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-sm"
+                                  onClick={() => {
+                                    setPerHoleStats(stats => {
+                                      const updated = [...stats];
+                                      const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                      puttDistances[idx] = q;
+                                      updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                      return updated;
+                                    });
                                   }}
-                                  className="w-40 mx-2"
-                                />
-                                <span className="text-xs text-gray-500">{value} ft</span>
-                              </div>
-                              <div className="flex gap-2 mt-2">
-                                {quickJumps.map(jump => (
-                                  <button
-                                    key={jump}
-                                    className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-semibold hover:bg-blue-200 border border-blue-200"
-                                    onClick={() => {
-                                      const stats = round?.perHoleStats ? [...round.perHoleStats] : [];
-                                      if (!stats[currentHoleIndex]) stats[currentHoleIndex] = {};
-                                      const pd = stats[currentHoleIndex].puttDistances ? [...stats[currentHoleIndex].puttDistances] : [];
-                                      pd[idx] = jump;
-                                      stats[currentHoleIndex].puttDistances = pd;
-                                      setRound(r => r ? { ...r, perHoleStats: stats } : r);
-                                    }}
-                                  >
-                                    {jump} ft
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
-                </div
-                >
-        </div>
-
-        {/* Navigation buttons */}
-        <div className="flex gap-2 mb-2 mt-4">
-          {currentHoleIndex > 0 && (
-            <button onClick={handlePreviousHole} className="flex-1 py-2 text-sm font-bold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition">
-              ← Prev
-            </button>
-          )}
-          {currentHoleIndex < course.holes.length - 1 && (
-            <button 
-              onClick={handleNextHole} 
-              disabled={currentScore === 0}
-              className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
-                currentScore === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-300 text-gray-800 hover:bg-green-400'
-              }`}
-            >
-              Next →
-            </button>
-          )}
-          {currentHoleIndex === course.holes.length - 1 && (
-            <button 
-              onClick={handleFinishRound}
-              disabled={currentScore === 0}
-              className={`flex-1 font-bold py-2 px-2 rounded-lg text-sm transition ${
-                currentScore === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-300 text-gray-800 hover:bg-green-400'
-              }`}
-            >
-              Finish ✓
-            </button>
+                                >
+                                  {q} ft
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            className="mb-2 cursor-pointer"
+                            onClick={() => {
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttExpanded: idx };
+                                return updated;
+                              });
+                            }}
+                          >
+                            <span className="font-semibold">Putt {idx + 1}:</span>
+                            <span className="ml-2 px-2 py-1 rounded bg-gray-100 border text-base">{dist} ft</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {/* Removed duplicate static Putt Distance to the Cup card */}
+              {/* Navigation Buttons */}
+              <div className="flex gap-4 mt-6">
+                {currentHoleIndex > 0 && (
+                  <button type="button" onClick={handlePreviousHole} className="btn-secondary flex-1">← Previous Hole</button>
+                )}
+                {scores[currentHoleIndex] > 0 && currentHoleIndex < course.holes.length - 1 && (
+                  <button type="button" onClick={handleNextHole} className="btn-primary flex-1">Next Hole →</button>
+                )}
+                {/* Finish/Save and End Early buttons */}
+                {allScored ? (
+                  <button
+                    type="button"
+                    className="btn-primary flex-1"
+                    onClick={handleFinishRound}
+                    disabled={finishing}
+                  >
+                    {finishing ? 'Saving...' : 'Finish Round'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn-warning flex-1"
+                    onClick={handleEndEarly}
+                    disabled={finishing}
+                  >
+                    {finishing ? 'Saving...' : 'End Round Early'}
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
 
-
-
-        {/* Stop Round in Progress button */}
-        <button
-          onClick={async () => {
-            if (stopRoundLoading) return;
-            if (window.confirm('Are you sure you want to stop and discard this round in progress? This cannot be undone.')) {
-              setStopRoundLoading(true);
-              try {
-                if (roundId) {
-                  // Remove current round from localStorage
-                  const savedRounds = localStorage.getItem('golfRounds');
-                  if (savedRounds) {
-                    const allRounds = JSON.parse(savedRounds);
-                    const filteredRounds = allRounds.filter((r: any) => r.id !== roundId);
-                    localStorage.setItem('golfRounds', JSON.stringify(filteredRounds));
-                  }
-                  // Remove round progress
-                  localStorage.removeItem('currentRoundId');
-                  localStorage.removeItem(`currentHoleIndex-${roundId}`);
-                  // Delete from Supabase
-                  await deleteRoundFromSupabase(roundId);
-                  alert('Round in progress has been stopped and removed.');
-                  router.push('/');
-                }
-              } catch (err: any) {
-                alert('Failed to fully delete round: ' + (err.message || err));
-              } finally {
-                setStopRoundLoading(false);
-              }
-            }
-          }}
-          className={`w-full py-2 px-2 bg-gradient-to-r from-red-600 to-red-800 text-white font-bold rounded-lg hover:from-red-700 hover:to-red-900 transition text-sm${stopRoundLoading ? ' opacity-60 cursor-not-allowed' : ''}`}
-          disabled={stopRoundLoading}
-        >
-          {stopRoundLoading ? 'Stopping...' : '🛑 Stop Round in Progress'}
-        </button>
-      </>
-      )}
+        {/* Delete Round Button (destructive, bottom of page) */}
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={handleDeleteRound}
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all text-lg flex items-center gap-2 disabled:opacity-60"
+            disabled={deleting}
+          >
+            <span role="img" aria-label="Delete">🗑️</span> Delete Round
+          </button>
+        </div>
+      </div>
     </PageWrapper>
-  )
+  );
 }
 
 export default function TrackRound() {
@@ -1024,5 +779,5 @@ export default function TrackRound() {
     <Suspense fallback={<div>Loading...</div>}>
       <TrackRoundContent />
     </Suspense>
-  )
+  );
 }

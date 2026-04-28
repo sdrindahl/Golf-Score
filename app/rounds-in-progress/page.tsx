@@ -46,6 +46,7 @@ export default function RoundsInProgressPage() {
   const handleViewGolfers = () => router.push('/players')
   const handleSettings = () => router.push('/settings')
 
+
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
@@ -65,13 +66,13 @@ export default function RoundsInProgressPage() {
                 <span className="font-semibold text-base text-green-700">{round.course_name}</span>
               </div>
               <div className="text-xs text-gray-600 mb-2">Started: {new Date(round.date).toLocaleString()}</div>
-              <Link href={`/round-detail?id=${round.id}&from=rounds-in-progress`} className="inline-block w-fit bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-1.5 px-4 rounded-lg shadow transition-all text-xs sm:text-sm">Watch Round</Link>
+                <div className="flex gap-2 mt-2">
+                  <Link href={`/round-detail?id=${round.id}&from=rounds-in-progress`} className="inline-block w-fit bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-1.5 px-4 rounded-lg shadow transition-all text-xs sm:text-sm">Watch Round</Link>
+                </div>
             </li>
           ))}
         </ul>
       </div>
-
-
     </div>
   );
 }

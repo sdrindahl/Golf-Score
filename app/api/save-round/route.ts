@@ -59,6 +59,10 @@ export async function POST(req: NextRequest) {
       total_score: validRound.totalScore,
       notes: validRound.notes,
       in_progress: typeof validRound.in_progress === 'boolean' ? validRound.in_progress : true,
+      course_id: Array.isArray(validRound.courseId)
+        ? validRound.courseId.join(',')
+        : validRound.courseId || null,
+      selected_tee: validRound.selectedTee,
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
     // Upsert round (only safe fields)
