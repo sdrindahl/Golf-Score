@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
         ? validRound.courseId.join(',')
         : validRound.courseId || null,
       selected_tee: validRound.selectedTee,
+      per_hole_stats: (validRound as any).perHoleStats || [],
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
     // Upsert round (only safe fields)

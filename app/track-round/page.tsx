@@ -41,6 +41,7 @@ function TrackRoundContent() {
     puttDistances?: number[];
     puttExpanded?: number | null; // index of expanded putt, or null if all collapsed
   }[]>([]);
+  const [selectedTee, setSelectedTee] = useState<string>('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const [showIncompleteWarning, setShowIncompleteWarning] = useState(false);
@@ -66,6 +67,10 @@ function TrackRoundContent() {
         userName: round?.userName || user?.name,
         courseId: round?.courseId || course?.id,
         courseName: round?.courseName || course?.name,
+        // Use selectedTee from state if it exists, otherwise fallback
+        selectedTee: typeof selectedTee !== 'undefined' ? selectedTee : (round?.selectedTee || ''),
+        // Always use the perHoleStats state
+        perHoleStats,
       };
       await fetch('/api/save-round', {
         method: 'POST',

@@ -3,7 +3,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Course } from '@/types'
+import { Course, Round, PerHoleStats } from '@/types'
+import { supabase } from '@/lib/supabase'
 import { COURSES_DATABASE } from '@/data/courses'
 import PageWrapper from '@/components/PageWrapper'
 
@@ -17,6 +18,55 @@ function CourseDetailsContent() {
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [rounds, setRounds] = useState<Round[]>([])
+  const [holeStats, setHoleStats] = useState<any[]>([])
+  // Fetch all rounds for this course and aggregate per-hole stats
+  useEffect(() => {
+    if (!courseId) return;
+    // Fetch all round_ids for this course from round_courses join table
+    async function fetchRoundsAndStats() {
+      // 1. Get all round_ids for this course
+      const { data: roundCourses, error: rcError } = await supabase
+        .from('round_courses')
+        .select('round_id')
+        .eq('course_id', courseId);
+      if (rcError) return;
+      const roundIds = roundCourses?.map((rc: any) => rc.round_id) || [];
+      if (roundIds.length === 0) {
+        setRounds([]);
+        setHoleStats([]);
+        return;
+      }
+      // 2. Fetch all rounds with those ids
+      const { data: roundData, error: rError } = await supabase
+        .from('rounds')
+        .select('*')
+        .in('id', roundIds)
+        .eq('in_progress', false);
+      if (rError) return;
+      setRounds(roundData || []);
+      // 3. Aggregate per-hole stats
+      if (!course) return;
+      const numHoles = course.holes.length;
+      // For each hole, collect stats from all rounds
+      const statsByHole = Array(numHoles).fill(null).map(() => ({ scores: [], fir: [], gir: [], putts: [], puttDistances: [] }));
+      (roundData || []).forEach((round: Round) => {
+        const perHole: PerHoleStats[] = round.perHoleStats || [];
+        const scores: number[] = round.scores || [];
+        for (let i = 0; i < numHoles; i++) {
+          if (scores[i] !== undefined) statsByHole[i].scores.push(scores[i]);
+          if (perHole[i]) {
+            if (perHole[i].fairwayHit) statsByHole[i].fir.push(perHole[i].fairwayHit);
+            if (typeof perHole[i].gir === 'boolean') statsByHole[i].gir.push(perHole[i].gir);
+            if (typeof perHole[i].putts === 'number') statsByHole[i].putts.push(perHole[i].putts);
+            if (Array.isArray(perHole[i].puttDistances)) statsByHole[i].puttDistances.push(...perHole[i].puttDistances);
+          }
+        }
+      });
+      setHoleStats(statsByHole);
+    }
+    fetchRoundsAndStats();
+  }, [courseId, course]);
 
   useEffect(() => {
     if (!courseId) return
@@ -221,161 +271,58 @@ function CourseDetailsContent() {
         </div>
       )}
 
-      {/* Score Card - Editable or View Only */}
-      <div className="card">
-        <h2 className="text-2xl font-bold mb-6">Score Card {isEditing && '(Editing)'}</h2>
-        
-        {isEditing ? (
-          // Editable Grid
-          <div className="space-y-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {editingHoles.map((hole) => (
-                <div key={hole.holeNumber} className="bg-green-900 bg-opacity-40 border-2 border-green-600 p-4 rounded-lg">
-                  <h4 className="font-bold mb-4 text-lg text-white">Hole {hole.holeNumber}</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-bold block mb-2 text-white">Par</label>
-                      <select
-                        value={String(hole.par)}
-                        onChange={(e) => handleHoleChange(hole.holeNumber, 'par', parseInt(e.target.value))}
-                        className="input-field mt-1 font-semibold"
-                      >
-                        <option value="3">Par 3</option>
-                        <option value="4">Par 4</option>
-                        <option value="5">Par 5</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-bold block mb-2 text-white">Handicap Index</label>
-                      <input
-                        type="number"
-                        value={String(hole.handicap)}
-                        onChange={(e) => handleHoleChange(hole.holeNumber, 'handicap', parseInt(e.target.value) || 0)}
-                        min="1"
-                        max={course.holeCount}
-                        className="input-field mt-1 font-semibold"
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Edit Mode Summary */}
-            <div className="mt-6 pt-6 border-t bg-gray-50 p-4 rounded">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-gray-600 text-sm">Total Par</p>
-                  <p className="text-2xl font-bold">{editingHoles.reduce((sum, h) => sum + h.par, 0)}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-600 text-sm">Holes</p>
-                  <p className="text-2xl font-bold">{editingHoles.length}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-600 text-sm">Average Par</p>
-                  <p className="text-2xl font-bold">{editingHoles.length > 0 ? (editingHoles.reduce((sum, h) => sum + h.par, 0) / editingHoles.length).toFixed(1) : '—'}</p>
-                </div>
-              </div>
-            </div>
+      {/* Stats Table: Hole-by-hole breakdown */}
+      <div className="card mt-8">
+        <h2 className="text-2xl font-bold mb-6">Hole-by-Hole Stats</h2>
+        {course && holeStats.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs md:text-sm">
+              <thead className="table-header">
+                <tr>
+                  <th className="text-center px-2 py-2">Hole</th>
+                  {course.holes.map((hole) => (
+                    <th key={hole.holeNumber} className="text-center px-2 py-2 font-semibold">{hole.holeNumber}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="font-bold text-center">Avg Score</td>
+                  {holeStats.map((h, i) => (
+                    <td key={i} className="text-center">{h.scores.length ? (h.scores.reduce((a, b) => a + b, 0) / h.scores.length).toFixed(2) : '—'}</td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="font-bold text-center">FIR %</td>
+                  {holeStats.map((h, i) => {
+                    const firHit = h.fir.filter((v: string) => v === 'hit').length;
+                    return <td key={i} className="text-center">{h.fir.length ? ((firHit / h.fir.length) * 100).toFixed(0) + '%' : '—'}</td>;
+                  })}
+                </tr>
+                <tr>
+                  <td className="font-bold text-center">GIR %</td>
+                  {holeStats.map((h, i) => {
+                    const girTrue = h.gir.filter((v: boolean) => v).length;
+                    return <td key={i} className="text-center">{h.gir.length ? ((girTrue / h.gir.length) * 100).toFixed(0) + '%' : '—'}</td>;
+                  })}
+                </tr>
+                <tr>
+                  <td className="font-bold text-center">Avg Putts</td>
+                  {holeStats.map((h, i) => (
+                    <td key={i} className="text-center">{h.putts.length ? (h.putts.reduce((a: number, b: number) => a + b, 0) / h.putts.length).toFixed(2) : '—'}</td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="font-bold text-center">Avg Putt Dist</td>
+                  {holeStats.map((h, i) => (
+                    <td key={i} className="text-center">{h.puttDistances.length ? (h.puttDistances.reduce((a: number, b: number) => a + b, 0) / h.puttDistances.length).toFixed(1) + ' ft' : '—'}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
         ) : (
-          // View Only Table - Separated Front 9 and Back 9
-          <>
-            {/* Front 9 Card */}
-            <div className="card mb-6">
-              <h3 className="text-xl font-bold mb-4">Front 9</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs md:text-sm">
-                  <thead className="table-header">
-                    <tr>
-                      <th className="text-center px-1 md:px-3 py-1 md:py-2 text-xs md:text-sm">Hole</th>
-                      {course.holes.slice(0, 9).map((hole) => (
-                        <th key={hole.holeNumber} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm font-semibold">
-                          {hole.holeNumber}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b">
-                      <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Par</td>
-                      {course.holes.slice(0, 9).map((hole) => (
-                        <td key={`par-${hole.holeNumber}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                          {hole.par}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="hidden md:table-row border-b">
-                      <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
-                      {course.holes.slice(0, 9).map((hole: any) => (
-                        <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                          {hole.men?.yardage || hole.yardage || '—'}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="hidden md:table-row">
-                      <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
-                      {course.holes.slice(0, 9).map((hole) => (
-                        <td key={`hcp-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                          {hole.handicap}
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Back 9 Card */}
-            {course.holes.length > 9 && (
-              <div className="card mb-6">
-                <h3 className="text-xl font-bold mb-4">Back 9</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs md:text-sm">
-                    <thead className="table-header">
-                      <tr>
-                        <th className="text-center px-1 md:px-3 py-1 md:py-2 text-xs md:text-sm">Hole</th>
-                        {course.holes.slice(9, 18).map((hole) => (
-                          <th key={hole.holeNumber} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm font-semibold">
-                            {hole.holeNumber}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-b">
-                        <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Par</td>
-                        {course.holes.slice(9, 18).map((hole) => (
-                          <td key={`par-${hole.holeNumber}`} className="text-center font-bold px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                            {hole.par}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className="hidden md:table-row border-b">
-                        <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">Yds</td>
-                        {course.holes.slice(9, 18).map((hole: any) => (
-                          <td key={`yds-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                            {hole.men?.yardage || hole.yardage || '—'}
-                          </td>
-                        ))}
-                      </tr>
-                      <tr className="hidden md:table-row">
-                        <td className="font-bold px-1 md:px-3 py-1 md:py-2 text-center text-xs">HCP</td>
-                        {course.holes.slice(9, 18).map((hole) => (
-                          <td key={`hcp-${hole.holeNumber}`} className="text-center px-0.5 md:px-2 py-1 md:py-2 text-xs md:text-sm">
-                            {hole.handicap}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
+          <div className="text-gray-500 text-center py-8">No round stats available for this course yet.</div>
         )}
       </div>
     </PageWrapper>
