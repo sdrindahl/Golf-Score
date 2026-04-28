@@ -99,6 +99,7 @@ function PlayerProfileContent() {
                 .select('*')
                 .eq('user_id', playerId)
                 .order('date', { ascending: false });
+              console.log('[DEBUG] Supabase rounds fetch:', { error, data });
               if (error) {
                 setRounds([]);
               } else if (data) {
@@ -115,6 +116,7 @@ function PlayerProfileContent() {
                   notes: r.notes,
                   in_progress: r.in_progress,
                 }));
+                console.log('[DEBUG] Parsed playerRounds:', playerRounds);
                 setRounds(playerRounds);
               }
             } else {
@@ -166,58 +168,63 @@ function PlayerProfileContent() {
     
     // Get course data to find course ratings
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-    
-    console.log('📊 All courses in storage:', courses)
-    console.log('📊 Calculating handicap for', rounds.length, 'rounds')
+
+    // Debug: log all course IDs in localStorage
+    const courseIdsInStorage = courses.map((c: any) => c.id);
+    console.log('📊 All courses in storage:', courses);
+    console.log('📊 Course IDs in storage:', courseIdsInStorage);
+    console.log('📊 Calculating handicap for', rounds.length, 'rounds');
+
+    // Debug: log courseId for each round
+    rounds.forEach((round, idx) => {
+      console.log(`[DEBUG] Round #${idx + 1} courseId:`, round.courseId);
+    });
 
     // Calculate handicap differential for each round
     // Formula: (Score - Course Rating) × 113 / Slope Rating
     const differentials = rounds
       .map(round => {
-        const course = courses.find((c: any) => c.id === round.courseId)
-        
-        if (!course) {
-          return null
+        // Support multi-child rounds (comma-separated courseId)
+        const courseIds = typeof round.courseId === 'string' ? round.courseId.split(',') : [round.courseId];
+        const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
+        if (childCourses.length === 0) {
+          return null;
         }
-        
-        const is9Hole = course.holes && course.holes.length === 9
-        
-        // Use provided courseRating or calculate from holes, default to 72 (or 36 for 9-hole)
-        let courseRating = course.courseRating
-        let slopeRating = course.slopeRating
-        
-        // If courseRating is set to default 18-hole rating (72) but this is a 9-hole course, adjust it
-        if (is9Hole && courseRating === 72) {
-          courseRating = 36
+        // Sum up ratings and slopes for all child courses
+        let totalRating = 0;
+        let totalSlope = 0;
+        let totalHoles = 0;
+        let allHaveSlope = true;
+        childCourses.forEach((course: any) => {
+          let courseRating = course.courseRating;
+          let slopeRating = course.slopeRating;
+          if (!courseRating && course.holes) {
+            courseRating = course.holes.reduce((sum: number, h: any) => sum + h.par, 0);
+          }
+          if (!courseRating) courseRating = 36;
+          if (!slopeRating) slopeRating = 113;
+          totalRating += courseRating;
+          totalSlope += slopeRating;
+          totalHoles += course.holes ? course.holes.length : 9;
+          if (!slopeRating) allHaveSlope = false;
+        });
+        if (!allHaveSlope) {
+          return null;
         }
-        
-        if (!courseRating && course.holes) {
-          // Calculate approximate rating from hole par values
-          const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
-          courseRating = totalPar
+        // If this is a full 18-hole round, use as is; if 9, double it
+        let adjustedScore = round.totalScore;
+        let adjustedRating = totalRating;
+        let adjustedSlope = totalSlope;
+        if (totalHoles === 9) {
+          adjustedScore = round.totalScore * 2;
+          adjustedRating = totalRating * 2;
+          adjustedSlope = totalSlope * 2;
         }
-        
-        if (!courseRating) courseRating = is9Hole ? 36 : 72
-        if (!slopeRating) slopeRating = 113
-        
-        if (!slopeRating) {
-          return null
-        }
-        
-        // For 9-hole rounds, we need to convert to 18-hole equivalent
-        let adjustedScore = round.totalScore
-        let adjustedRating = courseRating
-        
-        if (is9Hole) {
-          // Double 9-hole scores and ratings to get 18-hole equivalents
-          adjustedScore = round.totalScore * 2
-          adjustedRating = courseRating * 2
-        }
-        
-        const differential = (adjustedScore - adjustedRating) * 113 / slopeRating
-        return differential
+        // For 18 holes, use as is
+        const differential = (adjustedScore - adjustedRating) * 113 / adjustedSlope;
+        return differential;
       })
-      .filter((d: any) => d !== null) as number[]
+      .filter((d: any) => d !== null) as number[];
 
     console.log('📊 Valid differentials:', differentials)
 

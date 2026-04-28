@@ -52,7 +52,7 @@ function RoundDetailContent() {
               } else if (data.course_id) {
                 courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
               }
-              // Convert snake_case to camelCase
+              // Convert snake_case to camelCase and map per_hole_stats
               const camelRound: Round = {
                 id: data.id,
                 userId: data.user_id,
@@ -65,6 +65,7 @@ function RoundDetailContent() {
                 totalScore: data.total_score,
                 notes: data.notes,
                 in_progress: data.in_progress,
+                perHoleStats: data.per_hole_stats || [],
               };
               if (isMounted) setRound(camelRound);
 
@@ -436,6 +437,7 @@ function RoundDetailContent() {
             </div>
           </div>
 
+
           {/* Performance Breakdown */}
           <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
             <h3 className="text-lg font-bold text-gray-800 mb-3">Performance Breakdown</h3>
@@ -476,6 +478,45 @@ function RoundDetailContent() {
                   </div>
                 ) : null
               })}
+            </div>
+          </div>
+
+          {/* Per-Hole Stats Breakdown */}
+          <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
+            <h3 className="text-lg font-bold text-gray-800 mb-3">Per-Hole Stats Breakdown</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-xs md:text-sm">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="p-2">Hole</th>
+                    <th className="p-2">Score</th>
+                    <th className="p-2">FIR</th>
+                    <th className="p-2">GIR</th>
+                    <th className="p-2">Putts</th>
+                    <th className="p-2">Putt 1 Dist</th>
+                    <th className="p-2">Putt 2 Dist</th>
+                    <th className="p-2">Putt 3 Dist</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {course.holes.map((hole, idx) => {
+                    const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
+                    const puttDistances = Array.isArray(stats.puttDistances) ? stats.puttDistances : [];
+                    return (
+                      <tr key={hole.holeNumber} className="border-b last:border-0">
+                        <td className="p-2 text-center font-bold">{hole.holeNumber}</td>
+                        <td className="p-2 text-center">{round.scores[idx] || '-'}</td>
+                        <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
+                        <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
+                        <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
+                        <td className="p-2 text-center">{puttDistances[0] !== undefined ? `${puttDistances[0]} ft` : '-'}</td>
+                        <td className="p-2 text-center">{puttDistances[1] !== undefined ? `${puttDistances[1]} ft` : '-'}</td>
+                        <td className="p-2 text-center">{puttDistances[2] !== undefined ? `${puttDistances[2]} ft` : '-'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 

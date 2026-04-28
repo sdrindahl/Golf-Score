@@ -47,7 +47,26 @@ export interface PerHoleStats {
    */
   fairwayHit?: 'hit' | 'L' | 'R';
   gir?: boolean;
-  puttDistances?: number[]; // feet, e.g. [first, second, third, ...]
+  /**
+   * Array of putt distances in feet, e.g. [first, second, third, ...]
+   */
+  puttDistances?: number[];
+  /**
+   * Array of booleans: true if the putt was made, false if missed (for make % by distance)
+   */
+  puttResults?: boolean[];
+  /**
+   * For each putt, if missed, direction: 'L', 'R', 'S' (short), 'LNG' (long), or undefined
+   */
+  puttMissDirection?: ('L' | 'R' | 'S' | 'LNG' | undefined)[];
+  /**
+   * Number of putts on this hole (redundant but convenient)
+   */
+  putts?: number;
+  /**
+   * True if zero putts (chip-in)
+   */
+  chipIn?: boolean;
 }
 
 export interface Round {
