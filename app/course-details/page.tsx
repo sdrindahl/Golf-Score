@@ -25,6 +25,7 @@ function CourseDetailsContent() {
     if (!courseId) return;
     // Fetch all round_ids for this course from round_courses join table
     async function fetchRoundsAndStats() {
+      if (!supabase) return;
       // 1. Get all round_ids for this course
       const { data: roundCourses, error: rcError } = await supabase
         .from('round_courses')
@@ -49,17 +50,30 @@ function CourseDetailsContent() {
       if (!course) return;
       const numHoles = course.holes.length;
       // For each hole, collect stats from all rounds
-      const statsByHole = Array(numHoles).fill(null).map(() => ({ scores: [], fir: [], gir: [], putts: [], puttDistances: [] }));
+      type StatsByHole = {
+        scores: number[];
+        fir: Array<'hit' | 'L' | 'R' | undefined>;
+        gir: boolean[];
+        putts: number[];
+        puttDistances: number[];
+      };
+      const statsByHole: StatsByHole[] = Array(numHoles).fill(null).map(() => ({
+        scores: [],
+        fir: [],
+        gir: [],
+        putts: [],
+        puttDistances: [],
+      }));
       (roundData || []).forEach((round: Round) => {
         const perHole: PerHoleStats[] = round.perHoleStats || [];
         const scores: number[] = round.scores || [];
         for (let i = 0; i < numHoles; i++) {
           if (scores[i] !== undefined) statsByHole[i].scores.push(scores[i]);
           if (perHole[i]) {
-            if (perHole[i].fairwayHit) statsByHole[i].fir.push(perHole[i].fairwayHit);
+            if (perHole[i].fairwayHit !== undefined) statsByHole[i].fir.push(perHole[i].fairwayHit);
             if (typeof perHole[i].gir === 'boolean') statsByHole[i].gir.push(perHole[i].gir);
             if (typeof perHole[i].putts === 'number') statsByHole[i].putts.push(perHole[i].putts);
-            if (Array.isArray(perHole[i].puttDistances)) statsByHole[i].puttDistances.push(...perHole[i].puttDistances);
+            if (Array.isArray(perHole[i].puttDistances)) statsByHole[i].puttDistances.push(...(perHole[i].puttDistances as number[]));
           }
         }
       });
@@ -289,7 +303,7 @@ function CourseDetailsContent() {
                 <tr>
                   <td className="font-bold text-center">Avg Score</td>
                   {holeStats.map((h, i) => (
-                    <td key={i} className="text-center">{h.scores.length ? (h.scores.reduce((a, b) => a + b, 0) / h.scores.length).toFixed(2) : '—'}</td>
+                    <td key={i} className="text-center">{h.scores.length ? (h.scores.reduce((a: number, b: number) => a + b, 0) / h.scores.length).toFixed(2) : '—'}</td>
                   ))}
                 </tr>
                 <tr>
