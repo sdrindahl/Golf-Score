@@ -268,7 +268,7 @@ export default function Home() {
           >
             <div className="text-2xl mb-0.5">🏌️</div>
             <div className="text-lg font-bold">{rounds.length}</div>
-            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Rounds</div>
+            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">View My Rounds</div>
           </button>
 
           {/* Current Active Rounds Card */}
