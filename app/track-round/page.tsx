@@ -58,20 +58,26 @@ function TrackRoundContent() {
     setShowIncompleteWarning(false);
     try {
       const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+      // Robustly determine selectedTee: state, round.selectedTee, round.selected_tee
+      let teeToSend = selectedTee || round?.selectedTee || (round && (round as any).selected_tee) || '';
       const updatedRound = {
         ...round,
         scores,
-        in_progress: false,
+        in_progress: false, // Always boolean
         completed_at: new Date().toISOString(),
         userId: round?.userId || user?.id,
         userName: round?.userName || user?.name,
         courseId: round?.courseId || course?.id,
         courseName: round?.courseName || course?.name,
-        // Use selectedTee from state if it exists, otherwise fallback
-        selectedTee: typeof selectedTee !== 'undefined' ? selectedTee : (round?.selectedTee || ''),
+        selectedTee: teeToSend,
         // Always use the perHoleStats state
         perHoleStats,
       };
+      // Remove any snake_case fields if present (defensive)
+      if ('selected_tee' in updatedRound) delete (updatedRound as any).selected_tee;
+      if ('inProgress' in updatedRound) delete (updatedRound as any).inProgress;
+      // Debug log outgoing payload
+      console.log('[handleFinishRound] Outgoing payload:', updatedRound);
       await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -165,6 +171,7 @@ function TrackRoundContent() {
     setIsClient(true);
   }, []);
 
+
   useEffect(() => {
     if (!isClient || !roundId) return;
     let subscription: any;
@@ -192,6 +199,20 @@ function TrackRoundContent() {
       if (subscription && subscription.unsubscribe) subscription.unsubscribe();
     };
   }, [isClient, roundId]);
+
+  // 1B: Set selectedTee from round if it exists and state is empty
+  // Always sync selectedTee from round when round changes
+  useEffect(() => {
+  if (round) {
+    if (round.selectedTee) {
+      setSelectedTee(round.selectedTee);
+    } else if ((round as any).selected_tee) {
+      setSelectedTee((round as any).selected_tee);
+    } else {
+      setSelectedTee('');
+    }
+  }
+}, [round]);
 
   // Load course info from localStorage (as in round-detail)
   useEffect(() => {

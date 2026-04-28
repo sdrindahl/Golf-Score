@@ -31,7 +31,12 @@ function SelectTeePageInner() {
   // Create and save a new round, then navigate (wait for Supabase)
   React.useEffect(() => {
     const createAndStartRound = async () => {
-      if (!tee || !startingHole || creating) return;
+      // Defensive: do not proceed unless tee is a valid value
+      if (!tee || !['men', 'women', 'senior', 'championship'].includes(tee)) {
+        console.warn('[SelectTee] Attempted to create round without valid tee:', tee);
+        return;
+      }
+      if (!startingHole || creating) return;
       setCreating(true);
       setError(null);
 
@@ -40,6 +45,7 @@ function SelectTeePageInner() {
       const user = auth.getCurrentUser();
       const nines = selectedNines;
       console.log('[DEBUG] Selected nines:', nines);
+      console.log('[DEBUG] Tee at round creation:', tee);
       if (!user || !user.id) {
         setError('You must be logged in to start a round.');
         setCreating(false);
@@ -63,9 +69,12 @@ function SelectTeePageInner() {
         scores: Array(nines.length * 9).fill(0),
         totalScore: 0,
         notes: '',
-        in_progress: true,
+        in_progress: true, // Always boolean
         startingHole: startingHole,
       };
+      // Remove any snake_case fields if present (defensive)
+      if ('selected_tee' in round) delete (round as any).selected_tee;
+      if ('inProgress' in round) delete (round as any).inProgress;
       console.log('[DEBUG] Round object to save:', round);
 
       try {
@@ -82,6 +91,8 @@ function SelectTeePageInner() {
         }
 
         // 2. Save round to Supabase
+        // Debug log outgoing round object
+        console.log('[DEBUG] Outgoing round object to /api/save-round:', round);
         const response = await fetch('/api/save-round', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
