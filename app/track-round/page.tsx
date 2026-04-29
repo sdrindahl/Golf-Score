@@ -425,14 +425,14 @@ function TrackRoundContent() {
               const getResultLabel = (score: number, par: number) => {
                 if (!score) return '';
                 const diff = score - par;
-                if (score === 1) return 'Ace';
-                if (diff <= -3) return 'Alb.';
-                if (diff === -2) return 'Eagle';
-                if (diff === -1) return 'Birdie';
-                if (diff === 0) return 'Par';
-                if (diff === 1) return 'Bogey';
-                if (diff === 2) return 'D. Bogey';
-                if (diff > 2) return `${diff} Over`;
+                if (score === 1) return 'A';      // Ace
+                if (diff <= -3) return 'Alb';     // Albatross
+                if (diff === -2) return 'E';      // Eagle
+                if (diff === -1) return 'B';      // Birdie
+                if (diff === 0) return 'P';       // Par
+                if (diff === 1) return 'Bo';      // Bogey
+                if (diff === 2) return 'Db';      // Double Bogey
+                if (diff > 2) return 'Tb';        // Triple+ Bogey
                 return '';
               };
               const getColorClass = (score: number, par: number, isCurrent: boolean) => {
@@ -458,15 +458,15 @@ function TrackRoundContent() {
                 return (
                   <button
                     key={hole.holeNumber}
-                    className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl border font-bold text-xl sm:text-2xl transition p-0 ${colorClass} ${isCurrent ? 'ring-2 ring-green-600' : ''}`}
-                    style={{ minWidth: '4rem', minHeight: '4rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
+                    className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg border font-bold text-xs sm:text-base transition p-0 ${colorClass} ${isCurrent ? 'ring-2 ring-green-600' : ''}`}
+                    style={{ minWidth: '2.5rem', minHeight: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => setCurrentHoleIndex(idx)}
                   >
-                    <span className="absolute top-1 left-1 text-sm font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{`H${hole.holeNumber}`}</span>
+                    <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{hole.holeNumber}</span>
                     <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className="text-2xl sm:text-3xl font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
+                      <span className="text-base sm:text-lg font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
                     </span>
-                    <span className="absolute bottom-1 left-0 right-0 text-xs font-medium break-words text-center w-full">{score > 0 ? label : ''}</span>
+                    <span className="absolute left-0 right-0 text-[9px] font-medium break-words text-center w-full text-black" style={{bottom: 0}}>{score > 0 ? label : ''}</span>
                   </button>
                 );
               };
@@ -477,11 +477,11 @@ function TrackRoundContent() {
               return (
                 <>
                   <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Front 9</div>
-                  <div className="grid grid-cols-6 gap-2 mb-1 w-full">
+                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
                     {frontNine.map((hole, idx) => renderHoleSquare(hole, idx))}
                   </div>
                   <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Back 9</div>
-                  <div className="grid grid-cols-6 gap-2 mb-1 w-full">
+                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
                     {backNine.map((hole, idx) => renderHoleSquare(hole, 9 + idx))}
                   </div>
                 </>
