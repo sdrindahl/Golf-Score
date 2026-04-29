@@ -61,16 +61,16 @@ function LeaderboardByCourse({ rounds }: { rounds: Round[] }) {
           return bHoles - aHoles;
         });
         return (
-          <div key={parentName} className="bg-white rounded-2xl shadow-lg p-0 overflow-hidden border border-green-200">
-            <div className="bg-green-800 text-white text-xl font-bold px-6 py-4">{parentName} Standings</div>
-            <table className="min-w-full text-base">
+          <div key={parentName} className="bg-white rounded-2xl shadow-lg p-0 overflow-x-auto border border-green-200 w-full max-w-full">
+            <div className="bg-green-800 text-white text-base font-semibold px-3 py-2">{parentName}</div>
+            <table className="w-full text-sm">
               <thead>
                 <tr className="bg-green-50 border-b border-green-200">
-                  <th className="px-2 py-2 text-left font-semibold text-gray-700 w-8"></th>
+                  <th className="px-2 py-2 text-left font-semibold text-gray-700"></th>
                   <th className="px-2 py-2 text-left font-semibold text-gray-700"> </th>
-                  <th className="px-4 py-2 text-center font-semibold text-gray-700 w-16">+/-</th>
-                  <th className="px-4 py-2 text-center font-semibold text-gray-700 w-16">Thru</th>
-                  <th className="px-4 py-2 text-center font-semibold text-gray-700 w-16">TOT</th>
+                  <th className="px-2 py-2 text-center font-semibold text-gray-700">+/-</th>
+                  <th className="px-2 py-2 text-center font-semibold text-gray-700">Thru</th>
+                  <th className="px-2 py-2 text-center font-semibold text-gray-700">TOT</th>
                 </tr>
               </thead>
               <tbody>
