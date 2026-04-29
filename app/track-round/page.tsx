@@ -546,9 +546,8 @@ function TrackRoundContent() {
                   </span>
                 </div>
               </div>
-              {/* Advanced Stats Row */}
-              <div className="flex items-center gap-4 mb-4">
-                {/* FIR */}
+              {/* Advanced Stats Row - FIR on first row, GIR and Putts below */}
+              <div className="flex flex-col gap-2 mb-4">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold">FIR:</span>
                   {['hit', 'L', 'R'].map((val, idx) => (
@@ -568,44 +567,70 @@ function TrackRoundContent() {
                     </button>
                   ))}
                 </div>
-                {/* GIR */}
-                <div className="flex items-center gap-2 ml-2">
-                  <span className="font-semibold">GIR</span>
-                  <input
-                    type="checkbox"
-                    className="w-5 h-5"
-                    checked={!!perHoleStats[currentHoleIndex]?.gir}
-                    onChange={e => {
-                      setPerHoleStats(stats => {
-                        const updated = [...stats];
-                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: e.target.checked };
-                        return updated;
-                      });
-                    }}
-                  />
-                </div>
-                {/* Putts */}
-                <div className="flex items-center gap-2 min-w-[120px] flex-shrink-0">
-                  <span className="font-semibold">Putts:</span>
-                  <select
-                    className="border rounded px-2 py-1 min-w-[48px]"
-                    value={perHoleStats[currentHoleIndex]?.puttDistances?.length || 0}
-                    onChange={e => {
-                      const count = parseInt(e.target.value, 10);
-                      setPerHoleStats(stats => {
-                        const updated = [...stats];
-                        const prev = updated[currentHoleIndex]?.puttDistances || [];
-                        updated[currentHoleIndex] = {
-                          ...updated[currentHoleIndex],
-                          puttDistances: Array(count).fill(0).map((v, i) => prev[i] || 0),
-                          puttExpanded: count > 0 ? 0 : null // expand first putt if any
-                        };
-                        return updated;
-                      });
-                    }}
-                  >
-                    {[0,1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
+                <div className="flex flex-row flex-wrap gap-4 mt-1">
+                  {/* GIR */}
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">GIR</span>
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5"
+                      checked={!!perHoleStats[currentHoleIndex]?.gir}
+                      onChange={e => {
+                        setPerHoleStats(stats => {
+                          const updated = [...stats];
+                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: e.target.checked };
+                          return updated;
+                        });
+                      }}
+                    />
+                  </div>
+                  {/* Putts (Stepper) */}
+                  <div className="flex items-center gap-2 min-w-[120px] flex-shrink-0">
+                    <span className="font-semibold">Putts:</span>
+                    <button
+                      type="button"
+                      className="w-8 h-8 rounded bg-red-500 text-xl font-bold text-white flex items-center justify-center hover:bg-red-600 border"
+                      onClick={() => {
+                        setPerHoleStats(stats => {
+                          const updated = [...stats];
+                          const prev = updated[currentHoleIndex]?.puttDistances || [];
+                          const currentCount = prev.length;
+                          const newCount = Math.max(0, currentCount - 1);
+                          updated[currentHoleIndex] = {
+                            ...updated[currentHoleIndex],
+                            puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
+                            puttExpanded: newCount > 0 ? 0 : null
+                          };
+                          return updated;
+                        });
+                      }}
+                      aria-label="Decrease putts"
+                    >
+                      −
+                    </button>
+                    <span className="text-lg font-bold w-6 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length || 0}</span>
+                    <button
+                      type="button"
+                      className="w-8 h-8 rounded bg-green-500 text-xl font-bold text-white flex items-center justify-center hover:bg-green-600 border"
+                      onClick={() => {
+                        setPerHoleStats(stats => {
+                          const updated = [...stats];
+                          const prev = updated[currentHoleIndex]?.puttDistances || [];
+                          const currentCount = prev.length;
+                          const newCount = Math.min(6, currentCount + 1);
+                          updated[currentHoleIndex] = {
+                            ...updated[currentHoleIndex],
+                            puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
+                            puttExpanded: newCount > 0 ? 0 : null
+                          };
+                          return updated;
+                        });
+                      }}
+                      aria-label="Increase putts"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
               {/* Putt Distance Entry */}
