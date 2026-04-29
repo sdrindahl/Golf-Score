@@ -259,6 +259,9 @@ function RoundDetailContent() {
     }
   }, [course, round]);
 
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [showPerHole, setShowPerHole] = useState(false);
+
   if (loading) {
     return (
       <PageWrapper title="Scorecard">
@@ -457,86 +460,106 @@ function RoundDetailContent() {
           </div>
 
 
-          {/* Performance Breakdown */}
+          {/* Performance Breakdown (collapsible) */}
           <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">Performance Breakdown</h3>
-            <div className="space-y-2">
-              {Object.entries(scoreDistribution).map(([type, count]) => {
-                const percentage = (count / maxDistribution) * 100
-                const colors: { [key: string]: string } = {
-                  'Hole in 1': 'from-purple-500 to-purple-400',
-                  'Eagle': 'from-blue-500 to-blue-400',
-                  'Birdie': 'from-green-500 to-green-400',
-                  'Par': 'from-yellow-500 to-yellow-400',
-                  'Bogey': 'from-orange-500 to-orange-400',
-                  'Double+': 'from-red-500 to-red-400',
-                }
-                const emojis: { [key: string]: string } = {
-                  'Hole in 1': '⭐',
-                  'Eagle': '🦅',
-                  'Birdie': '🐦',
-                  'Par': '✔️',
-                  'Bogey': '⚠️',
-                  'Double+': '❌',
-                }
-                return count > 0 ? (
-                  <div key={type}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{emojis[type]}</span>
-                        <span className="text-sm font-semibold text-gray-700">{type}</span>
+            <button
+              className="flex items-center w-full justify-between text-lg font-bold text-gray-800 mb-3 focus:outline-none"
+              onClick={() => setShowPerformance(v => !v)}
+              aria-expanded={showPerformance}
+              aria-controls="performance-breakdown"
+            >
+              Performance Breakdown
+              <span className="ml-2 text-xl">{showPerformance ? '▼' : '▶'}</span>
+            </button>
+            {showPerformance && (
+              <div id="performance-breakdown" className="space-y-2">
+                {Object.entries(scoreDistribution).map(([type, count]) => {
+                  const percentage = (count / maxDistribution) * 100
+                  const colors: { [key: string]: string } = {
+                    'Hole in 1': 'from-purple-500 to-purple-400',
+                    'Eagle': 'from-blue-500 to-blue-400',
+                    'Birdie': 'from-green-500 to-green-400',
+                    'Par': 'from-yellow-500 to-yellow-400',
+                    'Bogey': 'from-orange-500 to-orange-400',
+                    'Double+': 'from-red-500 to-red-400',
+                  }
+                  const emojis: { [key: string]: string } = {
+                    'Hole in 1': '⭐',
+                    'Eagle': '🦅',
+                    'Birdie': '🐦',
+                    'Par': '✔️',
+                    'Bogey': '⚠️',
+                    'Double+': '❌',
+                  }
+                  return count > 0 ? (
+                    <div key={type}>
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{emojis[type]}</span>
+                          <span className="text-sm font-semibold text-gray-700">{type}</span>
+                        </div>
+                        <span className="text-sm font-bold text-gray-800">{count}</span>
                       </div>
-                      <span className="text-sm font-bold text-gray-800">{count}</span>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ) : null
-              })}
-            </div>
+                  ) : null
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Per-Hole Stats Breakdown */}
+          {/* Per-Hole Stats Breakdown (collapsible) */}
           <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">Per-Hole Stats Breakdown</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-xs md:text-sm">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-2">Hole</th>
-                    <th className="p-2">Score</th>
-                    <th className="p-2">FIR</th>
-                    <th className="p-2">GIR</th>
-                    <th className="p-2">Putts</th>
-                    <th className="p-2">Putt 1 Dist</th>
-                    <th className="p-2">Putt 2 Dist</th>
-                    <th className="p-2">Putt 3 Dist</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {course.holes.map((hole, idx) => {
-                    const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
-                    const puttDistances = Array.isArray(stats.puttDistances) ? stats.puttDistances : [];
-                    return (
-                      <tr key={hole.holeNumber} className="border-b last:border-0">
-                        <td className="p-2 text-center font-bold">{hole.holeNumber}</td>
-                        <td className="p-2 text-center">{round.scores[idx] || '-'}</td>
-                        <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
-                        <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
-                        <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
-                        <td className="p-2 text-center">{puttDistances[0] !== undefined ? `${puttDistances[0]} ft` : '-'}</td>
-                        <td className="p-2 text-center">{puttDistances[1] !== undefined ? `${puttDistances[1]} ft` : '-'}</td>
-                        <td className="p-2 text-center">{puttDistances[2] !== undefined ? `${puttDistances[2]} ft` : '-'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <button
+              className="flex items-center w-full justify-between text-lg font-bold text-gray-800 mb-3 focus:outline-none"
+              onClick={() => setShowPerHole(v => !v)}
+              aria-expanded={showPerHole}
+              aria-controls="per-hole-breakdown"
+            >
+              Per-Hole Stats Breakdown
+              <span className="ml-2 text-xl">{showPerHole ? '▼' : '▶'}</span>
+            </button>
+            {showPerHole && (
+              <div id="per-hole-breakdown" className="overflow-x-auto">
+                <table className="min-w-full text-xs md:text-sm">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="p-2">Hole</th>
+                      <th className="p-2">Score</th>
+                      <th className="p-2">FIR</th>
+                      <th className="p-2">GIR</th>
+                      <th className="p-2">Putts</th>
+                      <th className="p-2">Putt 1 Dist</th>
+                      <th className="p-2">Putt 2 Dist</th>
+                      <th className="p-2">Putt 3 Dist</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {course.holes.map((hole, idx) => {
+                      const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
+                      const puttDistances = Array.isArray(stats.puttDistances) ? stats.puttDistances : [];
+                      return (
+                        <tr key={hole.holeNumber} className="border-b last:border-0">
+                          <td className="p-2 text-center font-bold">{hole.holeNumber}</td>
+                          <td className="p-2 text-center">{round.scores[idx] || '-'}</td>
+                          <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
+                          <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
+                          <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
+                          <td className="p-2 text-center">{puttDistances[0] !== undefined ? `${puttDistances[0]} ft` : '-'}</td>
+                          <td className="p-2 text-center">{puttDistances[1] !== undefined ? `${puttDistances[1]} ft` : '-'}</td>
+                          <td className="p-2 text-center">{puttDistances[2] !== undefined ? `${puttDistances[2]} ft` : '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
