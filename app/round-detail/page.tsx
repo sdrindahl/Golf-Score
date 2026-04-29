@@ -382,49 +382,68 @@ function RoundDetailContent() {
             )}
           </div>
 
-          {/* All Holes Grid - Grouped by Nines */}
-          <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
-            <h2 className="text-lg font-bold mb-3 text-gray-800">Holes Completed</h2>
-            <div className="space-y-4">
-              {nines.map((nine, nineIdx) => {
-                // Find the starting index for this nine's holes in the flat course.holes array
-                const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
-                return (
-                  <div key={nineIdx}>
-                    <div className="font-semibold text-green-700 mb-1 text-xs pl-1">{nine.name}</div>
-                    <div className="grid grid-cols-6 gap-2">
-                      {nine.holes.map((hole, idx) => {
-                        const flatIdx = startIdx + idx
-                        const score = round.scores[flatIdx]
-                        const isCompleted = score > 0
-                        return (
-                          <div
-                            key={hole.holeNumber + '-' + nineIdx}
-                            onClick={() => handleHoleEdit(flatIdx)}
-                            className={`aspect-square rounded text-xs font-semibold flex flex-col items-center justify-center transition-all relative cursor-pointer hover:opacity-80 ${
-                              isCompleted
-                                ? `bg-gradient-to-br ${getScoreColor(score, hole.par)} text-white`
-                                : 'bg-gray-100 border border-gray-300 text-gray-700'
-                            }`}
-                            title={isCompleted ? `Hole ${hole.holeNumber}: Score ${score} (${getScoreType(score, hole.par)}) - Click to edit` : `Hole ${hole.holeNumber} - Click to edit`}
-                          >
-                            {isCompleted ? (
-                              <>
-                                <span className="text-[9px] absolute top-0.5 left-0.5 font-bold">H{hole.holeNumber}</span>
-                                <span className="text-lg font-bold">{score}</span>
-                                <span className="text-[9px] absolute bottom-0.5 leading-tight">{getScoreType(score, hole.par)}</span>
-                              </>
-                            ) : (
-                              <span className="font-bold text-xs">{hole.holeNumber}</span>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
+          {/* All Holes Grid - Grouped by Nines (Track Round style) */}
+          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+            <div className="font-semibold text-green-900 mb-2 text-base">Holes Completed</div>
+            {nines.map((nine, nineIdx) => {
+              // Find the starting index for this nine's holes in the flat course.holes array
+              const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
+              // Helper for abbreviation
+              const getResultLabel = (score: number, par: number) => {
+                if (!score) return '';
+                const diff = score - par;
+                if (score === 1) return 'A';      // Ace
+                if (diff <= -3) return 'Alb';     // Albatross
+                if (diff === -2) return 'E';      // Eagle
+                if (diff === -1) return 'B';      // Birdie
+                if (diff === 0) return 'P';       // Par
+                if (diff === 1) return 'Bo';      // Bogey
+                if (diff === 2) return 'Db';      // Double Bogey
+                if (diff > 2) return 'Tb';        // Triple+ Bogey
+                return '';
+              };
+              // Helper for color
+              const getColorClass = (score: number, par: number) => {
+                if (!score) return 'bg-gray-50 border-gray-300 text-gray-700';
+                const diff = score - par;
+                if (score === 1) return 'bg-purple-600 text-white';
+                if (diff <= -3) return 'bg-blue-900 text-white';
+                if (diff === -2) return 'bg-blue-600 text-white';
+                if (diff === -1) return 'bg-green-600 text-white';
+                if (diff === 0) return 'bg-gray-500 text-white';
+                if (diff === 1) return 'bg-orange-500 text-white';
+                if (diff === 2) return 'bg-red-600 text-white';
+                if (diff > 2) return 'bg-red-800 text-white';
+                return 'bg-gray-50 border-gray-300 text-gray-700';
+              };
+              return (
+                <div key={nineIdx}>
+                  <div className="font-semibold text-green-700 mb-1 text-xs pl-1">{nine.name}</div>
+                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
+                    {nine.holes.map((hole, idx) => {
+                      const flatIdx = startIdx + idx;
+                      const score = round.scores[flatIdx];
+                      const par = hole.par;
+                      const label = getResultLabel(score, par);
+                      const colorClass = getColorClass(score, par);
+                      return (
+                        <div
+                          key={hole.holeNumber + '-' + nineIdx}
+                          className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg border font-bold text-xs sm:text-base transition p-0 flex flex-col items-center justify-center ${colorClass}`}
+                          title={score > 0 ? `Hole ${hole.holeNumber}: Score ${score} (${label})` : `Hole ${hole.holeNumber}`}
+                        >
+                          <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{hole.holeNumber}</span>
+                          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-base sm:text-lg font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
+                          </span>
+                          <span className="absolute left-0 right-0 text-[9px] font-medium break-words text-center w-full text-black" style={{bottom: 0}}>{score > 0 ? label : ''}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              );
+            })}
             <div className="flex justify-between items-center p-2 rounded-lg font-semibold text-sm bg-gray-100 mt-3">
               <span className="text-gray-800">Total</span>
               <div className="flex gap-3 items-center text-xs md:text-sm">
