@@ -389,7 +389,7 @@ function RoundDetailContent() {
               // Find the starting index for this nine's holes in the flat course.holes array
               const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
               // Helper for abbreviation
-              const getResultLabel = (score, par) => {
+              const getResultLabel = (score: number, par: number) => {
                 if (!score) return '';
                 const diff = score - par;
                 if (score === 1) return 'A';      // Ace
@@ -403,7 +403,7 @@ function RoundDetailContent() {
                 return '';
               };
               // Helper for color
-              const getColorClass = (score, par) => {
+              const getColorClass = (score: number, par: number) => {
                 if (!score) return 'bg-gray-50 border-gray-300 text-gray-700';
                 const diff = score - par;
                 if (score === 1) return 'bg-purple-600 text-white';
