@@ -180,7 +180,8 @@ export default function Home() {
       const holes = selectedCourses.flatMap((c: any) => c.holes || []);
       for (let i = 0; i < holes.length; i++) {
         const hole = holes[i];
-        const score = round.scores?.[i] || 0;
+        const score = round.scores?.[i];
+        if (!score || score === 0) continue; // Skip unentered holes
         const par = hole.par;
         const diff = score - par;
         if (score === 1) {
