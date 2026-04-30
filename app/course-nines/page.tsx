@@ -60,7 +60,41 @@ function CourseNinesPageInner() {
         <button
           className="btn btn-primary mt-2 w-full"
           disabled={selectedChildIds.length === 0}
-          onClick={() => {
+          onClick={async () => {
+            // Prevent starting a round if one is already in progress
+            let currentUser = null;
+            try {
+              const userStr = localStorage.getItem('currentUser');
+              if (userStr) currentUser = JSON.parse(userStr);
+            } catch {}
+            if (!currentUser) {
+              alert('Please log in first.');
+              router.push('/login');
+              return;
+            }
+            let hasInProgress = false;
+            try {
+              const response = await fetch('/api/get-in-progress-rounds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id })
+              });
+              const result = await response.json();
+              hasInProgress = Array.isArray(result.rounds) && result.rounds.length > 0;
+            } catch (err) {}
+            // Check localStorage for in-progress round
+            const savedRounds = localStorage.getItem('golfRounds');
+            let localHasInProgress = false;
+            if (savedRounds) {
+              try {
+                const rounds = JSON.parse(savedRounds);
+                localHasInProgress = rounds.some((r: any) => r.userId === currentUser.id && r.in_progress);
+              } catch {}
+            }
+            if (hasInProgress || localHasInProgress) {
+              alert('You already have a round in progress. Please finish or discard it before starting a new one.');
+              return;
+            }
             const ninesParam = selectedChildIds.join(",");
             router.push(`/select-tee?nines=${ninesParam}`);
           }}
