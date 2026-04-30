@@ -88,7 +88,7 @@ function CourseNinesPageInner() {
             if (savedRounds) {
               try {
                 const rounds = JSON.parse(savedRounds);
-                localHasInProgress = rounds.some((r) => r.userId === currentUser.id && r.in_progress);
+                localHasInProgress = rounds.some((r: any) => r.userId === currentUser.id && r.in_progress);
               } catch {}
             }
             if (hasInProgress || localHasInProgress) {
