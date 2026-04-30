@@ -2,6 +2,15 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 
+// Helper to chunk an array into subarrays of given size
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) {
+    result.push(arr.slice(i, i + size));
+  }
+  return result;
+}
+
 function getDistanceYards(lat1: number, lon1: number, lat2: number, lon2: number) {
   const toRad = (v: number) => (v * Math.PI) / 180;
   const R = 6371000; // meters
@@ -389,27 +398,7 @@ function TrackRoundContent() {
           </div>
         </div>
 
-        {/* Distance to Center of the Green label and compact card */}
-        <div className="mb-1 font-semibold text-green-900 text-base text-center">Distance to Center of the Green</div>
-        <div className="mb-4 flex justify-center">
-          <div className="rounded-xl border-2 border-green-600 bg-green-50 flex items-center justify-center w-52 h-20 px-4 overflow-hidden">
-            <span className="text-4xl font-extrabold text-blue-700 leading-none truncate w-full text-center">
-              {(() => {
-                const hole = course.holes[currentHoleIndex];
-                // Debug log for distance calculation
-                console.log('[Distance Debug]', {
-                  hole,
-                  userLocation,
-                  greenLat: hole?.greenLat,
-                  greenLng: hole?.greenLng
-                });
-                if (!hole || !userLocation || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
-                const dist = getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng);
-                return Math.round(dist) + ' yd';
-              })()}
-            </span>
-          </div>
-        </div>
+
 
         {/* Holes Completed Card (responsive grid, never runs off card) */}
                 {/* Incomplete warning */}
@@ -419,7 +408,21 @@ function TrackRoundContent() {
                   </div>
                 )}
         <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
-          <div className="font-semibold text-green-900 mb-2 text-base">Holes Completed</div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-semibold text-green-900 text-base">Holes Completed</span>
+            <div className="flex-1" />
+            <div className="flex flex-col items-center">
+              <span className="text-black text-xs mb-0.5">Center of Green</span>
+              <span className="bg-green-100 rounded-full px-5 py-1 font-bold text-green-900 text-xl flex items-center min-w-[80px] justify-center border border-green-300">
+                {(() => {
+                  const hole = course.holes[currentHoleIndex];
+                  if (!hole || !userLocation || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
+                  const dist = getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng);
+                  return Math.round(dist) + ' yd';
+                })()}
+              </span>
+            </div>
+          </div>
             {(() => {
               const holes = course.holes;
               const getResultLabel = (score: number, par: number) => {
@@ -529,22 +532,6 @@ function TrackRoundContent() {
                     +
                   </button>
                 </div>
-                {/* Score vs Par */}
-                <div className="ml-4 text-xl font-bold">
-                  <span className={(() => {
-                    const score = scores[currentHoleIndex] || 0;
-                    const par = course.holes[currentHoleIndex]?.par || 0;
-                    const diff = score - par;
-                    return diff < 0 ? 'text-green-700' : diff > 0 ? 'text-red-700' : 'text-gray-700';
-                  })()}>
-                    {(() => {
-                      const score = scores[currentHoleIndex] || 0;
-                      const par = course.holes[currentHoleIndex]?.par || 0;
-                      const diff = score - par;
-                      return diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff);
-                    })()}
-                  </span>
-                </div>
               </div>
               {/* Advanced Stats Row - FIR on first row, GIR and Putts below */}
               <div className="flex flex-col gap-2 mb-4">
@@ -599,7 +586,7 @@ function TrackRoundContent() {
                           updated[currentHoleIndex] = {
                             ...updated[currentHoleIndex],
                             puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
-                            puttExpanded: newCount > 0 ? 0 : null
+                            puttExpanded: null // always collapse all on change
                           };
                           return updated;
                         });
@@ -621,7 +608,7 @@ function TrackRoundContent() {
                           updated[currentHoleIndex] = {
                             ...updated[currentHoleIndex],
                             puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
-                            puttExpanded: newCount > 0 ? 0 : null
+                            puttExpanded: null // always collapse all on change
                           };
                           return updated;
                         });
@@ -635,127 +622,113 @@ function TrackRoundContent() {
               </div>
               {/* Putt Distance Entry */}
               {perHoleStats[currentHoleIndex]?.puttDistances && perHoleStats[currentHoleIndex].puttDistances.length > 0 && (
-                <div className="mt-4 p-4 rounded-xl border-2 border-green-600 bg-white">
+                <div className="mt-4 p-4 rounded-xl border-2 border-green-600 bg-white relative">
                   <div className="font-semibold mb-2">Putt Distance to the Cup.</div>
-                  {perHoleStats[currentHoleIndex].puttDistances.map((dist, idx) => {
-                    const expanded = perHoleStats[currentHoleIndex]?.puttExpanded === idx;
+                  {/* Expanded putt editor, absolutely positioned overlay */}
+                  {typeof perHoleStats[currentHoleIndex]?.puttExpanded === 'number' && (() => {
+                    const idx = perHoleStats[currentHoleIndex].puttExpanded;
+                    const dist = perHoleStats[currentHoleIndex].puttDistances[idx];
                     return (
-                      <div key={idx} className="mb-4">
-                        {expanded ? (
-                          <>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-semibold">Putt {idx + 1}:</span>
-                              {/* - button */}
-                              <button
-                                type="button"
-                                className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                                onClick={() => {
-                                  setPerHoleStats(stats => {
-                                    const updated = [...stats];
-                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                    puttDistances[idx] = Math.max(0, (puttDistances[idx] || 0) - 1);
-                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                    return updated;
-                                  });
-                                }}
-                              >
-                                −
-                              </button>
-                              {/* Number input */}
-                              <input
-                                type="number"
-                                min={0}
-                                className="border rounded px-2 py-1 w-16 text-center"
-                                value={dist}
-                                onChange={e => {
-                                  const val = parseInt(e.target.value, 10) || 0;
-                                  setPerHoleStats(stats => {
-                                    const updated = [...stats];
-                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                    puttDistances[idx] = val;
-                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                    return updated;
-                                  });
-                                }}
-                              />
-                              <span>feet</span>
-                              {/* + button */}
-                              <button
-                                type="button"
-                                className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                                onClick={() => {
-                                  setPerHoleStats(stats => {
-                                    const updated = [...stats];
-                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                    puttDistances[idx] = (puttDistances[idx] || 0) + 1;
-                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                    return updated;
-                                  });
-                                }}
-                              >
-                                +
-                              </button>
-                              {/* Done button: collapse this putt, expand next if any */}
-                              <button
-                                type="button"
-                                className="ml-2 px-4 py-1 rounded bg-blue-600 text-white font-semibold"
-                                onClick={() => {
-                                  setPerHoleStats(stats => {
-                                    const updated = [...stats];
-                                    const puttCount = updated[currentHoleIndex]?.puttDistances?.length || 0;
-                                    // If not last putt, expand next; else collapse all
-                                    updated[currentHoleIndex] = {
-                                      ...updated[currentHoleIndex],
-                                      puttExpanded: (idx + 1 < puttCount) ? idx + 1 : null
-                                    };
-                                    return updated;
-                                  });
-                                }}
-                              >Done</button>
-                            </div>
-                            {/* Slider */}
-                            <div className="flex items-center gap-2 mb-2">
-                              <input
-                                type="range"
-                                min={0}
-                                max={100}
-                                value={dist}
-                                onChange={e => {
-                                  const val = parseInt(e.target.value, 10) || 0;
-                                  setPerHoleStats(stats => {
-                                    const updated = [...stats];
-                                    const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                    puttDistances[idx] = val;
-                                    updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                    return updated;
-                                  });
-                                }}
-                              />
-                              <span>{dist} ft</span>
-                            </div>
-                            {/* Quick select buttons */}
-                            <div className="flex gap-2 mb-2">
-                              {[5, 10, 15, 20, 50].map(q => (
-                                <button
-                                  key={q}
-                                  type="button"
-                                  className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-sm"
-                                  onClick={() => {
-                                    setPerHoleStats(stats => {
-                                      const updated = [...stats];
-                                      const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                      puttDistances[idx] = q;
-                                      updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                      return updated;
-                                    });
-                                  }}
-                                >
-                                  {q} ft
-                                </button>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
+                      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
+                        <div className="bg-white bg-opacity-95 rounded-xl shadow-2xl p-6 max-w-xs w-full flex flex-col items-center border-2 border-green-600">
+                          <div className="flex items-center gap-2 mb-4 w-full justify-center">
+                            <span className="font-semibold whitespace-nowrap">Putt {idx + 1}:</span>
+                            <button
+                              type="button"
+                              className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                              onClick={() => {
+                                setPerHoleStats(stats => {
+                                  const updated = [...stats];
+                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                  puttDistances[idx] = Math.max(0, (puttDistances[idx] || 0) - 1);
+                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                  return updated;
+                                });
+                              }}
+                            >
+                              −
+                            </button>
+                            <input
+                              type="number"
+                              min={0}
+                              className="border rounded px-2 py-1 w-16 text-center mx-1"
+                              value={dist}
+                              onChange={e => {
+                                const val = parseInt(e.target.value, 10) || 0;
+                                setPerHoleStats(stats => {
+                                  const updated = [...stats];
+                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                  puttDistances[idx] = val;
+                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                  return updated;
+                                });
+                              }}
+                            />
+                            <span className="ml-1">feet</span>
+                            <button
+                              type="button"
+                              className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border ml-1"
+                              onClick={() => {
+                                setPerHoleStats(stats => {
+                                  const updated = [...stats];
+                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                  puttDistances[idx] = (puttDistances[idx] || 0) + 1;
+                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                  return updated;
+                                });
+                              }}
+                            >
+                              +
+                            </button>
+                            <button
+                              type="button"
+                              className="ml-4 px-5 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition min-w-[70px]"
+                              onClick={() => {
+                                setPerHoleStats(stats => {
+                                  const updated = [...stats];
+                                  updated[currentHoleIndex] = {
+                                    ...updated[currentHoleIndex],
+                                    puttExpanded: null
+                                  };
+                                  return updated;
+                                });
+                              }}
+                            >Done</button>
+                          </div>
+                          <div className="flex items-center gap-2 w-full justify-center">
+                            <input
+                              type="range"
+                              min={0}
+                              max={100}
+                              value={dist}
+                              className="flex-1"
+                              onChange={e => {
+                                const val = parseInt(e.target.value, 10) || 0;
+                                setPerHoleStats(stats => {
+                                  const updated = [...stats];
+                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                  puttDistances[idx] = val;
+                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                  return updated;
+                                });
+                              }}
+                            />
+                            <span className="ml-2 w-10 text-center">{dist} ft</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* Collapsed putts grid, excluding expanded */}
+                  {chunkArray(
+                    perHoleStats[currentHoleIndex].puttDistances
+                      .map((dist, idx) => ({ dist, idx }))
+                      .filter(({ idx }) => perHoleStats[currentHoleIndex]?.puttExpanded !== idx),
+                    2
+                  ).map((row, rowIdx) => (
+                    <div key={rowIdx} className="flex flex-row gap-4 mb-2">
+                      {row.map(({ dist, idx }) => (
+                        <div key={idx} className="mb-2 flex-1">
                           <div
                             className="mb-2 cursor-pointer"
                             onClick={() => {
@@ -769,10 +742,10 @@ function TrackRoundContent() {
                             <span className="font-semibold">Putt {idx + 1}:</span>
                             <span className="ml-2 px-2 py-1 rounded bg-gray-100 border text-base">{dist} ft</span>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
               )}
               {/* Removed duplicate static Putt Distance to the Cup card */}
@@ -784,8 +757,8 @@ function TrackRoundContent() {
                 {scores[currentHoleIndex] > 0 && currentHoleIndex < course.holes.length - 1 && (
                   <button type="button" onClick={handleNextHole} className="btn-primary flex-1">Next Hole →</button>
                 )}
-                {/* Finish/Save and End Early buttons */}
-                {allScored ? (
+                {/* Show Finish Round only if all holes are scored */}
+                {allScored && (
                   <button
                     type="button"
                     className="btn-primary flex-1"
@@ -794,15 +767,6 @@ function TrackRoundContent() {
                   >
                     {finishing ? 'Saving...' : 'Finish Round'}
                   </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn-warning flex-1"
-                    onClick={handleEndEarly}
-                    disabled={finishing}
-                  >
-                    {finishing ? 'Saving...' : 'End Round Early'}
-                  </button>
                 )}
               </div>
             </>
@@ -810,14 +774,22 @@ function TrackRoundContent() {
         </div>
 
         {/* Delete Round Button (destructive, bottom of page) */}
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-row flex-wrap justify-center gap-4 items-center">
           <button
             type="button"
             onClick={handleDeleteRound}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg transition-all text-lg flex items-center gap-2 disabled:opacity-60"
+            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 sm:px-8 rounded-full shadow-lg transition-all text-lg flex-1 min-w-[140px] max-w-xs flex items-center justify-center gap-2 disabled:opacity-60"
             disabled={deleting}
           >
-            <span role="img" aria-label="Delete">🗑️</span> Delete Round
+            <span role="img" aria-label="Cancel">🗑️</span> Cancel Round
+          </button>
+          <button
+            type="button"
+            onClick={handleEndEarly}
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold py-3 px-4 sm:px-8 rounded-full shadow-lg transition-all text-lg flex-1 min-w-[140px] max-w-xs flex items-center justify-center gap-2 disabled:opacity-60"
+            disabled={finishing}
+          >
+            {finishing ? 'Saving...' : 'End Round Early'}
           </button>
         </div>
       </div>
