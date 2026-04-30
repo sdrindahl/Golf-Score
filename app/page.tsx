@@ -258,13 +258,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       {/* Debug: Show rounds array for troubleshooting */}
-      <pre className="fixed bottom-2 left-2 z-50 bg-white/90 text-xs p-2 rounded shadow max-w-[90vw] max-h-[40vh] overflow-auto border border-gray-300" style={{fontSize:'10px'}}>
-        {JSON.stringify(rounds, null, 2)}
-        {"\n\n[Debug] courseId for each round:"}
-        {rounds.map(r => `\n- round id: ${r.id}, courseId: ${r.courseId}`).join('')}
-        {"\n[Debug] All course IDs from Supabase:"}
-        {courses.map(c => c.id).join(', ')}
-      </pre>
+      {/* Debug output removed for production */}
       {/* Welcome Banner */}
       <div className="px-4 pt-8 pb-4">
         <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
