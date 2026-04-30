@@ -490,22 +490,37 @@ function TrackRoundContent() {
                   </button>
                 );
               };
-              // Front 9
-              const frontNine = holes.slice(0, 9);
-              // Back 9
-              const backNine = holes.slice(9, 18);
-              return (
-                <>
-                  <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Front 9</div>
-                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {frontNine.map((hole, idx) => renderHoleSquare(hole, idx))}
+              // Dynamically label each 9 based on selected courses
+              let nineLabels: string[] = [];
+              if (course && typeof window !== 'undefined') {
+                const savedCourses = localStorage.getItem('golfCourses');
+                if (savedCourses) {
+                  try {
+                    const allCourses = JSON.parse(savedCourses);
+                    // Get the courseIds used to merge this course
+                    const courseIds = course.id.split(',').map((id: string) => id.trim()).filter(Boolean);
+                    nineLabels = courseIds.map((id: string) => {
+                      const c = allCourses.find((cc: any) => cc.id === id);
+                      return c && c.name ? c.name : '';
+                    });
+                  } catch {}
+                }
+              }
+              // Render each 9 with its label and holes
+              const nines = [];
+              for (let i = 0; i < Math.ceil(holes.length / 9); i++) {
+                const label = nineLabels[i] || `Nine ${i + 1}`;
+                const nineHoles = holes.slice(i * 9, (i + 1) * 9);
+                nines.push(
+                  <div key={i}>
+                    <div className="mb-0.5 font-semibold text-green-700 text-xs">{label}</div>
+                    <div className="grid grid-cols-9 gap-1 mb-1 w-full">
+                      {nineHoles.map((hole, idx) => renderHoleSquare(hole, i * 9 + idx))}
+                    </div>
                   </div>
-                  <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Back 9</div>
-                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {backNine.map((hole, idx) => renderHoleSquare(hole, 9 + idx))}
-                  </div>
-                </>
-              );
+                );
+              }
+              return <>{nines}</>;
             })()}
         </div>
 
