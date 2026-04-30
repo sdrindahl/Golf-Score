@@ -493,283 +493,286 @@ function TrackRoundContent() {
         </div>
 
         {/* Per-Hole Entry Card (styled, advanced stats, production layout) */}
-        <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
-          {course.holes[currentHoleIndex] && (
-            <>
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex-1">
-                  <span className="font-bold text-xl">Hole {course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}</span>
-                  <span className="text-gray-600 ml-3 text-lg">Par {course.holes[currentHoleIndex]?.par || '-'}</span>
-                  <span className="text-gray-500 ml-3 text-base">
-                    {(() => {
-                      const hole = course.holes[currentHoleIndex];
-                      if (!hole) return '-';
-                      // Robust tee selection: camelCase, snake_case, fallback to 'men'
-                      const tee = round.selectedTee || (round as any).selected_tee || 'men';
-                      const teeBox = hole[tee];
-                      const yardage = teeBox?.yardage;
-                      // Remove debug log for production
-                      return typeof yardage === 'number' ? `${yardage}yd` : '-';
-                    })()}
-                  </span>
-                </div>
+        {/* Per-Hole Main Card: Hole, Par, Yards, Score Stepper */}
+        {course.holes[currentHoleIndex] && (
+          <div className="mb-4 p-6 rounded-xl border-2 border-green-600 bg-green-50 flex items-center justify-between">
+            <div>
+              <span className="font-bold text-xl block">Hole {course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}</span>
+              <div className="mt-1 flex flex-row items-baseline gap-4">
+                <span className="text-black text-lg">Par {course.holes[currentHoleIndex]?.par || '-'}</span>
+                <span className="text-black text-base">
+                  {(() => {
+                    const hole = course.holes[currentHoleIndex];
+                    if (!hole) return '-';
+                    const tee = round.selectedTee || (round as any).selected_tee || 'men';
+                    const teeBox = hole[tee];
+                    const yardage = teeBox?.yardage;
+                    return typeof yardage === 'number' ? `${yardage}yd` : '-';
+                  })()}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleScoreChange(Math.max(1, (scores[currentHoleIndex] || 0) - 1))}
+                className="w-12 h-12 rounded-lg bg-gray-200 text-3xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 transition"
+              >
+                −
+              </button>
+              <span className="text-4xl font-extrabold w-10 text-center text-blue-700">
+                {scores[currentHoleIndex] || 0}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleScoreChange((scores[currentHoleIndex] || 0) + 1)}
+                className="w-12 h-12 rounded-lg bg-green-500 text-3xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Per-Hole Stats Card: FIR, GIR, Putts, Putt Distance */}
+        {course.holes[currentHoleIndex] && (
+          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+            {/* Advanced Stats Row - FIR on first row, GIR and Putts below */}
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">FIR:</span>
+                {['hit', 'L', 'R'].map((val, idx) => (
+                  <button
+                    key={val}
+                    className={`w-8 h-8 rounded border font-bold ${perHoleStats[currentHoleIndex]?.fairwayHit === val ? (val === 'hit' ? 'bg-green-200 border-green-600' : 'bg-blue-200 border-blue-600') : 'bg-white border-gray-400'} ${val === 'hit' ? '' : ''}`}
+                    onClick={() => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: updated[currentHoleIndex]?.fairwayHit === val ? undefined : val as 'hit' | 'L' | 'R' };
+                        return updated;
+                      });
+                    }}
+                    type="button"
+                  >
+                    {val === 'hit' ? '✓' : val}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-row flex-wrap gap-4 mt-1">
+                {/* GIR */}
                 <div className="flex items-center gap-2">
+                  <span className="font-semibold">GIR</span>
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5"
+                    checked={!!perHoleStats[currentHoleIndex]?.gir}
+                    onChange={e => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: e.target.checked };
+                        return updated;
+                      });
+                    }}
+                  />
+                </div>
+                {/* Putts (Stepper) */}
+                <div className="flex items-center gap-2 min-w-[120px] flex-shrink-0">
+                  <span className="font-semibold">Putts:</span>
                   <button
                     type="button"
-                    onClick={() => handleScoreChange(Math.max(1, (scores[currentHoleIndex] || 0) - 1))}
-                    className="w-12 h-12 rounded-lg bg-gray-200 text-3xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 transition"
+                    className="w-8 h-8 rounded bg-red-500 text-xl font-bold text-white flex items-center justify-center hover:bg-red-600 border"
+                    onClick={() => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        const prev = updated[currentHoleIndex]?.puttDistances || [];
+                        const currentCount = prev.length;
+                        const newCount = Math.max(0, currentCount - 1);
+                        updated[currentHoleIndex] = {
+                          ...updated[currentHoleIndex],
+                          puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
+                          puttExpanded: null // always collapse all on change
+                        };
+                        return updated;
+                      });
+                    }}
+                    aria-label="Decrease putts"
                   >
                     −
                   </button>
-                  <span className="text-4xl font-extrabold w-10 text-center text-blue-700">
-                    {scores[currentHoleIndex] || 0}
-                  </span>
+                  <span className="text-lg font-bold w-6 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length || 0}</span>
                   <button
                     type="button"
-                    onClick={() => handleScoreChange((scores[currentHoleIndex] || 0) + 1)}
-                    className="w-12 h-12 rounded-lg bg-green-500 text-3xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
+                    className="w-8 h-8 rounded bg-green-500 text-xl font-bold text-white flex items-center justify-center hover:bg-green-600 border"
+                    onClick={() => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        const prev = updated[currentHoleIndex]?.puttDistances || [];
+                        const currentCount = prev.length;
+                        const newCount = Math.min(6, currentCount + 1);
+                        updated[currentHoleIndex] = {
+                          ...updated[currentHoleIndex],
+                          puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
+                          puttExpanded: null // always collapse all on change
+                        };
+                        return updated;
+                      });
+                    }}
+                    aria-label="Increase putts"
                   >
                     +
                   </button>
                 </div>
               </div>
-              {/* Advanced Stats Row - FIR on first row, GIR and Putts below */}
-              <div className="flex flex-col gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">FIR:</span>
-                  {['hit', 'L', 'R'].map((val, idx) => (
-                    <button
-                      key={val}
-                      className={`w-8 h-8 rounded border font-bold ${perHoleStats[currentHoleIndex]?.fairwayHit === val ? (val === 'hit' ? 'bg-green-200 border-green-600' : 'bg-blue-200 border-blue-600') : 'bg-white border-gray-400'} ${val === 'hit' ? '' : ''}`}
-                      onClick={() => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: updated[currentHoleIndex]?.fairwayHit === val ? undefined : val as 'hit' | 'L' | 'R' };
-                          return updated;
-                        });
-                      }}
-                      type="button"
-                    >
-                      {val === 'hit' ? '✓' : val}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex flex-row flex-wrap gap-4 mt-1">
-                  {/* GIR */}
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">GIR</span>
-                    <input
-                      type="checkbox"
-                      className="w-5 h-5"
-                      checked={!!perHoleStats[currentHoleIndex]?.gir}
-                      onChange={e => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: e.target.checked };
-                          return updated;
-                        });
-                      }}
-                    />
-                  </div>
-                  {/* Putts (Stepper) */}
-                  <div className="flex items-center gap-2 min-w-[120px] flex-shrink-0">
-                    <span className="font-semibold">Putts:</span>
-                    <button
-                      type="button"
-                      className="w-8 h-8 rounded bg-red-500 text-xl font-bold text-white flex items-center justify-center hover:bg-red-600 border"
-                      onClick={() => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          const prev = updated[currentHoleIndex]?.puttDistances || [];
-                          const currentCount = prev.length;
-                          const newCount = Math.max(0, currentCount - 1);
-                          updated[currentHoleIndex] = {
-                            ...updated[currentHoleIndex],
-                            puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
-                            puttExpanded: null // always collapse all on change
-                          };
-                          return updated;
-                        });
-                      }}
-                      aria-label="Decrease putts"
-                    >
-                      −
-                    </button>
-                    <span className="text-lg font-bold w-6 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length || 0}</span>
-                    <button
-                      type="button"
-                      className="w-8 h-8 rounded bg-green-500 text-xl font-bold text-white flex items-center justify-center hover:bg-green-600 border"
-                      onClick={() => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          const prev = updated[currentHoleIndex]?.puttDistances || [];
-                          const currentCount = prev.length;
-                          const newCount = Math.min(6, currentCount + 1);
-                          updated[currentHoleIndex] = {
-                            ...updated[currentHoleIndex],
-                            puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
-                            puttExpanded: null // always collapse all on change
-                          };
-                          return updated;
-                        });
-                      }}
-                      aria-label="Increase putts"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-              {/* Putt Distance Entry */}
-              {perHoleStats[currentHoleIndex]?.puttDistances && perHoleStats[currentHoleIndex].puttDistances.length > 0 && (
-                <div className="mt-4 p-4 rounded-xl border-2 border-green-600 bg-white relative">
-                  <div className="font-semibold mb-2">Putt Distance to the Cup.</div>
-                  {/* Expanded putt editor, absolutely positioned overlay */}
-                  {typeof perHoleStats[currentHoleIndex]?.puttExpanded === 'number' && (() => {
-                    const idx = perHoleStats[currentHoleIndex].puttExpanded;
-                    const dist = perHoleStats[currentHoleIndex].puttDistances[idx];
-                    return (
-                      <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
-                        <div className="bg-white bg-opacity-95 rounded-xl shadow-2xl p-6 max-w-xs w-full flex flex-col items-center border-2 border-green-600">
-                          <div className="flex items-center gap-2 mb-4 w-full justify-center">
-                            <span className="font-semibold whitespace-nowrap">Putt {idx + 1}:</span>
-                            <button
-                              type="button"
-                              className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                              onClick={() => {
-                                setPerHoleStats(stats => {
-                                  const updated = [...stats];
-                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                  puttDistances[idx] = Math.max(0, (puttDistances[idx] || 0) - 1);
-                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                  return updated;
-                                });
-                              }}
-                            >
-                              −
-                            </button>
-                            <input
-                              type="number"
-                              min={0}
-                              className="border rounded px-2 py-1 w-16 text-center mx-1"
-                              value={dist}
-                              onChange={e => {
-                                const val = parseInt(e.target.value, 10) || 0;
-                                setPerHoleStats(stats => {
-                                  const updated = [...stats];
-                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                  puttDistances[idx] = val;
-                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                  return updated;
-                                });
-                              }}
-                            />
-                            <span className="ml-1">feet</span>
-                            <button
-                              type="button"
-                              className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border ml-1"
-                              onClick={() => {
-                                setPerHoleStats(stats => {
-                                  const updated = [...stats];
-                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                  puttDistances[idx] = (puttDistances[idx] || 0) + 1;
-                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                  return updated;
-                                });
-                              }}
-                            >
-                              +
-                            </button>
-                            <button
-                              type="button"
-                              className="ml-4 px-5 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition min-w-[70px]"
-                              onClick={() => {
-                                setPerHoleStats(stats => {
-                                  const updated = [...stats];
-                                  updated[currentHoleIndex] = {
-                                    ...updated[currentHoleIndex],
-                                    puttExpanded: null
-                                  };
-                                  return updated;
-                                });
-                              }}
-                            >Done</button>
-                          </div>
-                          <div className="flex items-center gap-2 w-full justify-center">
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              value={dist}
-                              className="flex-1"
-                              onChange={e => {
-                                const val = parseInt(e.target.value, 10) || 0;
-                                setPerHoleStats(stats => {
-                                  const updated = [...stats];
-                                  const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                                  puttDistances[idx] = val;
-                                  updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                                  return updated;
-                                });
-                              }}
-                            />
-                            <span className="ml-2 w-10 text-center">{dist} ft</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  {/* Collapsed putts grid, excluding expanded */}
-                  {chunkArray(
-                    perHoleStats[currentHoleIndex].puttDistances
-                      .map((dist, idx) => ({ dist, idx }))
-                      .filter(({ idx }) => perHoleStats[currentHoleIndex]?.puttExpanded !== idx),
-                    2
-                  ).map((row, rowIdx) => (
-                    <div key={rowIdx} className="flex flex-row gap-4 mb-2">
-                      {row.map(({ dist, idx }) => (
-                        <div key={idx} className="mb-2 flex-1">
-                          <div
-                            className="mb-2 cursor-pointer"
+            </div>
+            {/* Putt Distance Entry */}
+            {perHoleStats[currentHoleIndex]?.puttDistances && perHoleStats[currentHoleIndex].puttDistances.length > 0 && (
+              <div className="mt-4 p-4 rounded-xl border-2 border-green-600 bg-white relative">
+                <div className="font-semibold mb-2">Putt Distance to the Cup.</div>
+                {/* Expanded putt editor, absolutely positioned overlay */}
+                {typeof perHoleStats[currentHoleIndex]?.puttExpanded === 'number' && (() => {
+                  const idx = perHoleStats[currentHoleIndex].puttExpanded;
+                  const dist = perHoleStats[currentHoleIndex].puttDistances[idx];
+                  return (
+                    <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-10">
+                      <div className="bg-white bg-opacity-95 rounded-xl shadow-2xl p-6 max-w-xs w-full flex flex-col items-center border-2 border-green-600">
+                        <div className="flex items-center gap-2 mb-4 w-full justify-center">
+                          <span className="font-semibold whitespace-nowrap">Putt {idx + 1}:</span>
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
                             onClick={() => {
                               setPerHoleStats(stats => {
                                 const updated = [...stats];
-                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttExpanded: idx };
+                                const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                puttDistances[idx] = Math.max(0, (puttDistances[idx] || 0) - 1);
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
                                 return updated;
                               });
                             }}
                           >
-                            <span className="font-semibold">Putt {idx + 1}:</span>
-                            <span className="ml-2 px-2 py-1 rounded bg-gray-100 border text-base">{dist} ft</span>
-                          </div>
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            min={0}
+                            className="border rounded px-2 py-1 w-16 text-center mx-1"
+                            value={dist}
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10) || 0;
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                puttDistances[idx] = val;
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                return updated;
+                              });
+                            }}
+                          />
+                          <span className="ml-1">feet</span>
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border ml-1"
+                            onClick={() => {
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                puttDistances[idx] = (puttDistances[idx] || 0) + 1;
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                return updated;
+                              });
+                            }}
+                          >
+                            +
+                          </button>
+                          <button
+                            type="button"
+                            className="ml-4 px-5 py-2 rounded bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition min-w-[70px]"
+                            onClick={() => {
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                updated[currentHoleIndex] = {
+                                  ...updated[currentHoleIndex],
+                                  puttExpanded: null
+                                };
+                                return updated;
+                              });
+                            }}
+                          >Done</button>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2 w-full justify-center">
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={dist}
+                            className="flex-1"
+                            onChange={e => {
+                              const val = parseInt(e.target.value, 10) || 0;
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                puttDistances[idx] = val;
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                return updated;
+                              });
+                            }}
+                          />
+                          <span className="ml-2 w-10 text-center">{dist} ft</span>
+                        </div>
+                      </div>
                     </div>
-                  ))}
-                </div>
-              )}
-              {/* Removed duplicate static Putt Distance to the Cup card */}
-              {/* Navigation Buttons */}
-              <div className="flex gap-4 mt-6">
-                {currentHoleIndex > 0 && (
-                  <button type="button" onClick={handlePreviousHole} className="btn-secondary flex-1">← Previous Hole</button>
-                )}
-                {scores[currentHoleIndex] > 0 && currentHoleIndex < course.holes.length - 1 && (
-                  <button type="button" onClick={handleNextHole} className="btn-primary flex-1">Next Hole →</button>
-                )}
-                {/* Show Finish Round only if all holes are scored */}
-                {allScored && (
-                  <button
-                    type="button"
-                    className="btn-primary flex-1"
-                    onClick={handleFinishRound}
-                    disabled={finishing}
-                  >
-                    {finishing ? 'Saving...' : 'Finish Round'}
-                  </button>
-                )}
+                  );
+                })()}
+                {/* Collapsed putts grid, excluding expanded */}
+                {chunkArray(
+                  perHoleStats[currentHoleIndex].puttDistances
+                    .map((dist, idx) => ({ dist, idx }))
+                    .filter(({ idx }) => perHoleStats[currentHoleIndex]?.puttExpanded !== idx),
+                  2
+                ).map((row, rowIdx) => (
+                  <div key={rowIdx} className="flex flex-row gap-4 mb-2">
+                    {row.map(({ dist, idx }) => (
+                      <div key={idx} className="mb-2 flex-1">
+                        <div
+                          className="mb-2 cursor-pointer"
+                          onClick={() => {
+                            setPerHoleStats(stats => {
+                              const updated = [...stats];
+                              updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttExpanded: idx };
+                              return updated;
+                            });
+                          }}
+                        >
+                          <span className="font-semibold">Putt {idx + 1}:</span>
+                          <span className="ml-2 px-2 py-1 rounded bg-gray-100 border text-base">{dist} ft</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </div>
-            </>
+            )}
+          </div>
+        )}
+
+        {/* Navigation Buttons - now outside the cards */}
+        <div className="flex gap-4 mt-6">
+          {currentHoleIndex > 0 && (
+            <button type="button" onClick={handlePreviousHole} className="btn-secondary flex-1">← Previous Hole</button>
+          )}
+          {scores[currentHoleIndex] > 0 && currentHoleIndex < course.holes.length - 1 && (
+            <button type="button" onClick={handleNextHole} className="btn-primary flex-1">Next Hole →</button>
+          )}
+          {/* Show Finish Round only if all holes are scored */}
+          {allScored && (
+            <button
+              type="button"
+              className="btn-primary flex-1"
+              onClick={handleFinishRound}
+              disabled={finishing}
+            >
+              {finishing ? 'Saving...' : 'Finish Round'}
+            </button>
           )}
         </div>
 
