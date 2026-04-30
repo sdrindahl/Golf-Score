@@ -362,7 +362,22 @@ function TrackRoundContent() {
       <div className="max-w-2xl mx-auto py-4">
         {/* Custom condensed header */}
         <div className="mb-2">
-          <h1 className="text-2xl font-bold text-black text-center mb-2">Score Round</h1>
+          <h1 className="text-2xl font-bold text-black text-center mb-2">
+            {(() => {
+              if (!course) return '';
+              // Try to get parent name from localStorage courses
+              const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+              if (savedCourses && course.parent_id) {
+                try {
+                  const allCourses = JSON.parse(savedCourses);
+                  const parent = allCourses.find((c: any) => c.id === course.parent_id);
+                  if (parent && parent.name) return parent.name;
+                } catch {}
+              }
+              // Fallback to course name
+              return course.name;
+            })()}
+          </h1>
         </div>
         {/* Summary Bar */}
         <div className="grid grid-cols-3 gap-2 mb-6">
@@ -475,22 +490,37 @@ function TrackRoundContent() {
                   </button>
                 );
               };
-              // Front 9
-              const frontNine = holes.slice(0, 9);
-              // Back 9
-              const backNine = holes.slice(9, 18);
-              return (
-                <>
-                  <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Front 9</div>
-                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {frontNine.map((hole, idx) => renderHoleSquare(hole, idx))}
+              // Dynamically label each 9 based on selected courses
+              let nineLabels: string[] = [];
+              if (course && typeof window !== 'undefined') {
+                const savedCourses = localStorage.getItem('golfCourses');
+                if (savedCourses) {
+                  try {
+                    const allCourses = JSON.parse(savedCourses);
+                    // Get the courseIds used to merge this course
+                    const courseIds = course.id.split(',').map((id: string) => id.trim()).filter(Boolean);
+                    nineLabels = courseIds.map((id: string) => {
+                      const c = allCourses.find((cc: any) => cc.id === id);
+                      return c && c.name ? c.name : '';
+                    });
+                  } catch {}
+                }
+              }
+              // Render each 9 with its label and holes
+              const nines = [];
+              for (let i = 0; i < Math.ceil(holes.length / 9); i++) {
+                const label = nineLabels[i] || `Nine ${i + 1}`;
+                const nineHoles = holes.slice(i * 9, (i + 1) * 9);
+                nines.push(
+                  <div key={i}>
+                    <div className="mb-0.5 font-semibold text-green-700 text-xs">{label}</div>
+                    <div className="grid grid-cols-9 gap-1 mb-1 w-full">
+                      {nineHoles.map((hole, idx) => renderHoleSquare(hole, i * 9 + idx))}
+                    </div>
                   </div>
-                  <div className="mb-0.5 font-semibold text-green-700 text-xs">Gold Back 9</div>
-                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {backNine.map((hole, idx) => renderHoleSquare(hole, 9 + idx))}
-                  </div>
-                </>
-              );
+                );
+              }
+              return <>{nines}</>;
             })()}
         </div>
 
