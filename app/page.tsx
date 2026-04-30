@@ -240,8 +240,39 @@ export default function Home() {
     return null
   }
 
-  const handleStartNewRound = () => {
-    router.push('/courses')
+  const handleStartNewRound = async () => {
+    // Check for in-progress round in Supabase
+    if (!currentUser) {
+      alert('Please log in first.');
+      router.push('/login');
+      return;
+    }
+    let hasInProgress = false;
+    try {
+      const response = await fetch('/api/get-in-progress-rounds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      const result = await response.json();
+      hasInProgress = Array.isArray(result.rounds) && result.rounds.length > 0;
+    } catch (err) {
+      // fallback to localStorage only
+    }
+    // Check localStorage for in-progress round
+    const savedRounds = localStorage.getItem('golfRounds');
+    let localHasInProgress = false;
+    if (savedRounds) {
+      try {
+        const rounds = JSON.parse(savedRounds);
+        localHasInProgress = rounds.some((r: any) => r.userId === currentUser.id && r.in_progress);
+      } catch {}
+    }
+    if (hasInProgress || localHasInProgress) {
+      alert('You already have a round in progress. Please finish or discard it before starting a new one.');
+      return;
+    }
+    router.push('/courses');
   }
 
   const handleViewRounds = () => {
