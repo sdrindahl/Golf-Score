@@ -362,7 +362,22 @@ function TrackRoundContent() {
       <div className="max-w-2xl mx-auto py-4">
         {/* Custom condensed header */}
         <div className="mb-2">
-          <h1 className="text-2xl font-bold text-black text-center mb-2">Score Round</h1>
+          <h1 className="text-2xl font-bold text-black text-center mb-2">
+            {(() => {
+              if (!course) return '';
+              // Try to get parent name from localStorage courses
+              const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+              if (savedCourses && course.parent_id) {
+                try {
+                  const allCourses = JSON.parse(savedCourses);
+                  const parent = allCourses.find((c: any) => c.id === course.parent_id);
+                  if (parent && parent.name) return parent.name;
+                } catch {}
+              }
+              // Fallback to course name
+              return course.name;
+            })()}
+          </h1>
         </div>
         {/* Summary Bar */}
         <div className="grid grid-cols-3 gap-2 mb-6">
