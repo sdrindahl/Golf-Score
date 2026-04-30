@@ -289,6 +289,20 @@ function RoundDetailContent() {
     scoreTotal: round.scores.reduce((sum, score) => sum + score, 0),
   }
 
+  // Find parent course name
+  let parentCourseName = '';
+  if (course && course.parent_id) {
+    const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+    if (savedCourses) {
+      try {
+        const allCourses = JSON.parse(savedCourses);
+        const parent = allCourses.find((c: any) => c.id === course.parent_id);
+        if (parent) parentCourseName = parent.name;
+      } catch {}
+    }
+  }
+  if (!parentCourseName && course) parentCourseName = course.name;
+
   // Helper function to get score type label
   const getScoreType = (score: number, par: number): string => {
     const diff = score - par
@@ -358,28 +372,18 @@ function RoundDetailContent() {
   const maxDistribution = Math.max(...Object.values(scoreDistribution), 1)
 
   return (
+
     <>
-      <PageWrapper title={round.courseName} userName={`${new Date(round.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`}>
-        <div className="max-w-4xl mx-auto space-y-6 pb-32">
-          {/* Header with Score */}
-          <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-xs text-gray-600 mb-1">Player: {round.userName}</p>
-                {round.selectedTee && (
-                  <p className="text-xs text-blue-600 font-semibold">
-                    Tee: {round.selectedTee.charAt(0).toUpperCase() + round.selectedTee.slice(1)}'s
-                  </p>
-                )}
-              </div>
-              <div className="text-right">
-                <div className="text-4xl font-bold text-blue-600">{round.scores.reduce((sum, score) => sum + (Number(score) || 0), 0)}</div>
-                <div className="text-sm text-gray-600">Total Score</div>
-              </div>
-            </div>
-            
+      <PageWrapper title="">
+        <div className="max-w-4xl mx-auto space-y-6 pb-32 mt-8">
+
+          {/* Move header just above Holes Completed card */}
+          <div className="flex flex-col items-center mb-4">
+            <div className="text-2xl font-bold text-white text-center drop-shadow-md">{parentCourseName}</div>
+            <div className="text-lg font-semibold text-white text-center mt-1 drop-shadow-md">{round.userName}</div>
+            <div className="text-sm text-white text-center mt-0.5 drop-shadow-md">{new Date(round.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
             {round.notes && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700 border border-blue-200">
+              <div className="mt-3 p-2 bg-blue-50 rounded-lg text-sm text-gray-700 border border-blue-200 w-full max-w-md text-center">
                 <strong>Notes:</strong> {round.notes}
               </div>
             )}
@@ -447,15 +451,25 @@ function RoundDetailContent() {
                 </div>
               );
             })}
-            <div className="flex justify-between items-center p-2 rounded-lg font-semibold text-sm bg-gray-100 mt-3">
-              <span className="text-gray-800">Total</span>
-              <div className="flex gap-3 items-center text-xs md:text-sm">
-                <span className="text-gray-700">Par {roundData.parTotal}</span>
-                <span className="text-blue-600">{roundData.scoreTotal}</span>
-                <span className={roundData.scoreTotal < roundData.parTotal ? 'text-green-600' : 'text-red-600'}>
-                  {roundData.scoreTotal < roundData.parTotal ? '-' : '+'}{Math.abs(roundData.scoreTotal - roundData.parTotal)}
-                </span>
-              </div>
+            <div className="flex items-center p-2 rounded-lg font-semibold text-sm bg-gray-100 mt-3">
+              {(() => {
+                // Only count completed holes for score and vs par
+                const completed = round.scores.map((s, i) => ({ score: s, par: course.holes[i]?.par })).filter(x => x.score > 0);
+                const completedScore = completed.reduce((sum, x) => sum + x.score, 0);
+                // Par for the displayed holes (all holes in this card)
+                const displayedPar = nines.reduce((sum, nine) => sum + nine.holes.reduce((s, h) => s + (h.par || 0), 0), 0);
+                // Par for completed holes (for vs par)
+                const completedPar = completed.reduce((sum, x) => sum + (x.par || 0), 0);
+                const diff = completedScore - completedPar;
+                return <>
+                  <span className="text-gray-800 mr-2">Total</span>
+                  <span className="text-blue-600 font-bold text-lg mr-4">{completedScore}</span>
+                  <span className="text-gray-700 mr-4">Par {displayedPar}</span>
+                  <span className={diff < 0 ? 'text-green-600' : diff > 0 ? 'text-red-600' : 'text-gray-700'}>
+                    {diff === 0 ? 'E' : (diff < 0 ? diff : '+' + diff)}
+                  </span>
+                </>;
+              })()}
             </div>
           </div>
 
