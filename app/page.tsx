@@ -301,61 +301,59 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Score Distribution Chart */}
-        {rounds.length > 0 && (
-          <div className="card p-4">
-            <h3 className="text-lg font-bold mb-4">Performance Breakdown</h3>
-            {/* Column Headers */}
-            <div className="flex items-center justify-between mb-3 px-1">
-              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</span>
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-8 text-center">Total</span>
-                <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-12 text-right">Avg/Rnd</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {Object.entries(distribution).map(([type, count]) => {
-                const percentage = (count / maxDistribution) * 100
-                const colors: { [key: string]: string } = {
-                  'Hole in 1': 'from-purple-500 to-purple-400',
-                  'Eagle': 'from-blue-500 to-blue-400',
-                  'Birdie': 'from-green-500 to-green-400',
-                  'Par': 'from-yellow-500 to-yellow-400',
-                  'Bogey': 'from-orange-500 to-orange-400',
-                  'Double+': 'from-red-500 to-red-400',
-                }
-                const emojis: { [key: string]: string } = {
-                  'Hole in 1': '⭐',
-                  'Eagle': '🦅',
-                  'Birdie': '🐦',
-                  'Par': '✔️',
-                  'Bogey': '⚠️',
-                  'Double+': '❌',
-                }
-                return (
-                  <div key={type}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{emojis[type]}</span>
-                        <span className="text-sm font-semibold">{type}</span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm font-bold w-8 text-center">{count}</span>
-                        <span className="text-xs w-12 text-right">{(count / rounds.length).toFixed(2)}</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                )
-              })}
+        {/* Performance Breakdown: Always show, even if no rounds */}
+        <div className="card p-4">
+          <h3 className="text-lg font-bold mb-4">Performance Breakdown</h3>
+          {/* Column Headers */}
+          <div className="flex items-center justify-between mb-3 px-1">
+            <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</span>
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-8 text-center">Total</span>
+              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-12 text-right">Avg/Rnd</span>
             </div>
           </div>
-        )}
+          <div className="space-y-2">
+            {Object.entries(distribution).map(([type, count]) => {
+              const percentage = (count / maxDistribution) * 100
+              const colors: { [key: string]: string } = {
+                'Hole in 1': 'from-purple-500 to-purple-400',
+                'Eagle': 'from-blue-500 to-blue-400',
+                'Birdie': 'from-green-500 to-green-400',
+                'Par': 'from-yellow-500 to-yellow-400',
+                'Bogey': 'from-orange-500 to-orange-400',
+                'Double+': 'from-red-500 to-red-400',
+              }
+              const emojis: { [key: string]: string } = {
+                'Hole in 1': '⭐',
+                'Eagle': '🦅',
+                'Birdie': '🐦',
+                'Par': '✔️',
+                'Bogey': '⚠️',
+                'Double+': '❌',
+              }
+              return (
+                <div key={type}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{emojis[type]}</span>
+                      <span className="text-sm font-semibold">{type}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-bold w-8 text-center">{count}</span>
+                      <span className="text-xs w-12 text-right">{rounds.length > 0 ? (count / rounds.length).toFixed(2) : '0.00'}</span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
 
         {/* Return to Round Button (if round in progress) */}
         {(() => {
