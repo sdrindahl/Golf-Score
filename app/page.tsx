@@ -11,6 +11,7 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+  const [courses, setCourses] = useState<any[]>([])
   const router = useRouter()
   const auth = useAuth()
 
@@ -18,123 +19,129 @@ export default function Home() {
     setIsClient(true)
   }, [])
 
+  // Debug: Print rounds and golfCourses to console
+  useEffect(() => {
+    if (!isClient) return;
+    const savedRounds = localStorage.getItem('golfRounds');
+    const savedCourses = localStorage.getItem('golfCourses');
+    console.log('DEBUG: rounds', savedRounds ? JSON.parse(savedRounds) : []);
+    console.log('DEBUG: golfCourses', savedCourses ? JSON.parse(savedCourses) : []);
+  }, [isClient, rounds]);
+
   // Only run client-only logic after hydration
   useEffect(() => {
     if (!isClient) return;
     // Get current user
-    const user = auth.getCurrentUser()
+    const user = auth.getCurrentUser();
     if (!user) {
-      router.push('/login')
-      return
+      router.push('/login');
+      return;
     }
-    setCurrentUser(user)
+    setCurrentUser(user);
 
-    // Load rounds from localStorage - only for current user
-    const savedRounds = localStorage.getItem('golfRounds')
-    if (savedRounds) {
-      const allRounds = JSON.parse(savedRounds) as Round[]
-      const userRounds = allRounds.filter(r => r.userId === user.id)
-      setRounds(userRounds)
-    }
+    // Fetch all rounds for the user from Supabase
+    fetch('/api/get-user-rounds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data.rounds)) {
+          // Map snake_case fields to camelCase for each round
+          const mappedRounds = data.rounds.map((r: any) => ({
+            id: r.id,
+            userId: r.user_id,
+            userName: r.user_name,
+            courseId: r.course_id,
+            courseName: r.course_name,
+            selectedTee: r.selected_tee,
+            date: r.date,
+            scores: r.scores,
+            totalScore: r.total_score,
+            notes: r.notes,
+            in_progress: r.in_progress,
+            perHoleStats: r.perHoleStats || r.per_hole_stats // fallback for perHoleStats if present
+          }));
+          setRounds(mappedRounds);
+        } else {
+          setRounds([]);
+        }
+      })
+      .catch(() => setRounds([]));
 
-    // Check if there's a current round in progress
-    const inProgressRoundId = localStorage.getItem('currentRoundId')
+    // Fetch all courses from Supabase
+    fetch('/api/get-courses')
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data.courses)) {
+          setCourses(data.courses);
+        } else {
+          setCourses([]);
+        }
+      })
+      .catch(() => setCourses([]));
+
+    // Optionally, check for a current round in progress (if you want to keep this logic)
+    const inProgressRoundId = localStorage.getItem('currentRoundId');
     if (inProgressRoundId) {
-      // Check if the round actually exists in localStorage
-      const savedRounds = localStorage.getItem('golfRounds')
-      let found = false
-      if (savedRounds) {
-        const allRounds = JSON.parse(savedRounds)
-        found = allRounds.some((r: any) => r.id === inProgressRoundId)
-      }
-      if (found) {
-        setCurrentRoundId(inProgressRoundId)
-      } else {
-        // Stale currentRoundId, clear it
-        localStorage.removeItem('currentRoundId')
-        setCurrentRoundId(null)
-      }
+      setCurrentRoundId(inProgressRoundId);
     }
-  }, [isClient])
+  }, [isClient]);
 
   const calculateHandicap = (): number => {
-    if (!isClient || rounds.length === 0) return 0
-    
-    let handicap = 0
-    
-    // Get course data to find course ratings
-    const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-
+    if (!isClient || rounds.length === 0 || courses.length === 0) return 0;
+    let handicap = 0;
     // Calculate handicap differential for each round
     // Formula: (Score - Course Rating) × 113 / Slope Rating
     const differentials = rounds
       .map(round => {
-        const course = courses.find((c: any) => c.id === round.courseId)
-        
-        if (!course) {
-          return null
+        // Support comma-separated courseId (e.g., '9a,9b')
+        let courseIds: string[] = [];
+        if (Array.isArray(round.courseId)) {
+          courseIds = round.courseId;
+        } else if (typeof round.courseId === 'string') {
+          courseIds = round.courseId.split(',').map((id: string) => id.trim());
         }
-        
-        const is9Hole = course.holes && course.holes.length === 9
-        
-        // Use provided courseRating or calculate from holes, default to 72 (or 36 for 9-hole)
-        let courseRating = course.courseRating
-        let slopeRating = course.slopeRating
-        
-        // If courseRating is set to default 18-hole rating (72) but this is a 9-hole course, adjust it
-        if (is9Hole && courseRating === 72) {
-          courseRating = 36
+        const selectedCourses = courses.filter((c: any) => courseIds.includes(c.id));
+        if (selectedCourses.length === 0) return null;
+        // For multi-course rounds, sum par/ratings and treat as one course
+        const totalPar = selectedCourses.reduce((sum: number, c: any) => sum + (c.par || 0), 0);
+        const totalHoles = selectedCourses.reduce((sum: number, c: any) => sum + (c.holes ? c.holes.length : 0), 0);
+        // Use average rating/slope if available, else fallback
+        const avgCourseRating = selectedCourses.reduce((sum: number, c: any) => sum + (c.courseRating || 0), 0) / selectedCourses.length || totalPar;
+        const avgSlopeRating = selectedCourses.reduce((sum: number, c: any) => sum + (c.slopeRating || 113), 0) / selectedCourses.length || 113;
+        let courseRating = avgCourseRating;
+        let slopeRating = avgSlopeRating;
+        if (!courseRating) courseRating = totalPar;
+        if (!slopeRating) slopeRating = 113;
+        let adjustedScore = round.totalScore;
+        let adjustedRating = courseRating;
+        // If 9 holes, double for 18
+        if (totalHoles === 9) {
+          adjustedScore = round.totalScore * 2;
+          adjustedRating = courseRating * 2;
         }
-        
-        if (!courseRating && course.holes) {
-          // Calculate approximate rating from hole par values
-          const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
-          courseRating = totalPar
-        }
-        
-        if (!courseRating) courseRating = is9Hole ? 36 : 72
-        if (!slopeRating) slopeRating = 113
-        
-        if (!slopeRating) {
-          return null
-        }
-        
-        // For 9-hole rounds, we need to convert to 18-hole equivalent
-        let adjustedScore = round.totalScore
-        let adjustedRating = courseRating
-        
-        if (is9Hole) {
-          // Double 9-hole scores and ratings to get 18-hole equivalents
-          adjustedScore = round.totalScore * 2
-          adjustedRating = courseRating * 2
-        }
-        
-        const differential = (adjustedScore - adjustedRating) * 113 / slopeRating
-        return differential
+        const differential = (adjustedScore - adjustedRating) * 113 / slopeRating;
+        return differential;
       })
-      .filter((d: any) => d !== null) as number[]
-
-    // Use best X of last 20 in the calculation based on USGA rules
+      .filter((d: any) => d !== null) as number[];
     if (differentials.length > 0) {
-      const recentDifferentials = differentials.slice(-20)
-      const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
-      
-      // USGA Handicap calculation based on number of scores
-      let bestCount = 1
-      const roundCount = sortedDifferentials.length
-      if (roundCount >= 6) bestCount = 2
-      if (roundCount >= 7) bestCount = 3
-      if (roundCount >= 9) bestCount = 4
-      if (roundCount >= 11) bestCount = 5
-      if (roundCount >= 13) bestCount = 6
-      if (roundCount >= 15) bestCount = 7
-      if (roundCount >= 17) bestCount = 8
-      
-      const bestDifferentials = sortedDifferentials.slice(0, bestCount)
-      handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
+      const recentDifferentials = differentials.slice(-20);
+      const sortedDifferentials = recentDifferentials.sort((a, b) => a - b);
+      let bestCount = 1;
+      const roundCount = sortedDifferentials.length;
+      if (roundCount >= 6) bestCount = 2;
+      if (roundCount >= 7) bestCount = 3;
+      if (roundCount >= 9) bestCount = 4;
+      if (roundCount >= 11) bestCount = 5;
+      if (roundCount >= 13) bestCount = 6;
+      if (roundCount >= 15) bestCount = 7;
+      if (roundCount >= 17) bestCount = 8;
+      const bestDifferentials = sortedDifferentials.slice(0, bestCount);
+      handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10;
     }
-
-    return handicap
+    return handicap;
   }
 
   const handicap = calculateHandicap()
@@ -154,75 +161,74 @@ export default function Home() {
       'Par': 0,
       'Bogey': 0,
       'Double+': 0,
+    };
+    if (!isClient || courses.length === 0) {
+      return { distribution, trend: 'stable', recentBestType: 'Par' };
     }
-
-    if (!isClient) {
-      return { distribution, trend: 'stable', recentBestType: 'Par' }
-    }
-
-    const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-    
     // Count score types across all holes in all rounds
-    for (const round of rounds) {
-      const course = courses.find((c: any) => c.id === round.courseId)
-      if (!course || !course.holes) continue
-      
-      for (let i = 0; i < course.holes.length; i++) {
-        const hole = course.holes[i]
-        const score = round.scores?.[i] || 0
-        const par = hole.par
-        const diff = score - par
-
+    // Only use completed (not in-progress) rounds
+    const completedRounds = rounds.filter(r => !r.in_progress);
+    for (const round of completedRounds) {
+      // Support comma-separated courseId (e.g., '9a,9b')
+      let courseIds: string[] = [];
+      if (Array.isArray(round.courseId)) {
+        courseIds = round.courseId;
+      } else if (typeof round.courseId === 'string') {
+        courseIds = round.courseId.split(',').map((id: string) => id.trim());
+      }
+      const selectedCourses = courses.filter((c: any) => courseIds.includes(c.id));
+      const holes = selectedCourses.flatMap((c: any) => c.holes || []);
+      for (let i = 0; i < holes.length; i++) {
+        const hole = holes[i];
+        const score = round.scores?.[i] || 0;
+        const par = hole.par;
+        const diff = score - par;
         if (score === 1) {
-          distribution['Hole in 1']++
+          distribution['Hole in 1']++;
         } else if (diff <= -2) {
-          distribution['Eagle']++
+          distribution['Eagle']++;
         } else if (diff === -1) {
-          distribution['Birdie']++
+          distribution['Birdie']++;
         } else if (diff === 0) {
-          distribution['Par']++
+          distribution['Par']++;
         } else if (diff === 1) {
-          distribution['Bogey']++
+          distribution['Bogey']++;
         } else {
-          distribution['Double+']++
+          distribution['Double+']++;
         }
       }
     }
-
     // Calculate trend - compare recent holes to overall
-    let trend: 'improving' | 'declining' | 'stable' = 'stable'
+    let trend: 'improving' | 'declining' | 'stable' = 'stable';
     if (rounds.length >= 2) {
-      const recentRound = rounds[rounds.length - 1]
-      const prevRound = rounds[rounds.length - 2]
-      const recentScore = recentRound.totalScore
-      const prevScore = prevRound.totalScore
-      
-      if (recentScore < prevScore - 1) trend = 'improving'
-      else if (recentScore > prevScore + 1) trend = 'declining'
+      const recentRound = rounds[rounds.length - 1];
+      const prevRound = rounds[rounds.length - 2];
+      const recentScore = recentRound.totalScore;
+      const prevScore = prevRound.totalScore;
+      if (recentScore < prevScore - 1) trend = 'improving';
+      else if (recentScore > prevScore + 1) trend = 'declining';
     }
-
     // Find best recent score type
-    let recentBestType = 'Par'
-    const recentRound = rounds[rounds.length - 1]
+    let recentBestType = 'Par';
+    const recentRound = rounds[rounds.length - 1];
     if (recentRound) {
-      const course = courses.find((c: any) => c.id === recentRound.courseId)
+      const course = courses.find((c: any) => c.id === recentRound.courseId);
       if (course?.holes) {
-        let bestDiff = 999
+        let bestDiff = 999;
         for (let i = 0; i < course.holes.length; i++) {
-          const hole = course.holes[i]
-          const score = recentRound.scores?.[i] || 0
-          const diff = score - hole.par
+          const hole = course.holes[i];
+          const score = recentRound.scores?.[i] || 0;
+          const diff = score - hole.par;
           if (diff < bestDiff) {
-            bestDiff = diff
-            if (diff <= -2) recentBestType = 'Eagle'
-            else if (diff === -1) recentBestType = 'Birdie'
-            else if (diff === 0) recentBestType = 'Par'
+            bestDiff = diff;
+            if (diff <= -2) recentBestType = 'Eagle';
+            else if (diff === -1) recentBestType = 'Birdie';
+            else if (diff === 0) recentBestType = 'Par';
           }
         }
       }
     }
-
-    return { distribution, trend, recentBestType }
+    return { distribution, trend, recentBestType };
   }
 
   const { distribution, trend: scoreTrend, recentBestType } = calculateScoreDistribution()
@@ -251,6 +257,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
+      {/* Debug: Show rounds array for troubleshooting */}
+      <pre className="fixed bottom-2 left-2 z-50 bg-white/90 text-xs p-2 rounded shadow max-w-[90vw] max-h-[40vh] overflow-auto border border-gray-300" style={{fontSize:'10px'}}>
+        {JSON.stringify(rounds, null, 2)}
+        {"\n\n[Debug] courseId for each round:"}
+        {rounds.map(r => `\n- round id: ${r.id}, courseId: ${r.courseId}`).join('')}
+        {"\n[Debug] All course IDs from Supabase:"}
+        {courses.map(c => c.id).join(', ')}
+      </pre>
       {/* Welcome Banner */}
       <div className="px-4 pt-8 pb-4">
         <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
