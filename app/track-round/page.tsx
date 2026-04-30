@@ -374,19 +374,21 @@ function TrackRoundContent() {
           </div>
           <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-purple-600 border-gray-200">
             <p className="text-gray-700 text-xs font-semibold">vs PAR</p>
-            <p className={`text-2xl font-bold ${
-              (() => {
-                const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
-                const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
-                const diff = totalScore - totalPar;
-                return diff < 0 ? 'text-green-700' : diff > 0 ? 'text-red-700' : 'text-gray-700';
-              })()
-            }`}>
+            <p className={`text-2xl font-bold ${(() => {
+              const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
+              const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
+              const diff = totalScore - totalPar;
+              return diff < 0 ? 'text-green-700' : diff > 0 ? 'text-red-700' : 'text-gray-700';
+            })()}`}>
               {(() => {
                 const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
                 const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
                 const diff = totalScore - totalPar;
-                return diff === 0 ? 'E' : (diff > 0 ? '+' + diff : diff);
+                if (diff === 0) return 'E';
+                if (diff > 0) return '+' + diff;
+                // Only show -N for reasonable values, never large negatives
+                if (diff < 0 && diff > -20) return diff;
+                return 'E';
               })()}
             </p>
           </div>
