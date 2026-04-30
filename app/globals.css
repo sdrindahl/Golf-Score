@@ -1,8 +1,24 @@
+/* Purple Rain Theme */
+.purplerain-mode {
+  --bg-primary: #18141c; /* deep black-purple */
+  --bg-secondary: #2d133b; /* dark purple */
+  --green-bg: linear-gradient(120deg, #18141c 0%, #a259c6 60%, #e040fb 100%);
+  --accent-color: #e040fb;
+  --text-primary: #fff;
+  --text-secondary: #e0b3ff;
+  --border-color: #111; /* black border for contrast */
+  --card-shadow: 0 4px 16px rgba(0,0,0,0.25);
+}
 /* Vikings Theme */
 .vikings-mode {
-  --bg-primary: #f3e7c9;
-  --bg-secondary: #f9eab7;
-  --green-bg: linear-gradient(120deg, #4f2683 0%, #ffc62f 60%, #ffffff 100%);
+  --bg-primary: #4f2683; /* deep Vikings purple */
+  --bg-secondary: #7c4fa3; /* lighter purple */
+  --green-bg: linear-gradient(120deg, #4f2683 0%, #7c4fa3 60%, #ffc62f 100%);
+  --accent-color: #4f2683;
+  --text-primary: #fff;
+  --text-secondary: #ffc62f;
+  --border-color: #4f2683;
+  --card-shadow: 0 4px 16px rgba(79,38,131,0.15);
 }
 .btn-success {
   @apply font-semibold py-2 px-4 md:px-4 transition-colors text-sm md:text-base;
