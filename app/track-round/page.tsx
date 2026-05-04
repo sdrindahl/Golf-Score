@@ -321,7 +321,11 @@ function TrackRoundContent() {
     }
   }, [round]);
 
-  const handleScoreChange = async (score: number) => {
+  // Debounce timer for score sync
+  const scoreDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const scoreRequestInFlightRef = useRef(false);
+
+  const handleScoreChange = (adjustment: 'increment' | 'decrement') => {
     if (!round) return;
     const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
     if (!auth || !user) {
@@ -332,40 +336,64 @@ function TrackRoundContent() {
       console.error('[handleScoreChange] Blocked: course not loaded');
       return;
     }
-    const newScores = [...scores];
-    newScores[currentHoleIndex] = score;
-    setScores(newScores);
-    // Live sync to Supabase
-    try {
-      // Ensure all required fields are present and valid
-      const userId = round.userId || user?.id;
-      const userName = round.userName || user?.name;
-      const courseName = round.courseName || course.name;
-      const updatedRound = {
-        id: round.id,
-        userId,
-        userName,
-        courseId: round.courseId || course.id,
-        courseName,
-        selectedTee: round.selectedTee || 'men',
-        date: round.date || new Date().toISOString(),
-        scores: newScores,
-        totalScore: newScores.reduce((a, b) => a + b, 0),
-        notes: round.notes || '',
-        in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
-        startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
-      };
-      // Debug log outgoing payload
-      console.log('[handleScoreChange] Sending updatedRound:', updatedRound);
-      await fetch('/api/save-round', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedRound),
-      });
-    } catch (e) {
-      // Optionally: show error or retry
-      console.error('Failed to sync score to Supabase', e);
-    }
+    
+    // Calculate new score using current state
+    setScores(prevScores => {
+      const currentScore = prevScores[currentHoleIndex] || 0;
+      const newScore = adjustment === 'increment' ? currentScore + 1 : Math.max(1, currentScore - 1);
+      const newScores = [...prevScores];
+      newScores[currentHoleIndex] = newScore;
+      
+      // Clear any pending debounce timer
+      if (scoreDebounceRef.current) {
+        clearTimeout(scoreDebounceRef.current);
+      }
+      
+      // Debounce Supabase sync - wait 300ms in case more clicks are coming
+      scoreDebounceRef.current = setTimeout(() => {
+        // Skip if a request is already in flight
+        if (scoreRequestInFlightRef.current) {
+          console.log('[handleScoreChange] Request already in flight, skipping');
+          return;
+        }
+        
+        try {
+          scoreRequestInFlightRef.current = true;
+          const userId = round.userId || user?.id;
+          const userName = round.userName || user?.name;
+          const courseName = round.courseName || course.name;
+          const updatedRound = {
+            id: round.id,
+            userId,
+            userName,
+            courseId: round.courseId || course.id,
+            courseName,
+            selectedTee: round.selectedTee || 'men',
+            date: round.date || new Date().toISOString(),
+            scores: newScores,
+            totalScore: newScores.reduce((a, b) => a + b, 0),
+            notes: round.notes || '',
+            in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
+            startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
+          };
+          
+          console.log('[handleScoreChange] Sending updatedRound:', updatedRound);
+          fetch('/api/save-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedRound),
+          }).catch(e => console.error('Failed to sync score to Supabase', e))
+            .finally(() => {
+              scoreRequestInFlightRef.current = false;
+            });
+        } catch (e) {
+          console.error('Error syncing score:', e);
+          scoreRequestInFlightRef.current = false;
+        }
+      }, 300);
+      
+      return newScores;
+    });
   };
 
   const handleNextHole = () => {
@@ -636,7 +664,7 @@ function TrackRoundContent() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => handleScoreChange(Math.max(1, (scores[currentHoleIndex] || 0) - 1))}
+                onClick={() => handleScoreChange('decrement')}
                 className="w-12 h-12 rounded-lg bg-gray-200 text-3xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 transition"
               >
                 −
@@ -646,7 +674,7 @@ function TrackRoundContent() {
               </span>
               <button
                 type="button"
-                onClick={() => handleScoreChange((scores[currentHoleIndex] || 0) + 1)}
+                onClick={() => handleScoreChange('increment')}
                 className="w-12 h-12 rounded-lg bg-green-500 text-3xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
               >
                 +
