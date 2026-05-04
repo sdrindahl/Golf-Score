@@ -523,6 +523,23 @@ function RoundDetailContent() {
                     </div>
                   ) : null
                 })}
+                {/* Add drive stats summary */}
+                {(() => {
+                  const driveYardages = (round?.perHoleStats || []).map(h => h?.drive?.yardage).filter(y => typeof y === 'number');
+                  if (driveYardages.length === 0) return null;
+                  const avgDrive = Math.round(driveYardages.reduce((a, b) => a + (b || 0), 0) / driveYardages.length);
+                  return (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🚗</span>
+                          <span className="text-sm font-semibold text-gray-700">Avg Drive</span>
+                        </div>
+                        <span className="text-sm font-bold text-blue-800">{avgDrive} yd</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -548,9 +565,7 @@ function RoundDetailContent() {
                       <th className="p-2">FIR</th>
                       <th className="p-2">GIR</th>
                       <th className="p-2">Putts</th>
-                      <th className="p-2">Putt 1 Dist</th>
-                      <th className="p-2">Putt 2 Dist</th>
-                      <th className="p-2">Putt 3 Dist</th>
+                      <th className="p-2">Drive (yd)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -564,9 +579,7 @@ function RoundDetailContent() {
                           <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
                           <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
                           <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
-                          <td className="p-2 text-center">{puttDistances[0] !== undefined ? `${puttDistances[0]} ft` : '-'}</td>
-                          <td className="p-2 text-center">{puttDistances[1] !== undefined ? `${puttDistances[1]} ft` : '-'}</td>
-                          <td className="p-2 text-center">{puttDistances[2] !== undefined ? `${puttDistances[2]} ft` : '-'}</td>
+                          <td className="p-2 text-center">{stats.drive && typeof stats.drive.yardage === 'number' ? stats.drive.yardage : '-'}{stats.drive && typeof stats.drive.yardage === 'number' ? ' yd' : ''}</td>
                         </tr>
                       );
                     })}

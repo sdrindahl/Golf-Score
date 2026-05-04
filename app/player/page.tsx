@@ -259,6 +259,27 @@ function PlayerProfileContent() {
 
   const handicap = calculateHandicap()
 
+  const calculateAverageDriveDistance = (): number | null => {
+    let totalDriveDistance = 0
+    let driveCount = 0
+    
+    for (const round of rounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const holeStats of round.perHoleStats) {
+          if (holeStats.drive?.yardage && typeof holeStats.drive.yardage === 'number') {
+            totalDriveDistance += holeStats.drive.yardage
+            driveCount++
+          }
+        }
+      }
+    }
+    
+    if (driveCount === 0) return null
+    return Math.round(totalDriveDistance / driveCount)
+  }
+
+  const averageDriveDistance = calculateAverageDriveDistance()
+
   const handleDeleteRound = (roundId: string) => {
     const updated = rounds.filter(r => r.id !== roundId)
     setRounds(updated)
@@ -289,6 +310,15 @@ function PlayerProfileContent() {
               <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Rounds</div>
             </div>
           </div>
+
+          {/* Drive Distance Card */}
+          {averageDriveDistance !== null && (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+              <div className="text-5xl mb-3 text-center">📏</div>
+              <div className="text-3xl font-bold text-center text-blue-600">{averageDriveDistance}</div>
+              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Avg Drive (yd)</div>
+            </div>
+          )}
 
           {/* Statistics */}
           {rounds.length > 0 && (() => {

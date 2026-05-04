@@ -56,6 +56,7 @@ function CourseDetailsContent() {
         gir: boolean[];
         putts: number[];
         puttDistances: number[];
+        driveYardages: number[];
       };
       const statsByHole: StatsByHole[] = Array(numHoles).fill(null).map(() => ({
         scores: [],
@@ -63,6 +64,7 @@ function CourseDetailsContent() {
         gir: [],
         putts: [],
         puttDistances: [],
+        driveYardages: [],
       }));
       (roundData || []).forEach((round: Round) => {
         const perHole: PerHoleStats[] = round.perHoleStats || [];
@@ -76,6 +78,10 @@ function CourseDetailsContent() {
             const puttsValue = perHole[i].putts;
             if (typeof puttsValue === 'number') statsByHole[i].putts.push(puttsValue);
             if (Array.isArray(perHole[i].puttDistances)) statsByHole[i].puttDistances.push(...(perHole[i].puttDistances as number[]));
+            const driveYardage = perHole[i].drive?.yardage;
+            if (typeof driveYardage === 'number') {
+              statsByHole[i].driveYardages.push(driveYardage);
+            }
           }
         }
       });
