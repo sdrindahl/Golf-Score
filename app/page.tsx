@@ -471,6 +471,15 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Start New Round Button - Prominent CTA */}
+        <button
+          onClick={handleStartNewRound}
+          className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg font-bold"
+        >
+          <span className="text-2xl">+</span>
+          <span>Start New Round</span>
+        </button>
+
         {/* Performance Breakdown: Always show, even if no rounds */}
         <div className="card p-4">
           <h3 className="text-lg font-bold mb-4">Performance Breakdown</h3>
@@ -615,15 +624,6 @@ export default function Home() {
           }
           return null;
         })()}
-
-        {/* Start New Round Button */}
-        <button
-          onClick={handleStartNewRound}
-          className="btn-primary w-full flex items-center justify-center gap-2 mt-2"
-        >
-          <span className="text-lg">+</span>
-          <span>Start New Round</span>
-        </button>
 
         {/* View Courses and Golfers */}
         <div className="grid grid-cols-2 gap-2 mt-2">
