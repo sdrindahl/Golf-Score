@@ -28,7 +28,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Round, Course } from '@/types';
 import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
+import CommentsModal from '@/components/CommentsModal';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
+import { createClient } from '@supabase/supabase-js';
 
 function TrackRoundContent() {
 
@@ -43,6 +45,9 @@ function TrackRoundContent() {
   const [isClient, setIsClient] = useState(false);
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
   const [scores, setScores] = useState<number[]>([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   // Per-hole stats: FIR, GIR, puttDistances, drive tracking
   const [perHoleStats, setPerHoleStats] = useState<{
     fairwayHit?: 'hit' | 'L' | 'R';
@@ -325,6 +330,95 @@ function TrackRoundContent() {
   const scoreDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const scoreRequestInFlightRef = useRef(false);
 
+  // Subscribe to real-time comment updates
+  useEffect(() => {
+    if (!roundId) return;
+
+    // Fetch initial comment count
+    const fetchCommentCount = async () => {
+      try {
+        const res = await fetch('/api/get-comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roundId }),
+        });
+        const data = await res.json();
+        setCommentCount(data.comments?.length || 0);
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+      }
+    };
+
+    fetchCommentCount();
+
+    // Set up Supabase realtime subscription for new comments
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const channel = supabase
+      .channel(`comments:${roundId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `round_id=eq.${roundId}`,
+        },
+        (payload: any) => {
+          setCommentCount((prev) => prev + 1);
+          // Show toast notification
+          const authorName = payload.new.author_name || 'Someone';
+          setToastMessage(`📝 ${authorName} just commented on your round!`);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [roundId]);
+
+  // Handle quick emoji reaction from Holes Completed card
+  const handleQuickReaction = async (emoji: string) => {
+    if (!roundId) return;
+
+    try {
+      // Fetch comments to get the most recent one
+      const res = await fetch('/api/get-comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundId }),
+      });
+      const data = await res.json();
+      const comments = data.comments || [];
+
+      if (comments.length === 0) {
+        // No comments yet, just open the modal
+        setShowCommentsModal(true);
+        return;
+      }
+
+      // Add reaction to the most recent comment
+      const mostRecentComment = comments[comments.length - 1];
+      await fetch('/api/comment-reactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          commentId: mostRecentComment.id,
+          emoji,
+          increment: true,
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to add reaction:', error);
+      // Fall back to opening modal if reaction fails
+      setShowCommentsModal(true);
+    }
+  };
+
   const handleScoreChange = (adjustment: 'increment' | 'decrement') => {
     if (!round) return;
     const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
@@ -436,6 +530,7 @@ function TrackRoundContent() {
 
   // Delete round handler
   const [deleting, setDeleting] = useState(false);
+
   const handleDeleteRound = async () => {
     if (deleting) return;
     if (!round) return;
@@ -476,6 +571,13 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
+      {/* Toast notification */}
+      {toastMessage && (
+        <div className="fixed top-4 left-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-pulse">
+          {toastMessage}
+        </div>
+      )}
+      
       <div className="max-w-2xl mx-auto py-4">
         {/* Custom condensed header */}
         <div className="mb-2">
@@ -541,8 +643,28 @@ function TrackRoundContent() {
             You haven&apos;t entered scores for all holes.
           </div>
         )}
-        <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+        <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50 relative">
           <div className="flex items-center justify-between mb-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleQuickReaction('👍')}
+                className="absolute left-6 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
+              >
+                <span className="text-lg">👍</span>
+                {commentCount > 0 && (
+                  <span className="text-xs font-semibold text-gray-700">{commentCount}</span>
+                )}
+              </button>
+              <button
+                onClick={() => setShowCommentsModal(true)}
+                className="absolute left-20 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
+              >
+                <span className="text-lg">💬</span>
+                {commentCount > 0 && (
+                  <span className="text-xs font-semibold text-blue-700">{commentCount}</span>
+                )}
+              </button>
+            </div>
             <span className="font-semibold text-green-900 text-base">Holes Completed</span>
             <div className="flex-1" />
             <div className="flex flex-col items-center">
@@ -1013,6 +1135,26 @@ function TrackRoundContent() {
         </button>
       </div>
     
+      {/* Comments Modal */}
+      {showCommentsModal && user && (
+        <CommentsModal
+          roundId={roundId || ''}
+          userId={user.id}
+          userName={user.name || 'Anonymous'}
+          onClose={() => setShowCommentsModal(false)}
+          onCommentAdded={() => {
+            // Refresh comment count
+            fetch('/api/get-comments', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ roundId }),
+            })
+              .then((res) => res.json())
+              .then((data) => setCommentCount(data.comments?.length || 0))
+              .catch((error) => console.error('Failed to refresh comments:', error));
+          }}
+        />
+      )}
       </PageWrapper >
     );
 }
