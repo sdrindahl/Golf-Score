@@ -235,6 +235,31 @@ export default function Home() {
   const { distribution, trend: scoreTrend, recentBestType } = calculateScoreDistribution()
   const maxDistribution = Math.max(...Object.values(distribution), 1)
 
+  const calculateAverageDriveDistance = (): number | null => {
+    if (!isClient || rounds.length === 0) return null
+    let totalDriveDistance = 0
+    let driveCount = 0
+    
+    // Only use completed rounds
+    const completedRounds = rounds.filter(r => !r.in_progress)
+    
+    for (const round of completedRounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const holeStats of round.perHoleStats) {
+          if (holeStats.drive?.yardage && typeof holeStats.drive.yardage === 'number') {
+            totalDriveDistance += holeStats.drive.yardage
+            driveCount++
+          }
+        }
+      }
+    }
+    
+    if (driveCount === 0) return null
+    return Math.round(totalDriveDistance / driveCount)
+  }
+
+  const averageDriveDistance = calculateAverageDriveDistance()
+
   // Don't render until client is hydrated and auth checked
   if (!isClient || !currentUser) {
     return null
@@ -386,6 +411,19 @@ export default function Home() {
             })}
           </div>
         </div>
+
+        {/* Drive Distance Stats */}
+        {averageDriveDistance !== null && (
+          <div className="card p-4 bg-blue-50 border-l-4 border-l-blue-600">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📏</span>
+                <span className="font-semibold">Avg Drive Distance</span>
+              </div>
+              <span className="text-2xl font-bold text-blue-600">{averageDriveDistance} yd</span>
+            </div>
+          </div>
+        )}
 
         {/* Return to Round Button (if round in progress) */}
         {(() => {

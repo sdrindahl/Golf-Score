@@ -67,6 +67,18 @@ export interface PerHoleStats {
    * True if zero putts (chip-in)
    */
   chipIn?: boolean;
+  /**
+   * Drive data: start/end coordinates and measured yardage
+   */
+  drive?: {
+    start?: { lat: number; lng: number };
+    end?: { lat: number; lng: number };
+    yardage?: number;
+  };
+  /**
+   * For tracking expanded putt editor state (UI only, not persisted)
+   */
+  puttExpanded?: number | null;
 }
 
 export interface Round {
