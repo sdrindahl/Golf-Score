@@ -280,6 +280,49 @@ function PlayerProfileContent() {
 
   const averageDriveDistance = calculateAverageDriveDistance()
 
+  const calculateFIRStats = () => {
+    let hit = 0, missLeft = 0, missRight = 0, total = 0;
+    for (const round of rounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const stats of round.perHoleStats) {
+          if (stats?.fairwayHit) {
+            total++;
+            if (stats.fairwayHit === 'hit') hit++;
+            else if (stats.fairwayHit === 'L') missLeft++;
+            else if (stats.fairwayHit === 'R') missRight++;
+          }
+        }
+      }
+    }
+    if (total === 0) return null;
+    return {
+      hitPercent: Math.round((hit / total) * 100),
+      missLeftPercent: Math.round((missLeft / total) * 100),
+      missRightPercent: Math.round((missRight / total) * 100),
+    };
+  }
+
+  const calculateGIRStats = () => {
+    let girCount = 0, totalHoles = 0;
+    for (const round of rounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const stats of round.perHoleStats) {
+          if (stats?.gir !== undefined) {
+            totalHoles++;
+            if (stats.gir === true) girCount++;
+          }
+        }
+      }
+    }
+    if (totalHoles === 0) return null;
+    return {
+      girPercent: Math.round((girCount / totalHoles) * 100),
+    };
+  }
+
+  const firStats = calculateFIRStats()
+  const girStats = calculateGIRStats()
+
   const handleDeleteRound = (roundId: string) => {
     const updated = rounds.filter(r => r.id !== roundId)
     setRounds(updated)
@@ -317,6 +360,29 @@ function PlayerProfileContent() {
               <div className="text-5xl mb-3 text-center">📏</div>
               <div className="text-3xl font-bold text-center text-blue-600">{averageDriveDistance}</div>
               <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Avg Drive (yd)</div>
+            </div>
+          )}
+
+          {/* FIR Stats Card */}
+          {firStats !== null && (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+              <div className="space-y-2">
+                <div className="text-5xl mb-3 text-center">⛳</div>
+                <div className="text-3xl font-bold text-center text-green-600">{firStats.hitPercent}%</div>
+                <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Fairway Hit Rate</div>
+                <div className="text-xs text-gray-600 text-center mt-3 space-y-1">
+                  <div>Miss L: {firStats.missLeftPercent}% | Miss R: {firStats.missRightPercent}%</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* GIR Stats Card */}
+          {girStats !== null && (
+            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
+              <div className="text-5xl mb-3 text-center">🎯</div>
+              <div className="text-3xl font-bold text-center text-indigo-600">{girStats.girPercent}%</div>
+              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Green in Regulation</div>
             </div>
           )}
 
