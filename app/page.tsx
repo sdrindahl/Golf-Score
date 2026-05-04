@@ -260,6 +260,119 @@ export default function Home() {
 
   const averageDriveDistance = calculateAverageDriveDistance()
 
+  // Calculate FIR stats
+  const calculateFIRStats = () => {
+    if (!isClient || rounds.length === 0) return null;
+    let hit = 0, missLeft = 0, missRight = 0, total = 0;
+    const completedRounds = rounds.filter(r => !r.in_progress);
+    for (const round of completedRounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const stats of round.perHoleStats) {
+          if (stats?.fairwayHit) {
+            total++;
+            if (stats.fairwayHit === 'hit') hit++;
+            else if (stats.fairwayHit === 'L') missLeft++;
+            else if (stats.fairwayHit === 'R') missRight++;
+          }
+        }
+      }
+    }
+    if (total === 0) return null;
+    return {
+      hitPercent: Math.round((hit / total) * 100),
+      missLeftPercent: Math.round((missLeft / total) * 100),
+      missRightPercent: Math.round((missRight / total) * 100),
+      total,
+    };
+  }
+
+  // Calculate GIR stats
+  const calculateGIRStats = () => {
+    if (!isClient || rounds.length === 0) return null;
+    let girCount = 0, totalHoles = 0;
+    const completedRounds = rounds.filter(r => !r.in_progress);
+    for (const round of completedRounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const stats of round.perHoleStats) {
+          if (stats?.gir !== undefined) {
+            totalHoles++;
+            if (stats.gir === true) girCount++;
+          }
+        }
+      }
+    }
+    if (totalHoles === 0) return null;
+    return {
+      girPercent: Math.round((girCount / totalHoles) * 100),
+      girCount,
+      totalHoles,
+    };
+  }
+
+  const firStats = calculateFIRStats()
+  const girStats = calculateGIRStats()
+
+  // Calculate putt success by distance bucket
+  const calculatePuttSuccessByDistance = () => {
+    if (!isClient || rounds.length === 0) return null;
+    const buckets = {
+      range0to3: { attempts: 0, makes: 0, name: "0-3'" },
+      range3to6: { attempts: 0, makes: 0, name: "3-6'" },
+      range6to10: { attempts: 0, makes: 0, name: "6-10'" },
+      range10to15: { attempts: 0, makes: 0, name: "10-15'" },
+      range15plus: { attempts: 0, makes: 0, name: "15'+" },
+    };
+    
+    const completedRounds = rounds.filter(r => !r.in_progress);
+    for (const round of completedRounds) {
+      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+        for (const stats of round.perHoleStats) {
+          if (Array.isArray(stats?.puttDistances) && stats.puttDistances.length > 0) {
+            // Last distance is always a make, all others are misses
+            for (let i = 0; i < stats.puttDistances.length; i++) {
+              const distance = stats.puttDistances[i];
+              const isMake = i === stats.puttDistances.length - 1;
+              
+              if (distance < 3) {
+                buckets.range0to3.attempts++;
+                if (isMake) buckets.range0to3.makes++;
+              } else if (distance < 6) {
+                buckets.range3to6.attempts++;
+                if (isMake) buckets.range3to6.makes++;
+              } else if (distance < 10) {
+                buckets.range6to10.attempts++;
+                if (isMake) buckets.range6to10.makes++;
+              } else if (distance < 15) {
+                buckets.range10to15.attempts++;
+                if (isMake) buckets.range10to15.makes++;
+              } else {
+                buckets.range15plus.attempts++;
+                if (isMake) buckets.range15plus.makes++;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Convert to percentages, only return buckets with attempts
+    const result: { [key: string]: { percent: number; makes: number; attempts: number; name: string } } = {};
+    for (const [key, bucket] of Object.entries(buckets)) {
+      if (bucket.attempts > 0) {
+        result[key] = {
+          percent: Math.round((bucket.makes / bucket.attempts) * 100),
+          makes: bucket.makes,
+          attempts: bucket.attempts,
+          name: bucket.name,
+        };
+      }
+    }
+    
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  const puttSuccessStats = calculatePuttSuccessByDistance()
+
   // Don't render until client is hydrated and auth checked
   if (!isClient || !currentUser) {
     return null
@@ -421,6 +534,59 @@ export default function Home() {
                 <span className="font-semibold">Avg Drive Distance</span>
               </div>
               <span className="text-2xl font-bold text-blue-600">{averageDriveDistance} yd</span>
+            </div>
+          </div>
+        )}
+
+        {/* FIR Stats */}
+        {firStats !== null && (
+          <div className="card p-4 bg-green-50 border-l-4 border-l-green-600">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">⛳</span>
+                  <span className="font-semibold">Fairway Hit Rate</span>
+                </div>
+                <span className="text-2xl font-bold text-green-600">{firStats.hitPercent}%</span>
+              </div>
+              <div className="text-xs text-gray-600 space-y-1 pl-6">
+                <div>Miss Left: {firStats.missLeftPercent}%</div>
+                <div>Miss Right: {firStats.missRightPercent}%</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* GIR Stats */}
+        {girStats !== null && (
+          <div className="card p-4 bg-indigo-50 border-l-4 border-l-indigo-600">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <span className="font-semibold">Green in Regulation</span>
+              </div>
+              <span className="text-2xl font-bold text-indigo-600">{girStats.girPercent}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Putt Success by Distance */}
+        {puttSuccessStats !== null && (
+          <div className="card p-4 bg-orange-50 border-l-4 border-l-orange-600">
+            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <span>🏌️</span>
+              <span>Putt Success Rate</span>
+            </h3>
+            <div className="space-y-2">
+              {Object.entries(puttSuccessStats).map(([key, stats]) => (
+                <div key={key} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">{stats.name}</span>
+                    <span className="text-xs text-gray-500">({stats.makes}/{stats.attempts})</span>
+                  </div>
+                  <span className="text-lg font-bold text-orange-600">{stats.percent}%</span>
+                </div>
+              ))}
             </div>
           </div>
         )}

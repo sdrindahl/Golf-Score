@@ -368,6 +368,60 @@ function RoundDetailContent() {
     return distribution
   }
 
+  // Calculate FIR stats (hit, miss left, miss right)
+  const calculateFIRStats = () => {
+    let hit = 0, missLeft = 0, missRight = 0, total = 0;
+    (round?.perHoleStats || []).forEach((stats) => {
+      if (stats?.fairwayHit) {
+        total++;
+        if (stats.fairwayHit === 'hit') hit++;
+        else if (stats.fairwayHit === 'L') missLeft++;
+        else if (stats.fairwayHit === 'R') missRight++;
+      }
+    });
+    return {
+      hitPercent: total > 0 ? Math.round((hit / total) * 100) : 0,
+      missLeftPercent: total > 0 ? Math.round((missLeft / total) * 100) : 0,
+      missRightPercent: total > 0 ? Math.round((missRight / total) * 100) : 0,
+      total,
+    };
+  }
+
+  // Calculate GIR stats
+  const calculateGIRStats = () => {
+    let girCount = 0, totalHoles = 0;
+    (round?.perHoleStats || []).forEach((stats) => {
+      if (stats?.gir !== undefined) {
+        totalHoles++;
+        if (stats.gir === true) girCount++;
+      }
+    });
+    return {
+      girPercent: totalHoles > 0 ? Math.round((girCount / totalHoles) * 100) : 0,
+      girCount,
+      totalHoles,
+    };
+  }
+
+  // Calculate putt make percentage by distance
+  const calculatePuttMakeByDistance = () => {
+    const makeByDistance: { [key: number]: { made: number; total: number } } = {};
+    (round?.perHoleStats || []).forEach((stats) => {
+      if (Array.isArray(stats?.puttDistances) && Array.isArray(stats?.puttResults)) {
+        stats.puttDistances.forEach((distance, idx) => {
+          if (!makeByDistance[distance]) {
+            makeByDistance[distance] = { made: 0, total: 0 };
+          }
+          makeByDistance[distance].total++;
+          if (stats.puttResults?.[idx] === true) {
+            makeByDistance[distance].made++;
+          }
+        });
+      }
+    });
+    return makeByDistance;
+  }
+
   const scoreDistribution = calculateScoreDistribution()
   const maxDistribution = Math.max(...Object.values(scoreDistribution), 1)
 
@@ -540,6 +594,42 @@ function RoundDetailContent() {
                     </div>
                   );
                 })()}
+                {/* Add FIR stats */}
+                {(() => {
+                  const firStats = calculateFIRStats();
+                  if (firStats.total === 0) return null;
+                  return (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">⛳</span>
+                          <span className="text-sm font-semibold text-gray-700">FIR</span>
+                        </div>
+                        <span className="text-sm font-bold text-green-800">{firStats.hitPercent}%</span>
+                      </div>
+                      <div className="text-xs text-gray-600 pl-6 space-y-1">
+                        <div>Miss Left: {firStats.missLeftPercent}%</div>
+                        <div>Miss Right: {firStats.missRightPercent}%</div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                {/* Add GIR stats */}
+                {(() => {
+                  const girStats = calculateGIRStats();
+                  if (girStats.totalHoles === 0) return null;
+                  return (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🎯</span>
+                          <span className="text-sm font-semibold text-gray-700">GIR</span>
+                        </div>
+                        <span className="text-sm font-bold text-blue-800">{girStats.girPercent}%</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -556,35 +646,58 @@ function RoundDetailContent() {
               <span className="ml-2 text-xl">{showPerHole ? '▼' : '▶'}</span>
             </button>
             {showPerHole && (
-              <div id="per-hole-breakdown" className="overflow-x-auto">
-                <table className="min-w-full text-xs md:text-sm">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-2">Hole</th>
-                      <th className="p-2">Score</th>
-                      <th className="p-2">FIR</th>
-                      <th className="p-2">GIR</th>
-                      <th className="p-2">Putts</th>
-                      <th className="p-2">Drive (yd)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {course.holes.map((hole, idx) => {
+              <div id="per-hole-breakdown" className="overflow-x-auto max-h-96 overflow-y-auto">
+                {(() => {
+                  // Calculate max putts for header
+                  const maxPutts = Math.max(
+                    ...(course.holes.map((_, idx) => {
                       const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
                       const puttDistances = Array.isArray(stats.puttDistances) ? stats.puttDistances : [];
-                      return (
-                        <tr key={hole.holeNumber} className="border-b last:border-0">
-                          <td className="p-2 text-center font-bold">{hole.holeNumber}</td>
-                          <td className="p-2 text-center">{round.scores[idx] || '-'}</td>
-                          <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
-                          <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
-                          <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
-                          <td className="p-2 text-center">{stats.drive && typeof stats.drive.yardage === 'number' ? stats.drive.yardage : '-'}{stats.drive && typeof stats.drive.yardage === 'number' ? ' yd' : ''}</td>
+                      return puttDistances.length;
+                    }) || [0])
+                  );
+
+                  return (
+                    <table className="min-w-full text-xs md:text-sm border-collapse">
+                      <thead className="sticky top-0 z-20">
+                        <tr className="bg-gray-100">
+                          <th className="p-2 sticky left-0 bg-gray-100 z-20">Hole</th>
+                          <th className="p-2 sticky left-12 bg-gray-100 z-20">Par</th>
+                          <th className="p-2">Score</th>
+                          <th className="p-2">FIR</th>
+                          <th className="p-2">GIR</th>
+                          <th className="p-2">Putts</th>
+                          {Array.from({ length: maxPutts }, (_, i) => (
+                            <th key={`putt-${i + 1}`} className="p-2">Putt {i + 1}</th>
+                          ))}
+                          <th className="p-2">Drive (yd)</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {course.holes.map((hole, idx) => {
+                          const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
+                          const puttDistances = Array.isArray(stats.puttDistances) ? stats.puttDistances : [];
+                          return (
+                            <tr key={hole.holeNumber} className="border-b last:border-0">
+                              <td className="p-2 text-center font-bold sticky left-0 bg-white z-10">{hole.holeNumber}</td>
+                              <td className="p-2 text-center font-semibold text-gray-700 sticky left-12 bg-white z-10">{hole.par}</td>
+                              <td className="p-2 text-center">{round.scores[idx] || '-'}</td>
+                              <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
+                              <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
+                              <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
+                              {Array.from({ length: maxPutts }, (_, i) => (
+                                <td key={`putt-${i}-${idx}`} className="p-2 text-center">
+                                  {puttDistances[i] ? `${puttDistances[i]}'` : '-'}
+                                </td>
+                              ))}
+                              <td className="p-2 text-center">{stats.drive && typeof stats.drive.yardage === 'number' ? stats.drive.yardage : '-'}{stats.drive && typeof stats.drive.yardage === 'number' ? ' yd' : ''}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  );
+                })()}
               </div>
             )}
           </div>
