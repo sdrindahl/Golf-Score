@@ -379,6 +379,12 @@ function TrackRoundContent() {
 
     fetchCommentCount();
 
+    // Polling fallback - check for new comments every 3 seconds
+    // This ensures we see updates even if real-time subscription doesn't work (e.g., on local dev)
+    const pollInterval = setInterval(() => {
+      fetchCommentCount();
+    }, 3000);
+
     // Set up Supabase realtime subscription for new comments
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -414,6 +420,7 @@ function TrackRoundContent() {
       .subscribe();
 
     return () => {
+      clearInterval(pollInterval);
       channel.unsubscribe();
     };
   }, [roundId]);
