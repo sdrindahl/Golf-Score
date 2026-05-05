@@ -164,8 +164,8 @@ export default function CommentsModal({
           </button>
         </div>
 
-        {/* Comments List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* Comments List - Limited height for compact display */}
+        <div className="max-h-[250px] overflow-y-auto p-4 space-y-3">
           {commentsLoading ? (
             <p className="text-center text-gray-500">Loading comments...</p>
           ) : comments.length === 0 ? (
