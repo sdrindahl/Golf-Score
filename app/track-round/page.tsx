@@ -400,6 +400,15 @@ function TrackRoundContent() {
           // Show toast notification
           const authorName = payload.new.author_name || 'Someone';
           setToastMessage(`📝 ${authorName} just commented on your round!`);
+          // Auto-clear toast after 6 seconds
+          setTimeout(() => setToastMessage(null), 6000);
+          // Optional: Play a subtle sound notification
+          try {
+            const audio = new Audio('data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==');
+            audio.play().catch(() => {}); // Ignore if autoplay is blocked
+          } catch (e) {
+            // Silently fail if audio is not supported
+          }
         }
       )
       .subscribe();
@@ -561,10 +570,16 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
-      {/* Toast notification */}
+      {/* Toast notification - More prominent with close button */}
       {toastMessage && (
-        <div className="fixed top-4 left-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-pulse">
-          {toastMessage}
+        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-lg shadow-xl z-50 border-l-4 border-white flex items-center justify-between gap-4 animate-bounce">
+          <span className="font-semibold">{toastMessage}</span>
+          <button 
+            onClick={() => setToastMessage(null)}
+            className="text-lg font-bold leading-none hover:opacity-70 transition-opacity"
+          >
+            ✕
+          </button>
         </div>
       )}
       
