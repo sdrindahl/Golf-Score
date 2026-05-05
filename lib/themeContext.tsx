@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-export type Theme = 'light' | 'wolves' | 'vikings' | 'purplerain'
+export type Theme = 'wolves' | 'vikings'
 
 interface ThemeContextType {
   theme: Theme
@@ -15,29 +15,23 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
-      return (localStorage.getItem('theme') as Theme) || 'light';
+      return (localStorage.getItem('theme') as Theme) || 'wolves';
     }
-    return 'light';
+    return 'wolves';
   });
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-    html.classList.remove('light-mode', 'wolves-mode', 'vikings-mode', 'purplerain-mode');
-    body.classList.remove('light-mode', 'wolves-mode', 'vikings-mode', 'purplerain-mode');
+    html.classList.remove('wolves-mode', 'vikings-mode');
+    body.classList.remove('wolves-mode', 'vikings-mode');
     if (theme === 'wolves') {
       html.classList.add('wolves-mode');
       body.classList.add('wolves-mode');
     } else if (theme === 'vikings') {
       html.classList.add('vikings-mode');
       body.classList.add('vikings-mode');
-    } else if (theme === 'purplerain') {
-      html.classList.add('purplerain-mode');
-      body.classList.add('purplerain-mode');
-    } else {
-      html.classList.add('light-mode');
-      body.classList.add('light-mode');
     }
     setMounted(true);
     localStorage.setItem('theme', theme);
