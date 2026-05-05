@@ -1,6 +1,6 @@
 {
-  "version": "3.0.3",
-  "buildDate": "2026-04-23",
-  "buildTime": "17:28:23",
-  "description": "Golf Score Tracking App"
+  "version": "4.0.0",
+  "buildDate": "2026-05-05",
+  "buildTime": "12:04:23",
+  "description": "My Caddie - A golf score tracking application built with React and TypeScript."
 }
