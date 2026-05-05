@@ -1,14 +1,3 @@
-/* Purple Rain Theme */
-.purplerain-mode {
-  --bg-primary: #18141c; /* deep black-purple */
-  --bg-secondary: #2d133b; /* dark purple */
-  --green-bg: linear-gradient(120deg, #18141c 0%, #a259c6 60%, #e040fb 100%);
-  --accent-color: #e040fb;
-  --text-primary: #fff;
-  --text-secondary: #e0b3ff;
-  --border-color: #111; /* black border for contrast */
-  --card-shadow: 0 4px 16px rgba(0,0,0,0.25);
-}
 /* Vikings Theme */
 .vikings-mode {
   --bg-primary: #4f2683; /* deep Vikings purple */
@@ -48,16 +37,16 @@ html {
 
 
 :root {
-  --bg-primary: #f8f9fa;
-  --bg-secondary: #ffffff;
+  --bg-primary: #d0e7f7;
+  --bg-secondary: #b3e6e6;
   --text-primary: #111111;
   --text-secondary: #636366;
   --border-color: #e5e5ea;
-  --accent-color: #007aff; /* iOS blue */
+  --accent-color: #00ff87; /* My Caddie neon green */
   --danger-color: #ff3b30;
   --card-radius: 20px;
-  --card-shadow: 0 4px 16px rgba(60,60,67,0.07);
-  --green-bg: linear-gradient(to bottom right, #059669, #22c55e, #14b8a6); /* default green gradient */
+  --card-shadow: 0 4px 16px rgba(0,255,135,0.15);
+  --green-bg: linear-gradient(120deg, #0a1833 0%, #00ff87 60%, #00cfff 100%); /* My Caddie gradient */
 }
 
 /* Wolves Theme */
