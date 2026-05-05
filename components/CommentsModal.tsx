@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Comment } from '@/types';
 
 interface CommentsModalProps {
@@ -26,6 +26,7 @@ export default function CommentsModal({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(true);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const charCount = text.length;
   const isOverLimit = charCount > 100;
@@ -34,6 +35,15 @@ export default function CommentsModal({
   useEffect(() => {
     fetchComments();
   }, [roundId]);
+
+  // Auto-scroll to bottom when comments change
+  useEffect(() => {
+    scrollToBottom();
+  }, [comments]);
+
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const fetchComments = async () => {
     try {
@@ -45,8 +55,8 @@ export default function CommentsModal({
       });
       const data = await res.json();
       if (data.comments) {
-        // Reverse so newest comments appear first (no scrolling needed)
-        setComments([...data.comments].reverse());
+        // Keep chronological order (oldest first, newest last)
+        setComments(data.comments);
       }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
@@ -74,8 +84,8 @@ export default function CommentsModal({
       const data = await res.json();
       if (data.comment) {
         const newComment = { ...data.comment, reactions: [] };
-        // Add new comment to the beginning (since list is reversed)
-        setComments([newComment, ...comments]);
+        // Add new comment to the end (newest at bottom)
+        setComments([...comments, newComment]);
         setText('');
         if (onCommentAdded) {
           onCommentAdded();
@@ -308,6 +318,8 @@ export default function CommentsModal({
               );
             })
           )}
+          {/* Auto-scroll anchor */}
+          <div ref={commentsEndRef} />
         </div>
 
         {/* Divider */}
