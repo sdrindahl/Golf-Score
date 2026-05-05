@@ -18,7 +18,8 @@ export default function NavBar() {
   useEffect(() => {
     // Get current user
     const user = auth.getCurrentUser()
-    setCurrentUser(user)
+    console.log('[NavBar] Current user:', user)
+    setCurrentUser(user || null)
     setLoading(false)
 
     // If not logged in and not on login page, redirect to login
@@ -69,8 +70,11 @@ export default function NavBar() {
 
   // Don't show navbar on login page
   if (pathname === '/login') {
+    console.log('[NavBar] On login page, returning null')
     return null;
   }
+
+  console.log('[NavBar] Rendering navbar. pathname:', pathname, 'currentUser:', currentUser)
 
   // Don't show Return to Round button on track-round page
   const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
@@ -87,7 +91,7 @@ export default function NavBar() {
             >
               ⛳ Golf Tracker
             </h1>
-            {!loading && currentUser && (
+            {currentUser && (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 px-3 py-1 bg-green-600 rounded">
                   <span>👤</span>
@@ -106,63 +110,61 @@ export default function NavBar() {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      {!loading && currentUser && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)' }}>
-          <div className="flex justify-around">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)' }}>
+        <div className="flex justify-around">
+          <button
+            onClick={() => router.push('/')}
+            className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
+                ? 'bg-green-600 text-white'
+                : 'hover:bg-green-600'
+            }`}
+          >
+            <span className="text-lg mb-1">🏠</span>
+            Home
+          </button>
+          <button
+            onClick={() => router.push('/players')}
+            className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+            }`}
+          >
+            <span className="text-lg mb-1">👥</span>
+            Golfers
+          </button>
+          {/* Return to Round Button (middle position) */}
+          {currentRoundId && !isTrackRoundPage && (
             <button
-              onClick={() => router.push('/')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
-                isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
-              }`}
+              onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
+              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition bg-red-600 hover:bg-red-700 text-white shadow-lg rounded"
+              style={{ minWidth: '0' }}
             >
-              <span className="text-lg mb-1">🏠</span>
-              Home
+              <span className="text-lg mb-1">🎯</span>
+              Return to Round
             </button>
-            <button
-              onClick={() => router.push('/players')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
-                pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+          )}
+          <button
+            onClick={() => router.push('/courses')}
+            className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
+                ? 'bg-green-600 text-white'
+                : 'hover:bg-green-600'
               }`}
-            >
-              <span className="text-lg mb-1">👥</span>
-              Golfers
-            </button>
-            {/* Return to Round Button (middle position) */}
-            {currentRoundId && !isTrackRoundPage && (
-              <button
-                onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
-                className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition bg-red-600 hover:bg-red-700 text-white shadow-lg rounded"
-                style={{ minWidth: '0' }}
-              >
-                <span className="text-lg mb-1">🎯</span>
-                Return to Round
-              </button>
-            )}
-            <button
-              onClick={() => router.push('/courses')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
-                pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
-              }`}
-            >
-              <span className="text-lg mb-1">⛳</span>
-              Courses
-            </button>
-            <button
-              onClick={() => router.push('/settings')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
-                pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
-              }`}
-            >
-              <span className="text-lg mb-1">⚙️</span>
-              Account
-            </button>
-          </div>
-        </nav>
-      )}
+          >
+            <span className="text-lg mb-1">⛳</span>
+            Courses
+          </button>
+          <button
+            onClick={() => router.push('/settings')}
+            className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+            }`}
+          >
+            <span className="text-lg mb-1">⚙️</span>
+            Account
+          </button>
+        </div>
+      </nav>
     </>
   )
 }
