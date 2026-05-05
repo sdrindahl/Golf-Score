@@ -772,7 +772,7 @@ function TrackRoundContent() {
               >
                 −
               </button>
-              <span className="text-4xl font-extrabold w-10 text-center text-blue-700">
+              <span className="text-4xl font-extrabold w-10 text-center text-blue-700 font-mono" style={{ fontFamily: 'monospace', lineHeight: '1' }}>
                 {scores[currentHoleIndex] || 0}
               </span>
               <button
