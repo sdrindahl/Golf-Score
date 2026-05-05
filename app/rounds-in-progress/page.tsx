@@ -180,6 +180,8 @@ export default function RoundsInProgressPage() {
   const [commentCounts, setCommentCounts] = useState<{ [roundId: string]: number }>({});
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
   const [allPlayers, setAllPlayers] = useState<string[]>([]);
+  const [favoritePlayers, setFavoritePlayers] = useState<Set<string>>(new Set());
+  const [viewAllMode, setViewAllMode] = useState(false);
   const currentUser = auth.getCurrentUser();
 
   // Fetch comment counts for a specific round
@@ -247,25 +249,53 @@ export default function RoundsInProgressPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Load selected players from localStorage on mount
-    const saved = localStorage.getItem('selectedPlayersFilter');
-    if (saved) {
-      setSelectedPlayers(new Set(JSON.parse(saved)));
+    // Load favorite players from localStorage on mount
+    const savedFavorites = localStorage.getItem('favoritePlayers');
+    if (savedFavorites) {
+      setFavoritePlayers(new Set(JSON.parse(savedFavorites)));
     }
+    // Load view all mode from localStorage
+    const savedViewAll = localStorage.getItem('viewAllPlayersMode');
+    setViewAllMode(savedViewAll === 'true');
   }, []);
 
-  // Filter rounds based on selected players
+  // Filter rounds based on view mode and favorite players
   useEffect(() => {
-    if (selectedPlayers.size === 0) {
+    if (viewAllMode) {
+      // Show all rounds when in "View All" mode
       setFilteredRounds(rounds);
     } else {
-      const filtered = rounds.filter((r: any) => {
-        const playerName = r.user_name || r.userName;
-        return selectedPlayers.has(playerName);
-      });
-      setFilteredRounds(filtered);
+      // Show only rounds with favorite players
+      if (favoritePlayers.size === 0) {
+        setFilteredRounds([]);
+      } else {
+        const filtered = rounds.filter((r: any) => {
+          const playerName = r.user_name || r.userName;
+          return favoritePlayers.has(playerName);
+        });
+        setFilteredRounds(filtered);
+      }
     }
-  }, [selectedPlayers, rounds]);
+  }, [favoritePlayers, rounds, viewAllMode]);
+
+  // Handle player favorite toggle
+  const toggleFavorite = (playerName: string) => {
+    const newFavorites = new Set(favoritePlayers);
+    if (newFavorites.has(playerName)) {
+      newFavorites.delete(playerName);
+    } else {
+      newFavorites.add(playerName);
+    }
+    setFavoritePlayers(newFavorites);
+    localStorage.setItem('favoritePlayers', JSON.stringify(Array.from(newFavorites)));
+  };
+
+  // Toggle between favorites-only and view all
+  const toggleViewAllMode = () => {
+    const newMode = !viewAllMode;
+    setViewAllMode(newMode);
+    localStorage.setItem('viewAllPlayersMode', String(newMode));
+  };
 
   // Handle player selection toggle
   const togglePlayer = (playerName: string) => {
@@ -277,19 +307,6 @@ export default function RoundsInProgressPage() {
     }
     setSelectedPlayers(newSelected);
     localStorage.setItem('selectedPlayersFilter', JSON.stringify(Array.from(newSelected)));
-  };
-
-  // Select all players
-  const selectAllPlayers = () => {
-    const allPlayersSet = new Set(allPlayers);
-    setSelectedPlayers(allPlayersSet);
-    localStorage.setItem('selectedPlayersFilter', JSON.stringify(allPlayers));
-  };
-
-  // Deselect all players
-  const deselectAllPlayers = () => {
-    setSelectedPlayers(new Set());
-    localStorage.removeItem('selectedPlayersFilter');
   };
 
   useEffect(() => {
@@ -348,39 +365,50 @@ export default function RoundsInProgressPage() {
         {allPlayers.length > 0 && (
           <div className="bg-white/90 rounded-xl shadow-md p-4 mb-4">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-semibold text-gray-800">Filter by Player</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={selectAllPlayers}
-                  className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition"
-                >
-                  Select All
-                </button>
-                <button
-                  onClick={deselectAllPlayers}
-                  className="text-xs px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded transition"
-                >
-                  Clear
-                </button>
-              </div>
+              <h3 className="text-sm font-semibold text-gray-800">
+                {viewAllMode ? 'All Players' : 'Favorite Players'}
+              </h3>
+              <button
+                onClick={toggleViewAllMode}
+                className={`text-xs px-3 py-1 rounded transition font-semibold ${
+                  viewAllMode
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                    : 'bg-green-600 hover:bg-green-700 text-white'
+                }`}
+              >
+                {viewAllMode ? 'View All' : 'Favorites'}
+              </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {allPlayers.map((playerName) => (
-                <button
-                  key={playerName}
-                  onClick={() => togglePlayer(playerName)}
-                  className={`px-3 py-1 rounded-full text-sm font-semibold transition ${
-                    selectedPlayers.has(playerName)
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                  }`}
-                >
-                  {playerName}
-                </button>
-              ))}
+              {allPlayers.map((playerName) => {
+                const isFavorite = favoritePlayers.has(playerName);
+                return (
+                  <div
+                    key={playerName}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 border border-gray-300"
+                  >
+                    <span>{playerName}</span>
+                    <button
+                      onClick={() => toggleFavorite(playerName)}
+                      className="flex-shrink-0 ml-1 hover:scale-125 transition-transform"
+                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      {isFavorite ? (
+                        <span className="text-lg">⭐</span>
+                      ) : (
+                        <span className="text-lg opacity-40">☆</span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
             <div className="text-xs text-gray-600 mt-2">
-              Showing {filteredRounds.length} of {rounds.length} rounds
+              {viewAllMode ? (
+                <>Showing all {rounds.length} rounds</>
+              ) : (
+                <>Showing {filteredRounds.length} of {rounds.length} rounds</>
+              )}
             </div>
           </div>
         )}
