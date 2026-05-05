@@ -379,6 +379,12 @@ function TrackRoundContent() {
 
     fetchCommentCount();
 
+    // Polling fallback - check for new comments every 3 seconds
+    // This ensures we see updates even if real-time subscription doesn't work (e.g., on local dev)
+    const pollInterval = setInterval(() => {
+      fetchCommentCount();
+    }, 3000);
+
     // Set up Supabase realtime subscription for new comments
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -400,52 +406,24 @@ function TrackRoundContent() {
           // Show toast notification
           const authorName = payload.new.author_name || 'Someone';
           setToastMessage(`📝 ${authorName} just commented on your round!`);
+          // Auto-clear toast after 6 seconds
+          setTimeout(() => setToastMessage(null), 6000);
+          // Optional: Play a subtle sound notification
+          try {
+            const audio = new Audio('data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==');
+            audio.play().catch(() => {}); // Ignore if autoplay is blocked
+          } catch (e) {
+            // Silently fail if audio is not supported
+          }
         }
       )
       .subscribe();
 
     return () => {
+      clearInterval(pollInterval);
       channel.unsubscribe();
     };
   }, [roundId]);
-
-  // Handle quick emoji reaction from Holes Completed card
-  const handleQuickReaction = async (emoji: string) => {
-    if (!roundId) return;
-
-    try {
-      // Fetch comments to get the most recent one
-      const res = await fetch('/api/get-comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roundId }),
-      });
-      const data = await res.json();
-      const comments = data.comments || [];
-
-      if (comments.length === 0) {
-        // No comments yet, just open the modal
-        setShowCommentsModal(true);
-        return;
-      }
-
-      // Add reaction to the most recent comment
-      const mostRecentComment = comments[comments.length - 1];
-      await fetch('/api/comment-reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          commentId: mostRecentComment.id,
-          emoji,
-          increment: true,
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to add reaction:', error);
-      // Fall back to opening modal if reaction fails
-      setShowCommentsModal(true);
-    }
-  };
 
   const handleScoreChange = (adjustment: 'increment' | 'decrement') => {
     if (!round) return;
@@ -599,10 +577,16 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
-      {/* Toast notification */}
+      {/* Toast notification - More prominent with close button */}
       {toastMessage && (
-        <div className="fixed top-4 left-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-pulse">
-          {toastMessage}
+        <div className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-lg shadow-xl z-50 border-l-4 border-white flex items-center justify-between gap-4 animate-bounce">
+          <span className="font-semibold">{toastMessage}</span>
+          <button 
+            onClick={() => setToastMessage(null)}
+            className="text-lg font-bold leading-none hover:opacity-70 transition-opacity"
+          >
+            ✕
+          </button>
         </div>
       )}
       
@@ -675,17 +659,8 @@ function TrackRoundContent() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex gap-2">
               <button
-                onClick={() => handleQuickReaction('👍')}
-                className="absolute left-6 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
-              >
-                <span className="text-lg">👍</span>
-                {commentCount > 0 && (
-                  <span className="text-xs font-semibold text-gray-700">{commentCount}</span>
-                )}
-              </button>
-              <button
                 onClick={() => setShowCommentsModal(true)}
-                className="absolute left-20 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
+                className="absolute left-6 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
               >
                 <span className="text-lg">💬</span>
                 {commentCount > 0 && (
@@ -819,7 +794,7 @@ function TrackRoundContent() {
               >
                 −
               </button>
-              <span className="text-4xl font-extrabold w-10 text-center text-blue-700">
+              <span className="text-4xl font-extrabold w-10 text-center text-blue-700 font-mono" style={{ fontFamily: 'monospace', lineHeight: '1' }}>
                 {scores[currentHoleIndex] || 0}
               </span>
               <button

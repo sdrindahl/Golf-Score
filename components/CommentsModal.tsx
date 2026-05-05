@@ -45,7 +45,8 @@ export default function CommentsModal({
       });
       const data = await res.json();
       if (data.comments) {
-        setComments(data.comments);
+        // Reverse so newest comments appear first (no scrolling needed)
+        setComments([...data.comments].reverse());
       }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
@@ -73,7 +74,8 @@ export default function CommentsModal({
       const data = await res.json();
       if (data.comment) {
         const newComment = { ...data.comment, reactions: [] };
-        setComments([...comments, newComment]);
+        // Add new comment to the beginning (since list is reversed)
+        setComments([newComment, ...comments]);
         setText('');
         if (onCommentAdded) {
           onCommentAdded();
@@ -162,8 +164,8 @@ export default function CommentsModal({
           </button>
         </div>
 
-        {/* Comments List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {/* Comments List - Limited height for compact display */}
+        <div className="max-h-[250px] overflow-y-auto p-4 space-y-3">
           {commentsLoading ? (
             <p className="text-center text-gray-500">Loading comments...</p>
           ) : comments.length === 0 ? (
