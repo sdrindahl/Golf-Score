@@ -27,7 +27,7 @@ type GroupedRounds = {
   [key: string]: Round[];
 };
 
-function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenComments, commentCounts }: { rounds: Round[]; currentUserId?: string; currentUserName?: string; onOpenComments?: (roundId: string) => void; commentCounts?: { [roundId: string]: number } }) {
+function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenComments, commentCounts, selectedPlayers, onTogglePlayer }: { rounds: Round[]; currentUserId?: string; currentUserName?: string; onOpenComments?: (roundId: string) => void; commentCounts?: { [roundId: string]: number }; selectedPlayers?: Set<string>; onTogglePlayer?: (playerName: string) => void }) {
   // Helper to group rounds by parent course name
   function groupByParent(rounds: Round[]): GroupedRounds {
     const grouped: GroupedRounds = {};
@@ -81,6 +81,9 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                   const thru = round.in_progress === false ? 'F' : holesCompleted;
                   const toPar = getToPar(round);
                   const totalScore = round.total_score ?? round.totalScore ?? 0;
+                  const playerName = round.user_name || round.userName || '';
+                  const isSelected = selectedPlayers?.has(playerName) ?? false;
+                  
                   // Get last 3 holes (score/par)
                   let last3: { score: number, par: number }[] = [];
                   if (Array.isArray(round.scores) && Array.isArray(round.holes)) {
@@ -97,7 +100,21 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                       </td>
                       <td className="px-2 py-2">
                         <div className="font-semibold text-gray-800 flex items-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
-                          {round.user_name || round.userName}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTogglePlayer?.(playerName);
+                            }}
+                            className="flex-shrink-0 hover:scale-125 transition-transform"
+                            title={isSelected ? 'Unselect player' : 'Select player'}
+                          >
+                            {isSelected ? (
+                              <span className="text-lg">⭐</span>
+                            ) : (
+                              <span className="text-lg opacity-40">☆</span>
+                            )}
+                          </button>
+                          <span className="min-w-0 truncate">{playerName}</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -177,6 +194,8 @@ export default function RoundsInProgressPage() {
   const [isClient, setIsClient] = useState(false);
   const [openCommentsModal, setOpenCommentsModal] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [roundId: string]: number }>({});
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
+  const [showAllPlayers, setShowAllPlayers] = useState(true);
   const currentUser = auth.getCurrentUser();
 
   // Fetch comment counts for a specific round
@@ -218,7 +237,8 @@ export default function RoundsInProgressPage() {
   const fetchAndHydrateRounds = () => {
     setLoading(true);
     getRoundsInProgress().then(data => {
-      setRounds(hydrateRoundsWithHoles(data || []));
+      const hydratedData = hydrateRoundsWithHoles(data || []);
+      setRounds(hydratedData);
       setLoading(false);
     }).catch((err) => {
       setLoading(false);
@@ -230,6 +250,18 @@ export default function RoundsInProgressPage() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Toggle player selection
+  const togglePlayer = (playerName: string) => {
+    const newSelected = new Set(selectedPlayers);
+    if (newSelected.has(playerName)) {
+      newSelected.delete(playerName);
+    } else {
+      newSelected.add(playerName);
+    }
+    setSelectedPlayers(newSelected);
+    setShowAllPlayers(false); // Switch to filtered view when selecting a player
+  };
 
   useEffect(() => {
     if (!isClient) return;
@@ -272,6 +304,15 @@ export default function RoundsInProgressPage() {
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
+  // Filter rounds based on selected players
+  let displayedRounds = rounds;
+  if (!showAllPlayers && selectedPlayers.size > 0) {
+    displayedRounds = rounds.filter((r: any) => {
+      const playerName = r.user_name || r.userName;
+      return selectedPlayers.has(playerName);
+    });
+  }
+
   // Navigation handlers for bottom nav
   const handleViewRounds = () => router.push('/')
   const handleViewCourses = () => router.push('/courses')
@@ -281,7 +322,35 @@ export default function RoundsInProgressPage() {
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       <div className="max-w-xl mx-auto px-2 sm:px-4 py-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 drop-shadow-lg text-center">Rounds in Progress</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-lg text-center">Rounds in Progress</h1>
+        
+        {/* View All Players / View Selected Toggle Button */}
+        <div className="mb-4 flex justify-center gap-3">
+          <button
+            onClick={() => setShowAllPlayers(true)}
+            className={`font-semibold py-2 px-6 rounded-full shadow transition-all duration-150 ${
+              showAllPlayers
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-gray-400 hover:bg-gray-500 text-white'
+            }`}
+          >
+            View All Players
+          </button>
+          <button
+            onClick={() => setShowAllPlayers(false)}
+            disabled={selectedPlayers.size === 0}
+            className={`font-semibold py-2 px-6 rounded-full shadow transition-all duration-150 ${
+              !showAllPlayers && selectedPlayers.size > 0
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : selectedPlayers.size === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-400 hover:bg-gray-500 text-white'
+            }`}
+          >
+            ⭐ Favorites
+          </button>
+        </div>
+        
         {/* Helper text for last 3 holes symbols */}
         <div className="w-full text-center text-xs text-black mb-1">
           Symbols below +/- show last 3 holes
@@ -296,15 +365,17 @@ export default function RoundsInProgressPage() {
           <LegendSymbol abbr="Db" color="#f59e42" label="Double Bogey" />
           <LegendSymbol abbr="Tb" color="#222" label="Triple+ Bogey" />
         </div>
-        {rounds.length === 0 && (
+        {displayedRounds.length === 0 && (
           <div className="bg-white/90 rounded-xl shadow-md p-6 text-center">
-            <p className="text-gray-500 font-semibold">No rounds in progress.</p>
+            <p className="text-gray-500 font-semibold">
+              {rounds.length === 0 ? 'No rounds in progress.' : 'No rounds match selected players.'}
+            </p>
           </div>
         )}
         {/* Leaderboard Table Cards by Parent Course */}
-        {isClient && rounds.length > 0 && (
+        {isClient && displayedRounds.length > 0 && (
           <>
-            <LeaderboardByCourse rounds={rounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} />
+            <LeaderboardByCourse rounds={displayedRounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} selectedPlayers={selectedPlayers} onTogglePlayer={togglePlayer} />
             <div className="flex justify-start mt-3 mb-2">
               <button
                 className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded-full shadow transition-all duration-150"
