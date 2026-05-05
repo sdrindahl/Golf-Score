@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Comment } from '@/types';
 
 interface CommentsModalProps {
@@ -26,6 +26,7 @@ export default function CommentsModal({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
   const [commentsLoading, setCommentsLoading] = useState(true);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const charCount = text.length;
   const isOverLimit = charCount > 100;
@@ -34,6 +35,15 @@ export default function CommentsModal({
   useEffect(() => {
     fetchComments();
   }, [roundId]);
+
+  // Auto-scroll to bottom when comments change
+  useEffect(() => {
+    scrollToBottom();
+  }, [comments]);
+
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const fetchComments = async () => {
     try {
@@ -45,8 +55,8 @@ export default function CommentsModal({
       });
       const data = await res.json();
       if (data.comments) {
-        // Reverse so newest comments appear first (no scrolling needed)
-        setComments([...data.comments].reverse());
+        // Keep chronological order (oldest first, newest last)
+        setComments(data.comments);
       }
     } catch (error) {
       console.error('Failed to fetch comments:', error);
@@ -74,8 +84,8 @@ export default function CommentsModal({
       const data = await res.json();
       if (data.comment) {
         const newComment = { ...data.comment, reactions: [] };
-        // Add new comment to the beginning (since list is reversed)
-        setComments([newComment, ...comments]);
+        // Add new comment to the end (newest at bottom)
+        setComments([...comments, newComment]);
         setText('');
         if (onCommentAdded) {
           onCommentAdded();
@@ -164,106 +174,152 @@ export default function CommentsModal({
           </button>
         </div>
 
-        {/* Comments List - Limited height for compact display */}
-        <div className="max-h-[250px] overflow-y-auto p-4 space-y-3">
+        {/* Comments List - iMessages style chat bubbles */}
+        <div className="max-h-[250px] overflow-y-auto p-4 space-y-2 flex flex-col">
           {commentsLoading ? (
             <p className="text-center text-gray-500">Loading comments...</p>
           ) : comments.length === 0 ? (
-            <p className="text-center text-gray-500 py-4">
+            <p className="text-center text-gray-500 py-8">
               No comments yet. Be the first!
             </p>
           ) : (
-            comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="p-3 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                {editingId === comment.id ? (
-                  <div className="space-y-2">
-                    <textarea
-                      value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
-                      maxLength={101}
-                      rows={2}
-                      className="w-full p-2 border border-gray-300 rounded resize-none text-sm"
-                    />
-                    <div className="flex gap-2 justify-end">
+            comments.map((comment) => {
+              const isOwnComment = comment.user_id === userId;
+              return (
+                <div
+                  key={comment.id}
+                  className={`flex ${isOwnComment ? 'justify-end' : 'justify-start'} gap-2 group`}
+                >
+                  {/* Edit/Delete buttons for own comments (left side on hover) */}
+                  {isOwnComment && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center">
                       <button
-                        onClick={() => setEditingId(null)}
-                        className="btn-secondary text-xs px-2 py-1"
+                        onClick={() => {
+                          setEditingId(comment.id);
+                          setEditText(comment.text);
+                        }}
+                        className="text-sm text-blue-500 hover:text-blue-700"
                       >
-                        Cancel
+                        ✏️
                       </button>
                       <button
-                        onClick={() => handleUpdate(comment.id)}
-                        className="btn-primary text-xs px-2 py-1"
+                        onClick={() => handleDelete(comment.id)}
+                        className="text-sm text-red-500 hover:text-red-700"
                       >
-                        Save
+                        🗑️
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between mb-1">
-                      <div>
-                        <span className="font-semibold text-sm">
+                  )}
+
+                  {/* Chat bubble */}
+                  <div className={`max-w-xs ${isOwnComment ? 'items-end' : 'items-start'} flex flex-col`}>
+                    {/* Author name and timestamp (above bubble for others, below for self) */}
+                    {!isOwnComment && (
+                      <div className="flex gap-1 mb-0.5 px-3">
+                        <span className="font-semibold text-xs text-gray-700">
                           {comment.author_name}
                         </span>
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-500">
                           {new Date(comment.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </span>
                       </div>
-                      {comment.user_id === userId && (
-                        <div className="flex gap-1">
+                    )}
+
+                    {editingId === comment.id ? (
+                      <div className={`space-y-1 p-2 rounded-2xl ${isOwnComment ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                        <textarea
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          maxLength={101}
+                          rows={2}
+                          className="w-full p-2 border border-gray-300 rounded resize-none text-sm"
+                        />
+                        <div className="flex gap-2 justify-end">
                           <button
-                            onClick={() => {
-                              setEditingId(comment.id);
-                              setEditText(comment.text);
-                            }}
-                            className="text-xs text-blue-500 hover:text-blue-700"
+                            onClick={() => setEditingId(null)}
+                            className="btn-secondary text-xs px-2 py-1"
                           >
-                            ✏️
+                            Cancel
                           </button>
                           <button
-                            onClick={() => handleDelete(comment.id)}
-                            className="text-xs text-red-500 hover:text-red-700"
+                            onClick={() => handleUpdate(comment.id)}
+                            className="btn-primary text-xs px-2 py-1"
                           >
-                            🗑️
+                            Save
                           </button>
                         </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-800 mb-2">{comment.text}</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Message bubble */}
+                        <div
+                          className={`px-4 py-2 rounded-2xl ${
+                            isOwnComment
+                              ? 'bg-blue-500 text-white rounded-br-none'
+                              : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                          }`}
+                        >
+                          <p className="text-sm break-words">{comment.text}</p>
+                        </div>
 
-                    {/* Reactions */}
-                    <div className="flex flex-wrap gap-1">
-                      {REACTION_EMOJIS.map((emoji) => {
-                        const reaction = comment.reactions?.find(
-                          (r) => r.emoji === emoji
-                        );
-                        return (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReaction(comment.id, emoji)}
-                            className={`text-xs px-2 py-1 rounded border transition ${
-                              reaction && reaction.count > 0
-                                ? 'bg-blue-100 border-blue-300'
-                                : 'bg-gray-100 border-gray-300 hover:bg-gray-200'
-                            }`}
-                          >
-                            {emoji} {reaction && reaction.count > 0 ? reaction.count : ''}
-                          </button>
-                        );
-                      })}
+                        {/* Reactions below bubble */}
+                        <div className="flex flex-wrap gap-1 mt-1 px-1">
+                          {REACTION_EMOJIS.map((emoji) => {
+                            const reaction = comment.reactions?.find(
+                              (r) => r.emoji === emoji
+                            );
+                            return (
+                              <button
+                                key={emoji}
+                                onClick={() => handleReaction(comment.id, emoji)}
+                                className={`text-xs px-1.5 py-0.5 rounded-full border transition ${
+                                  reaction && reaction.count > 0
+                                    ? 'bg-blue-100 border-blue-300'
+                                    : 'bg-gray-100 border-gray-300 hover:bg-gray-200'
+                                }`}
+                                title={`${emoji}${reaction && reaction.count > 0 ? ' x' + reaction.count : ''}`}
+                              >
+                                {emoji}
+                                {reaction && reaction.count > 0 && (
+                                  <span className="ml-0.5 text-xs font-semibold">
+                                    {reaction.count}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Author name and timestamp (below bubble for self) */}
+                    {isOwnComment && (
+                      <div className="flex gap-1 mt-0.5 px-3 justify-end">
+                        <span className="text-xs text-gray-500">
+                          {new Date(comment.created_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Edit/Delete buttons for others' comments (right side on hover) */}
+                  {!isOwnComment && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center">
+                      {/* No edit/delete for others' comments */}
                     </div>
-                  </>
-                )}
-              </div>
-            ))
+                  )}
+                </div>
+              );
+            })
           )}
+          {/* Auto-scroll anchor */}
+          <div ref={commentsEndRef} />
         </div>
 
         {/* Divider */}
