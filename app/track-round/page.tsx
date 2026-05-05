@@ -286,9 +286,31 @@ function TrackRoundContent() {
       const found = data?.find((r: any) => r.id === roundId);
       setRound(found || null);
       setScores(found?.scores || []);
-      // Initialize perHoleStats if not set
+      // Initialize perHoleStats: load from saved data or create empty objects
       if (found && found.scores) {
-        setPerHoleStats((prev) => prev.length === found.scores.length ? prev : Array(found.scores.length).fill({}));
+        const savedStats = found.perHoleStats || found.per_hole_stats || [];
+        if (Array.isArray(savedStats) && savedStats.length === found.scores.length) {
+          // Use saved stats if available and correct length
+          setPerHoleStats(savedStats);
+        } else {
+          // Create empty stats for any missing entries
+          setPerHoleStats((prev) => {
+            const result = Array(found.scores.length).fill({});
+            // Preserve any existing stats that match
+            if (prev.length === found.scores.length) {
+              return prev;
+            }
+            // Copy over saved stats if available
+            if (Array.isArray(savedStats)) {
+              savedStats.forEach((stat, idx) => {
+                if (idx < result.length) {
+                  result[idx] = stat || {};
+                }
+              });
+            }
+            return result;
+          });
+        }
       }
       setLoading(false);
       subscription = subscribeToRoundsInProgress(() => {
@@ -297,7 +319,25 @@ function TrackRoundContent() {
           setRound(updated || null);
           setScores(updated?.scores || []);
           if (updated && updated.scores) {
-            setPerHoleStats((prev) => prev.length === updated.scores.length ? prev : Array(updated.scores.length).fill({}));
+            const savedStats = updated.perHoleStats || updated.per_hole_stats || [];
+            if (Array.isArray(savedStats) && savedStats.length === updated.scores.length) {
+              setPerHoleStats(savedStats);
+            } else {
+              setPerHoleStats((prev) => {
+                const result = Array(updated.scores.length).fill({});
+                if (prev.length === updated.scores.length) {
+                  return prev;
+                }
+                if (Array.isArray(savedStats)) {
+                  savedStats.forEach((stat, idx) => {
+                    if (idx < result.length) {
+                      result[idx] = stat || {};
+                    }
+                  });
+                }
+                return result;
+              });
+            }
           }
         });
       });
