@@ -3,7 +3,6 @@ import { useEffect, useState, useRef } from 'react';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
-import CommentsBubble from '@/components/CommentsBubble';
 import CommentsModal from '@/components/CommentsModal';
 // import Link from 'next/link';
 
@@ -28,7 +27,7 @@ type GroupedRounds = {
   [key: string]: Round[];
 };
 
-function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenComments, commentCounts, openEmojiPicker, onOpenEmojiPicker, onEmojiReaction, roundReactions, userReactions, whoReactedModal, onShowWhoReacted }: { rounds: Round[]; currentUserId?: string; currentUserName?: string; onOpenComments?: (roundId: string) => void; commentCounts?: { [roundId: string]: number }; openEmojiPicker?: string | null; onOpenEmojiPicker?: (roundId: string | null) => void; onEmojiReaction?: (roundId: string, emoji: string) => void; roundReactions?: { [roundId: string]: { [emoji: string]: { count: number; users: { user_id: string; user_name: string }[] } } }; userReactions?: { [roundId: string]: string[] }; whoReactedModal?: { roundId: string; emoji: string } | null; onShowWhoReacted?: (modal: { roundId: string; emoji: string } | null) => void }) {
+function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenComments, commentCounts }: { rounds: Round[]; currentUserId?: string; currentUserName?: string; onOpenComments?: (roundId: string) => void; commentCounts?: { [roundId: string]: number } }) {
   // Helper to group rounds by parent course name
   function groupByParent(rounds: Round[]): GroupedRounds {
     const grouped: GroupedRounds = {};
@@ -99,86 +98,13 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                       <td className="px-2 py-2">
                         <div className="font-semibold text-gray-800 flex items-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
                           {round.user_name || round.userName}
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onOpenEmojiPicker?.(openEmojiPicker === round.id ? null : round.id);
-                              }}
-                              className="flex items-center gap-1 hover:opacity-70 transition-opacity flex-shrink-0"
-                              title="Add reaction"
-                            >
-                              <div className="flex gap-0.5">
-                                {(userReactions && userReactions[round.id]?.length > 0) ? (
-                                  userReactions[round.id].map((emoji) => (
-                                    <span key={emoji} className="text-sm">{emoji}</span>
-                                  ))
-                                ) : (
-                                  <span className="text-sm">👍</span>
-                                )}
-                              </div>
-                              {roundReactions && roundReactions[round.id] && Object.values(roundReactions[round.id]).reduce((sum: number, data: any) => sum + (data.count || 0), 0) > 0 && (
-                                <span className="text-xs font-semibold text-gray-700">
-                                  {Object.values(roundReactions[round.id]).reduce((sum: number, data: any) => sum + (data.count || 0), 0)}
-                                </span>
-                              )}
-                            </button>
-                            {openEmojiPicker === round.id && (
-                              <div className="fixed bg-white rounded-lg shadow-xl border border-gray-300 p-3 z-50" style={{ 
-                                left: '50%',
-                                top: '200px',
-                                transform: 'translateX(-50%)',
-                                minWidth: '320px'
-                              }}>
-                                <div className="flex gap-2 flex-wrap justify-center">
-                                  {['👍', '❓', '💩'].map((emoji) => {
-                                    const reactionData = roundReactions && roundReactions[round.id]?.[emoji];
-                                    const userHasReacted = userReactions && userReactions[round.id]?.includes(emoji);
-                                    const count = reactionData?.count || 0;
-
-                                    return (
-                                      <div
-                                        key={emoji}
-                                        className="flex flex-col items-center gap-1"
-                                      >
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            onEmojiReaction?.(round.id, emoji);
-                                          }}
-                                          className={`flex flex-col items-center gap-1 p-2 rounded transition-all ${
-                                            userHasReacted
-                                              ? 'bg-blue-100 border-2 border-blue-500'
-                                              : 'hover:bg-gray-100 border-2 border-transparent'
-                                          }`}
-                                        >
-                                          <span className="text-2xl">{emoji}</span>
-                                        </button>
-                                        {count > 0 && (
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              onShowWhoReacted?.({ roundId: round.id, emoji });
-                                            }}
-                                            className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
-                                          >
-                                            {count}
-                                          </button>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-                          </div>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               onOpenComments?.(round.id);
                             }}
                             className="flex items-center gap-1 hover:opacity-70 transition-opacity flex-shrink-0"
-                            title="View reactions and comments"
+                            title="View comments"
                           >
                             <span className="text-sm">💬</span>
                           </button>
@@ -251,11 +177,6 @@ export default function RoundsInProgressPage() {
   const [isClient, setIsClient] = useState(false);
   const [openCommentsModal, setOpenCommentsModal] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [roundId: string]: number }>({});
-  const [openEmojiPicker, setOpenEmojiPicker] = useState<string | null>(null);
-  const [roundReactions, setRoundReactions] = useState<{ [roundId: string]: { [emoji: string]: { count: number; users: { user_id: string; user_name: string }[] } } }>({});
-  const [userReactions, setUserReactions] = useState<{ [roundId: string]: string[] }>({});
-  const [whoReactedModal, setWhoReactedModal] = useState<{ roundId: string; emoji: string } | null>(null);
-  const fetchedReactionsRef = useRef<Set<string>>(new Set());
   const currentUser = auth.getCurrentUser();
 
   // Fetch comment counts for a specific round
@@ -273,59 +194,6 @@ export default function RoundsInProgressPage() {
     } catch (error) {
       console.error(`Failed to fetch comments for round ${roundId}:`, error);
       return 0;
-    }
-  };
-
-  // Fetch round reactions
-  const fetchRoundReactions = async (roundId: string) => {
-    try {
-      const res = await fetch('/api/get-round-reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roundId }),
-      });
-      const data = await res.json();
-      setRoundReactions((prev) => ({ ...prev, [roundId]: data.reactions || {} }));
-
-      // Calculate which emojis the current user has reacted with
-      if (currentUser && data.reactions) {
-        const userEmojis: string[] = [];
-        for (const [emoji, reactionData] of Object.entries(data.reactions || {})) {
-          const reaction = reactionData as { count: number; users: { user_id: string; user_name: string }[] };
-          if (reaction.users?.some((u) => u.user_id === currentUser.id)) {
-            userEmojis.push(emoji);
-          }
-        }
-        setUserReactions((prev) => ({ ...prev, [roundId]: userEmojis }));
-      }
-    } catch (error) {
-      console.error(`Failed to fetch reactions for round ${roundId}:`, error);
-    }
-  };
-
-  // Toggle emoji reaction
-  const handleEmojiReaction = async (roundId: string, emoji: string) => {
-    if (!currentUser) return;
-
-    try {
-      const res = await fetch('/api/toggle-round-reaction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roundId,
-          userId: currentUser.id,
-          userName: currentUser.name,
-          emoji,
-        }),
-      });
-
-      if (res.ok) {
-        // Refetch reactions to update UI
-        await fetchRoundReactions(roundId);
-        setOpenEmojiPicker(null);
-      }
-    } catch (error) {
-      console.error('Failed to toggle reaction:', error);
     }
   };
 
@@ -402,23 +270,6 @@ export default function RoundsInProgressPage() {
     fetchCommentCounts();
   }, [rounds]);
 
-  // Fetch reactions for all rounds (only once per round)
-  useEffect(() => {
-    if (rounds.length === 0) return;
-
-    const fetchAllReactions = async () => {
-      for (const round of rounds) {
-        // Skip if we already fetched this round's reactions
-        if (fetchedReactionsRef.current.has(round.id)) continue;
-        
-        fetchedReactionsRef.current.add(round.id);
-        await fetchRoundReactions(round.id);
-      }
-    };
-
-    fetchAllReactions();
-  }, [rounds.length]);
-
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   // Navigation handlers for bottom nav
@@ -453,7 +304,7 @@ export default function RoundsInProgressPage() {
         {/* Leaderboard Table Cards by Parent Course */}
         {isClient && rounds.length > 0 && (
           <>
-            <LeaderboardByCourse rounds={rounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} openEmojiPicker={openEmojiPicker} onOpenEmojiPicker={setOpenEmojiPicker} onEmojiReaction={handleEmojiReaction} roundReactions={roundReactions} userReactions={userReactions} whoReactedModal={whoReactedModal} onShowWhoReacted={setWhoReactedModal} />
+            <LeaderboardByCourse rounds={rounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} />
             <div className="flex justify-start mt-3 mb-2">
               <button
                 className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded-full shadow transition-all duration-150"
@@ -476,33 +327,6 @@ export default function RoundsInProgressPage() {
           userName={currentUser.name || 'Anonymous'}
           onClose={() => setOpenCommentsModal(null)}
         />
-      )}
-
-      {/* Who Reacted Modal */}
-      {whoReactedModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-sm w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold">
-                {whoReactedModal.emoji} Reactions
-              </h3>
-              <button
-                onClick={() => setWhoReactedModal(null)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-              >
-                ×
-              </button>
-            </div>
-            <div className="space-y-2">
-              {roundReactions?.[whoReactedModal.roundId]?.[whoReactedModal.emoji]?.users?.map((user) => (
-                <div key={user.user_id} className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded">
-                  <span className="text-2xl">{whoReactedModal.emoji}</span>
-                  <span className="text-sm font-medium text-gray-700">{user.user_name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
