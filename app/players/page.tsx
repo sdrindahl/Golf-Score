@@ -220,7 +220,7 @@ export default function Players() {
             />
           </div>
 
-          {/* View All Players / View Favorites Toggle Buttons + Refresh */}
+          {/* View All Players / View Favorites Toggle Buttons */}
           <div className="mb-4 flex justify-center gap-3 flex-wrap">
             <button
               onClick={() => setShowAllPlayers(true)}
@@ -244,21 +244,6 @@ export default function Players() {
               }`}
             >
               ⭐ Favorites ({favoritePlayerIds.size})
-            </button>
-            <button
-              onClick={async () => {
-                setRefreshing(true)
-                await loadPlayers()
-                setRefreshing(false)
-              }}
-              disabled={refreshing}
-              className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
-                refreshing
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
-              }`}
-            >
-              {refreshing ? '🔄 Refreshing...' : '🔄 Refresh'}
             </button>
           </div>
 
@@ -355,7 +340,24 @@ export default function Players() {
 
               return (
                 <>
-                  <h3 className="text-lg font-bold text-gray-800 mb-2">Top 3 Golfers</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-800">Top 3 Golfers</h3>
+                    <button
+                      onClick={async () => {
+                        setRefreshing(true)
+                        await loadPlayers()
+                        setRefreshing(false)
+                      }}
+                      disabled={refreshing}
+                      className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
+                        refreshing
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                      }`}
+                    >
+                      {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Stats'}
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {topThree.map((player, index) => {
                       let bgGradient = 'from-gray-50 to-gray-100'
