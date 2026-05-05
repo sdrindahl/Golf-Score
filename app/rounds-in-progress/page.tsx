@@ -173,10 +173,13 @@ export default function RoundsInProgressPage() {
   const router = useRouter();
   const auth = useAuth();
   const [rounds, setRounds] = useState<any[]>([]);
+  const [filteredRounds, setFilteredRounds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [openCommentsModal, setOpenCommentsModal] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [roundId: string]: number }>({});
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
+  const [allPlayers, setAllPlayers] = useState<string[]>([]);
   const currentUser = auth.getCurrentUser();
 
   // Fetch comment counts for a specific round
@@ -218,7 +221,22 @@ export default function RoundsInProgressPage() {
   const fetchAndHydrateRounds = () => {
     setLoading(true);
     getRoundsInProgress().then(data => {
-      setRounds(hydrateRoundsWithHoles(data || []));
+      const hydratedData = hydrateRoundsWithHoles(data || []);
+      setRounds(hydratedData);
+      
+      // Extract unique player names
+      const players = Array.from(new Set(
+        hydratedData.map((r: any) => r.user_name || r.userName).filter(Boolean)
+      )).sort();
+      setAllPlayers(players);
+      
+      // If no selected players yet, default to showing all
+      if (selectedPlayers.size === 0 && players.length > 0) {
+        const allPlayersSet = new Set(players);
+        setSelectedPlayers(allPlayersSet);
+        localStorage.setItem('selectedPlayersFilter', JSON.stringify(players));
+      }
+      
       setLoading(false);
     }).catch((err) => {
       setLoading(false);
@@ -229,7 +247,50 @@ export default function RoundsInProgressPage() {
 
   useEffect(() => {
     setIsClient(true);
+    // Load selected players from localStorage on mount
+    const saved = localStorage.getItem('selectedPlayersFilter');
+    if (saved) {
+      setSelectedPlayers(new Set(JSON.parse(saved)));
+    }
   }, []);
+
+  // Filter rounds based on selected players
+  useEffect(() => {
+    if (selectedPlayers.size === 0) {
+      setFilteredRounds(rounds);
+    } else {
+      const filtered = rounds.filter((r: any) => {
+        const playerName = r.user_name || r.userName;
+        return selectedPlayers.has(playerName);
+      });
+      setFilteredRounds(filtered);
+    }
+  }, [selectedPlayers, rounds]);
+
+  // Handle player selection toggle
+  const togglePlayer = (playerName: string) => {
+    const newSelected = new Set(selectedPlayers);
+    if (newSelected.has(playerName)) {
+      newSelected.delete(playerName);
+    } else {
+      newSelected.add(playerName);
+    }
+    setSelectedPlayers(newSelected);
+    localStorage.setItem('selectedPlayersFilter', JSON.stringify(Array.from(newSelected)));
+  };
+
+  // Select all players
+  const selectAllPlayers = () => {
+    const allPlayersSet = new Set(allPlayers);
+    setSelectedPlayers(allPlayersSet);
+    localStorage.setItem('selectedPlayersFilter', JSON.stringify(allPlayers));
+  };
+
+  // Deselect all players
+  const deselectAllPlayers = () => {
+    setSelectedPlayers(new Set());
+    localStorage.removeItem('selectedPlayersFilter');
+  };
 
   useEffect(() => {
     if (!isClient) return;
@@ -282,6 +343,48 @@ export default function RoundsInProgressPage() {
     <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       <div className="max-w-xl mx-auto px-2 sm:px-4 py-4">
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 drop-shadow-lg text-center">Rounds in Progress</h1>
+        
+        {/* Player Filter Section */}
+        {allPlayers.length > 0 && (
+          <div className="bg-white/90 rounded-xl shadow-md p-4 mb-4">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-sm font-semibold text-gray-800">Filter by Player</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={selectAllPlayers}
+                  className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition"
+                >
+                  Select All
+                </button>
+                <button
+                  onClick={deselectAllPlayers}
+                  className="text-xs px-2 py-1 bg-gray-400 hover:bg-gray-500 text-white rounded transition"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {allPlayers.map((playerName) => (
+                <button
+                  key={playerName}
+                  onClick={() => togglePlayer(playerName)}
+                  className={`px-3 py-1 rounded-full text-sm font-semibold transition ${
+                    selectedPlayers.has(playerName)
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
+                  }`}
+                >
+                  {playerName}
+                </button>
+              ))}
+            </div>
+            <div className="text-xs text-gray-600 mt-2">
+              Showing {filteredRounds.length} of {rounds.length} rounds
+            </div>
+          </div>
+        )}
+        
         {/* Helper text for last 3 holes symbols */}
         <div className="w-full text-center text-xs text-black mb-1">
           Symbols below +/- show last 3 holes
@@ -296,15 +399,17 @@ export default function RoundsInProgressPage() {
           <LegendSymbol abbr="Db" color="#f59e42" label="Double Bogey" />
           <LegendSymbol abbr="Tb" color="#222" label="Triple+ Bogey" />
         </div>
-        {rounds.length === 0 && (
+        {filteredRounds.length === 0 && (
           <div className="bg-white/90 rounded-xl shadow-md p-6 text-center">
-            <p className="text-gray-500 font-semibold">No rounds in progress.</p>
+            <p className="text-gray-500 font-semibold">
+              {rounds.length === 0 ? 'No rounds in progress.' : 'No rounds match selected players.'}
+            </p>
           </div>
         )}
         {/* Leaderboard Table Cards by Parent Course */}
-        {isClient && rounds.length > 0 && (
+        {isClient && filteredRounds.length > 0 && (
           <>
-            <LeaderboardByCourse rounds={rounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} />
+            <LeaderboardByCourse rounds={filteredRounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} />
             <div className="flex justify-start mt-3 mb-2">
               <button
                 className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded-full shadow transition-all duration-150"
