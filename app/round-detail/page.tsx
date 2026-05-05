@@ -81,7 +81,7 @@ function RoundDetailContent() {
                     foundCourse = {
                       ...selectedCourses[0],
                       id: courseIdsArr.join(','),
-                      name: camelRound.courseName,
+                      name: camelRound.courseName || 'Combined Course',
                       holes: selectedCourses.flatMap(c => c.holes),
                       holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
                       par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),

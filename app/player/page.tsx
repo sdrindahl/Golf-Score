@@ -8,6 +8,7 @@ import PageWrapper from '@/components/PageWrapper'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { calculateHandicap } from '@/lib/handicapCalculator'
 
 function PlayerProfileContent() {
   const searchParams = useSearchParams()
@@ -161,103 +162,12 @@ function PlayerProfileContent() {
       );
     }
 
-  const calculateHandicap = (): number => {
-    if (rounds.length === 0) return 0
-    
-    let handicap = 0
-    
-    // Get course data to find course ratings
+  const calculateHandicapLocal = (): number => {
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-
-    // Debug: log all course IDs in localStorage
-    const courseIdsInStorage = courses.map((c: any) => c.id);
-    console.log('📊 All courses in storage:', courses);
-    console.log('📊 Course IDs in storage:', courseIdsInStorage);
-    console.log('📊 Calculating handicap for', rounds.length, 'rounds');
-
-    // Debug: log courseId for each round
-    rounds.forEach((round, idx) => {
-      console.log(`[DEBUG] Round #${idx + 1} courseId:`, round.courseId);
-    });
-
-    // Calculate handicap differential for each round
-    // Formula: (Score - Course Rating) × 113 / Slope Rating
-    const differentials = rounds
-      .map(round => {
-        // Support multi-child rounds (comma-separated courseId)
-        const courseIds = typeof round.courseId === 'string' ? round.courseId.split(',') : [round.courseId];
-        const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
-        if (childCourses.length === 0) {
-          return null;
-        }
-        // Sum up ratings and slopes for all child courses
-        let totalRating = 0;
-        let totalSlope = 0;
-        let totalHoles = 0;
-        let allHaveSlope = true;
-        childCourses.forEach((course: any) => {
-          let courseRating = course.courseRating;
-          let slopeRating = course.slopeRating;
-          if (!courseRating && course.holes) {
-            courseRating = course.holes.reduce((sum: number, h: any) => sum + h.par, 0);
-          }
-          if (!courseRating) courseRating = 36;
-          if (!slopeRating) slopeRating = 113;
-          totalRating += courseRating;
-          totalSlope += slopeRating;
-          totalHoles += course.holes ? course.holes.length : 9;
-          if (!slopeRating) allHaveSlope = false;
-        });
-        if (!allHaveSlope) {
-          return null;
-        }
-        // If this is a full 18-hole round, use as is; if 9, double it
-        let adjustedScore = round.totalScore;
-        let adjustedRating = totalRating;
-        let adjustedSlope = totalSlope;
-        if (totalHoles === 9) {
-          adjustedScore = round.totalScore * 2;
-          adjustedRating = totalRating * 2;
-          adjustedSlope = totalSlope * 2;
-        }
-        // For 18 holes, use as is
-        const differential = (adjustedScore - adjustedRating) * 113 / adjustedSlope;
-        return differential;
-      })
-      .filter((d: any) => d !== null) as number[];
-
-    console.log('📊 Valid differentials:', differentials)
-
-    // Use best X of last 20 in the calculation based on USGA rules
-    if (differentials.length > 0) {
-      const recentDifferentials = differentials.slice(-20)
-      const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
-      
-      // USGA Handicap calculation based on number of scores
-      let bestCount = 1
-      const roundCount = sortedDifferentials.length
-      if (roundCount >= 6) bestCount = 2
-      if (roundCount >= 7) bestCount = 3
-      if (roundCount >= 9) bestCount = 4
-      if (roundCount >= 11) bestCount = 5
-      if (roundCount >= 13) bestCount = 6
-      if (roundCount >= 15) bestCount = 7
-      if (roundCount >= 17) bestCount = 8
-      
-      const bestDifferentials = sortedDifferentials.slice(0, bestCount)
-      handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
-      
-      console.log(`🎯 Handicap calculation: ${roundCount} differentials, using best ${bestCount}`)
-      console.log(`   Best: ${bestDifferentials.map(d => d.toFixed(1)).join(', ')}`)
-      console.log(`   Handicap: ${handicap}`)
-    } else {
-      console.log('❌ No valid differentials calculated')
-    }
-
-    return handicap
+    return calculateHandicap(rounds, courses)
   }
 
-  const handicap = calculateHandicap()
+  const handicap = calculateHandicapLocal()
 
   const calculateAverageDriveDistance = (): number | null => {
     let totalDriveDistance = 0
@@ -392,7 +302,8 @@ function PlayerProfileContent() {
             const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]');
             const rounds18 = rounds.filter(r => {
               // Support multi-child rounds (comma-separated courseId)
-              const courseIds = r.courseId.split(',');
+              const courseIdStr = r.courseId || r.course_id || '';
+              const courseIds = courseIdStr.split(',');
               // Find all matching courses
               const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
               // If any child course has 18 holes, treat as 18-hole round
@@ -401,18 +312,21 @@ function PlayerProfileContent() {
                 return totalHoles === 18;
               }
               // fallback: single course logic
-              const course = courses.find((c: any) => c.id === r.courseId);
+              const course = courses.find((c: any) => c.id === courseIdStr);
               return course && course.holes.length === 18;
             });
             if (rounds18.length === 0) return null;
-            const best18 = rounds18.reduce((best, current) =>
-              current.totalScore < best.totalScore ? current : best
-            );
+            const best18 = rounds18.reduce((best, current) => {
+              const currentScore = current.totalScore || current.total_score || 999;
+              const bestScore = best.totalScore || best.total_score || 999;
+              return currentScore < bestScore ? current : best
+            });
             // Parent/child display logic (copied from ScoreHistory)
             let parentName = '';
             let childNames: string[] = [];
-            if (courses && courses.length && best18.courseId) {
-              const courseIds = typeof best18.courseId === 'string' ? best18.courseId.split(',') : [];
+            if (courses && courses.length && (best18.courseId || best18.course_id)) {
+              const courseIdStr = best18.courseId || best18.course_id || '';
+              const courseIds = typeof courseIdStr === 'string' ? courseIdStr.split(',') : [];
               const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
               if (childCourses.length > 0) {
                 const parentId = childCourses[0].parent_id;

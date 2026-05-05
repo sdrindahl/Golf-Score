@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { User, Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import PageWrapper from '@/components/PageWrapper'
+import { calculateHandicap } from '@/lib/handicapCalculator'
 
 import { useRouter } from 'next/navigation'
 
@@ -29,89 +30,70 @@ export default function Players() {
 
         // Get all players from Supabase or localStorage
         const allUsers = await auth.getAllUsersAsync()
-        console.log('Loaded users:', allUsers)
         setPlayers(allUsers)
 
         // Calculate stats for each player
+        // Try to get rounds from localStorage first, then fetch from Supabase if empty
+        let allRounds: Round[] = []
+        
+        // Check localStorage first
         const savedRounds = localStorage.getItem('golfRounds')
-        const allRounds: Round[] = savedRounds ? JSON.parse(savedRounds) : []
+        if (savedRounds) {
+          try {
+            const parsed = JSON.parse(savedRounds)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              allRounds = parsed
+            }
+          } catch (e) {
+            console.error('[Players] Error parsing localStorage rounds:', e)
+          }
+        }
+        
+        // If still no rounds, fetch from Supabase
+        if (allRounds.length === 0) {
+          try {
+            // Fetch all rounds for all users
+            const roundPromises = allUsers.map(user => {
+              return fetch('/api/get-user-rounds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+              })
+                .then(r => {
+                  if (!r.ok) return { rounds: [] }
+                  return r.json()
+                })
+                .then(data => data.rounds || [])
+                .catch(e => {
+                  console.error(`[Players] Error fetching rounds:`, e)
+                  return []
+                })
+            })
+            const allRoundsArrays = await Promise.all(roundPromises)
+            allRounds = allRoundsArrays.flat()
+            // Save to localStorage for future use
+            if (allRounds.length > 0) {
+              localStorage.setItem('golfRounds', JSON.stringify(allRounds))
+            }
+          } catch (fetchError) {
+            console.error('[Players] Error fetching rounds from Supabase:', fetchError)
+          }
+        }
+
+        const savedCourses = localStorage.getItem('golfCourses')
+        const courses = savedCourses ? JSON.parse(savedCourses) : []
 
         const stats: Record<string, { roundCount: number; handicap: number }> = {}
         
         allUsers.forEach(user => {
-          const userRounds = allRounds.filter(r => r.userId === user.id)
+          // Rounds from Supabase have snake_case field names
+          const userRounds = allRounds.filter(r => r.user_id === user.id || r.userId === user.id)
           const roundCount = userRounds.length
 
-          let handicap = 0
-          if (userRounds.length > 0) {
-            // Get course data to find course ratings
-            const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
-            
-            // Calculate handicap differential for each round
-            // Formula: (Score - Course Rating) × 113 / Slope Rating
-            const differentials = userRounds
-              .map(round => {
-                const course = courses.find((c: any) => c.id === round.courseId)
-                
-                if (!course) {
-                  return null
-                }
-                
-                const is9Hole = course.holes && course.holes.length === 9
-                
-                // Use provided courseRating or calculate from holes, default to 72 (or 36 for 9-hole)
-                let courseRating = course.courseRating
-                let slopeRating = course.slopeRating
-                
-                if (!courseRating && course.holes) {
-                  // Calculate approximate rating from hole par values
-                  const totalPar = course.holes.reduce((sum: number, h: any) => sum + h.par, 0)
-                  courseRating = totalPar
-                }
-                
-                if (!courseRating) courseRating = is9Hole ? 36 : 72
-                if (!slopeRating) slopeRating = 130
-                
-                if (!slopeRating) {
-                  return null
-                }
-                
-                // For 9-hole rounds, convert to 18-hole equivalent
-                let adjustedScore = round.totalScore
-                let adjustedRating = courseRating
-                
-                if (is9Hole) {
-                  // Double 9-hole scores and ratings to get 18-hole equivalents
-                  adjustedScore = round.totalScore * 2
-                  adjustedRating = courseRating * 2
-                }
-                
-                return (adjustedScore - adjustedRating) * 113 / slopeRating
-              })
-              .filter((d: any) => d !== null) as number[]
+          // Use the shared handicap calculation function
+          const handicap = userRounds.length > 0 ? calculateHandicap(userRounds, courses) : 0
 
-            // Use best X of last 20 in the calculation based on USGA rules
-            if (differentials.length > 0) {
-              const recentDifferentials = differentials.slice(-20)
-              const sortedDifferentials = recentDifferentials.sort((a, b) => a - b)
-              
-              // USGA Handicap calculation based on number of scores
-              let bestCount = 1
-              const numDifferentials = sortedDifferentials.length
-              if (numDifferentials >= 6) bestCount = 2
-              if (numDifferentials >= 7) bestCount = 3
-              if (numDifferentials >= 9) bestCount = 4
-              if (numDifferentials >= 11) bestCount = 5
-              if (numDifferentials >= 13) bestCount = 6
-              if (numDifferentials >= 15) bestCount = 7
-              if (numDifferentials >= 17) bestCount = 8
-              
-              const bestDifferentials = sortedDifferentials.slice(0, bestCount)
-              handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10
-            }
-          }
-
-          stats[user.id] = { roundCount, handicap }
+          stats[user.id] = { roundCount, handicap: handicap || 99 }
         })
 
         setPlayerStats(stats)
@@ -212,18 +194,32 @@ export default function Players() {
             </div>
           ) : (
             (() => {
-              // Filter and sort players by handicap (lowest first)
+              // Filter and sort players by handicap (lowest/best first), then alphabetically
               const filteredPlayers = players
                 .filter(player => {
                   if (currentUser?.is_admin) return true
                   return !player.is_admin
                 })
-                .map(player => ({
-                  ...player,
-                  handicap: playerStats[player.id]?.handicap ?? Infinity
-                }))
+                .map(player => {
+                  const stats = playerStats[player.id] || { roundCount: 0, handicap: 99 }
+                  return {
+                    ...player,
+                    handicap: stats.handicap,
+                    roundCount: stats.roundCount,
+                  }
+                })
                 .sort((a, b) => {
-                  if (a.handicap !== b.handicap) return a.handicap - b.handicap
+                  // Sort by handicap (lowest/best first), then by name alphabetically
+                  if (a.handicap !== b.handicap) {
+                    // Both have valid handicaps - sort by best (lowest) first
+                    if (a.handicap < 99 && b.handicap < 99) {
+                      return a.handicap - b.handicap
+                    }
+                    // If one doesn't have a handicap, put it at the end
+                    if (a.handicap === 99) return 1
+                    if (b.handicap === 99) return -1
+                  }
+                  // Same handicap or both have no handicap - sort alphabetically
                   return a.name.localeCompare(b.name)
                 })
 
@@ -262,8 +258,8 @@ export default function Players() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs text-gray-600">{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
-                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap === Infinity ? '—' : player.handicap.toFixed(1)}</span>
+                                <span className="text-xs text-gray-600">{player.roundCount || 0} Round{player.roundCount !== 1 ? 's' : ''}</span>
+                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                               </div>
                               {currentUser?.is_admin && (
                                 <button
@@ -312,8 +308,8 @@ export default function Players() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs text-gray-600">{playerStats[player.id]?.roundCount || 0} Round{playerStats[player.id]?.roundCount !== 1 ? 's' : ''}</span>
-                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap === Infinity ? '—' : player.handicap.toFixed(1)}</span>
+                                <span className="text-xs text-gray-600">{player.roundCount || 0} Round{player.roundCount !== 1 ? 's' : ''}</span>
+                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                               </div>
                               {currentUser?.is_admin && (
                                 <button
