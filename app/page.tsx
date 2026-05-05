@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { calculateHandicap } from '@/lib/handicapCalculator'
 
 export default function Home() {
   const [rounds, setRounds] = useState<Round[]>([])
@@ -89,62 +90,12 @@ export default function Home() {
     }
   }, [isClient]);
 
-  const calculateHandicap = (): number => {
-    if (!isClient || rounds.length === 0 || courses.length === 0) return 0;
-    let handicap = 0;
-    // Calculate handicap differential for each round
-    // Formula: (Score - Course Rating) × 113 / Slope Rating
-    const differentials = rounds
-      .map(round => {
-        // Support comma-separated courseId (e.g., '9a,9b')
-        let courseIds: string[] = [];
-        if (Array.isArray(round.courseId)) {
-          courseIds = round.courseId;
-        } else if (typeof round.courseId === 'string') {
-          courseIds = round.courseId.split(',').map((id: string) => id.trim());
-        }
-        const selectedCourses = courses.filter((c: any) => courseIds.includes(c.id));
-        if (selectedCourses.length === 0) return null;
-        // For multi-course rounds, sum par/ratings and treat as one course
-        const totalPar = selectedCourses.reduce((sum: number, c: any) => sum + (c.par || 0), 0);
-        const totalHoles = selectedCourses.reduce((sum: number, c: any) => sum + (c.holes ? c.holes.length : 0), 0);
-        // Use average rating/slope if available, else fallback
-        const avgCourseRating = selectedCourses.reduce((sum: number, c: any) => sum + (c.courseRating || 0), 0) / selectedCourses.length || totalPar;
-        const avgSlopeRating = selectedCourses.reduce((sum: number, c: any) => sum + (c.slopeRating || 113), 0) / selectedCourses.length || 113;
-        let courseRating = avgCourseRating;
-        let slopeRating = avgSlopeRating;
-        if (!courseRating) courseRating = totalPar;
-        if (!slopeRating) slopeRating = 113;
-        let adjustedScore = round.totalScore || round.total_score || 0;
-        let adjustedRating = courseRating;
-        // If 9 holes, double for 18
-        if (totalHoles === 9) {
-          adjustedScore = (adjustedScore || 0) * 2;
-          adjustedRating = courseRating * 2;
-        }
-        const differential = (adjustedScore - adjustedRating) * 113 / slopeRating;
-        return differential;
-      })
-      .filter((d: any) => d !== null) as number[];
-    if (differentials.length > 0) {
-      const recentDifferentials = differentials.slice(-20);
-      const sortedDifferentials = recentDifferentials.sort((a, b) => a - b);
-      let bestCount = 1;
-      const roundCount = sortedDifferentials.length;
-      if (roundCount >= 6) bestCount = 2;
-      if (roundCount >= 7) bestCount = 3;
-      if (roundCount >= 9) bestCount = 4;
-      if (roundCount >= 11) bestCount = 5;
-      if (roundCount >= 13) bestCount = 6;
-      if (roundCount >= 15) bestCount = 7;
-      if (roundCount >= 17) bestCount = 8;
-      const bestDifferentials = sortedDifferentials.slice(0, bestCount);
-      handicap = Math.round(bestDifferentials.reduce((a, b) => a + b, 0) / bestCount * 10) / 10;
-    }
-    return handicap;
+  const calculateHandicapLocal = (): number => {
+    if (!isClient || rounds.length === 0 || courses.length === 0) return 0
+    return calculateHandicap(rounds, courses)
   }
 
-  const handicap = calculateHandicap()
+  const handicap = calculateHandicapLocal()
   
   const calculateBestScore = (): number | null => {
     if (!isClient || rounds.length === 0) return null
