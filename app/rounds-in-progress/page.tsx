@@ -81,7 +81,7 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                   const thru = round.in_progress === false ? 'F' : holesCompleted;
                   const toPar = getToPar(round);
                   const totalScore = round.total_score ?? round.totalScore ?? 0;
-                  const playerName = round.user_name || round.userName;
+                  const playerName = round.user_name || round.userName || '';
                   const isSelected = selectedPlayers?.has(playerName) ?? false;
                   
                   // Get last 3 holes (score/par)
