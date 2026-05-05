@@ -16,7 +16,42 @@ export default function Players() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [deleteModal, setDeleteModal] = useState<{ userId: string; userName: string } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showAllPlayers, setShowAllPlayers] = useState(true)
+  const [favoritePlayerIds, setFavoritePlayerIds] = useState<Set<string>>(new Set())
+  const [isClient, setIsClient] = useState(false)
   const auth = useAuth()
+
+  // Initialize client and load favorites from localStorage
+  useEffect(() => {
+    setIsClient(true)
+    const savedFavorites = localStorage.getItem('favoritePlayerIds')
+    if (savedFavorites) {
+      try {
+        const parsed = JSON.parse(savedFavorites)
+        setFavoritePlayerIds(new Set(parsed))
+      } catch (e) {
+        console.error('Error loading favorites:', e)
+      }
+    }
+  }, [])
+
+  // Save favorites to localStorage whenever they change
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('favoritePlayerIds', JSON.stringify(Array.from(favoritePlayerIds)))
+    }
+  }, [favoritePlayerIds, isClient])
+
+  const toggleFavorite = (playerId: string) => {
+    const newFavorites = new Set(favoritePlayerIds)
+    if (newFavorites.has(playerId)) {
+      newFavorites.delete(playerId)
+    } else {
+      newFavorites.add(playerId)
+    }
+    setFavoritePlayerIds(newFavorites)
+  }
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -159,6 +194,44 @@ export default function Players() {
             </div>
           )}
 
+          {/* Search Input */}
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="🔍 Search players..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-600 focus:outline-none bg-white shadow-sm"
+            />
+          </div>
+
+          {/* View All Players / View Favorites Toggle Buttons */}
+          <div className="mb-4 flex justify-center gap-3">
+            <button
+              onClick={() => setShowAllPlayers(true)}
+              className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
+                showAllPlayers
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-gray-400 hover:bg-gray-500 text-white'
+              }`}
+            >
+              All Players
+            </button>
+            <button
+              onClick={() => setShowAllPlayers(false)}
+              disabled={favoritePlayerIds.size === 0}
+              className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
+                !showAllPlayers && favoritePlayerIds.size > 0
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : favoritePlayerIds.size === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-400 hover:bg-gray-500 text-white'
+              }`}
+            >
+              ⭐ Favorites ({favoritePlayerIds.size})
+            </button>
+          </div>
+
           {deleteModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
               <div className="bg-white rounded-lg p-6 max-w-sm w-full">
@@ -195,7 +268,7 @@ export default function Players() {
           ) : (
             (() => {
               // Filter and sort players by handicap (lowest/best first), then alphabetically
-              const filteredPlayers = players
+              let filteredPlayers = players
                 .filter(player => {
                   if (currentUser?.is_admin) return true
                   return !player.is_admin
@@ -223,8 +296,32 @@ export default function Players() {
                   return a.name.localeCompare(b.name)
                 })
 
+              // Apply search filter
+              if (searchQuery.trim()) {
+                filteredPlayers = filteredPlayers.filter(player =>
+                  player.name.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+              }
+
+              // Apply favorites filter
+              if (!showAllPlayers && favoritePlayerIds.size > 0) {
+                filteredPlayers = filteredPlayers.filter(player =>
+                  favoritePlayerIds.has(player.id)
+                )
+              }
+
               const topThree = filteredPlayers.slice(0, 3)
               const rest = filteredPlayers.slice(3)
+
+              if (filteredPlayers.length === 0) {
+                return (
+                  <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
+                    <p className="text-gray-500 font-semibold">
+                      {searchQuery ? `No players found matching "${searchQuery}"` : 'No favorite players yet'}
+                    </p>
+                  </div>
+                )
+              }
 
               return (
                 <>
@@ -274,6 +371,17 @@ export default function Players() {
                                 </button>
                               )}
                             </div>
+                            <button
+                              onClick={e => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleFavorite(player.id)
+                              }}
+                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform"
+                              title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
+                            >
+                              {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
+                            </button>
                           </div>
                         </Link>
                       )
@@ -324,6 +432,17 @@ export default function Players() {
                                 </button>
                               )}
                             </div>
+                            <button
+                              onClick={e => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                toggleFavorite(player.id)
+                              }}
+                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform"
+                              title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
+                            >
+                              {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
+                            </button>
                           </div>
                         </Link>
                       )
