@@ -409,44 +409,6 @@ function TrackRoundContent() {
     };
   }, [roundId]);
 
-  // Handle quick emoji reaction from Holes Completed card
-  const handleQuickReaction = async (emoji: string) => {
-    if (!roundId) return;
-
-    try {
-      // Fetch comments to get the most recent one
-      const res = await fetch('/api/get-comments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roundId }),
-      });
-      const data = await res.json();
-      const comments = data.comments || [];
-
-      if (comments.length === 0) {
-        // No comments yet, just open the modal
-        setShowCommentsModal(true);
-        return;
-      }
-
-      // Add reaction to the most recent comment
-      const mostRecentComment = comments[comments.length - 1];
-      await fetch('/api/comment-reactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          commentId: mostRecentComment.id,
-          emoji,
-          increment: true,
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to add reaction:', error);
-      // Fall back to opening modal if reaction fails
-      setShowCommentsModal(true);
-    }
-  };
-
   const handleScoreChange = (adjustment: 'increment' | 'decrement') => {
     if (!round) return;
     const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
@@ -675,17 +637,8 @@ function TrackRoundContent() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex gap-2">
               <button
-                onClick={() => handleQuickReaction('👍')}
-                className="absolute left-6 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
-              >
-                <span className="text-lg">👍</span>
-                {commentCount > 0 && (
-                  <span className="text-xs font-semibold text-gray-700">{commentCount}</span>
-                )}
-              </button>
-              <button
                 onClick={() => setShowCommentsModal(true)}
-                className="absolute left-20 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
+                className="absolute left-6 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
               >
                 <span className="text-lg">💬</span>
                 {commentCount > 0 && (
