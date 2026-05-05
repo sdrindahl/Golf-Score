@@ -27,7 +27,7 @@ type GroupedRounds = {
   [key: string]: Round[];
 };
 
-function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenComments, commentCounts }: { rounds: Round[]; currentUserId?: string; currentUserName?: string; onOpenComments?: (roundId: string) => void; commentCounts?: { [roundId: string]: number } }) {
+function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenComments, commentCounts, selectedPlayers, onTogglePlayer }: { rounds: Round[]; currentUserId?: string; currentUserName?: string; onOpenComments?: (roundId: string) => void; commentCounts?: { [roundId: string]: number }; selectedPlayers?: Set<string>; onTogglePlayer?: (playerName: string) => void }) {
   // Helper to group rounds by parent course name
   function groupByParent(rounds: Round[]): GroupedRounds {
     const grouped: GroupedRounds = {};
@@ -81,6 +81,9 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                   const thru = round.in_progress === false ? 'F' : holesCompleted;
                   const toPar = getToPar(round);
                   const totalScore = round.total_score ?? round.totalScore ?? 0;
+                  const playerName = round.user_name || round.userName;
+                  const isSelected = selectedPlayers?.has(playerName) ?? false;
+                  
                   // Get last 3 holes (score/par)
                   let last3: { score: number, par: number }[] = [];
                   if (Array.isArray(round.scores) && Array.isArray(round.holes)) {
@@ -97,7 +100,21 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                       </td>
                       <td className="px-2 py-2">
                         <div className="font-semibold text-gray-800 flex items-center gap-2 whitespace-nowrap overflow-hidden text-ellipsis">
-                          {round.user_name || round.userName}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onTogglePlayer?.(playerName);
+                            }}
+                            className="flex-shrink-0 hover:scale-125 transition-transform"
+                            title={isSelected ? 'Unselect player' : 'Select player'}
+                          >
+                            {isSelected ? (
+                              <span className="text-lg">⭐</span>
+                            ) : (
+                              <span className="text-lg opacity-40">☆</span>
+                            )}
+                          </button>
+                          <span className="min-w-0 truncate">{playerName}</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -173,15 +190,12 @@ export default function RoundsInProgressPage() {
   const router = useRouter();
   const auth = useAuth();
   const [rounds, setRounds] = useState<any[]>([]);
-  const [filteredRounds, setFilteredRounds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
   const [openCommentsModal, setOpenCommentsModal] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [roundId: string]: number }>({});
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
-  const [allPlayers, setAllPlayers] = useState<string[]>([]);
-  const [favoritePlayers, setFavoritePlayers] = useState<Set<string>>(new Set());
-  const [viewAllMode, setViewAllMode] = useState(false);
+  const [showAllPlayers, setShowAllPlayers] = useState(true);
   const currentUser = auth.getCurrentUser();
 
   // Fetch comment counts for a specific round
@@ -225,20 +239,6 @@ export default function RoundsInProgressPage() {
     getRoundsInProgress().then(data => {
       const hydratedData = hydrateRoundsWithHoles(data || []);
       setRounds(hydratedData);
-      
-      // Extract unique player names
-      const players = Array.from(new Set(
-        hydratedData.map((r: any) => r.user_name || r.userName).filter(Boolean)
-      )).sort();
-      setAllPlayers(players);
-      
-      // If no selected players yet, default to showing all
-      if (selectedPlayers.size === 0 && players.length > 0) {
-        const allPlayersSet = new Set(players);
-        setSelectedPlayers(allPlayersSet);
-        localStorage.setItem('selectedPlayersFilter', JSON.stringify(players));
-      }
-      
       setLoading(false);
     }).catch((err) => {
       setLoading(false);
@@ -249,55 +249,9 @@ export default function RoundsInProgressPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Load favorite players from localStorage on mount
-    const savedFavorites = localStorage.getItem('favoritePlayers');
-    if (savedFavorites) {
-      setFavoritePlayers(new Set(JSON.parse(savedFavorites)));
-    }
-    // Load view all mode from localStorage
-    const savedViewAll = localStorage.getItem('viewAllPlayersMode');
-    setViewAllMode(savedViewAll === 'true');
   }, []);
 
-  // Filter rounds based on view mode and favorite players
-  useEffect(() => {
-    if (viewAllMode) {
-      // Show all rounds when in "View All" mode
-      setFilteredRounds(rounds);
-    } else {
-      // Show only rounds with favorite players
-      if (favoritePlayers.size === 0) {
-        setFilteredRounds([]);
-      } else {
-        const filtered = rounds.filter((r: any) => {
-          const playerName = r.user_name || r.userName;
-          return favoritePlayers.has(playerName);
-        });
-        setFilteredRounds(filtered);
-      }
-    }
-  }, [favoritePlayers, rounds, viewAllMode]);
-
-  // Handle player favorite toggle
-  const toggleFavorite = (playerName: string) => {
-    const newFavorites = new Set(favoritePlayers);
-    if (newFavorites.has(playerName)) {
-      newFavorites.delete(playerName);
-    } else {
-      newFavorites.add(playerName);
-    }
-    setFavoritePlayers(newFavorites);
-    localStorage.setItem('favoritePlayers', JSON.stringify(Array.from(newFavorites)));
-  };
-
-  // Toggle between favorites-only and view all
-  const toggleViewAllMode = () => {
-    const newMode = !viewAllMode;
-    setViewAllMode(newMode);
-    localStorage.setItem('viewAllPlayersMode', String(newMode));
-  };
-
-  // Handle player selection toggle
+  // Toggle player selection
   const togglePlayer = (playerName: string) => {
     const newSelected = new Set(selectedPlayers);
     if (newSelected.has(playerName)) {
@@ -306,7 +260,7 @@ export default function RoundsInProgressPage() {
       newSelected.add(playerName);
     }
     setSelectedPlayers(newSelected);
-    localStorage.setItem('selectedPlayersFilter', JSON.stringify(Array.from(newSelected)));
+    setShowAllPlayers(false); // Switch to filtered view when selecting a player
   };
 
   useEffect(() => {
@@ -350,6 +304,15 @@ export default function RoundsInProgressPage() {
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
+  // Filter rounds based on selected players
+  let displayedRounds = rounds;
+  if (!showAllPlayers && selectedPlayers.size > 0) {
+    displayedRounds = rounds.filter((r: any) => {
+      const playerName = r.user_name || r.userName;
+      return selectedPlayers.has(playerName);
+    });
+  }
+
   // Navigation handlers for bottom nav
   const handleViewRounds = () => router.push('/')
   const handleViewCourses = () => router.push('/courses')
@@ -359,59 +322,34 @@ export default function RoundsInProgressPage() {
   return (
     <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
       <div className="max-w-xl mx-auto px-2 sm:px-4 py-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 drop-shadow-lg text-center">Rounds in Progress</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-lg text-center">Rounds in Progress</h1>
         
-        {/* Player Filter Section */}
-        {allPlayers.length > 0 && (
-          <div className="bg-white/90 rounded-xl shadow-md p-4 mb-4">
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-sm font-semibold text-gray-800">
-                {viewAllMode ? 'All Players' : 'Favorite Players'}
-              </h3>
-              <button
-                onClick={toggleViewAllMode}
-                className={`text-xs px-3 py-1 rounded transition font-semibold ${
-                  viewAllMode
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-                }`}
-              >
-                {viewAllMode ? 'View All' : 'Favorites'}
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {allPlayers.map((playerName) => {
-                const isFavorite = favoritePlayers.has(playerName);
-                return (
-                  <div
-                    key={playerName}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 border border-gray-300"
-                  >
-                    <span>{playerName}</span>
-                    <button
-                      onClick={() => toggleFavorite(playerName)}
-                      className="flex-shrink-0 ml-1 hover:scale-125 transition-transform"
-                      title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      {isFavorite ? (
-                        <span className="text-lg">⭐</span>
-                      ) : (
-                        <span className="text-lg opacity-40">☆</span>
-                      )}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="text-xs text-gray-600 mt-2">
-              {viewAllMode ? (
-                <>Showing all {rounds.length} rounds</>
-              ) : (
-                <>Showing {filteredRounds.length} of {rounds.length} rounds</>
-              )}
-            </div>
-          </div>
-        )}
+        {/* View All Players / View Selected Toggle Button */}
+        <div className="mb-4 flex justify-center gap-3">
+          <button
+            onClick={() => setShowAllPlayers(true)}
+            className={`font-semibold py-2 px-6 rounded-full shadow transition-all duration-150 ${
+              showAllPlayers
+                ? 'bg-green-600 hover:bg-green-700 text-white'
+                : 'bg-gray-400 hover:bg-gray-500 text-white'
+            }`}
+          >
+            View All Players
+          </button>
+          <button
+            onClick={() => setShowAllPlayers(false)}
+            disabled={selectedPlayers.size === 0}
+            className={`font-semibold py-2 px-6 rounded-full shadow transition-all duration-150 ${
+              !showAllPlayers && selectedPlayers.size > 0
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : selectedPlayers.size === 0
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-gray-400 hover:bg-gray-500 text-white'
+            }`}
+          >
+            ⭐ Favorites
+          </button>
+        </div>
         
         {/* Helper text for last 3 holes symbols */}
         <div className="w-full text-center text-xs text-black mb-1">
@@ -427,7 +365,7 @@ export default function RoundsInProgressPage() {
           <LegendSymbol abbr="Db" color="#f59e42" label="Double Bogey" />
           <LegendSymbol abbr="Tb" color="#222" label="Triple+ Bogey" />
         </div>
-        {filteredRounds.length === 0 && (
+        {displayedRounds.length === 0 && (
           <div className="bg-white/90 rounded-xl shadow-md p-6 text-center">
             <p className="text-gray-500 font-semibold">
               {rounds.length === 0 ? 'No rounds in progress.' : 'No rounds match selected players.'}
@@ -435,9 +373,9 @@ export default function RoundsInProgressPage() {
           </div>
         )}
         {/* Leaderboard Table Cards by Parent Course */}
-        {isClient && filteredRounds.length > 0 && (
+        {isClient && displayedRounds.length > 0 && (
           <>
-            <LeaderboardByCourse rounds={filteredRounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} />
+            <LeaderboardByCourse rounds={displayedRounds} currentUserId={currentUser?.id} currentUserName={currentUser?.name} onOpenComments={setOpenCommentsModal} commentCounts={commentCounts} selectedPlayers={selectedPlayers} onTogglePlayer={togglePlayer} />
             <div className="flex justify-start mt-3 mb-2">
               <button
                 className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 px-6 rounded-full shadow transition-all duration-150"
