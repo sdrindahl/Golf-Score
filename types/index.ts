@@ -95,3 +95,20 @@ export interface Round {
   in_progress?: boolean
   perHoleStats?: PerHoleStats[] // Array, one per hole (optional)
 }
+
+export interface CommentReaction {
+  emoji: string;
+  count: number;
+}
+
+export interface Comment {
+  id: number;
+  round_id: string;
+  user_id: string;
+  author_name: string;
+  text: string;
+  created_at: string;
+  updated_at: string;
+  deleted: boolean;
+  reactions?: CommentReaction[];
+}

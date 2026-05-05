@@ -1,9 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import CommentsBubble from '@/components/CommentsBubble'
+import CommentsModal from '@/components/CommentsModal'
+
+const QUICK_EMOJIS = ['👍', '�', '❓', '😂', '🤥'];
 
 
 interface ScoreHistoryProps {
@@ -69,6 +73,61 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
 
   // Sort by date descending (most recent first)
   const sortedRounds = [...rounds].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+  // State for emoji picker and comments modal
+  const [openEmojiPicker, setOpenEmojiPicker] = useState<string | null>(null)
+  const [openCommentsModal, setOpenCommentsModal] = useState<string | null>(null)
+  const [commentCounts, setCommentCounts] = useState<{ [key: string]: number }>({})
+  const [reactionCounts, setReactionCounts] = useState<{ [key: string]: number }>({})
+  const fetchedRoundsRef = useRef<Set<string>>(new Set())
+
+  // Fetch comment and reaction counts once per round (prevent duplicate API calls)
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const newCounts: { [key: string]: number } = { ...commentCounts }
+      const newReactions: { [key: string]: number } = { ...reactionCounts }
+      let hasNewData = false
+      
+      for (const round of sortedRounds) {
+        // Skip if already fetched
+        if (fetchedRoundsRef.current.has(round.id)) {
+          continue
+        }
+        
+        try {
+          const res = await fetch('/api/get-comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ roundId: round.id }),
+          })
+          const data = await res.json()
+          newCounts[round.id] = data.comments?.length || 0
+          
+          // Count total reactions
+          let totalReactions = 0
+          data.comments?.forEach((comment: any) => {
+            if (comment.reactions) {
+              totalReactions += comment.reactions.reduce((sum: number, r: any) => sum + r.count, 0)
+            }
+          })
+          newReactions[round.id] = totalReactions
+          fetchedRoundsRef.current.add(round.id)
+          hasNewData = true
+        } catch (error) {
+          console.error('Failed to fetch counts:', error)
+        }
+      }
+      
+      if (hasNewData) {
+        setCommentCounts(newCounts)
+        setReactionCounts(newReactions)
+      }
+    }
+    
+    if (sortedRounds.length > 0) {
+      fetchCounts()
+    }
+  }, [rounds.length])
 
   // Load courses from localStorage (if available)
   const [courses, setCourses] = useState<any[]>([]);
@@ -148,8 +207,59 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
               onClick={() => router.push(`/round-detail?id=${round.id}`)}
               className="bg-white/95 backdrop-blur rounded-xl p-4 shadow border border-white/20 cursor-pointer transition-all active:scale-95 active:shadow-lg relative flex flex-row items-center justify-between"
             >
+              {/* Comment & Like Buttons - Facebook style */}
+              <div className="absolute -top-5 -left-5 flex gap-3">
+                {/* Like Button with count */}
+                <div className="relative">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenEmojiPicker(openEmojiPicker === round.id ? null : round.id);
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded hover:bg-gray-100 text-gray-700 transition-all active:scale-95 text-sm"
+                    title="Like"
+                  >
+                    <span className="text-lg">👍</span>
+                    {reactionCounts[round.id] > 0 && (
+                      <span className="px-2 py-0.5 bg-gray-200 text-gray-800 text-xs font-bold rounded-full">{reactionCounts[round.id]}</span>
+                    )}
+                  </button>
+                  {/* Emoji Picker Dropdown */}
+                  {openEmojiPicker === round.id && (
+                    <div className="absolute top-10 left-0 bg-white rounded-lg shadow-xl border border-gray-200 p-2 z-50 flex flex-nowrap gap-1 w-auto" onClick={(e) => e.stopPropagation()}>
+                      {QUICK_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Could add reaction to round or just show feedback
+                            setOpenEmojiPicker(null);
+                          }}
+                          className="text-2xl p-2 hover:bg-gray-100 rounded transition-all active:scale-110"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* Comment Button with count */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenCommentsModal(round.id);
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 px-2 py-1 rounded hover:bg-blue-100 text-blue-500 transition-all active:scale-95 text-sm font-bold"
+                  title="Comment"
+                >
+                  <span className="text-lg">💬</span>
+                  {commentCounts[round.id] > 0 && (
+                    <span className="px-2 py-0.5 bg-blue-200 text-blue-700 text-xs font-bold rounded-full">{commentCounts[round.id]}</span>
+                  )}
+                </button>
+              </div>
               {/* Date in top right */}
-              <span className="absolute top-2 right-4 text-xs text-gray-500">{dateStr}</span>
+              <span className="absolute top-2 right-2 text-xs text-gray-500">{dateStr}</span>
               {/* Left: Parent and Child course names */}
               <div className="flex flex-col items-start">
                 {parentName && (
@@ -168,6 +278,42 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
           );
         })}
       </div>
+
+      {/* Comments Modal */}
+      {openCommentsModal && currentUser && (
+        <CommentsModal
+          roundId={openCommentsModal}
+          userId={currentUser.id}
+          userName={currentUser.name || 'Anonymous'}
+          onClose={() => setOpenCommentsModal(null)}
+          onCommentAdded={() => {
+            // Refresh comment counts for this round
+            const fetchUpdatedCounts = async () => {
+              const res = await fetch('/api/get-comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roundId: openCommentsModal }),
+              })
+              const data = await res.json()
+              const newCounts = { ...commentCounts }
+              newCounts[openCommentsModal] = data.comments?.length || 0
+              
+              let totalReactions = 0
+              data.comments?.forEach((comment: any) => {
+                if (comment.reactions) {
+                  totalReactions += comment.reactions.reduce((sum: number, r: any) => sum + r.count, 0)
+                }
+              })
+              const newReactions = { ...reactionCounts }
+              newReactions[openCommentsModal] = totalReactions
+              
+              setCommentCounts(newCounts)
+              setReactionCounts(newReactions)
+            }
+            fetchUpdatedCounts()
+          }}
+        />
+      )}
     </div>
   );
 }
