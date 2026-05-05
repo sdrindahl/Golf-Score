@@ -404,10 +404,10 @@ export default function Home() {
             className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg transition-all"
           >
             <div className="text-2xl mb-0.5">⏱️</div>
-            <div className="text-sm font-bold text-[var(--accent-color)] leading-tight text-center">
+            <div className="text-sm font-bold leading-tight text-center" style={{ color: '#007aff' }}>
               Current<br />Golfers
             </div>
-            <div className="text-[10px] text-[var(--accent-color)] text-center font-semibold uppercase tracking-wide mt-0.5">View Live</div>
+            <div className="text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5" style={{ color: '#007aff' }}>View Live</div>
           </button>
 
           {/* Handicap Card */}
@@ -579,6 +579,7 @@ export default function Home() {
           <button
             onClick={handleViewCourses}
             className="btn-secondary flex items-center justify-center gap-2 text-xs font-semibold py-2"
+            style={{ color: 'black' }}
           >
             <span className="text-base">⛳</span>
             <span>Courses</span>
@@ -587,6 +588,7 @@ export default function Home() {
           <button
             onClick={handleViewGolfers}
             className="btn-secondary flex items-center justify-center gap-2 text-xs font-semibold py-2"
+            style={{ color: 'black' }}
           >
             <span className="text-base">👥</span>
             <span>Golfers</span>
