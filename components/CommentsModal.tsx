@@ -90,6 +90,8 @@ export default function CommentsModal({
         if (onCommentAdded) {
           onCommentAdded();
         }
+        // Close modal after successful comment
+        onClose();
       }
     } catch (error) {
       console.error('Failed to save comment:', error);
