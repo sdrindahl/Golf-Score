@@ -115,11 +115,11 @@ export default function Home() {
         let slopeRating = avgSlopeRating;
         if (!courseRating) courseRating = totalPar;
         if (!slopeRating) slopeRating = 113;
-        let adjustedScore = round.totalScore;
+        let adjustedScore = round.totalScore || round.total_score || 0;
         let adjustedRating = courseRating;
         // If 9 holes, double for 18
         if (totalHoles === 9) {
-          adjustedScore = round.totalScore * 2;
+          adjustedScore = (adjustedScore || 0) * 2;
           adjustedRating = courseRating * 2;
         }
         const differential = (adjustedScore - adjustedRating) * 113 / slopeRating;
@@ -148,7 +148,8 @@ export default function Home() {
   
   const calculateBestScore = (): number | null => {
     if (!isClient || rounds.length === 0) return null
-    return Math.min(...rounds.map(r => r.totalScore))
+    const scores = rounds.map(r => r.totalScore || r.total_score || 0).filter(s => s > 0)
+    return scores.length > 0 ? Math.min(...scores) : null
   }
 
   const bestScore = calculateBestScore()
@@ -204,16 +205,17 @@ export default function Home() {
     if (rounds.length >= 2) {
       const recentRound = rounds[rounds.length - 1];
       const prevRound = rounds[rounds.length - 2];
-      const recentScore = recentRound.totalScore;
-      const prevScore = prevRound.totalScore;
-      if (recentScore < prevScore - 1) trend = 'improving';
-      else if (recentScore > prevScore + 1) trend = 'declining';
+      const recentScore = recentRound.totalScore || recentRound.total_score;
+      const prevScore = prevRound.totalScore || prevRound.total_score;
+      if (recentScore && prevScore && recentScore < prevScore - 1) trend = 'improving';
+      else if (recentScore && prevScore && recentScore > prevScore + 1) trend = 'declining';
     }
     // Find best recent score type
     let recentBestType = 'Par';
     const recentRound = rounds[rounds.length - 1];
     if (recentRound) {
-      const course = courses.find((c: any) => c.id === recentRound.courseId);
+      const courseId = recentRound.courseId || recentRound.course_id;
+      const course = courses.find((c: any) => c.id === courseId);
       if (course?.holes) {
         let bestDiff = 999;
         for (let i = 0; i < course.holes.length; i++) {
@@ -611,7 +613,7 @@ export default function Home() {
             foundRound = allRounds.find((r: any) => r.id === currentRoundId);
           }
           // Only show if round is in progress and has a valid courseId
-          if (foundRound && foundRound.in_progress && foundRound.courseId && foundRound.courseId !== '') {
+          if (foundRound && foundRound.in_progress && (foundRound.courseId || foundRound.course_id)) {
             return (
               <button
                 onClick={() => router.push(`/track-round?id=${currentRoundId}`)}

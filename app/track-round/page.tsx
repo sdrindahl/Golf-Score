@@ -342,7 +342,7 @@ function TrackRoundContent() {
         const mergedCourse: Course = {
           ...foundCourses[0],
           id: courseIds.join(','),
-          name: round.courseName,
+          name: round.courseName || 'Combined Course',
           holes: foundCourses.flatMap(c => c.holes),
           holeCount: foundCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
           par: foundCourses.reduce((sum, c) => sum + (c.par || 0), 0),
@@ -778,8 +778,8 @@ function TrackRoundContent() {
                   {(() => {
                     const hole = course.holes[currentHoleIndex];
                     if (!hole) return '-';
-                    const tee = round.selectedTee || (round as any).selected_tee || 'men';
-                    const teeBox = hole[tee];
+                    const tee = (round.selectedTee || (round as any).selected_tee || 'men') as keyof typeof hole;
+                    const teeBox = hole[tee] as any;
                     const yardage = teeBox?.yardage;
                     return typeof yardage === 'number' ? `${yardage}yd` : '-';
                   })()}

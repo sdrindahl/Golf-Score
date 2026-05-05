@@ -302,7 +302,8 @@ function PlayerProfileContent() {
             const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]');
             const rounds18 = rounds.filter(r => {
               // Support multi-child rounds (comma-separated courseId)
-              const courseIds = r.courseId.split(',');
+              const courseIdStr = r.courseId || r.course_id || '';
+              const courseIds = courseIdStr.split(',');
               // Find all matching courses
               const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
               // If any child course has 18 holes, treat as 18-hole round
@@ -311,18 +312,21 @@ function PlayerProfileContent() {
                 return totalHoles === 18;
               }
               // fallback: single course logic
-              const course = courses.find((c: any) => c.id === r.courseId);
+              const course = courses.find((c: any) => c.id === courseIdStr);
               return course && course.holes.length === 18;
             });
             if (rounds18.length === 0) return null;
-            const best18 = rounds18.reduce((best, current) =>
-              current.totalScore < best.totalScore ? current : best
-            );
+            const best18 = rounds18.reduce((best, current) => {
+              const currentScore = current.totalScore || current.total_score || 999;
+              const bestScore = best.totalScore || best.total_score || 999;
+              return currentScore < bestScore ? current : best
+            });
             // Parent/child display logic (copied from ScoreHistory)
             let parentName = '';
             let childNames: string[] = [];
-            if (courses && courses.length && best18.courseId) {
-              const courseIds = typeof best18.courseId === 'string' ? best18.courseId.split(',') : [];
+            if (courses && courses.length && (best18.courseId || best18.course_id)) {
+              const courseIdStr = best18.courseId || best18.course_id || '';
+              const courseIds = typeof courseIdStr === 'string' ? courseIdStr.split(',') : [];
               const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
               if (childCourses.length > 0) {
                 const parentId = childCourses[0].parent_id;

@@ -19,7 +19,7 @@ export const calculateHandicap = (
       
       // Handle comma-separated course IDs (e.g., "9a,9b" for 9-hole courses)
       const courseIds = courseIdStr.split(',').map((id: string) => id.trim())
-      const courseList = courseIds.map(id => courses.find((c: any) => c.id === id)).filter(Boolean)
+      const courseList = courseIds.map((id: string) => courses.find((c: any) => c.id === id)).filter(Boolean)
       
       if (courseList.length === 0) {
         return null
