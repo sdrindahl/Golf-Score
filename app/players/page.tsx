@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { User, Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
-import PageWrapper from '@/components/PageWrapper'
 import { calculateHandicap } from '@/lib/handicapCalculator'
 
 import { useRouter } from 'next/navigation'
@@ -200,8 +199,19 @@ export default function Players() {
   const handleSettings = () => router.push('/settings')
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col pb-24">
-      <PageWrapper title="👥 Golfers" userName="View player profiles and statistics">
+    <div className="min-h-screen flex flex-col pb-32" style={{ background: 'var(--green-bg)' }}>
+      {/* Custom Header with Players Icon */}
+      <div className="px-6 py-8 text-white flex justify-between items-start">
+        <div>
+          <div className="flex items-center gap-3">
+            <img src="/Players.png" alt="Golfers" className="h-10 w-10" />
+            <h1 className="text-4xl font-bold tracking-tight">Golfers</h1>
+          </div>
+          <p className="text-base opacity-80 mt-2">View player profiles and statistics</p>
+        </div>
+      </div>
+
+      <div className="px-4">
         <div className="max-w-6xl mx-auto space-y-6">
           {currentUser?.is_admin && (
             <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
@@ -485,7 +495,7 @@ export default function Players() {
             })()
           )}
         </div>
-      </PageWrapper>
+      </div>
     </div>
   );
 }

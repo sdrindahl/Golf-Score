@@ -92,7 +92,10 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
       <div className="card max-w-md w-full">
-        <h1 className="text-3xl font-bold mb-8 text-center text-green-700">⛳ Golf Score Tracker</h1>
+        <div className="flex items-center justify-center mb-6">
+          <img src="/my_caddie.png" alt="My Caddie" className="h-16 w-16" />
+        </div>
+        <h1 className="text-3xl font-bold mb-8 text-center text-green-700">My Caddie</h1>
 
         <div className="flex gap-4 mb-6">
           <button
