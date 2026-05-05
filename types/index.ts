@@ -83,17 +83,24 @@ export interface PerHoleStats {
 
 export interface Round {
   id: string
-  userId: string
-  userName: string
-  courseId: string
-  courseName: string
-  selectedTee: 'men' | 'women' | 'senior' | 'championship'
+  userId?: string
+  user_id?: string  // Supabase field name (snake_case)
+  userName?: string
+  user_name?: string  // Supabase field name (snake_case)
+  courseId?: string
+  course_id?: string  // Supabase field name (snake_case)
+  courseName?: string
+  course_name?: string  // Supabase field name (snake_case)
+  selectedTee?: 'men' | 'women' | 'senior' | 'championship'
+  selected_tee?: 'men' | 'women' | 'senior' | 'championship'  // Supabase field name (snake_case)
   date: string
   scores: number[]
-  totalScore: number
+  totalScore?: number
+  total_score?: number  // Supabase field name (snake_case)
   notes?: string
   in_progress?: boolean
-  perHoleStats?: PerHoleStats[] // Array, one per hole (optional)
+  perHoleStats?: PerHoleStats[]  // Array, one per hole (optional)
+  per_hole_stats?: PerHoleStats[]  // Supabase field name (snake_case)
 }
 
 export interface CommentReaction {
