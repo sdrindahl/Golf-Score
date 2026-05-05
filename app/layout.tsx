@@ -4,8 +4,8 @@ import './globals.css'
 import ClientLayout from './ClientLayout'
 
 export const metadata: Metadata = {
-  title: 'Golf Score Tracker',
-  description: 'Track your golf scores and calculate your handicap',
+  title: 'My Caddie - Golf Scorecard',
+  description: 'Your personal golf caddie - track scores, calculate handicaps, and compete with friends',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Golf Score Tracker',
+    title: 'My Caddie',
   },
   formatDetection: {
     telephone: false,
@@ -43,7 +43,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="green" />
-        <meta name="apple-mobile-web-app-title" content="Golf Tracker" />
+        <meta name="apple-mobile-web-app-title" content="My Caddie" />
       </head>
       <body>
         <ClientLayout>{children}</ClientLayout>

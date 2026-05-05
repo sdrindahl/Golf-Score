@@ -376,9 +376,12 @@ export default function Home() {
       {/* Debug: Show rounds array for troubleshooting */}
       {/* Debug output removed for production */}
       {/* Welcome Banner */}
-      <div className="px-4 pt-8 pb-4">
-        <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">{currentUser?.name || 'Golfer'}</h1>
+      <div className="px-4 pt-8 pb-4 flex justify-between items-start">
+        <div>
+          <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">{currentUser?.name || 'Golfer'}</h1>
+        </div>
+        <img src="/my_caddie.png" alt="My Caddie" className="h-16 w-16" />
       </div>
 
       {/* Main Content */}

@@ -1,6 +1,6 @@
-# ⛳ Golf Score Tracker
+# 🎒 My Caddie
 
-A modern web app to track your golf scores, calculate your handicap, and find courses. Built with Next.js, TypeScript, and Tailwind CSS.
+Your personal golf caddie - track your golf scores, calculate your handicap, and compete with friends. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
 ## Features
 

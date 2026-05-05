@@ -85,12 +85,13 @@ export default function NavBar() {
       <nav className="hidden md:block text-white p-4 sticky top-0 z-50 shadow-lg border-b border-black/10" style={{ background: 'var(--green-bg)' }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
-            <h1 
+            <div 
               onClick={() => router.push('/')}
-              className="text-2xl font-bold cursor-pointer"
+              className="flex items-center gap-2 cursor-pointer"
             >
-              ⛳ Golf Tracker
-            </h1>
+              <img src="/my_caddie.png" alt="My Caddie" className="h-12 w-12" />
+              <h1 className="text-2xl font-bold">My Caddie</h1>
+            </div>
             {currentUser && (
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 px-3 py-1 bg-green-600 rounded">
@@ -120,7 +121,7 @@ export default function NavBar() {
                 : 'hover:bg-green-600'
             }`}
           >
-            <span className="text-lg mb-1">🏠</span>
+            <img src="/my_caddie.png" alt="Home" className="h-12 w-12 mb-1" />
             Home
           </button>
           <button
@@ -129,7 +130,7 @@ export default function NavBar() {
               pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
             }`}
           >
-            <span className="text-lg mb-1">👥</span>
+            <img src="/Players.png" alt="Golfers" className="h-12 w-12 mb-1" />
             Golfers
           </button>
           {/* Return to Round Button (middle position) */}
@@ -151,7 +152,7 @@ export default function NavBar() {
                 : 'hover:bg-green-600'
               }`}
           >
-            <span className="text-lg mb-1">⛳</span>
+            <img src="/courses.png" alt="Courses" className="h-12 w-12 mb-1" />
             Courses
           </button>
           <button
@@ -160,8 +161,8 @@ export default function NavBar() {
               pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
             }`}
           >
-            <span className="text-lg mb-1">⚙️</span>
-            Account
+            <img src="/settings1.png" alt="Settings" className="h-12 w-12 mb-1" />
+            Settings
           </button>
         </div>
       </nav>

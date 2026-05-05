@@ -1,7 +1,7 @@
 {
-  "name": "Golf Score Tracker",
-  "short_name": "Golf Tracker",
-  "description": "Track your golf scores and calculate your handicap",
+  "name": "My Caddie - Golf Scorecard",
+  "short_name": "My Caddie",
+  "description": "Your personal golf caddie - track scores, calculate handicaps, and compete with friends",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
