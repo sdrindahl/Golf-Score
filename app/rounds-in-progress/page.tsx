@@ -325,21 +325,21 @@ export default function RoundsInProgressPage() {
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-lg text-center">Rounds in Progress</h1>
         
         {/* View All Players / View Selected Toggle Button */}
-        <div className="mb-4 flex justify-center gap-3">
+        <div className="mb-4 flex justify-center gap-3 flex-wrap">
           <button
             onClick={() => setShowAllPlayers(true)}
-            className={`font-semibold py-2 px-6 rounded-full shadow transition-all duration-150 ${
+            className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
               showAllPlayers
-                ? 'bg-green-600 hover:bg-green-700 text-white'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
             }`}
           >
-            View All Players
+            All Players
           </button>
           <button
             onClick={() => setShowAllPlayers(false)}
             disabled={selectedPlayers.size === 0}
-            className={`font-semibold py-2 px-6 rounded-full shadow transition-all duration-150 ${
+            className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
               !showAllPlayers && selectedPlayers.size > 0
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : selectedPlayers.size === 0
@@ -347,7 +347,7 @@ export default function RoundsInProgressPage() {
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
             }`}
           >
-            ⭐ Favorites
+            Favorites
           </button>
         </div>
         

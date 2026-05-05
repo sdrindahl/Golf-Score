@@ -17,8 +17,13 @@ export const calculateHandicap = (
       // Handle both camelCase (local) and snake_case (Supabase) field names
       const courseIdStr = round.courseId || round.course_id || ''
       
-      // Handle comma-separated course IDs (e.g., "9a,9b" for 9-hole courses)
-      const courseIds = courseIdStr.split(',').map((id: string) => id.trim())
+      // Handle comma-separated course IDs (e.g., "9a,9b" for 9-hole courses) or arrays
+      let courseIds: string[] = []
+      if (Array.isArray(courseIdStr)) {
+        courseIds = courseIdStr
+      } else if (typeof courseIdStr === 'string') {
+        courseIds = courseIdStr.split(',').map((id: string) => id.trim())
+      }
       const courseList = courseIds.map((id: string) => courses.find((c: any) => c.id === id)).filter(Boolean)
       
       if (courseList.length === 0) {
