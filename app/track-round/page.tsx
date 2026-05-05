@@ -157,6 +157,34 @@ function TrackRoundContent() {
       if ('inProgress' in updatedRound) delete (updatedRound as any).inProgress;
       // Debug log outgoing payload
       console.log('[handleFinishRound] Outgoing payload:', updatedRound);
+      
+      // Save courses to Supabase before saving the round (fixes missing course data issue)
+      // Get the individual course IDs and save them all
+      if (course) {
+        const courseIds = course.id.split(',').map((id: string) => id.trim()).filter(Boolean);
+        const savedCourses = localStorage.getItem('golfCourses');
+        if (savedCourses) {
+          try {
+            const allCourses = JSON.parse(savedCourses);
+            // Save each individual course that was used in this round
+            for (const courseId of courseIds) {
+              const courseToSave = allCourses.find((c: any) => c.id === courseId);
+              if (courseToSave) {
+                console.log('[handleFinishRound] Saving course to Supabase:', courseToSave.name);
+                await fetch('/api/save-course', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(courseToSave),
+                });
+              }
+            }
+          } catch (error) {
+            console.error('[handleFinishRound] Error saving courses:', error);
+            // Continue anyway, don't block round saving
+          }
+        }
+      }
+      
       await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
