@@ -13,6 +13,7 @@ export default function Players() {
   const [players, setPlayers] = useState<User[]>([])
   const [playerStats, setPlayerStats] = useState<Record<string, { roundCount: number; handicap: number }>>({})
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [deleteModal, setDeleteModal] = useState<{ userId: string; userName: string } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
@@ -53,97 +54,111 @@ export default function Players() {
     setFavoritePlayerIds(newFavorites)
   }
 
-  useEffect(() => {
-    const loadPlayers = async () => {
-      try {
-        // Sync from Supabase first to get latest rounds (via API route)
-        await fetch('/api/sync-players', { method: 'POST' })
+  const loadPlayers = async () => {
+    try {
+      // Sync from Supabase first to get latest rounds (via API route)
+      await fetch('/api/sync-players', { method: 'POST' })
 
-        // Get current user
-        const user = auth.getCurrentUser()
-        setCurrentUser(user)
+      // Get current user
+      const user = auth.getCurrentUser()
+      setCurrentUser(user)
 
-        // Get all players from Supabase or localStorage
-        const allUsers = await auth.getAllUsersAsync()
-        setPlayers(allUsers)
+      // Get all players from Supabase or localStorage
+      const allUsers = await auth.getAllUsersAsync()
+      setPlayers(allUsers)
 
-        // Calculate stats for each player
-        // Try to get rounds from localStorage first, then fetch from Supabase if empty
-        let allRounds: Round[] = []
-        
-        // Check localStorage first
-        const savedRounds = localStorage.getItem('golfRounds')
-        if (savedRounds) {
-          try {
-            const parsed = JSON.parse(savedRounds)
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              allRounds = parsed
-            }
-          } catch (e) {
-            console.error('[Players] Error parsing localStorage rounds:', e)
+      // Calculate stats for each player
+      // Try to get rounds from localStorage first, then fetch from Supabase if empty
+      let allRounds: Round[] = []
+      
+      // Check localStorage first
+      const savedRounds = localStorage.getItem('golfRounds')
+      if (savedRounds) {
+        try {
+          const parsed = JSON.parse(savedRounds)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            allRounds = parsed
           }
+        } catch (e) {
+          console.error('[Players] Error parsing localStorage rounds:', e)
         }
-        
-        // If still no rounds, fetch from Supabase
-        if (allRounds.length === 0) {
-          try {
-            // Fetch all rounds for all users
-            const roundPromises = allUsers.map(user => {
-              return fetch('/api/get-user-rounds', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id })
-              })
-                .then(r => {
-                  if (!r.ok) return { rounds: [] }
-                  return r.json()
-                })
-                .then(data => data.rounds || [])
-                .catch(e => {
-                  console.error(`[Players] Error fetching rounds:`, e)
-                  return []
-                })
+      }
+      
+      // If still no rounds, fetch from Supabase
+      if (allRounds.length === 0) {
+        try {
+          // Fetch all rounds for all users
+          const roundPromises = allUsers.map(user => {
+            return fetch('/api/get-user-rounds', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: user.id })
             })
-            const allRoundsArrays = await Promise.all(roundPromises)
-            allRounds = allRoundsArrays.flat()
-            // Save to localStorage for future use
-            if (allRounds.length > 0) {
-              localStorage.setItem('golfRounds', JSON.stringify(allRounds))
-            }
-          } catch (fetchError) {
-            console.error('[Players] Error fetching rounds from Supabase:', fetchError)
+              .then(r => {
+                if (!r.ok) return { rounds: [] }
+                return r.json()
+              })
+              .then(data => data.rounds || [])
+              .catch(e => {
+                console.error(`[Players] Error fetching rounds:`, e)
+                return []
+              })
+          })
+          const allRoundsArrays = await Promise.all(roundPromises)
+          allRounds = allRoundsArrays.flat()
+          // Save to localStorage for future use
+          if (allRounds.length > 0) {
+            localStorage.setItem('golfRounds', JSON.stringify(allRounds))
           }
+        } catch (fetchError) {
+          console.error('[Players] Error fetching rounds from Supabase:', fetchError)
         }
+      }
 
-        const savedCourses = localStorage.getItem('golfCourses')
-        const courses = savedCourses ? JSON.parse(savedCourses) : []
+      const savedCourses = localStorage.getItem('golfCourses')
+      const courses = savedCourses ? JSON.parse(savedCourses) : []
 
-        const stats: Record<string, { roundCount: number; handicap: number }> = {}
-        
-        allUsers.forEach(user => {
-          // Rounds from Supabase have snake_case field names
-          const userRounds = allRounds.filter(r => r.user_id === user.id || r.userId === user.id)
-          const roundCount = userRounds.length
+      const stats: Record<string, { roundCount: number; handicap: number }> = {}
+      
+      allUsers.forEach(user => {
+        // Rounds from Supabase have snake_case field names
+        const userRounds = allRounds.filter(r => r.user_id === user.id || r.userId === user.id)
+        const roundCount = userRounds.length
 
-          // Use the shared handicap calculation function
-          const handicap = userRounds.length > 0 ? calculateHandicap(userRounds, courses) : 0
+        // Use the shared handicap calculation function
+        const handicap = userRounds.length > 0 ? calculateHandicap(userRounds, courses) : 0
 
-          stats[user.id] = { roundCount, handicap: handicap || 99 }
-        })
+        stats[user.id] = { roundCount, handicap: handicap || 99 }
+      })
 
-        setPlayerStats(stats)
+      setPlayerStats(stats)
 
-        if (allUsers.length === 0) {
-          console.warn('No users found. Supabase configured:', auth.isSupabaseActive())
-        }
-      } catch (error) {
-        console.error('Error loading players:', error)
-      } finally {
-        setLoading(false)
+      if (allUsers.length === 0) {
+        console.warn('No users found. Supabase configured:', auth.isSupabaseActive())
+      }
+    } catch (error) {
+      console.error('Error loading players:', error)
+    }
+  }
+
+  useEffect(() => {
+    const initLoad = async () => {
+      setLoading(true)
+      await loadPlayers()
+      setLoading(false)
+    }
+    initLoad()
+
+    // Refresh when page comes back into focus
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Players] Page came back into focus, refreshing data...')
+        await loadPlayers()
       }
     }
 
-    loadPlayers()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const handleDeleteUser = async (userId: string) => {
@@ -206,7 +221,7 @@ export default function Players() {
           </div>
 
           {/* View All Players / View Favorites Toggle Buttons */}
-          <div className="mb-4 flex justify-center gap-3">
+          <div className="mb-4 flex justify-center gap-3 flex-wrap">
             <button
               onClick={() => setShowAllPlayers(true)}
               className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
@@ -325,7 +340,24 @@ export default function Players() {
 
               return (
                 <>
-                  <h3 className="text-lg font-bold text-gray-800 mb-2">Top 3 Golfers</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-800">Top 3 Golfers</h3>
+                    <button
+                      onClick={async () => {
+                        setRefreshing(true)
+                        await loadPlayers()
+                        setRefreshing(false)
+                      }}
+                      disabled={refreshing}
+                      className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
+                        refreshing
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                      }`}
+                    >
+                      {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Stats'}
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     {topThree.map((player, index) => {
                       let bgGradient = 'from-gray-50 to-gray-100'
