@@ -20,14 +20,7 @@ export default function Home() {
     setIsClient(true)
   }, [])
 
-  // Debug: Print rounds and golfCourses to console
-  useEffect(() => {
-    if (!isClient) return;
-    const savedRounds = localStorage.getItem('golfRounds');
-    const savedCourses = localStorage.getItem('golfCourses');
-    console.log('DEBUG: rounds', savedRounds ? JSON.parse(savedRounds) : []);
-    console.log('DEBUG: golfCourses', savedCourses ? JSON.parse(savedCourses) : []);
-  }, [isClient, rounds]);
+
 
   // Only run client-only logic after hydration
   useEffect(() => {
@@ -418,7 +411,7 @@ export default function Home() {
           <div className="card flex-1 flex flex-col items-center justify-center gap-1">
             <div className="text-2xl mb-0.5">⛳</div>
             <div className="text-lg font-bold">
-              {handicap > 0 ? handicap : '—'}
+              {isClient && rounds.length > 0 && courses.length > 0 ? handicap : '—'}
             </div>
             <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Handicap</div>
           </div>
