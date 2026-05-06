@@ -278,6 +278,21 @@ function TrackRoundContent() {
     setIsClient(true);
   }, []);
 
+  // Save current hole index to localStorage whenever it changes
+  useEffect(() => {
+    if (!roundId || !isClient) return;
+    localStorage.setItem(`currentHoleIndex_${roundId}`, currentHoleIndex.toString());
+  }, [currentHoleIndex, roundId, isClient]);
+
+  // Helper function to find the first unscored hole (next hole to play)
+  const getNextUnscoredholeIndex = (roundScores: number[]): number => {
+    if (!roundScores) return 0;
+    // Find first hole with score of 0 or null
+    const unscored = roundScores.findIndex(score => !score || score === 0);
+    // If all holes are scored, return the last hole for review
+    return unscored >= 0 ? unscored : roundScores.length - 1;
+  };
+
 
   useEffect(() => {
     if (!isClient || !roundId) return;
@@ -286,6 +301,11 @@ function TrackRoundContent() {
       const found = data?.find((r: any) => r.id === roundId);
       setRound(found || null);
       setScores(found?.scores || []);
+      // Set current hole index to the first unscored hole
+      if (found?.scores) {
+        const nextHoleIdx = getNextUnscoredholeIndex(found.scores);
+        setCurrentHoleIndex(nextHoleIdx);
+      }
       // Initialize perHoleStats: load from saved data or create empty objects
       if (found && found.scores) {
         const savedStats = found.perHoleStats || found.per_hole_stats || [];
@@ -314,32 +334,10 @@ function TrackRoundContent() {
       }
       setLoading(false);
       subscription = subscribeToRoundsInProgress(() => {
-        getRoundsInProgress().then(data => {
-          const updated = data?.find((r: any) => r.id === roundId);
-          setRound(updated || null);
-          setScores(updated?.scores || []);
-          if (updated && updated.scores) {
-            const savedStats = updated.perHoleStats || updated.per_hole_stats || [];
-            if (Array.isArray(savedStats) && savedStats.length === updated.scores.length) {
-              setPerHoleStats(savedStats);
-            } else {
-              setPerHoleStats((prev) => {
-                const result = Array(updated.scores.length).fill({});
-                if (prev.length === updated.scores.length) {
-                  return prev;
-                }
-                if (Array.isArray(savedStats)) {
-                  savedStats.forEach((stat, idx) => {
-                    if (idx < result.length) {
-                      result[idx] = stat || {};
-                    }
-                  });
-                }
-                return result;
-              });
-            }
-          }
-        });
+        // Subscription is just a notification that data changed on Supabase.
+        // We don't fetch or update UI state here to avoid race conditions with local changes.
+        // The auto-save effect handles syncing local changes TO Supabase.
+        // Real-time syncing happens through the fetch on page load; subscription is just for awareness.
       });
     }).catch(() => setLoading(false));
     return () => {
@@ -394,9 +392,7 @@ function TrackRoundContent() {
     }
   }, [round]);
 
-  // Debounce timer for score sync
-  const scoreDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const scoreRequestInFlightRef = useRef(false);
+  const perHoleStatsRef = useRef<any[]>([]);
 
   // Subscribe to real-time comment updates
   useEffect(() => {
@@ -465,75 +461,95 @@ function TrackRoundContent() {
     };
   }, [roundId]);
 
-  const handleScoreChange = (adjustment: 'increment' | 'decrement') => {
-    if (!round) return;
+  // Keep perHoleStatsRef in sync whenever perHoleStats changes
+  useEffect(() => {
+    perHoleStatsRef.current = perHoleStats;
+  }, [perHoleStats]);
+
+  // Debounce timer for per-hole stats sync
+  const statsDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const statsRequestInFlightRef = useRef(false);
+
+  // Auto-save per-hole stats changes (debounced)
+  useEffect(() => {
+    if (!round || !course || !isClient) return;
+
     const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
-    if (!auth || !user) {
-      console.error('[handleScoreChange] Blocked: user not loaded');
-      return;
+    if (!user) return;
+
+    // Clear any pending debounce timer
+    if (statsDebounceRef.current) {
+      clearTimeout(statsDebounceRef.current);
     }
-    if (!course) {
-      console.error('[handleScoreChange] Blocked: course not loaded');
-      return;
-    }
-    
-    // Calculate new score using current state
-    setScores(prevScores => {
-      const currentScore = prevScores[currentHoleIndex] || 0;
-      const newScore = adjustment === 'increment' ? currentScore + 1 : Math.max(1, currentScore - 1);
-      const newScores = [...prevScores];
-      newScores[currentHoleIndex] = newScore;
-      
-      // Clear any pending debounce timer
-      if (scoreDebounceRef.current) {
-        clearTimeout(scoreDebounceRef.current);
+
+    // Debounce Supabase sync for stats - wait 500ms in case more changes are coming
+    statsDebounceRef.current = setTimeout(() => {
+      // Skip if a request is already in flight
+      if (statsRequestInFlightRef.current) {
+        return;
       }
-      
-      // Debounce Supabase sync - wait 300ms in case more clicks are coming
-      scoreDebounceRef.current = setTimeout(() => {
-        // Skip if a request is already in flight
-        if (scoreRequestInFlightRef.current) {
-          console.log('[handleScoreChange] Request already in flight, skipping');
-          return;
+
+      try {
+        statsRequestInFlightRef.current = true;
+        const userId = round.userId || user?.id;
+        const userName = round.userName || user?.name;
+        const courseName = round.courseName || course.name;
+        const updatedRound = {
+          id: round.id,
+          userId,
+          userName,
+          courseId: round.courseId || course.id,
+          courseName,
+          selectedTee: round.selectedTee || 'men',
+          date: round.date || new Date().toISOString(),
+          scores,
+          totalScore: scores.reduce((a, b) => a + b, 0),
+          notes: round.notes || '',
+          in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
+          startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
+          perHoleStats,
+        };
+
+        // Also save to localStorage as a backup
+        if (typeof window !== 'undefined') {
+          const savedRounds = localStorage.getItem('golfRounds');
+          if (savedRounds) {
+            try {
+              const allRounds = JSON.parse(savedRounds);
+              const index = allRounds.findIndex((r: any) => r.id === round.id);
+              if (index >= 0) {
+                allRounds[index] = updatedRound;
+                localStorage.setItem('golfRounds', JSON.stringify(allRounds));
+              }
+            } catch (e) {
+              // Silently fail
+            }
+          }
         }
-        
-        try {
-          scoreRequestInFlightRef.current = true;
-          const userId = round.userId || user?.id;
-          const userName = round.userName || user?.name;
-          const courseName = round.courseName || course.name;
-          const updatedRound = {
-            id: round.id,
-            userId,
-            userName,
-            courseId: round.courseId || course.id,
-            courseName,
-            selectedTee: round.selectedTee || 'men',
-            date: round.date || new Date().toISOString(),
-            scores: newScores,
-            totalScore: newScores.reduce((a, b) => a + b, 0),
-            notes: round.notes || '',
-            in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
-            startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
-          };
-          
-          console.log('[handleScoreChange] Sending updatedRound:', updatedRound);
-          fetch('/api/save-round', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedRound),
-          }).catch(e => console.error('Failed to sync score to Supabase', e))
-            .finally(() => {
-              scoreRequestInFlightRef.current = false;
-            });
-        } catch (e) {
-          console.error('Error syncing score:', e);
-          scoreRequestInFlightRef.current = false;
-        }
-      }, 300);
-      
-      return newScores;
-    });
+
+        fetch('/api/save-round', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedRound),
+        }).catch(e => console.error('Failed to sync per-hole stats to Supabase', e))
+          .finally(() => {
+            statsRequestInFlightRef.current = false;
+          });
+      } catch (e) {
+        console.error('Error syncing per-hole stats:', e);
+        statsRequestInFlightRef.current = false;
+      }
+    }, 500);
+
+    return () => {
+      if (statsDebounceRef.current) {
+        clearTimeout(statsDebounceRef.current);
+      }
+    };
+  }, [perHoleStats, scores, round, course, isClient]);
+
+  const handleScoreChange = () => {
+    // This function is no longer used - scores are updated directly via button clicks
   };
 
   const handleNextHole = () => {
@@ -826,21 +842,37 @@ function TrackRoundContent() {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => handleScoreChange('decrement')}
-                className="w-12 h-12 rounded-lg bg-gray-200 text-3xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 transition"
+                onClick={() => {
+                  const current = scores[currentHoleIndex] || 0;
+                  if (current > 0) {
+                    const newScores = [...scores];
+                    newScores[currentHoleIndex] = current - 1;
+                    setScores(newScores);
+                  }
+                }}
+                className="w-12 h-12 rounded-lg bg-red-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-red-600 transition"
               >
                 −
               </button>
-              <span className="text-4xl font-extrabold w-10 text-center text-blue-700 font-mono" style={{ fontFamily: 'monospace', lineHeight: '1' }}>
-                {scores[currentHoleIndex] || 0}
-              </span>
+              <div className="w-16 h-12 rounded-lg bg-white border-2 border-blue-600 flex items-center justify-center">
+                <span className="text-3xl font-extrabold text-blue-700">
+                  {scores[currentHoleIndex] || 0}
+                </span>
+              </div>
               <button
                 type="button"
-                onClick={() => handleScoreChange('increment')}
-                className="w-12 h-12 rounded-lg bg-green-500 text-3xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
+                onClick={() => {
+                  const current = scores[currentHoleIndex] || 0;
+                  if (current < 20) {
+                    const newScores = [...scores];
+                    newScores[currentHoleIndex] = current + 1;
+                    setScores(newScores);
+                  }
+                }}
+                className="w-12 h-12 rounded-lg bg-green-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
               >
                 +
               </button>
@@ -1138,7 +1170,7 @@ function TrackRoundContent() {
       {/* Navigation Buttons - now outside the cards */}
       <div className="flex gap-4 mt-6">
         {currentHoleIndex > 0 && (
-          <button type="button" onClick={handlePreviousHole} className="btn-secondary flex-1">← Previous Hole</button>
+          <button type="button" onClick={handlePreviousHole} className="btn-secondary flex-1 !text-black">← Previous Hole</button>
         )}
         {scores[currentHoleIndex] > 0 && currentHoleIndex < course.holes.length - 1 && (
           <button type="button" onClick={handleNextHole} className="btn-primary flex-1">Next Hole →</button>

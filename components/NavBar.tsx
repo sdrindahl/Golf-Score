@@ -89,8 +89,8 @@ export default function NavBar() {
               onClick={() => router.push('/')}
               className="flex items-center gap-2 cursor-pointer"
             >
-              <img src="/my_caddie.png" alt="My Caddie" className="h-12 w-12" />
-              <h1 className="text-2xl font-bold">My Caddie</h1>
+              <img src="/apex_tracer.png" alt="ApexTracer Golf" className="h-12 w-12" />
+              <h1 className="text-2xl font-bold">ApexTracer Golf</h1>
             </div>
             {currentUser && (
               <div className="flex items-center gap-4">
@@ -121,7 +121,7 @@ export default function NavBar() {
                 : 'hover:bg-green-600'
             }`}
           >
-            <img src="/my_caddie.png" alt="Home" className="h-12 w-12 mb-1" />
+            <img src="/apex_tracer.png" alt="Home" className="h-12 w-12 mb-1" />
             Home
           </button>
           <button
