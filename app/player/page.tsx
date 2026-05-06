@@ -308,51 +308,33 @@ function PlayerProfileContent() {
             </button>
           </Link>
 
-          {/* Header Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-              <div className="text-5xl mb-3 text-center">⛳</div>
-              <div className="text-3xl font-bold text-center text-gray-800">{handicap}</div>
-              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Handicap</div>
+          {/* Header Stats - Compact */}
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+              <div className="text-2xl mb-1">⛳</div>
+              <div className="text-xl font-bold text-gray-800">{handicap}</div>
+              <div className="text-xs text-gray-600 font-semibold uppercase">HCP</div>
             </div>
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-              <div className="text-5xl mb-3 text-center">🏌️</div>
-              <div className="text-3xl font-bold text-center text-gray-800">{rounds.length}</div>
-              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Rounds</div>
+            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+              <div className="text-2xl mb-1">🏌️</div>
+              <div className="text-xl font-bold text-gray-800">{rounds.length}</div>
+              <div className="text-xs text-gray-600 font-semibold uppercase">Rounds</div>
             </div>
-          </div>
-
-          {/* Drive Distance Card */}
-          {averageDriveDistance !== null && (
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-              <div className="text-5xl mb-3 text-center">📏</div>
-              <div className="text-3xl font-bold text-center text-blue-600">{averageDriveDistance}</div>
-              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Avg Drive (yd)</div>
-            </div>
-          )}
-
-          {/* FIR Stats Card */}
-          {firStats !== null && (
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-              <div className="space-y-2">
-                <div className="text-5xl mb-3 text-center">⛳</div>
-                <div className="text-3xl font-bold text-center text-green-600">{firStats.hitPercent}%</div>
-                <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Fairway Hit Rate</div>
-                <div className="text-xs text-gray-600 text-center mt-3 space-y-1">
-                  <div>Miss L: {firStats.missLeftPercent}% | Miss R: {firStats.missRightPercent}%</div>
-                </div>
+            {firStats !== null && (
+              <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+                <div className="text-2xl mb-1">⛳</div>
+                <div className="text-lg font-bold text-green-600">{firStats.hitPercent}%</div>
+                <div className="text-xs text-gray-600 font-semibold uppercase">FIR</div>
               </div>
-            </div>
-          )}
-
-          {/* GIR Stats Card */}
-          {girStats !== null && (
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-7 shadow-lg border border-white/20">
-              <div className="text-5xl mb-3 text-center">🎯</div>
-              <div className="text-3xl font-bold text-center text-indigo-600">{girStats.girPercent}%</div>
-              <div className="text-xs text-gray-600 text-center font-semibold uppercase tracking-wide">Green in Regulation</div>
-            </div>
-          )}
+            )}
+            {girStats !== null && (
+              <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+                <div className="text-2xl mb-1">🎯</div>
+                <div className="text-lg font-bold text-indigo-600">{girStats.girPercent}%</div>
+                <div className="text-xs text-gray-600 font-semibold uppercase">GIR</div>
+              </div>
+            )}
+          </div>
 
           {/* Statistics */}
           {rounds.length > 0 && (() => {
