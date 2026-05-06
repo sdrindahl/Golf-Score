@@ -116,6 +116,7 @@ function PlayerProfileContent() {
                   totalScore: r.total_score,
                   notes: r.notes,
                   in_progress: r.in_progress,
+                  perHoleStats: r.perHoleStats || r.per_hole_stats,
                 }));
                 console.log('[DEBUG] Parsed playerRounds:', playerRounds);
                 setRounds(playerRounds);
@@ -134,6 +135,62 @@ function PlayerProfileContent() {
 
       loadPlayerData();
     }, [playerId, refreshKey]);
+
+    // Real-time subscription to update rounds when they change in Supabase
+    useEffect(() => {
+      if (!playerId || !isSupabaseConfigured() || !supabase) return;
+
+      const subscription = supabase
+        .channel(`player-rounds:${playerId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'rounds',
+            filter: `user_id=eq.${playerId}`,
+          },
+          () => {
+            // Refetch rounds when they change
+            getRoundsForPlayer();
+          }
+        )
+        .subscribe();
+
+      const getRoundsForPlayer = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('rounds')
+            .select('*')
+            .eq('user_id', playerId)
+            .order('date', { ascending: false });
+
+          if (!error && data) {
+            const playerRounds: Round[] = data.map((r: any) => ({
+              id: r.id,
+              userId: r.user_id,
+              userName: r.user_name,
+              courseId: r.course_id,
+              courseName: r.course_name,
+              selectedTee: r.selected_tee,
+              date: r.date,
+              scores: r.scores,
+              totalScore: r.total_score,
+              notes: r.notes,
+              in_progress: r.in_progress,
+              perHoleStats: r.perHoleStats || r.per_hole_stats,
+            }));
+            setRounds(playerRounds);
+          }
+        } catch (error) {
+          console.error('Error fetching updated rounds:', error);
+        }
+      };
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }, [playerId]);
 
     if (loading) {
       return (

@@ -1,6 +1,6 @@
 {
-  "name": "My Caddie - Golf Scorecard",
-  "short_name": "My Caddie",
+  "name": "ApexTracer - Golf Scorecard",
+  "short_name": "ApexTracer",
   "description": "Your personal golf caddie - track scores, calculate handicaps, and compete with friends",
   "start_url": "/",
   "scope": "/",

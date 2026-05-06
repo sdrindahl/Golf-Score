@@ -21,7 +21,7 @@ export default function ThemesPage() {
           } : {}}
           onClick={() => setTheme('wolves')}
         >
-          My Caddie
+          ApexTracer
         </button>
         <button
           className={`flex-1 min-w-[180px] min-h-[56px] py-4 px-6 rounded-xl text-lg font-semibold transition-colors border-2 ${theme === 'vikings' ? 'scale-105' : 'bg-white/80 text-gray-800 border-gray-300 hover:scale-105'}`}
