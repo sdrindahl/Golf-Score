@@ -93,9 +93,9 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
       <div className="card max-w-md w-full">
         <div className="flex items-center justify-center mb-6">
-          <img src="/my_caddie.png" alt="My Caddie" className="h-16 w-16" />
+          <img src="/apex_tracer.png" alt="ApexTracer Golf" className="h-16 w-16" />
         </div>
-        <h1 className="text-3xl font-bold mb-8 text-center text-green-700">My Caddie</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center text-green-700">ApexTracer Golf</h1>
 
         <div className="flex gap-4 mb-6">
           <button
