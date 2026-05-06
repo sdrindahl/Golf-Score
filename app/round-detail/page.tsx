@@ -40,12 +40,21 @@ function RoundDetailContent() {
         if (isMounted) setCurrentUser(user);
 
         try {
+          console.log('[DEBUG] round-detail: Fetching round with id:', roundId)
           const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+          
           if (!res.ok) {
+            console.warn('[DEBUG] round-detail: API returned non-ok status:', res.status)
             if (isMounted) setRound(null);
           } else {
-            const { round: data, courses: apiCourses } = await res.json()
-            if (data) {
+            const responseData = await res.json()
+            console.log('[DEBUG] round-detail: API response:', responseData)
+            
+            const data = responseData.round
+            const apiCourses = responseData.courses
+            
+            if (data && data.id) {
+              console.log('[DEBUG] round-detail: Processing round data:', data.id)
               let courseIds: string[] = [];
               if (apiCourses && apiCourses.length > 0) {
                 courseIds = apiCourses.map((c: any) => c.id)
@@ -95,11 +104,12 @@ function RoundDetailContent() {
                 }
               }
             } else {
+              console.warn('[DEBUG] round-detail: No round data in response:', responseData)
               if (isMounted) setRound(null);
             }
           }
         } catch (error) {
-          console.error('Error loading round detail:', error);
+          console.error('[DEBUG] Error loading round detail:', error);
         } finally {
           if (isMounted) setLoading(false);
         }

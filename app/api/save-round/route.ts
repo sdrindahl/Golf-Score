@@ -82,11 +82,9 @@ export async function POST(req: NextRequest) {
       total_score: validRound.totalScore,
       notes: validRound.notes,
       in_progress: inProgressValue,
-      course_id: Array.isArray(validRound.courseId)
-        ? validRound.courseId.join(',')
-        : validRound.courseId || null,
       selected_tee: selectedTeeFinal,
       per_hole_stats: (validRound as any).perHoleStats || [],
+      // NOTE: course_id column was removed - use round_courses join table instead
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
     console.log('[DEBUG] selected_tee value being sent to Supabase:', roundData.selected_tee);
