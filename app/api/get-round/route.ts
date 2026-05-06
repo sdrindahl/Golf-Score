@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     console.log('[DEBUG] Round fetched successfully:', round.id)
 
     // Fetch associated course IDs from join table
-    let roundCourses = []
+    let roundCourses: any[] = []
     try {
       const { data, error: joinError } = await supabase
         .from('round_courses')
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     console.log('[DEBUG] Course IDs from join table:', courseIds)
 
     // Fetch all associated courses
-    let courses = []
+    let courses: any[] = []
     if (courseIds.length > 0) {
       try {
         const { data: courseData, error: courseError } = await supabase
