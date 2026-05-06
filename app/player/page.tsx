@@ -140,24 +140,8 @@ function PlayerProfileContent() {
     useEffect(() => {
       if (!playerId || !isSupabaseConfigured() || !supabase) return;
 
-      const subscription = supabase
-        .channel(`player-rounds:${playerId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'rounds',
-            filter: `user_id=eq.${playerId}`,
-          },
-          () => {
-            // Refetch rounds when they change
-            getRoundsForPlayer();
-          }
-        )
-        .subscribe();
-
       const getRoundsForPlayer = async () => {
+        if (!supabase) return;
         try {
           const { data, error } = await supabase
             .from('rounds')
@@ -186,6 +170,23 @@ function PlayerProfileContent() {
           console.error('Error fetching updated rounds:', error);
         }
       };
+
+      const subscription = supabase
+        .channel(`player-rounds:${playerId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'rounds',
+            filter: `user_id=eq.${playerId}`,
+          },
+          () => {
+            // Refetch rounds when they change
+            getRoundsForPlayer();
+          }
+        )
+        .subscribe();
 
       return () => {
         subscription.unsubscribe();
