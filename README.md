@@ -1,4 +1,4 @@
-# 🎒 My Caddie
+# 🎒 ApexTracer
 
 Your personal golf caddie - track your golf scores, calculate your handicap, and compete with friends. Built with Next.js, TypeScript, Tailwind CSS, and Supabase.
 
