@@ -1,13 +1,29 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function VersionChecker() {
   const [version, setVersion] = useState<string | null>(null)
   const [updateAvailable, setUpdateAvailable] = useState(false)
   const [showBanner, setShowBanner] = useState(false)
+  const [hasActiveRound, setHasActiveRound] = useState(false)
+
+  // Check if user has any active rounds
+  const checkForActiveRounds = async () => {
+    try {
+      const rounds = await getRoundsInProgress()
+      setHasActiveRound(rounds && rounds.length > 0)
+    } catch (error) {
+      // If error (e.g., Supabase not configured), allow updates
+      setHasActiveRound(false)
+    }
+  }
 
   useEffect(() => {
+    // Check for active rounds on mount
+    checkForActiveRounds()
+
     // Get current version
     const loadVersion = async () => {
       try {
@@ -16,6 +32,7 @@ export default function VersionChecker() {
         setVersion(data.version)
         // Store in sessionStorage for version display
         sessionStorage.setItem('appVersion', data.version)
+        console.log('VersionChecker: Loaded version:', data.version)
       } catch (error) {
         console.error('Error loading version:', error)
       }
@@ -27,9 +44,12 @@ export default function VersionChecker() {
     if ('serviceWorker' in navigator) {
       const handleServiceWorkerMessage = (event: MessageEvent) => {
         if (event.data.type === 'UPDATE_AVAILABLE') {
-          console.log(`Update available: ${event.data.version}`)
+          console.log(`VersionChecker: Update available from SW: ${event.data.version}`)
           setUpdateAvailable(true)
-          setShowBanner(true)
+          // Check for active rounds before showing banner
+          checkForActiveRounds().then(() => {
+            setShowBanner(true)
+          })
         }
       }
 
@@ -40,9 +60,14 @@ export default function VersionChecker() {
         try {
           const response = await fetch('/version.json', { cache: 'no-store' })
           const data = await response.json()
+          console.log('VersionChecker: Checking version. Current:', version, 'Latest:', data.version)
           if (version && data.version !== version) {
+            console.log('VersionChecker: New version detected! Showing banner.')
             setUpdateAvailable(true)
-            setShowBanner(true)
+            // Check for active rounds before showing banner
+            checkForActiveRounds().then(() => {
+              setShowBanner(true)
+            })
           }
         } catch (error) {
           console.error('Error checking for updates:', error)
@@ -57,42 +82,34 @@ export default function VersionChecker() {
   }, [version])
 
   const handleUpdate = () => {
-    // Clear caches and reload
+    // Service worker will handle new version on reload
+    // Auth tokens (currentUser in localStorage) are preserved
     if (typeof window !== 'undefined' && typeof window.location !== 'undefined') {
-      if ('caches' in window) {
-        caches.keys().then((cacheNames: string[]) => {
-          Promise.all(cacheNames.map((cacheName: string) => caches.delete(cacheName)))
-            .then(() => {
-              (window as any).location.reload()
-            })
-        })
-      } else {
-        (window as any).location.reload()
-      }
+      (window as any).location.reload()
     }
   }
 
   return (
     <>
-      {/* Version banner - shows when update is available */}
-      {showBanner && updateAvailable && (
-        <div className="fixed bottom-4 left-4 right-4 max-w-md bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg shadow-lg z-50">
-          <p className="font-semibold mb-2">📱 Update Available</p>
-          <p className="text-sm mb-3">A new version of the app is ready to install.</p>
-          <div className="flex gap-2">
-            <button
-              onClick={handleUpdate}
-              className="flex-1 bg-white text-blue-600 font-semibold py-2 px-3 rounded hover:bg-gray-100 transition-colors text-sm"
-            >
-              Update Now
-            </button>
-            <button
-              onClick={() => setShowBanner(false)}
-              className="px-3 py-2 hover:bg-blue-700 transition-colors text-sm"
-            >
-              Later
-            </button>
-          </div>
+      {/* Version banner - shows when update is available AND no active rounds */}
+      {showBanner && updateAvailable && !hasActiveRound && (
+        <div className="fixed top-4 left-4 right-4 max-w-md bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow-lg z-50">
+          <p className="font-semibold mb-2">✨ New Update Available</p>
+          <p className="text-sm mb-3">A new version is ready. Click below to update.</p>
+          <button
+            onClick={handleUpdate}
+            className="w-full bg-white text-green-600 font-semibold py-2 px-3 rounded hover:bg-gray-100 transition-colors text-sm"
+          >
+            Update Now
+          </button>
+        </div>
+      )}
+
+      {/* Hidden banner message when update is available but user is golfing */}
+      {showBanner && updateAvailable && hasActiveRound && (
+        <div className="fixed top-4 left-4 right-4 max-w-md bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-lg shadow-lg z-50">
+          <p className="font-semibold mb-2">📱 Update Waiting</p>
+          <p className="text-sm">Update will be available after you finish your round.</p>
         </div>
       )}
 
