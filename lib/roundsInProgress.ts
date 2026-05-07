@@ -55,10 +55,10 @@ export async function getRoundsInProgress() {
   
   // Fetch course IDs from join table for each round
   let roundsWithCourses = data || [];
-  if (roundsWithCourses.length > 0) {
+  if (roundsWithCourses.length > 0 && supabase) {
     roundsWithCourses = await Promise.all(
       roundsWithCourses.map(async (round: any) => {
-        const { data: courseLinks, error: joinError } = await supabase
+        const { data: courseLinks, error: joinError } = await supabase!
           .from('round_courses')
           .select('course_id')
           .eq('round_id', round.id)
