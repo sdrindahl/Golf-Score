@@ -113,7 +113,7 @@ function PlayerProfileContent() {
                 // Fetch course IDs for each round from round_courses join table
                 const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
                   let courseId = '';
-                  if (r.id) {
+                  if (r.id && supabase) {
                     const { data: courseData, error: courseError } = await supabase
                       .from('round_courses')
                       .select('course_id')
@@ -173,7 +173,7 @@ function PlayerProfileContent() {
             // Fetch course IDs for each round from round_courses join table
             const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
               let courseId = '';
-              if (r.id) {
+              if (r.id && supabase) {
                 const { data: courseData, error: courseError } = await supabase
                   .from('round_courses')
                   .select('course_id')
