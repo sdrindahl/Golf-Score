@@ -71,6 +71,8 @@ export default function Home() {
       .then(data => {
         if (data && Array.isArray(data.courses)) {
           setCourses(data.courses);
+          // Also save to localStorage for other pages
+          localStorage.setItem('golfCourses', JSON.stringify(data.courses));
         } else {
           setCourses([]);
         }
@@ -98,6 +100,33 @@ export default function Home() {
   const calculateHandicapLocal = (): number => {
     if (!isClient || rounds.length === 0 || courses.length === 0) return 0
     return calculateHandicap(rounds, courses)
+  }
+
+  const getHandicapColor = (hcp: number) => {
+    if (hcp <= 10) return 'text-green-600'; // Good
+    if (hcp <= 20) return 'text-yellow-600'; // OK
+    return 'text-red-600'; // Needs improvement
+  }
+
+  const getHandicapTrend = () => {
+    if (rounds.length < 2) return null;
+    const completedRounds = rounds.filter(r => !r.in_progress).sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    if (completedRounds.length < 2) return null;
+    
+    const lastRounds = completedRounds.slice(0, 3);
+    let totalBefore = 0;
+    let totalAfter = 0;
+    
+    if (lastRounds.length >= 2) {
+      totalAfter = lastRounds[0].totalScore || 0;
+      totalBefore = lastRounds[lastRounds.length - 1].totalScore || 0;
+      
+      if (totalAfter < totalBefore) return '↓'; // Improving (scores going down)
+      if (totalAfter > totalBefore) return '↑'; // Declining (scores going up)
+    }
+    return null;
   }
 
   const handicap = calculateHandicapLocal()
@@ -370,9 +399,13 @@ export default function Home() {
             onClick={handleViewRounds}
             className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg hover:bg-opacity-80 transition-all"
           >
-            <div className="text-2xl mb-0.5">📊</div>
-            <div className="text-lg font-bold">{rounds.length}</div>
-            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Round History</div>
+            <div className="relative">
+              <img src="/scorecard.png" alt="scorecard" className="h-16 w-16 object-contain" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold text-black">{rounds.length}</span>
+              </div>
+            </div>
+            <div className="text-[9px] text-black text-center font-semibold uppercase tracking-wide mt-0.5 leading-tight">Tap to view<br />round history</div>
           </button>
 
           {/* Current Active Rounds Card */}
@@ -396,11 +429,13 @@ export default function Home() {
 
           {/* Handicap Card */}
           <div className="card flex-1 flex flex-col items-center justify-center gap-1">
-            <div className="text-2xl mb-0.5">⛳</div>
-            <div className="text-lg font-bold">
-              {isClient && rounds.length > 0 && courses.length > 0 ? handicap : '—'}
+            <div className="flex items-center gap-0.5">
+              <div className={`text-4xl font-bold ${getHandicapColor(handicap)}`}>
+                {isClient && rounds.length > 0 && courses.length > 0 ? handicap : '—'}
+              </div>
+              {getHandicapTrend() && <div className={`text-sm ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
             </div>
-            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Handicap</div>
+            <div className={`text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5 ${getHandicapColor(handicap)}`}>My HCP</div>
           </div>
         </div>
 

@@ -21,6 +21,7 @@ function PlayerProfileContent() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [isClient, setIsClient] = useState(false)
 
   // ...existing code...
 
@@ -28,6 +29,11 @@ function PlayerProfileContent() {
   const isOwnProfile = currentUser?.id === player?.id;
   // Show Golf Costs button only for the logged-in user viewing their own profile
   const showGolfCostsButton = isOwnProfile;
+
+  // Set hydration flag
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Refresh data when returning to this page
   useEffect(() => {
@@ -104,19 +110,33 @@ function PlayerProfileContent() {
               if (error) {
                 setRounds([]);
               } else if (data) {
-                const playerRounds: Round[] = data.map((r: any) => ({
-                  id: r.id,
-                  userId: r.user_id,
-                  userName: r.user_name,
-                  courseId: r.course_id,
-                  courseName: r.course_name,
-                  selectedTee: r.selected_tee,
-                  date: r.date,
-                  scores: r.scores,
-                  totalScore: r.total_score,
-                  notes: r.notes,
-                  in_progress: r.in_progress,
-                  perHoleStats: r.perHoleStats || r.per_hole_stats,
+                // Fetch course IDs for each round from round_courses join table
+                const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
+                  let courseId = '';
+                  if (r.id && supabase) {
+                    const { data: courseData, error: courseError } = await supabase
+                      .from('round_courses')
+                      .select('course_id')
+                      .eq('round_id', r.id)
+                      .order('course_order', { ascending: true });
+                    if (!courseError && courseData && courseData.length > 0) {
+                      courseId = courseData.map((rc: any) => rc.course_id).join(',');
+                    }
+                  }
+                  return {
+                    id: r.id,
+                    userId: r.user_id,
+                    userName: r.user_name,
+                    courseId: courseId,
+                    courseName: '',
+                    selectedTee: r.selected_tee,
+                    date: r.date,
+                    scores: r.scores,
+                    totalScore: r.total_score,
+                    notes: r.notes,
+                    in_progress: r.in_progress,
+                    perHoleStats: r.perHoleStats || r.per_hole_stats,
+                  };
                 }));
                 console.log('[DEBUG] Parsed playerRounds:', playerRounds);
                 setRounds(playerRounds);
@@ -150,19 +170,33 @@ function PlayerProfileContent() {
             .order('date', { ascending: false });
 
           if (!error && data) {
-            const playerRounds: Round[] = data.map((r: any) => ({
-              id: r.id,
-              userId: r.user_id,
-              userName: r.user_name,
-              courseId: r.course_id,
-              courseName: r.course_name,
-              selectedTee: r.selected_tee,
-              date: r.date,
-              scores: r.scores,
-              totalScore: r.total_score,
-              notes: r.notes,
-              in_progress: r.in_progress,
-              perHoleStats: r.perHoleStats || r.per_hole_stats,
+            // Fetch course IDs for each round from round_courses join table
+            const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
+              let courseId = '';
+              if (r.id && supabase) {
+                const { data: courseData, error: courseError } = await supabase
+                  .from('round_courses')
+                  .select('course_id')
+                  .eq('round_id', r.id)
+                  .order('course_order', { ascending: true });
+                if (!courseError && courseData && courseData.length > 0) {
+                  courseId = courseData.map((rc: any) => rc.course_id).join(',');
+                }
+              }
+              return {
+                id: r.id,
+                userId: r.user_id,
+                userName: r.user_name,
+                courseId: courseId,
+                courseName: '',
+                selectedTee: r.selected_tee,
+                date: r.date,
+                scores: r.scores,
+                totalScore: r.total_score,
+                notes: r.notes,
+                in_progress: r.in_progress,
+                perHoleStats: r.perHoleStats || r.per_hole_stats,
+              };
             }));
             setRounds(playerRounds);
           }
@@ -221,11 +255,40 @@ function PlayerProfileContent() {
     }
 
   const calculateHandicapLocal = (): number => {
+    if (!isClient) return 0
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
+    if (rounds.length === 0 || courses.length === 0) return 0
     return calculateHandicap(rounds, courses)
   }
 
   const handicap = calculateHandicapLocal()
+
+  const getHandicapColor = (hcp: number) => {
+    if (hcp <= 10) return 'text-green-600'; // Good
+    if (hcp <= 20) return 'text-yellow-600'; // OK
+    return 'text-red-600'; // Needs improvement
+  }
+
+  const getHandicapTrend = () => {
+    if (rounds.length < 2) return null;
+    const completedRounds = rounds.filter(r => !r.in_progress).sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    if (completedRounds.length < 2) return null;
+    
+    const lastRounds = completedRounds.slice(0, 3);
+    let totalBefore = 0;
+    let totalAfter = 0;
+    
+    if (lastRounds.length >= 2) {
+      totalAfter = lastRounds[0].totalScore || 0;
+      totalBefore = lastRounds[lastRounds.length - 1].totalScore || 0;
+      
+      if (totalAfter < totalBefore) return '↓'; // Improving (scores going down)
+      if (totalAfter > totalBefore) return '↑'; // Declining (scores going up)
+    }
+    return null;
+  }
 
   const calculateAverageDriveDistance = (): number | null => {
     let totalDriveDistance = 0
@@ -310,30 +373,32 @@ function PlayerProfileContent() {
 
           {/* Header Stats - Compact */}
           <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
-              <div className="text-2xl mb-1">⛳</div>
-              <div className="text-xl font-bold text-gray-800">{handicap}</div>
-              <div className="text-xs text-gray-600 font-semibold uppercase">HCP</div>
+            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center flex flex-col items-center justify-center">
+              <div className="flex items-center gap-1 justify-center">
+                <div className={`text-3xl font-bold ${getHandicapColor(handicap)}`}>
+                  {handicap}
+                </div>
+                {getHandicapTrend() && <div className={`text-sm ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
+              </div>
+              <div className={`text-xs font-semibold uppercase mt-2 ${getHandicapColor(handicap)}`}>HCP</div>
             </div>
             <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
-              <div className="text-2xl mb-1">🏌️</div>
-              <div className="text-xl font-bold text-gray-800">{rounds.length}</div>
+              <div className="w-12 h-12 flex items-center justify-center mb-1 mx-auto">
+                <img src="/scorecard.png" alt="scorecard" className="w-full h-full object-contain" />
+              </div>
+              <div className="text-xl font-bold text-black mb-1">{rounds.length}</div>
               <div className="text-xs text-gray-600 font-semibold uppercase">Rounds</div>
             </div>
-            {firStats !== null && (
-              <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
-                <div className="text-2xl mb-1">⛳</div>
-                <div className="text-lg font-bold text-green-600">{firStats.hitPercent}%</div>
-                <div className="text-xs text-gray-600 font-semibold uppercase">FIR</div>
-              </div>
-            )}
-            {girStats !== null && (
-              <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
-                <div className="text-2xl mb-1">🎯</div>
-                <div className="text-lg font-bold text-indigo-600">{girStats.girPercent}%</div>
-                <div className="text-xs text-gray-600 font-semibold uppercase">GIR</div>
-              </div>
-            )}
+            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+              <div className="text-2xl mb-1">⛳</div>
+              <div className="text-lg font-bold text-green-600">{firStats ? `${firStats.hitPercent}%` : '—'}</div>
+              <div className="text-xs text-gray-600 font-semibold uppercase">FIR</div>
+            </div>
+            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+              <div className="text-2xl mb-1">🎯</div>
+              <div className="text-lg font-bold text-indigo-600">{girStats ? `${girStats.girPercent}%` : '—'}</div>
+              <div className="text-xs text-gray-600 font-semibold uppercase">GIR</div>
+            </div>
           </div>
 
           {/* Statistics */}

@@ -20,6 +20,7 @@ export default function Players() {
   const [showAllPlayers, setShowAllPlayers] = useState(true)
   const [favoritePlayerIds, setFavoritePlayerIds] = useState<Set<string>>(new Set())
   const [isClient, setIsClient] = useState(false)
+  const [courses, setCourses] = useState<any[]>([])
   const auth = useAuth()
 
   // Initialize client and load favorites from localStorage
@@ -83,40 +84,82 @@ export default function Players() {
         }
       }
       
-      // If still no rounds, fetch from Supabase
-      if (allRounds.length === 0) {
+      // Always enrich rounds with courseIds from join table (for backwards compatibility)
+      // and if no rounds found in localStorage
+      if (allRounds.length > 0 || true) {
         try {
-          // Fetch all rounds for all users
-          const roundPromises = allUsers.map(user => {
-            return fetch('/api/get-user-rounds', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: user.id })
+          // For rounds that don't have courseIds (migrated from old system), fetch from API
+          const roundsNeedingCourses = allRounds.filter(r => !r.courseId && !r.course_id)
+          
+          if (roundsNeedingCourses.length > 0 || allRounds.length === 0) {
+            console.log('[Players] Fetching rounds from Supabase to get courseIds...')
+            // Fetch all rounds for all users
+            const roundPromises = allUsers.map(user => {
+              return fetch('/api/get-user-rounds', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+              })
+                .then(r => {
+                  if (!r.ok) return { rounds: [] }
+                  return r.json()
+                })
+                .then(data => data.rounds || [])
+                .catch(e => {
+                  console.error(`[Players] Error fetching rounds:`, e)
+                  return []
+                })
             })
-              .then(r => {
-                if (!r.ok) return { rounds: [] }
-                return r.json()
-              })
-              .then(data => data.rounds || [])
-              .catch(e => {
-                console.error(`[Players] Error fetching rounds:`, e)
-                return []
-              })
-          })
-          const allRoundsArrays = await Promise.all(roundPromises)
-          allRounds = allRoundsArrays.flat()
-          // Save to localStorage for future use
-          if (allRounds.length > 0) {
-            localStorage.setItem('golfRounds', JSON.stringify(allRounds))
+            const allRoundsArrays = await Promise.all(roundPromises)
+            const supabaseRounds = allRoundsArrays.flat()
+            
+            if (supabaseRounds.length > 0) {
+              console.log('[Players] Got rounds from Supabase:', supabaseRounds.length)
+              // Merge: use Supabase rounds (which have courseIds) as the source of truth
+              allRounds = supabaseRounds
+              // Save to localStorage for future use
+              localStorage.setItem('golfRounds', JSON.stringify(allRounds))
+            }
           }
         } catch (fetchError) {
           console.error('[Players] Error fetching rounds from Supabase:', fetchError)
         }
       }
 
+      // LOAD COURSES FIRST before calculating stats
+      let coursesToUse: any[] = []
       const savedCourses = localStorage.getItem('golfCourses')
-      const courses = savedCourses ? JSON.parse(savedCourses) : []
+      if (savedCourses) {
+        try {
+          const parsed = JSON.parse(savedCourses)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            coursesToUse = parsed
+          }
+        } catch (e) {
+          console.error('[Players] Error parsing courses from localStorage:', e)
+        }
+      }
+      
+      // If no courses in localStorage, fetch from API
+      if (coursesToUse.length === 0) {
+        try {
+          console.log('[Players] Fetching courses from API...')
+          const res = await fetch('/api/get-courses')
+          const data = await res.json()
+          if (data && Array.isArray(data.courses) && data.courses.length > 0) {
+            coursesToUse = data.courses
+            console.log('[Players] Got courses from API:', data.courses.length)
+            // Save to localStorage for next time
+            localStorage.setItem('golfCourses', JSON.stringify(data.courses))
+          }
+        } catch (e) {
+          console.error('[Players] Error fetching courses from API:', e)
+        }
+      } else {
+        console.log('[Players] Using courses from localStorage:', coursesToUse.length)
+      }
 
+      // NOW calculate stats with loaded courses
       const stats: Record<string, { roundCount: number; handicap: number }> = {}
       
       allUsers.forEach(user => {
@@ -125,12 +168,15 @@ export default function Players() {
         const roundCount = userRounds.length
 
         // Use the shared handicap calculation function
-        const handicap = userRounds.length > 0 ? calculateHandicap(userRounds, courses) : 0
+        const handicap = userRounds.length > 0 ? calculateHandicap(userRounds, coursesToUse) : 0
+        console.log(`[Players] ${user.name}: ${roundCount} rounds, handicap=${handicap}, coursesAvailable=${coursesToUse.length}`)
 
         stats[user.id] = { roundCount, handicap: handicap || 99 }
       })
 
+      // Set both stats and courses in state
       setPlayerStats(stats)
+      setCourses(coursesToUse)
 
       if (allUsers.length === 0) {
         console.warn('No users found. Supabase configured:', auth.isSupabaseActive())
