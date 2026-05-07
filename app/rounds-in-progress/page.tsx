@@ -260,7 +260,6 @@ export default function RoundsInProgressPage() {
       newSelected.add(playerName);
     }
     setSelectedPlayers(newSelected);
-    setShowAllPlayers(false); // Switch to filtered view when selecting a player
   };
 
   useEffect(() => {
@@ -338,12 +337,9 @@ export default function RoundsInProgressPage() {
           </button>
           <button
             onClick={() => setShowAllPlayers(false)}
-            disabled={selectedPlayers.size === 0}
             className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
-              !showAllPlayers && selectedPlayers.size > 0
+              !showAllPlayers
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : selectedPlayers.size === 0
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-gray-400 hover:bg-gray-500 text-white'
             }`}
           >
