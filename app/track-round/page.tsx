@@ -30,7 +30,7 @@ import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
 import CommentsModal from '@/components/CommentsModal';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
 
@@ -297,8 +297,24 @@ function TrackRoundContent() {
   useEffect(() => {
     if (!isClient || !roundId) return;
     let subscription: any;
-    getRoundsInProgress().then(data => {
-      const found = data?.find((r: any) => r.id === roundId);
+    getRoundsInProgress().then(async (data) => {
+      let found = data?.find((r: any) => r.id === roundId);
+      
+      // Fallback: if not found in in-progress list, try fetching by ID
+      // This handles auto-completed rounds that are no longer "in progress"
+      if (!found) {
+        console.log('[DEBUG] Round not in in-progress list, trying get-round-by-id API');
+        try {
+          const res = await fetch(`/api/get-round-by-id?id=${roundId}`);
+          if (res.ok) {
+            const { round: roundData } = await res.json();
+            found = roundData;
+          }
+        } catch (err) {
+          console.error('[DEBUG] Failed to fetch round by ID:', err);
+        }
+      }
+      
       setRound(found || null);
       setScores(found?.scores || []);
       // Set current hole index to the first unscored hole
@@ -344,6 +360,55 @@ function TrackRoundContent() {
       if (subscription && subscription.unsubscribe) subscription.unsubscribe();
     };
   }, [isClient, roundId]);
+
+  // 1A: Keep round active by updating its timestamp every 30 seconds
+  // This prevents the auto-complete feature from completing active rounds
+  // Also does a full save to ensure round_courses join table is populated
+  useEffect(() => {
+    if (!round || !roundId) return; // Don't require course - we have courseId from round
+    
+    // Update every 30 seconds to keep the round active
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        // Convert round to camelCase for API
+        const heartbeatRound = {
+          id: round.id,
+          userId: round.userId || (round as any).user_id,
+          userName: round.userName || (round as any).user_name,
+          // Use courseId from round object (already fetched from round_courses join table)
+          // Fallback to course?.id if round doesn't have it
+          courseId: round.courseId || (round as any).course_id || course?.id,
+          courseName: course?.name,
+          selectedTee: selectedTee || round.selectedTee || (round as any).selected_tee,
+          date: round.date,
+          scores: scores.length > 0 ? scores : round.scores,
+          totalScore: round.totalScore || (round as any).total_score,
+          notes: round.notes,
+          in_progress: round.in_progress !== false, // Default to true
+          perHoleStats: (round as any).perHoleStats || (round as any).per_hole_stats || [],
+        };
+        
+        console.log('[DEBUG] Heartbeat sending courseId:', heartbeatRound.courseId, 'from round.courseId:', round.courseId, 'course?.id:', course?.id);
+        
+        const res = await fetch('/api/save-round', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(heartbeatRound),
+        });
+        
+        if (res.ok) {
+          console.log('[DEBUG] Heartbeat: Updated round and round_courses join table');
+        } else {
+          console.warn('[DEBUG] Heartbeat save failed:', res.status);
+        }
+      } catch (err) {
+        console.error('[DEBUG] Heartbeat update failed:', err);
+        // Silently fail - this is not critical
+      }
+    }, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(heartbeatInterval);
+  }, [round, roundId, scores, selectedTee]); // Removed course - not needed since we use courseId from round
 
   // 1B: Set selectedTee from round if it exists and state is empty
   // Always sync selectedTee from round when round changes
@@ -422,10 +487,10 @@ function TrackRoundContent() {
     }, 3000);
 
     // Set up Supabase realtime subscription for new comments
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    if (!supabase) {
+      console.warn('[DEBUG] Supabase client not configured, skipping real-time subscription');
+      return () => clearInterval(pollInterval);
+    }
 
     const channel = supabase
       .channel(`comments:${roundId}`)

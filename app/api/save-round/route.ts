@@ -29,18 +29,33 @@ function ensureValidTotalScore(round: Round): Round {
 }
 
 async function insertRoundCourses(roundId: string, courseIds: string[]): Promise<void> {
-  if (!roundId || !courseIds || courseIds.length === 0) return;
+  if (!roundId || !courseIds || courseIds.length === 0) {
+    console.log('[DEBUG] insertRoundCourses: Skipping - invalid roundId or empty courseIds');
+    return;
+  }
+  
   // Remove any existing links for this round (idempotent)
-  await supabase.from('round_courses').delete().eq('round_id', roundId);
+  const { error: deleteError } = await supabase.from('round_courses').delete().eq('round_id', roundId);
+  if (deleteError) {
+    console.error('[DEBUG] Error deleting old round_courses:', deleteError);
+  }
+  
   // Insert new links
   const rows = courseIds.map((courseId: string, idx: number) => ({
     round_id: roundId,
     course_id: courseId,
     course_order: idx
   }));
+  console.log('[DEBUG] Inserting into round_courses - rows to insert:', JSON.stringify(rows));
+  
   if (rows.length > 0) {
     const { error } = await supabase.from('round_courses').insert(rows);
-    if (error) throw error;
+    if (error) {
+      console.error('[DEBUG] Error inserting into round_courses:', error);
+      throw error;
+    } else {
+      console.log('[DEBUG] Successfully inserted into round_courses:', rows.length, 'rows');
+    }
   }
 }
 
@@ -84,6 +99,7 @@ export async function POST(req: NextRequest) {
       in_progress: inProgressValue,
       selected_tee: selectedTeeFinal,
       per_hole_stats: (validRound as any).perHoleStats || [],
+      updated_at: new Date().toISOString(),
       // NOTE: course_id column was removed - use round_courses join table instead
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
