@@ -258,7 +258,8 @@ function PlayerProfileContent() {
     if (!isClient) return 0
     const courses = JSON.parse(localStorage.getItem('golfCourses') || '[]')
     if (rounds.length === 0 || courses.length === 0) return 0
-    return calculateHandicap(rounds, courses)
+    const completedRounds = rounds.filter(r => !r.in_progress)
+    return calculateHandicap(completedRounds, courses)
   }
 
   const handicap = calculateHandicapLocal()
@@ -373,8 +374,8 @@ function PlayerProfileContent() {
 
           {/* Header Stats - Compact */}
           <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center flex flex-col items-center justify-center">
-              <div className="flex items-center gap-1 justify-center max-w-[80px] overflow-hidden">
+            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center flex flex-col items-center justify-center min-w-0">
+              <div className="flex items-center gap-1 justify-center min-w-0">
                 <div className={`text-3xl font-bold truncate ${getHandicapColor(handicap)}`}>
                   {handicap}
                 </div>

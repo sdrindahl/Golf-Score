@@ -166,9 +166,10 @@ export default function Players() {
         // Rounds from Supabase have snake_case field names
         const userRounds = allRounds.filter(r => r.user_id === user.id || r.userId === user.id)
         const roundCount = userRounds.length
+        const completedRounds = userRounds.filter(r => !r.in_progress)
 
         // Use the shared handicap calculation function
-        const handicap = userRounds.length > 0 ? calculateHandicap(userRounds, coursesToUse) : 0
+        const handicap = completedRounds.length > 0 ? calculateHandicap(completedRounds, coursesToUse) : 0
         console.log(`[Players] ${user.name}: ${roundCount} rounds, handicap=${handicap}, coursesAvailable=${coursesToUse.length}`)
 
         stats[user.id] = { roundCount, handicap: handicap || 99 }

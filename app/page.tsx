@@ -99,7 +99,8 @@ export default function Home() {
 
   const calculateHandicapLocal = (): number => {
     if (!isClient || rounds.length === 0 || courses.length === 0) return 0
-    return calculateHandicap(rounds, courses)
+    const completedRounds = rounds.filter(r => !r.in_progress)
+    return calculateHandicap(completedRounds, courses)
   }
 
   const getHandicapColor = (hcp: number) => {
@@ -428,8 +429,8 @@ export default function Home() {
           </button>
 
           {/* Handicap Card */}
-          <div className="card flex-1 flex flex-col items-center justify-center gap-1">
-            <div className="flex items-center gap-0.5 max-w-[90px] overflow-hidden">
+          <div className="card flex-1 flex flex-col items-center justify-center gap-1 min-w-0">
+            <div className="flex items-center gap-0.5 min-w-0">
               <div className={`text-4xl font-bold truncate ${getHandicapColor(handicap)}`}>
                 {isClient && rounds.length > 0 && courses.length > 0 ? handicap : '—'}
               </div>
