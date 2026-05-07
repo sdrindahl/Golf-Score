@@ -364,51 +364,110 @@ function TrackRoundContent() {
   // 1A: Keep round active by updating its timestamp every 30 seconds
   // This prevents the auto-complete feature from completing active rounds
   // Also does a full save to ensure round_courses join table is populated
+  // Use refs to access latest state values without recreating interval
+  const roundRef = useRef(round);
+  const scoresRef = useRef(scores);
+  const selectedTeeRef = useRef(selectedTee);
+  const courseRef = useRef(course);
+  
+  // Update refs whenever state changes
   useEffect(() => {
-    if (!round || !roundId) return; // Don't require course - we have courseId from round
+    roundRef.current = round;
+    scoresRef.current = scores;
+    selectedTeeRef.current = selectedTee;
+    courseRef.current = course;
+  }, [round, scores, selectedTee, course]);
+
+  useEffect(() => {
+    if (!roundId) return;
     
-    // Update every 30 seconds to keep the round active
-    const heartbeatInterval = setInterval(async () => {
-      try {
-        // Convert round to camelCase for API
-        const heartbeatRound = {
-          id: round.id,
-          userId: round.userId || (round as any).user_id,
-          userName: round.userName || (round as any).user_name,
-          // Use courseId from round object (already fetched from round_courses join table)
-          // Fallback to course?.id if round doesn't have it
-          courseId: round.courseId || (round as any).course_id || course?.id,
-          courseName: course?.name,
-          selectedTee: selectedTee || round.selectedTee || (round as any).selected_tee,
-          date: round.date,
-          scores: scores.length > 0 ? scores : round.scores,
-          totalScore: round.totalScore || (round as any).total_score,
-          notes: round.notes,
-          in_progress: round.in_progress !== false, // Default to true
-          perHoleStats: (round as any).perHoleStats || (round as any).per_hole_stats || [],
-        };
-        
-        console.log('[DEBUG] Heartbeat sending courseId:', heartbeatRound.courseId, 'from round.courseId:', round.courseId, 'course?.id:', course?.id);
-        
-        const res = await fetch('/api/save-round', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(heartbeatRound),
-        });
-        
-        if (res.ok) {
-          console.log('[DEBUG] Heartbeat: Updated round and round_courses join table');
-        } else {
-          console.warn('[DEBUG] Heartbeat save failed:', res.status);
+    let heartbeatInterval: NodeJS.Timeout | null = null;
+    let isPageVisible = !document.hidden;
+    
+    // Function to start the heartbeat
+    const startHeartbeat = () => {
+      if (heartbeatInterval) return; // Don't start if already running
+      
+      console.log('[DEBUG] Heartbeat started');
+      heartbeatInterval = setInterval(async () => {
+        console.log('[DEBUG] Heartbeat interval fired');
+        try {
+          const currentRound = roundRef.current;
+          if (!currentRound) {
+            console.log('[DEBUG] Heartbeat skipped - no round data');
+            return;
+          }
+
+          // Get current round data from refs (latest state)
+          const heartbeatRound = {
+            id: roundId,
+            userId: auth.user?.id,
+            userName: auth.user?.name,
+            courseId: currentRound.courseId || (currentRound as any).course_id || courseRef.current?.id,
+            courseName: courseRef.current?.name,
+            selectedTee: selectedTeeRef.current || currentRound.selectedTee || (currentRound as any).selected_tee,
+            date: currentRound.date,
+            scores: scoresRef.current.length > 0 ? scoresRef.current : currentRound.scores,
+            totalScore: currentRound.totalScore || (currentRound as any).total_score,
+            notes: currentRound.notes,
+            in_progress: currentRound.in_progress !== false,
+            perHoleStats: (currentRound as any).perHoleStats || (currentRound as any).per_hole_stats || [],
+          };
+          
+          console.log('[DEBUG] Heartbeat sending courseId:', heartbeatRound.courseId);
+          
+          const res = await fetch('/api/save-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(heartbeatRound),
+          });
+          
+          if (res.ok) {
+            console.log('[DEBUG] Heartbeat: Updated round and round_courses join table');
+          } else {
+            console.warn('[DEBUG] Heartbeat save failed:', res.status);
+          }
+        } catch (err) {
+          console.error('[DEBUG] Heartbeat update failed:', err);
         }
-      } catch (err) {
-        console.error('[DEBUG] Heartbeat update failed:', err);
-        // Silently fail - this is not critical
-      }
-    }, 30000); // Update every 30 seconds
+      }, 30000); // Update every 30 seconds
+    };
     
-    return () => clearInterval(heartbeatInterval);
-  }, [round, roundId, scores, selectedTee]); // Removed course - not needed since we use courseId from round
+    // Function to stop the heartbeat
+    const stopHeartbeat = () => {
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+        console.log('[DEBUG] Heartbeat stopped - page hidden');
+      }
+    };
+    
+    // Listen for visibility changes
+    const handleVisibilityChange = () => {
+      const wasVisible = isPageVisible;
+      isPageVisible = !document.hidden;
+      
+      console.log('[DEBUG] Visibility changed - isPageVisible:', isPageVisible, '(was:', wasVisible, ')');
+      
+      if (!isPageVisible && heartbeatInterval) {
+        stopHeartbeat();
+      } else if (isPageVisible && !heartbeatInterval) {
+        startHeartbeat();
+      }
+    };
+    
+    // Start heartbeat if page is initially visible
+    if (isPageVisible) {
+      startHeartbeat();
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stopHeartbeat();
+    };
+  }, [roundId]);
 
   // 1B: Set selectedTee from round if it exists and state is empty
   // Always sync selectedTee from round when round changes
@@ -692,9 +751,32 @@ function TrackRoundContent() {
     router.push('/');
   };
 
+  // Redirect if round not found (e.g., auto-deleted due to inactivity)
+  useEffect(() => {
+    if (!loading && !round && isClient && roundId) {
+      // Show toast message explaining the round was deleted
+      setToastMessage('Your round was idle for over 4 hours and has been deleted.');
+      
+      // Redirect to home after showing message for 3 seconds
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, round, isClient, roundId, router]);
+
   const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
   if (loading || !auth || !user) return <div className="p-8 text-center">Loading user and round data...</div>;
-  if (!round || !course) return <div className="p-8 text-center">Round or course not found.</div>;
+  if (!round || !course) return (
+    <div className="p-8 text-center">
+      {toastMessage && (
+        <div className="bg-amber-100 border-2 border-amber-500 text-amber-900 px-6 py-4 rounded-lg shadow-lg">
+          <p className="font-semibold text-lg">{toastMessage}</p>
+          <p className="text-sm mt-2">Redirecting to home...</p>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <PageWrapper title="" userName={round.userName}>
