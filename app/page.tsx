@@ -429,11 +429,11 @@ export default function Home() {
 
           {/* Handicap Card */}
           <div className="card flex-1 flex flex-col items-center justify-center gap-1">
-            <div className="flex items-center gap-0.5">
-              <div className={`text-4xl font-bold ${getHandicapColor(handicap)}`}>
+            <div className="flex items-center gap-0.5 max-w-[90px] overflow-hidden">
+              <div className={`text-4xl font-bold truncate ${getHandicapColor(handicap)}`}>
                 {isClient && rounds.length > 0 && courses.length > 0 ? handicap : '—'}
               </div>
-              {getHandicapTrend() && <div className={`text-sm ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
+              {getHandicapTrend() && <div className={`text-sm flex-shrink-0 ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
             </div>
             <div className={`text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5 ${getHandicapColor(handicap)}`}>My HCP</div>
           </div>
