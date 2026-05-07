@@ -399,10 +399,11 @@ function TrackRoundContent() {
           }
 
           // Get current round data from refs (latest state)
+          const currentUser = auth.getCurrentUser();
           const heartbeatRound = {
             id: roundId,
-            userId: auth.user?.id,
-            userName: auth.user?.name,
+            userId: currentUser?.id,
+            userName: currentUser?.name,
             courseId: currentRound.courseId || (currentRound as any).course_id || courseRef.current?.id,
             courseName: courseRef.current?.name,
             selectedTee: selectedTeeRef.current || currentRound.selectedTee || (currentRound as any).selected_tee,
