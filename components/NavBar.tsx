@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function NavBar() {
   const router = useRouter()
@@ -14,6 +15,32 @@ export default function NavBar() {
 
   // State for current round in progress
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+
+  // Fetch active rounds from Supabase on mount and when pathname changes
+  // This ensures button disappears when user returns after round is deleted
+  useEffect(() => {
+    const fetchActiveRound = async () => {
+      try {
+        const user = auth.getCurrentUser();
+        if (!user) {
+          setCurrentRoundId(null);
+          return;
+        }
+
+        const rounds = await getRoundsInProgress();
+        if (rounds && rounds.length > 0) {
+          setCurrentRoundId(rounds[0].id);
+        } else {
+          setCurrentRoundId(null);
+        }
+      } catch (err) {
+        console.error('[NavBar] Error fetching rounds:', err);
+        setCurrentRoundId(null);
+      }
+    };
+
+    fetchActiveRound();
+  }, [pathname, auth]);
 
   useEffect(() => {
     // Get current user
@@ -31,30 +58,7 @@ export default function NavBar() {
     ) {
       router.push('/login')
     }
-    // Check for round in progress for current user
-    if (user) {
-      const inProgressRoundId = localStorage.getItem('currentRoundId');
-      if (inProgressRoundId) {
-        // Validate the round exists and is in progress
-        const savedRounds = localStorage.getItem('golfRounds');
-        let found = false;
-        if (savedRounds) {
-          const allRounds = JSON.parse(savedRounds);
-          found = allRounds.some((r: any) => r.id === inProgressRoundId && r.in_progress && r.userId === user.id);
-        }
-        if (found) {
-          setCurrentRoundId(inProgressRoundId);
-        } else {
-          localStorage.removeItem('currentRoundId');
-          setCurrentRoundId(null);
-        }
-      } else {
-        setCurrentRoundId(null);
-      }
-    } else {
-      setCurrentRoundId(null);
-    }
-  }, [pathname, router])
+  }, [])
 
   const isActive = (path: string) => {
     if (!pathname) return false
@@ -130,19 +134,47 @@ export default function NavBar() {
               pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
             }`}
           >
-            <img src="/Players.png" alt="Golfers" className="h-12 w-12 mb-1" />
+            <img src="/list_of_golfers.png" alt="Golfers" className="h-12 w-12 mb-1" />
             Golfers
           </button>
-          {/* Return to Round Button (middle position) */}
-          {currentRoundId && !isTrackRoundPage && (
+          {/* Start/Return to Round Button (middle position) */}
+          {!isTrackRoundPage ? (
             <button
-              onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
-              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition bg-red-600 hover:bg-red-700 text-white shadow-lg rounded"
+              onClick={() => {
+                if (currentRoundId) {
+                  router.push(`/track-round?id=${currentRoundId}`);
+                } else {
+                  router.push('/courses');
+                }
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition shadow-lg rounded ${
+                currentRoundId
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
               style={{ minWidth: '0' }}
             >
-              <span className="text-lg mb-1">🎯</span>
-              Return to Round
+              {currentRoundId ? (
+                <>
+                  <img src="/Players.png" alt="Return to Round" className="h-12 w-12 mb-1" />
+                  Return to
+                  <br />
+                  Round
+                </>
+              ) : (
+                <>
+                  <span className="text-lg mb-1">▶</span>
+                  Start Round
+                </>
+              )}
             </button>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs text-black">
+              <img src="/Players.png" alt="Round in Process" className="h-12 w-12 mb-1 opacity-50" />
+              Round in
+              <br />
+              Progress
+            </div>
           )}
           <button
             onClick={() => router.push('/courses')}

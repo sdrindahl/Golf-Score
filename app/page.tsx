@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Round, User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import { calculateHandicap } from '@/lib/handicapCalculator'
+import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function Home() {
   const [rounds, setRounds] = useState<Round[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isClient, setIsClient] = useState(false)
-  const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const [courses, setCourses] = useState<any[]>([])
+  const [activeRoundsCount, setActiveRoundsCount] = useState(0)
   const router = useRouter()
   const auth = useAuth()
 
@@ -76,11 +77,22 @@ export default function Home() {
       })
       .catch(() => setCourses([]));
 
-    // Optionally, check for a current round in progress (if you want to keep this logic)
-    const inProgressRoundId = localStorage.getItem('currentRoundId');
-    if (inProgressRoundId) {
-      setCurrentRoundId(inProgressRoundId);
-    }
+    // Fetch active rounds count
+    const fetchActiveRoundsCount = async () => {
+      try {
+        const activeRounds = await getRoundsInProgress();
+        setActiveRoundsCount(activeRounds?.length || 0);
+      } catch (err) {
+        console.error('Error fetching active rounds:', err);
+        setActiveRoundsCount(0);
+      }
+    };
+
+    fetchActiveRoundsCount();
+    // Refresh count every 10 seconds
+    const interval = setInterval(fetchActiveRoundsCount, 10000);
+    return () => clearInterval(interval);
+
   }, [isClient]);
 
   const calculateHandicapLocal = (): number => {
@@ -324,41 +336,6 @@ export default function Home() {
     return null
   }
 
-  const handleStartNewRound = async () => {
-    // Check for in-progress round in Supabase
-    if (!currentUser) {
-      alert('Please log in first.');
-      router.push('/login');
-      return;
-    }
-    let hasInProgress = false;
-    try {
-      const response = await fetch('/api/get-in-progress-rounds', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: currentUser.id })
-      });
-      const result = await response.json();
-      hasInProgress = Array.isArray(result.rounds) && result.rounds.length > 0;
-    } catch (err) {
-      // fallback to localStorage only
-    }
-    // Check localStorage for in-progress round
-    const savedRounds = localStorage.getItem('golfRounds');
-    let localHasInProgress = false;
-    if (savedRounds) {
-      try {
-        const rounds = JSON.parse(savedRounds);
-        localHasInProgress = rounds.some((r: any) => r.userId === currentUser.id && r.in_progress);
-      } catch {}
-    }
-    if (hasInProgress || localHasInProgress) {
-      alert('You already have a round in progress. Please finish or discard it before starting a new one.');
-      return;
-    }
-    router.push('/courses');
-  }
-
   const handleViewRounds = () => {
     router.push(`/player?id=${currentUser.id}`)
   }
@@ -391,11 +368,11 @@ export default function Home() {
           {/* Rounds Card */}
           <button
             onClick={handleViewRounds}
-            className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg transition-all"
+            className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg hover:bg-opacity-80 transition-all"
           >
-            <div className="text-2xl mb-0.5">🏌️</div>
+            <div className="text-2xl mb-0.5">📊</div>
             <div className="text-lg font-bold">{rounds.length}</div>
-            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">View My Rounds</div>
+            <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Round History</div>
           </button>
 
           {/* Current Active Rounds Card */}
@@ -403,11 +380,18 @@ export default function Home() {
             onClick={() => router.push('/rounds-in-progress')}
             className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg transition-all"
           >
-            <div className="text-2xl mb-0.5">⏱️</div>
-            <div className="text-sm font-bold leading-tight text-center" style={{ color: '#007aff' }}>
-              Current<br />Golfers
+            <div className="relative">
+              <div className="text-2xl">🏌️</div>
+              {activeRoundsCount > 0 && (
+                <div className="absolute -top-2 -right-3 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                  {activeRoundsCount}
+                </div>
+              )}
             </div>
-            <div className="text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5" style={{ color: '#007aff' }}>View Live</div>
+            <div className="text-sm font-bold leading-tight text-center" style={{ color: '#007aff' }}>
+              Live<br />Leaderboard
+            </div>
+            <div className="text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5" style={{ color: '#007aff' }}>Rounds in Progress</div>
           </button>
 
           {/* Handicap Card */}
@@ -419,15 +403,6 @@ export default function Home() {
             <div className="text-[10px] text-[var(--text-secondary)] text-center font-semibold uppercase tracking-wide mt-0.5">Handicap</div>
           </div>
         </div>
-
-        {/* Start New Round Button - Prominent CTA */}
-        <button
-          onClick={handleStartNewRound}
-          className="btn-primary w-full flex items-center justify-center gap-2 py-4 text-lg font-bold"
-        >
-          <span className="text-2xl">+</span>
-          <span>Start New Round</span>
-        </button>
 
         {/* Performance Breakdown: Always show, even if no rounds */}
         <div className="card p-4">
@@ -548,31 +523,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* Return to Round Button (if round in progress) */}
-        {(() => {
-          if (!currentRoundId) return null;
-          // Find the round in localStorage
-          const savedRounds = typeof window !== 'undefined' ? localStorage.getItem('golfRounds') : null;
-          let foundRound = null;
-          if (savedRounds) {
-            const allRounds = JSON.parse(savedRounds);
-            foundRound = allRounds.find((r: any) => r.id === currentRoundId);
-          }
-          // Only show if round is in progress and has a valid courseId
-          if (foundRound && foundRound.in_progress && (foundRound.courseId || foundRound.course_id)) {
-            return (
-              <button
-                onClick={() => router.push(`/track-round?id=${currentRoundId}`)}
-                className="btn-danger w-full flex items-center justify-center gap-2 mt-2"
-              >
-                <span className="text-lg">🎯</span>
-                <span>Return to Round</span>
-              </button>
-            );
-          }
-          return null;
-        })()}
 
         {/* View Courses and Golfers */}
         <div className="grid grid-cols-2 gap-2 mt-2">

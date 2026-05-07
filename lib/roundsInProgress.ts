@@ -2,7 +2,7 @@
 import { supabase } from './supabase'
 
 // Constants for inactivity timeout
-// Auto-complete rounds inactive for 4 hours
+// Production: 4 hours
 const INACTIVITY_TIMEOUT_HOURS = 4
 const INACTIVITY_TIMEOUT_MS = INACTIVITY_TIMEOUT_HOURS * 60 * 60 * 1000
 

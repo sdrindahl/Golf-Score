@@ -13,6 +13,8 @@ function CourseNinesPageInner() {
   const parentId = searchParams?.get("id");
   const [childCourses, setChildCourses] = useState<ChildCourse[]>([]);
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
+  const [showInProgressModal, setShowInProgressModal] = useState(false);
+  const [inProgressRoundId, setInProgressRoundId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!parentId) return;
@@ -92,7 +94,35 @@ function CourseNinesPageInner() {
               } catch {}
             }
             if (hasInProgress || localHasInProgress) {
-              alert('You already have a round in progress. Please finish or discard it before starting a new one.');
+              // Get the round ID for "Continue" option
+              let roundId: string | null = null;
+              if (hasInProgress) {
+                try {
+                  const response = await fetch('/api/get-in-progress-rounds', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                  });
+                  const result = await response.json();
+                  if (result.rounds && result.rounds.length > 0) {
+                    roundId = result.rounds[0].id;
+                  }
+                } catch (err) {}
+              } else if (localHasInProgress) {
+                // If only in localStorage (round was auto-deleted), get the ID from there
+                try {
+                  const savedRounds = localStorage.getItem('golfRounds');
+                  if (savedRounds) {
+                    const rounds = JSON.parse(savedRounds);
+                    const userRound = rounds.find((r: any) => r.userId === currentUser.id && r.in_progress);
+                    if (userRound) {
+                      roundId = userRound.id;
+                    }
+                  }
+                } catch (err) {}
+              }
+              setInProgressRoundId(roundId);
+              setShowInProgressModal(true);
               return;
             }
             const ninesParam = selectedChildIds.join(",");
@@ -110,6 +140,67 @@ function CourseNinesPageInner() {
           Back to Courses
         </button>
       </div>
+
+      {/* Modal for in-progress round */}
+      {showInProgressModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
+            <h2 className="text-xl font-bold mb-4">Round in Progress</h2>
+            <p className="text-gray-700 mb-6">You already have a round in progress. What would you like to do?</p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => {
+                  setShowInProgressModal(false);
+                  if (inProgressRoundId) {
+                    router.push(`/track-round?id=${inProgressRoundId}`);
+                  }
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition"
+              >
+                Continue Round
+              </button>
+              <button
+                onClick={async () => {
+                  if (inProgressRoundId) {
+                    try {
+                      const response = await fetch('/api/delete-round', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ roundId: inProgressRoundId })
+                      });
+                      // Clear from localStorage as well
+                      const savedRounds = localStorage.getItem('golfRounds');
+                      if (savedRounds) {
+                        try {
+                          let rounds = JSON.parse(savedRounds);
+                          rounds = rounds.filter((r: any) => r.id !== inProgressRoundId);
+                          localStorage.setItem('golfRounds', JSON.stringify(rounds));
+                        } catch (err) {}
+                      }
+                      setShowInProgressModal(false);
+                      // Start new round
+                      const ninesParam = selectedChildIds.join(",");
+                      router.push(`/select-tee?nines=${ninesParam}`);
+                    } catch (err) {
+                      console.error('Error ending round:', err);
+                      alert('Failed to end the round. Please try again.');
+                    }
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded transition"
+              >
+                End Round
+              </button>
+              <button
+                onClick={() => setShowInProgressModal(false)}
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </PageWrapper>
   );
 }
