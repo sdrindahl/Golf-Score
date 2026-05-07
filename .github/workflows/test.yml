@@ -1,0 +1,24 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run Jest unit tests (REQUIRED)
+        run: npm run test
+      
+      - name: Run API integration tests (INFO ONLY)
+        run: npm run test:api
+        continue-on-error: true
+      
+      # Note: E2E tests are run locally only, not in CI
