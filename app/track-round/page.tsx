@@ -379,7 +379,8 @@ function TrackRoundContent() {
   }, [round, scores, selectedTee, course]);
 
   useEffect(() => {
-    if (!roundId) return;
+    // Don't start heartbeat until round data is loaded
+    if (!roundId || loading) return;
     
     let heartbeatInterval: NodeJS.Timeout | null = null;
     let isPageVisible = !document.hidden;
@@ -468,7 +469,7 @@ function TrackRoundContent() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       stopHeartbeat();
     };
-  }, [roundId]);
+  }, [roundId, loading]);
 
   // 1B: Set selectedTee from round if it exists and state is empty
   // Always sync selectedTee from round when round changes
@@ -751,20 +752,6 @@ function TrackRoundContent() {
     // Redirect home
     router.push('/');
   };
-
-  // Redirect if round not found (e.g., auto-deleted due to inactivity)
-  useEffect(() => {
-    if (!loading && !round && isClient && roundId) {
-      // Show toast message explaining the round was deleted
-      setToastMessage('Your round was idle for over 4 hours and has been deleted.');
-      
-      // Redirect to home after showing message for 3 seconds
-      const timer = setTimeout(() => {
-        router.push('/');
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, round, isClient, roundId, router]);
 
   const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
   if (loading || !auth || !user) return <div className="p-8 text-center">Loading user and round data...</div>;
