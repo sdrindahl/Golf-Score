@@ -374,11 +374,11 @@ function PlayerProfileContent() {
           {/* Header Stats - Compact */}
           <div className="grid grid-cols-4 gap-2">
             <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center flex flex-col items-center justify-center">
-              <div className="flex items-center gap-1 justify-center">
-                <div className={`text-3xl font-bold ${getHandicapColor(handicap)}`}>
+              <div className="flex items-center gap-1 justify-center max-w-[80px] overflow-hidden">
+                <div className={`text-3xl font-bold truncate ${getHandicapColor(handicap)}`}>
                   {handicap}
                 </div>
-                {getHandicapTrend() && <div className={`text-sm ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
+                {getHandicapTrend() && <div className={`text-sm flex-shrink-0 ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
               </div>
               <div className={`text-xs font-semibold uppercase mt-2 ${getHandicapColor(handicap)}`}>HCP</div>
             </div>
