@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import PageWrapper from "@/components/PageWrapper";
+import { COURSES_DATABASE } from "@/data/courses";
 import type { ChildCourse } from "@/types/api";
 
 
@@ -15,18 +16,32 @@ function CourseNinesPageInner() {
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
   const [showInProgressModal, setShowInProgressModal] = useState(false);
   const [inProgressRoundId, setInProgressRoundId] = useState<string | null>(null);
+  const [parentCourseName, setParentCourseName] = useState<string>("Select Nines");
 
   useEffect(() => {
     if (!parentId) return;
+    
+    // Get parent course name from COURSES_DATABASE
+    const parentCourse = COURSES_DATABASE.find((c) => c.id === parentId);
+    if (parentCourse) {
+      setParentCourseName(parentCourse.name);
+    }
+    
+    // Fetch child courses
     fetch(`/api/get-child-courses?parentId=${parentId}`)
       .then((res) => res.json())
       .then((data) => setChildCourses(data));
   }, [parentId]);
 
   return (
-    <PageWrapper title="Select Nines">
+    <PageWrapper title="">
       <div className="max-w-lg mx-auto mt-8 flex flex-col gap-6">
-        <h2 className="text-xl font-bold mb-2 text-center">Select up to 2 Nines</h2>
+        <h1 className="text-3xl font-bold mb-4 text-center text-white">{parentCourseName}</h1>
+        <h2 className="text-xl font-bold mb-2 text-center">
+          {childCourses.length === 1 
+            ? "Select this course" 
+            : "Choose your 9 or 18 Holes"}
+        </h2>
         {childCourses.length === 0 ? (
           <div className="card text-center text-gray-500">No nines found for this course.</div>
         ) : (

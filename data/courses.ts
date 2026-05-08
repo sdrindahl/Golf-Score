@@ -1,8 +1,128 @@
 
 
 export const COURSES_DATABASE: any[] = [
+// Parent course for Bemdji Town and Country Club Golf Course
+  {
+    id: 'BTCC',
+    name: 'Bemidji Town and Country Club',
+    location: 'Bemidji',
+    state: 'MN',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+  {
+        id: '21a',
+        name: 'Front 9',
+        location: 'Bemidji',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'BTCC',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 11, greenLat: 47.54249548806625, greenLng: -94.83699617642513, men: { yardage: 345, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 345, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 290, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 350, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 2, par: 3, handicap: 17, greenLat: 47.54137621044284, greenLng: -94.8358742475091, men: { yardage: 165, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 165, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 145, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 210, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 3, par: 4, handicap: 13, greenLat: 47.54338719000939, greenLng: -94.83549287172292, men: { yardage: 305, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 305, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 256, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 314, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 4, par: 5, handicap: 7, greenLat: 47.547024778635084, greenLng: -94.83177032761225, men: { yardage: 485, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 485, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 390, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 500, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 5, par: 4, handicap: 3, greenLat: 47.547209838688715, greenLng: -94.83551658541674, men: { yardage: 369, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 304, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 304, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 389, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 6, par: 4, handicap: 1, greenLat: 47.54430306637142, greenLng: -94.83553379638914, men: { yardage: 392, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 300, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 300, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 421, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 7, par: 3, handicap: 15, greenLat: 47.54306448573401, greenLng: -94.83686798232054, men: { yardage: 157, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 157, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 146, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 183, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 8, par: 4, handicap: 5, greenLat: 47.54679286567445, greenLng: -94.83702346297687, men: { yardage: 383, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 304, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 304, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 393, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 9, par: 5, handicap: 9, greenLat: 47.54290161493642, greenLng: -94.83951070367112, men: { yardage: 489, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 489, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 433, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 510, courseRating: 71.8, slopeRating: 134 } },
+        ],
+      },
+      {
+        id: '21b',
+        name: 'Back 9',
+        location: 'Bemidji',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'BTCC',
+        holes: [
+          { holeNumber: 10, par: 5, handicap: 6, greenLat: 47.54664764366131, greenLng: -94.83850219959675, men: { yardage: 487, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 445, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 445, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 499, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 11, par: 3, handicap: 16, greenLat: 47.54772346780191, greenLng: -94.8367140749689, men: { yardage: 168, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 168, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 155, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 193, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 12, par: 4, handicap: 2, greenLat: 47.54764730630113, greenLng: -94.83195003716058, men: { yardage: 390, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 345, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 345, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 405, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 13, par: 4, handicap: 14, greenLat: 47.54467729331711, greenLng: -94.83298300607468, men: { yardage: 330, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 330, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 276, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 350, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 14, par: 3, handicap: 18, greenLat: 47.54527902660191, greenLng: -94.83132857626502, men: { yardage: 150, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 150, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 135, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 181, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 15, par: 5, handicap: 8, greenLat: 47.5415102486785, greenLng: -94.83260743772975, men: { yardage: 465, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 465, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 393, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 492, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 16, par: 4, handicap: 10, greenLat: 47.54409329704851, greenLng: -94.83395281500289, men: { yardage: 360, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 306, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 306, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 377, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 17, par: 4, handicap: 12, greenLat: 47.541417556114595, greenLng: -94.83427217664544, men: { yardage: 347, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 347, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 332, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 354, courseRating: 71.8, slopeRating: 134 } },
+          { holeNumber: 18, par: 4, handicap: 4, greenLat: 47.54175388431227, greenLng: -94.84060483393215, men: { yardage: 417, courseRating: 70.3, slopeRating: 129 }, women: { yardage: 359, courseRating: 73.5, slopeRating: 129 }, senior: { yardage: 359, courseRating: 65.9, slopeRating: 115 }, championship: { yardage: 424, courseRating: 71.8, slopeRating: 134 } },
+        ],
+      },
 
-// Parent course for Valleywood Golf Course
+// Parent course for Inver Wood Golf Course
+  {
+    id: 'IW',
+    name: 'Inver Wood',
+    location: 'Inver Grove Heights',
+    state: 'MN',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+{
+        id: '19',
+        name: 'Executive Course (Par 30)',
+        location: 'Inver Grove Heights',
+        state: 'MN',
+        holeCount: 9,
+        par: 30,
+        parent_id: 'IW',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 4, greenLat: 44.84252979867205, greenLng: -93.07268519483159, men: { yardage: 353, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 302, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 305, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 384, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 2, par: 3, handicap: 8, greenLat: 44.84095539469625, greenLng: -93.07252429895794, men: { yardage: 108, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 87, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 89, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 139, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 3, par: 3, handicap: 7, greenLat: 44.84008078672584, greenLng: -93.07423032276432, men: { yardage: 105, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 101, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 102, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 125, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 4, par: 4, handicap: 2, greenLat: 44.83740764568686, greenLng: -93.07451601582494, men: { yardage: 289, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 261, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 266, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 308, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 5, par: 3, handicap: 9, greenLat: 44.839132420849715, greenLng: -93.07373129893084, men: { yardage: 136, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 116, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 121, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 149, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 6, par: 3, handicap: 6, greenLat: 44.83969739726935, greenLng: -93.072201440947, men: { yardage: 101, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 90, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 92, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 116, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 7, par: 3, handicap: 3, greenLat: 44.84133921407954, greenLng: -93.06985013050422, men: { yardage: 92, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 73, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 75, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 121, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 8, par: 4, handicap: 1, greenLat: 44.84398189949781, greenLng: -93.06889966780625, men: { yardage: 329, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 283, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 286, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 365, courseRating: 59.2, slopeRating: 94 } },
+          { holeNumber: 9, par: 3, handicap: 5, greenLat: 44.845506094371615, greenLng: -93.06901093296543, men: { yardage: 118, courseRating: 57.8, slopeRating: 91 }, women: { yardage: 105, courseRating: 58.6, slopeRating: 88 }, senior: { yardage: 108, courseRating: 58.6, slopeRating: 88 }, championship: { yardage: 150, courseRating: 59.2, slopeRating: 94 } },
+        ],
+      },
+      {
+        id: '20a',
+        name: 'Front 9 (Par 36)',
+        location: 'Inver Grove Heights',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'IW',
+        holes: [
+          { holeNumber: 1, par: 5, handicap: 7, greenLat: 44.841566977682604, greenLng: -93.07357192737085, men: { yardage: 526, courseRating: 70, slopeRating: 136 }, women: { yardage: 444, courseRating: 70, slopeRating: 122 }, senior: { yardage: 466, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 536, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 2, par: 4, handicap: 11, greenLat: 44.841268737632625, greenLng: -93.07731609405016, men: { yardage: 334, courseRating: 70, slopeRating: 136 }, women: { yardage: 259, courseRating: 70, slopeRating: 122 }, senior: { yardage: 292, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 349, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 3, par: 4, handicap: 9, greenLat: 44.8414152844306, greenLng: -93.08176776178573, men: { yardage: 334, courseRating: 70, slopeRating: 136 }, women: { yardage: 285, courseRating: 70, slopeRating: 122 }, senior: { yardage: 324, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 363, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 4, par: 4, handicap: 15, greenLat: 44.84304353861555, greenLng: -93.0845561612995, men: { yardage: 328, courseRating: 70, slopeRating: 136 }, women: { yardage: 282, courseRating: 70, slopeRating: 122 }, senior: { yardage: 316, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 352, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 5, par: 4, handicap: 5, greenLat: 44.84320003450473, greenLng: -93.08006877567092, men: { yardage: 383, courseRating: 70, slopeRating: 136 }, women: { yardage: 326, courseRating: 70, slopeRating: 122 }, senior: { yardage: 372, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 409, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 6, par: 3, handicap: 13, greenLat: 44.842145629360445, greenLng: -93.08204303184536, men: { yardage: 160, courseRating: 70, slopeRating: 136 }, women: { yardage: 118, courseRating: 70, slopeRating: 122 }, senior: { yardage: 151, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 206, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 7, par: 5, handicap: 3, greenLat: 44.84184559299641, greenLng: -93.07499366612619, men: { yardage: 512, courseRating: 70, slopeRating: 136 }, women: { yardage: 450, courseRating: 70, slopeRating: 122 }, senior: { yardage: 500, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 537, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 8, par: 4, handicap: 1, greenLat: 44.845729065065285, greenLng: -93.0736516170581, men: { yardage: 428, courseRating: 70, slopeRating: 136 }, women: { yardage: 368, courseRating: 70, slopeRating: 122 }, senior: { yardage: 418, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 453, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 9, par: 3, handicap: 17, greenLat: 44.84589538827976, greenLng: -93.07227887590821, men: { yardage: 134, courseRating: 70, slopeRating: 136 }, women: { yardage: 114, courseRating: 70, slopeRating: 122 }, senior: { yardage: 124, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 167, courseRating: 72.5, slopeRating: 140 } },
+        ],
+      },
+      {
+        id: '20b',
+        name: 'Back 9 (Par 36)',
+        location: 'Inver Grove Heights',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'IW',
+        holes: [
+          { holeNumber: 10, par: 5, handicap: 2, greenLat: 44.841309703892314, greenLng: -93.0717096735837, men: { yardage: 484, courseRating: 70, slopeRating: 136 }, women: { yardage: 416, courseRating: 70, slopeRating: 122 }, senior: { yardage: 432, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 512, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 11, par: 4, handicap: 14, greenLat: 44.83710796479596, greenLng: -93.07077210069721, men: { yardage: 325, courseRating: 70, slopeRating: 136 }, women: { yardage: 276, courseRating: 70, slopeRating: 122 }, senior: { yardage: 314, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 351, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 12, par: 3, handicap: 8, greenLat: 44.83461835641596, greenLng: -93.07093191671451, men: { yardage: 176, courseRating: 70, slopeRating: 136 }, women: { yardage: 123, courseRating: 70, slopeRating: 122 }, senior: { yardage: 144, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 240, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 13, par: 4, handicap: 12, greenLat: 44.836678975611484, greenLng: -93.07186353715046, men: { yardage: 305, courseRating: 70, slopeRating: 136 }, women: { yardage: 228, courseRating: 70, slopeRating: 122 }, senior: { yardage: 295, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 351, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 14, par: 5, handicap: 4, greenLat: 44.83387041580963, greenLng: -93.07338027342968, men: { yardage: 512, courseRating: 70, slopeRating: 136 }, women: { yardage: 434, courseRating: 70, slopeRating: 122 }, senior: { yardage: 461, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 540, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 15, par: 4, handicap: 6, greenLat: 44.83682719008051, greenLng: -93.07442258914516, men: { yardage: 361, courseRating: 70, slopeRating: 136 }, women: { yardage: 308, courseRating: 70, slopeRating: 122 }, senior: { yardage: 353, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 389, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 16, par: 4, handicap: 18, greenLat: 44.839862673848415, greenLng: -93.07142039697032, men: { yardage: 359, courseRating: 70, slopeRating: 136 }, women: { yardage: 307, courseRating: 70, slopeRating: 122 }, senior: { yardage: 350, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 385, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 17, par: 3, handicap: 16, greenLat: 44.84207584926484, greenLng: -93.07011895592117, men: { yardage: 172, courseRating: 70, slopeRating: 136 }, women: { yardage: 134, courseRating: 70, slopeRating: 122 }, senior: { yardage: 154, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 190, courseRating: 72.5, slopeRating: 140 } },
+          { holeNumber: 18, par: 4, handicap: 10, greenLat: 44.84550702620732, greenLng: -93.07000935861909, men: { yardage: 361, courseRating: 70, slopeRating: 136 }, women: { yardage: 303, courseRating: 70, slopeRating: 122 }, senior: { yardage: 329, courseRating: 68.2, slopeRating: 133 }, championship: { yardage: 394, courseRating: 72.5, slopeRating: 140 } },
+        ],
+      },
+  // Parent course for Valleywood Golf Course
   {
     id: 'VW',
     name: 'Valleywood Golf',
@@ -14,7 +134,7 @@ export const COURSES_DATABASE: any[] = [
   },
       {
         id: '18a',
-        name: 'Front 9',
+        name: 'Front 9 (Par 36)',
         location: 'Apple Valley',
         state: 'MN',
         holeCount: 9,
@@ -34,7 +154,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '18b',
-        name: 'Back 9',
+        name: 'Back 9 (Par 36)',
         location: 'Apple Valley',
         state: 'MN',
         holeCount: 9,
@@ -55,7 +175,7 @@ export const COURSES_DATABASE: any[] = [
   
    // Parent course for Southern Hills
       {
-        id: 'SG',
+        id: 'SH',
         name: 'Southern Hills Golf',
         location: 'Farmingtion',
         state: 'MN',
@@ -66,12 +186,12 @@ export const COURSES_DATABASE: any[] = [
       // Gold Front 9
       {
         id: '17a',
-        name: 'Front 9',
+        name: 'Front 9 (Par 35)',
         location: 'Farmingtion',
         state: 'MN',
         holeCount: 9,
         par: 35,
-        parent_id: 'SG',
+        parent_id: 'SH',
         holes: [
            { holeNumber: 1, par: 5, handicap: 3, greenLat: 44.678289420351646, greenLng: -93.13307443638972, men: { yardage: 475, courseRating: 69.2, slopeRating: 128 }, women: { yardage: 412, courseRating: 64.4, slopeRating: 125 }, senior: { yardage: 430, courseRating: 68.8, slopeRating: 125 }, championship: { yardage: 501, courseRating: 74.5, slopeRating: 137 } },
            { holeNumber: 2, par: 3, handicap: 5, greenLat: 44.67884145602559, greenLng: -93.13449860028123, men: { yardage: 153, courseRating: 69.2, slopeRating: 128 }, women: { yardage: 132, courseRating: 64.4, slopeRating: 125 }, senior: { yardage: 139, courseRating: 68.8, slopeRating: 125 }, championship: { yardage: 195, courseRating: 74.5, slopeRating: 137 } },
@@ -84,15 +204,15 @@ export const COURSES_DATABASE: any[] = [
            { holeNumber: 9, par: 5, handicap: 17, greenLat: 44.67465618349328, greenLng: -93.13264792001945, men: { yardage: 462, courseRating: 69.2, slopeRating: 128 }, women: { yardage: 413, courseRating: 64.4, slopeRating: 125 }, senior: { yardage: 420, courseRating: 68.8, slopeRating: 125 }, championship: { yardage: 484, courseRating: 74.5, slopeRating: 137 } },
         ],
       },
-      // Gold Back 9 Soiuthern Hills
+      // Gold Back 9 Southern Hills
       {
         id: '17b',
-        name: 'Back 9',
+        name: 'Back 9 (Par 36)',
         location: 'Farmingtion',
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'SG',
+        parent_id: 'SH',
         holes: [
            { holeNumber: 10, par: 4, handicap: 14, greenLat: 44.6744604985349, greenLng: -93.1285849120218, men: { yardage: 345, courseRating: 69.2, slopeRating: 128 }, women: { yardage: 277, courseRating: 64.4, slopeRating: 125 }, senior: { yardage: 303, courseRating: 68.8, slopeRating: 125 }, championship: { yardage: 417, courseRating: 74.5, slopeRating: 137 } },
            { holeNumber: 11, par: 3, handicap: 18, greenLat: 44.67455022022828, greenLng: -93.12673123390414, men: { yardage: 137, courseRating: 69.2, slopeRating: 128 }, women: { yardage: 115, courseRating: 64.4, slopeRating: 125 }, senior: { yardage: 124, courseRating: 68.8, slopeRating: 125 }, championship: { yardage: 162, courseRating: 74.5, slopeRating: 137 } },
@@ -118,7 +238,7 @@ export const COURSES_DATABASE: any[] = [
   },
       {
         id: '14',
-        name: 'West',
+        name: 'West Course (Par 36)',
         location: 'Coon Rapids',
         state: 'MN',
         holeCount: 9,
@@ -138,7 +258,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '15',
-        name: 'North',
+        name: 'North Course (Par 36)',
         location: 'Coon Rapids',
         state: 'MN',
         holeCount: 9,
@@ -158,7 +278,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '16',
-        name: 'East',
+        name: 'East Course (Par 36)',
         location: 'Coon Rapids',
         state: 'MN',
         holeCount: 9,
@@ -189,7 +309,7 @@ export const COURSES_DATABASE: any[] = [
       // Gold Front 9
       {
         id: '9a',
-        name: 'Gold Front 9',
+        name: 'Gold Front 9 (Par 36)',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -211,7 +331,7 @@ export const COURSES_DATABASE: any[] = [
       // Gold Back 9
       {
         id: '9b',
-        name: 'Gold Back 9',
+        name: 'Gold Back 9 (Par 36)',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -233,7 +353,7 @@ export const COURSES_DATABASE: any[] = [
       // Silver Front 9
       {
         id: '13a',
-        name: 'Silver Front 9',
+        name: 'Silver Front 9 (Par 36)',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -255,7 +375,7 @@ export const COURSES_DATABASE: any[] = [
       // Silver Back 9
       {
         id: '13b',
-        name: 'Silver Back 9',
+        name: 'Silver Back 9 (Par 36)',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -286,7 +406,7 @@ export const COURSES_DATABASE: any[] = [
   // Lost Spur 9 holes as child
   {
     id: '11',
-    name: 'Lost Spur 9',
+    name: 'Lost Spur 9 (Par 34)',
     location: 'Lost Spur',
     state: 'MN',
     holeCount: 9,
@@ -316,7 +436,7 @@ export const COURSES_DATABASE: any[] = [
   // Birnamwood 9 holes as child
   {
     id: '12',
-    name: 'Birnamwood 9',
+    name: 'Birnamwood 9 (Par 27)',
     location: 'Burnsville',
     state: 'MN',
     holeCount: 9,
