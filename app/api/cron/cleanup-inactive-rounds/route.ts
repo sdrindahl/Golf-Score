@@ -18,14 +18,15 @@ export async function GET(req: NextRequest) {
     // Calculate cutoff time: 4 hours ago
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
 
-    console.log(`[CRON] Cleanup started - looking for rounds inactive since ${fourHoursAgo}`);
+    console.log(`[CRON] Cleanup started - looking for rounds with no activity since ${fourHoursAgo}`);
 
     // Find all inactive rounds
+    // Check last_activity_at which tracks actual score changes, not heartbeat updates
     const { data: inactiveRounds, error: fetchError } = await supabase
       .from('rounds')
       .select('id')
       .eq('in_progress', true)
-      .lt('updated_at', fourHoursAgo);
+      .lt('last_activity_at', fourHoursAgo);
 
     if (fetchError) {
       console.error('[CRON] Error fetching inactive rounds:', fetchError);

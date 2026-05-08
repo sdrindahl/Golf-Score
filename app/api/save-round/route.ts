@@ -88,6 +88,34 @@ export async function POST(req: NextRequest) {
     }
     // Debug log for coerced value
     console.log('[DEBUG] Coerced in_progress to:', inProgressValue, 'Type:', typeof inProgressValue);
+    
+    // Check if this is an update and if scores have changed
+    let hasScoreChanges = true;
+    if (validRound.id) {
+      // Fetch existing round to compare scores
+      const { data: existingRound } = await supabase
+        .from('rounds')
+        .select('scores, notes, in_progress')
+        .eq('id', validRound.id)
+        .single();
+      
+      if (existingRound) {
+        // Compare scores and notes to determine if there's actual activity
+        const scoresUnchanged = JSON.stringify(existingRound.scores || []) === JSON.stringify(validRound.scores || []);
+        const notesUnchanged = existingRound.notes === validRound.notes;
+        const inProgressUnchanged = existingRound.in_progress === inProgressValue;
+        
+        // Only consider it a real activity if scores or notes changed, or round status changed
+        hasScoreChanges = !scoresUnchanged || !notesUnchanged || !inProgressUnchanged;
+        
+        if (!hasScoreChanges) {
+          console.log('[DEBUG] Heartbeat detected - no score/note changes, skipping last_activity_at update');
+        } else {
+          console.log('[DEBUG] Real activity detected - updating last_activity_at');
+        }
+      }
+    }
+    
     const roundData = {
       id: validRound.id,
       user_id: validRound.userId,
@@ -100,6 +128,8 @@ export async function POST(req: NextRequest) {
       selected_tee: selectedTeeFinal,
       per_hole_stats: (validRound as any).perHoleStats || [],
       updated_at: new Date().toISOString(),
+      // Only update last_activity_at if there are actual score/note changes
+      ...(hasScoreChanges && { last_activity_at: new Date().toISOString() }),
       // NOTE: course_id column was removed - use round_courses join table instead
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));

@@ -101,6 +101,8 @@ export interface Round {
   in_progress?: boolean
   perHoleStats?: PerHoleStats[]  // Array, one per hole (optional)
   per_hole_stats?: PerHoleStats[]  // Supabase field name (snake_case)
+  updated_at?: string  // Timestamp of last heartbeat/update
+  last_activity_at?: string  // Timestamp of last actual score change
 }
 
 export interface CommentReaction {
