@@ -82,7 +82,8 @@ export default function Home() {
     // Fetch active rounds count
     const fetchActiveRoundsCount = async () => {
       try {
-        const activeRounds = await getRoundsInProgress();
+        // Pass user ID to filter only current user's rounds (FIX: prevent cross-user access bug)
+        const activeRounds = await getRoundsInProgress(user.id);
         setActiveRoundsCount(activeRounds?.length || 0);
       } catch (err) {
         console.error('Error fetching active rounds:', err);

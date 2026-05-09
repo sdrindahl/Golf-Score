@@ -413,7 +413,8 @@ function TrackRoundContent() {
             totalScore: currentRound.totalScore || (currentRound as any).total_score,
             notes: currentRound.notes,
             in_progress: currentRound.in_progress !== false,
-            perHoleStats: (currentRound as any).perHoleStats || (currentRound as any).per_hole_stats || [],
+            // FIX: Use perHoleStatsRef for current user edits, not old database data
+            perHoleStats: perHoleStatsRef.current.length > 0 ? perHoleStatsRef.current : (currentRound as any).perHoleStats || (currentRound as any).per_hole_stats || [],
           };
           
           console.log('[DEBUG] Heartbeat sending courseId:', heartbeatRound.courseId);

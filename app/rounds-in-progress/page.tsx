@@ -63,9 +63,10 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
           return bHoles - aHoles;
         });
         return (
-          <div key={parentName} className="bg-white rounded-2xl shadow-lg p-0 overflow-x-auto border border-green-200 w-full max-w-full">
+          <div key={parentName} className="bg-white rounded-2xl shadow-lg p-0 overflow-hidden border border-green-200 w-full">
             <div className="bg-green-800 text-white text-base font-semibold px-3 py-2">{parentName}</div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-sm min-w-max">
               <thead>
                 <tr className="bg-green-50 border-b border-green-200">
                   <th className="px-2 py-2 text-left font-semibold text-gray-700"></th>
@@ -147,6 +148,7 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         );
       })}
@@ -236,7 +238,11 @@ export default function RoundsInProgressPage() {
   // Fetch and hydrate rounds
   const fetchAndHydrateRounds = () => {
     setLoading(true);
-    getRoundsInProgress().then(data => {
+    // Get current user to filter by their ID (FIX: prevent cross-user access bug)
+    const user = auth.getCurrentUser();
+    const userId = user?.id;
+    
+    getRoundsInProgress(userId).then(data => {
       const hydratedData = hydrateRoundsWithHoles(data || []);
       setRounds(hydratedData);
       setLoading(false);

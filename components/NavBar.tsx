@@ -27,7 +27,8 @@ export default function NavBar() {
           return;
         }
 
-        const rounds = await getRoundsInProgress();
+        // Pass user ID to filter rounds by current user only (FIX: prevent cross-user access bug)
+        const rounds = await getRoundsInProgress(user.id);
         if (rounds && rounds.length > 0) {
           setCurrentRoundId(rounds[0].id);
         } else {
