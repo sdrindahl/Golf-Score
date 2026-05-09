@@ -238,11 +238,11 @@ export default function RoundsInProgressPage() {
   // Fetch and hydrate rounds
   const fetchAndHydrateRounds = () => {
     setLoading(true);
-    // Get current user to filter by their ID (FIX: prevent cross-user access bug)
+    // Get current user for UI purposes only (comment counts, etc)
     const user = auth.getCurrentUser();
-    const userId = user?.id;
     
-    getRoundsInProgress(userId).then(data => {
+    // Fetch ALL in-progress rounds for the leaderboard (not filtered by user)
+    getRoundsInProgress().then(data => {
       const hydratedData = hydrateRoundsWithHoles(data || []);
       setRounds(hydratedData);
       setLoading(false);
