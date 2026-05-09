@@ -47,6 +47,7 @@ function TrackRoundContent() {
   const [scores, setScores] = useState<number[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showDriveHelp, setShowDriveHelp] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   // Per-hole stats: FIR, GIR, puttDistances, drive tracking
   const [perHoleStats, setPerHoleStats] = useState<{
@@ -945,11 +946,16 @@ function TrackRoundContent() {
             for (let i = 0; i < Math.ceil(holes.length / 9); i++) {
               const label = nineLabels[i] || `Nine ${i + 1}`;
               const nineHoles = holes.slice(i * 9, (i + 1) * 9);
+              const nineStartIndex = i * 9;
+              const nineEndIndex = nineStartIndex + nineHoles.length - 1;
+              const isCurrentNine = currentHoleIndex >= nineStartIndex && currentHoleIndex <= nineEndIndex;
               nines.push(
-                <div key={i}>
-                  <div className="mb-0.5 font-semibold text-green-700 text-xs">{label}</div>
+                <div key={i} className={`p-3 rounded-lg transition ${isCurrentNine ? 'bg-green-200 border-2 border-green-700' : 'bg-transparent border border-transparent'}`}>
+                  <div className={`mb-0.5 font-bold text-xs ${isCurrentNine ? 'text-green-900 text-sm' : 'text-green-700'}`}>
+                    {isCurrentNine && '▶ '}{label}{isCurrentNine && ' ◀'}
+                  </div>
                   <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {nineHoles.map((hole, idx) => renderHoleSquare(hole, i * 9 + idx))}
+                    {nineHoles.map((hole, idx) => renderHoleSquare(hole, nineStartIndex + idx))}
                   </div>
                 </div>
               );
@@ -1018,7 +1024,16 @@ function TrackRoundContent() {
 
         {/* Per-Hole Stats Card: FIR, GIR, Putts, Putt Distance */}
         {course.holes[currentHoleIndex] && (
-          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50 relative">
+            {/* Info button in upper right */}
+            <button
+              type="button"
+              onClick={() => setShowDriveHelp(true)}
+              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white border-2 border-blue-600 text-blue-600 flex items-center justify-center text-sm font-bold hover:bg-blue-50 transition"
+              title="Show drive measurement instructions"
+            >
+              i
+            </button>
             {/* Header with FIR on left and Track Drive button on right */}
             <div className="flex items-start justify-between mb-4 gap-4">
               {/* FIR Section on the left */}
@@ -1044,7 +1059,7 @@ function TrackRoundContent() {
                 </div>
               </div>
               {/* Track Drive Button on the right - fixed size, no resize */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   className={`rounded-full font-bold shadow transition flex items-center justify-center min-w-[140px] py-2 px-5 ${
@@ -1081,10 +1096,10 @@ function TrackRoundContent() {
                       handleStartDrive();
                     }
                   }}
-                  title={isTrackingDrive ? "Tap to stop measuring" : "See how far you drove your ball to keep stats on your average drive distance"}
                 >
-                  <span className="text-sm font-bold whitespace-nowrap">
-                    {isTrackingDrive && userLocation && perHoleStats[currentHoleIndex]?.drive?.start
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-sm font-bold whitespace-nowrap">
+                      {isTrackingDrive && userLocation && perHoleStats[currentHoleIndex]?.drive?.start
                       ? (() => {
                         const dist = getDistanceYards(
                           perHoleStats[currentHoleIndex].drive.start.lat,
@@ -1099,8 +1114,15 @@ function TrackRoundContent() {
                     : 'Measure Drive'
                   }
                 </span>
-              </button>
-            </div>
+                {!isTrackingDrive && !perHoleStats[currentHoleIndex]?.drive?.yardage && (
+                  <span className="text-xs opacity-75 font-normal">Stand at tee, tap to start</span>
+                )}
+                {isTrackingDrive && (
+                  <span className="text-xs opacity-75 font-normal">Walk to ball, tap to save</span>
+                )}
+              </div>
+                </button>
+              </div>
             </div>
             
             {/* Stats Row - GIR and Putts */}
@@ -1253,8 +1275,9 @@ function TrackRoundContent() {
                         type="range"
                         min={0}
                         max={100}
+                        step={5}
                         value={dist}
-                        className="flex-1"
+                        className="flex-1 cursor-grab active:cursor-grabbing"
                         onChange={e => {
                           const val = parseInt(e.target.value, 10) || 0;
                           setPerHoleStats(stats => {
@@ -1365,6 +1388,39 @@ function TrackRoundContent() {
               .catch((error) => console.error('Failed to refresh comments:', error));
           }}
         />
+      )}
+
+      {/* Drive Measurement Help Modal */}
+      {showDriveHelp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">How to Measure Drive</h2>
+            <div className="space-y-3 text-gray-700">
+              <div className="flex items-start gap-3">
+                <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">①</span>
+                <span>Stand at the tee where you hit the ball</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">②</span>
+                <span>Tap the "Measure Drive" button</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">③</span>
+                <span>Walk to where your ball landed</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">④</span>
+                <span>Tap the button again to save the distance</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowDriveHelp(false)}
+              className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
       )}
       </PageWrapper >
     );
