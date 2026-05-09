@@ -95,7 +95,7 @@ export default function VersionChecker() {
       {showBanner && updateAvailable && !hasActiveRound && (
         <div className="fixed top-4 left-4 right-4 max-w-md bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg shadow-lg z-50">
           <p className="font-semibold mb-2">✨ New Update Available</p>
-          <p className="text-sm mb-3">A new version is ready. Click below to update.</p>
+          <p className="text-sm mb-3">A new version is ready with bug fixes and improvements.</p>
           <button
             onClick={handleUpdate}
             className="w-full bg-white text-green-600 font-semibold py-2 px-3 rounded hover:bg-gray-100 transition-colors text-sm"
@@ -109,7 +109,8 @@ export default function VersionChecker() {
       {showBanner && updateAvailable && hasActiveRound && (
         <div className="fixed top-4 left-4 right-4 max-w-md bg-gradient-to-r from-amber-500 to-amber-600 text-white p-4 rounded-lg shadow-lg z-50">
           <p className="font-semibold mb-2">📱 Update Waiting</p>
-          <p className="text-sm">Update will be available after you finish your round.</p>
+          <p className="text-sm mb-2">A new version is ready. Finish your round first, then tap "Update Now" when it appears.</p>
+          <p className="text-xs opacity-90">Your data is safe—no need to rush.</p>
         </div>
       )}
 
