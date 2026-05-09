@@ -1,15 +1,22 @@
-// Fetch all rounds in progress from Supabase
+// Fetch rounds in progress from Supabase
 import { supabase } from './supabase'
 
-export async function getRoundsInProgress() {
+export async function getRoundsInProgress(userId?: string) {
   if (!supabase) {
     throw new Error('Supabase client not initialized');
   }
-  const { data, error } = await supabase
+  
+  let query = supabase
     .from('rounds')
     .select('*')
-    .eq('in_progress', true)
-    .order('date', { ascending: false });
+    .eq('in_progress', true);
+  
+  // Filter by user_id if provided (IMPORTANT: prevents cross-user access bug)
+  if (userId) {
+    query = query.eq('user_id', userId);
+  }
+  
+  const { data, error } = await query.order('date', { ascending: false });
   if (error) throw error;
   
   // Fetch course IDs from join table for each round
