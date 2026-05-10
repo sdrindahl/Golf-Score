@@ -401,10 +401,10 @@ function RoundDetailContent() {
   const calculateGIRStats = () => {
     let girCount = 0, totalHoles = 0;
     (round?.perHoleStats || []).forEach((stats) => {
-      if (stats?.gir !== undefined) {
-        totalHoles++;
-        if (stats.gir === true) girCount++;
-      }
+      // Count all holes in perHoleStats
+      totalHoles++;
+      // Only count as GIR if explicitly checked (true)
+      if (stats?.gir === true) girCount++;
     });
     return {
       girPercent: totalHoles > 0 ? Math.round((girCount / totalHoles) * 100) : 0,

@@ -73,8 +73,9 @@ function CourseDetailsContent() {
           if (scores[i] !== undefined) statsByHole[i].scores.push(scores[i]);
           if (perHole[i]) {
             if (perHole[i].fairwayHit !== undefined) statsByHole[i].fir.push(perHole[i].fairwayHit);
-            const girValue = perHole[i].gir;
-            if (typeof girValue === 'boolean') statsByHole[i].gir.push(girValue);
+            // Always push GIR value - treat undefined as false
+            const girValue = perHole[i].gir === true ? true : false;
+            statsByHole[i].gir.push(girValue);
             const puttsValue = perHole[i].putts;
             if (typeof puttsValue === 'number') statsByHole[i].putts.push(puttsValue);
             if (Array.isArray(perHole[i].puttDistances)) statsByHole[i].puttDistances.push(...(perHole[i].puttDistances as number[]));

@@ -339,10 +339,10 @@ function PlayerProfileContent() {
     for (const round of rounds) {
       if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
         for (const stats of round.perHoleStats) {
-          if (stats?.gir !== undefined) {
-            totalHoles++;
-            if (stats.gir === true) girCount++;
-          }
+          // Count all holes in perHoleStats
+          totalHoles++;
+          // Only count as GIR if explicitly checked (true)
+          if (stats?.gir === true) girCount++;
         }
       }
     }
