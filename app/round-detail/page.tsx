@@ -29,6 +29,65 @@ function RoundDetailContent() {
   // Polling interval in ms
   const REFRESH_INTERVAL = 5000; // 5 seconds
 
+  // Helper function to refresh round data from API
+  const refreshRoundFromAPI = async () => {
+    if (!roundId) return;
+    try {
+      console.log('[DEBUG] Refreshing round data from API...')
+      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+      
+      if (!res.ok) {
+        console.warn('[DEBUG] Failed to refresh round:', res.status)
+        return
+      }
+      
+      const responseData = await res.json()
+      const data = responseData.round
+      const apiCourses = responseData.courses
+      
+      if (data && data.id) {
+        let courseIds: string[] = [];
+        if (apiCourses && apiCourses.length > 0) {
+          courseIds = apiCourses.map((c: any) => c.id)
+        } else if (data.course_id) {
+          courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+        }
+        
+        const camelRound: Round = {
+          id: data.id,
+          userId: data.user_id,
+          userName: data.user_name,
+          courseId: courseIds.join(','),
+          courseName: data.course_name,
+          selectedTee: data.selected_tee,
+          date: data.date,
+          scores: data.scores,
+          totalScore: data.total_score,
+          notes: data.notes,
+          in_progress: data.in_progress,
+          perHoleStats: data.per_hole_stats || [],
+        };
+        
+        console.log('[DEBUG] ✅ Round refreshed from API:', camelRound)
+        setRound(camelRound)
+        
+        // Sync to localStorage
+        const savedRoundsStr = localStorage.getItem('golfRounds')
+        if (savedRoundsStr) {
+          try {
+            const allRounds = JSON.parse(savedRoundsStr) as Round[]
+            const updated = allRounds.map((r: Round) => r.id === roundId ? camelRound : r)
+            localStorage.setItem('golfRounds', JSON.stringify(updated))
+          } catch (e) {
+            console.warn('[DEBUG] Could not sync to localStorage:', e)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error refreshing round:', error)
+    }
+  }
+
   useEffect(() => {
     if (!roundId) return;
 
@@ -36,8 +95,8 @@ function RoundDetailContent() {
     let intervalId: NodeJS.Timeout | null = null;
 
     const fetchRound = async () => {
-        // Don't fetch if editing or there are unsaved changes
-        if (isEditMode || hasUnsavedChanges) return;
+        // Only fetch if NOT in edit mode
+        if (isEditMode) return;
 
         // Get current user for permission checking
         const user = auth.getCurrentUser();
@@ -152,7 +211,7 @@ function RoundDetailContent() {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [roundId, isEditMode, hasUnsavedChanges]);
+  }, [roundId, isEditMode]);
 
   // Ensure edit mode is off when component loads
   useEffect(() => {
@@ -258,50 +317,8 @@ function RoundDetailContent() {
     setEditStats({})
     setPuttBeingEdited(null)
     
-    // Fetch fresh data from API when exiting edit mode
-    if (roundId) {
-      const fetchFreshData = async () => {
-        try {
-          const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
-          if (res.ok) {
-            const responseData = await res.json()
-            const data = responseData.round
-            const apiCourses = responseData.courses
-            
-            if (data && data.id) {
-              let courseIds: string[] = [];
-              if (apiCourses && apiCourses.length > 0) {
-                courseIds = apiCourses.map((c: any) => c.id)
-              } else if (data.course_id) {
-                courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-              }
-              
-              const camelRound: Round = {
-                id: data.id,
-                userId: data.user_id,
-                userName: data.user_name,
-                courseId: courseIds.join(','),
-                courseName: data.course_name,
-                selectedTee: data.selected_tee,
-                date: data.date,
-                scores: data.scores,
-                totalScore: data.total_score,
-                notes: data.notes,
-                in_progress: data.in_progress,
-                perHoleStats: data.per_hole_stats || [],
-              };
-              
-              setRound(camelRound)
-              console.log('✅ Refreshed round data after exiting edit mode:', camelRound)
-            }
-          }
-        } catch (error) {
-          console.error('Error refreshing round data:', error)
-        }
-      }
-      
-      fetchFreshData()
-    }
+    // Refresh data when exiting edit mode
+    refreshRoundFromAPI()
   }
 
   const handleConfirmHoleScore = async () => {
@@ -367,40 +384,8 @@ function RoundDetailContent() {
       
       console.log('✅ Synced hole to Supabase:', updatedRound)
       
-      // Fetch fresh data after successful save to ensure UI is updated
-      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
-      if (res.ok) {
-        const responseData = await res.json()
-        const data = responseData.round
-        const apiCourses = responseData.courses
-        
-        if (data && data.id) {
-          let courseIds: string[] = [];
-          if (apiCourses && apiCourses.length > 0) {
-            courseIds = apiCourses.map((c: any) => c.id)
-          } else if (data.course_id) {
-            courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-          }
-          
-          const camelRound: Round = {
-            id: data.id,
-            userId: data.user_id,
-            userName: data.user_name,
-            courseId: courseIds.join(','),
-            courseName: data.course_name,
-            selectedTee: data.selected_tee,
-            date: data.date,
-            scores: data.scores,
-            totalScore: data.total_score,
-            notes: data.notes,
-            in_progress: data.in_progress,
-            perHoleStats: data.per_hole_stats || [],
-          };
-          
-          setRound(camelRound)
-          console.log('✅ Refreshed UI with latest data:', camelRound)
-        }
-      }
+      // Immediately refresh UI with latest data
+      await refreshRoundFromAPI()
     } catch (error) {
       console.error('⚠️ Error syncing to Supabase:', error)
       alert('Note: Changes saved locally but sync to Supabase failed')
@@ -470,40 +455,8 @@ function RoundDetailContent() {
       
       console.log('✅ Synced conceded hole to Supabase:', updatedRound)
       
-      // Fetch fresh data after successful save to ensure UI is updated
-      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
-      if (res.ok) {
-        const responseData = await res.json()
-        const data = responseData.round
-        const apiCourses = responseData.courses
-        
-        if (data && data.id) {
-          let courseIds: string[] = [];
-          if (apiCourses && apiCourses.length > 0) {
-            courseIds = apiCourses.map((c: any) => c.id)
-          } else if (data.course_id) {
-            courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-          }
-          
-          const camelRound: Round = {
-            id: data.id,
-            userId: data.user_id,
-            userName: data.user_name,
-            courseId: courseIds.join(','),
-            courseName: data.course_name,
-            selectedTee: data.selected_tee,
-            date: data.date,
-            scores: data.scores,
-            totalScore: data.total_score,
-            notes: data.notes,
-            in_progress: data.in_progress,
-            perHoleStats: data.per_hole_stats || [],
-          };
-          
-          setRound(camelRound)
-          console.log('✅ Refreshed UI with latest data:', camelRound)
-        }
-      }
+      // Immediately refresh UI with latest data
+      await refreshRoundFromAPI()
     } catch (error) {
       console.error('⚠️ Error syncing to Supabase:', error)
       alert('Note: Changes saved locally but sync to Supabase failed')
@@ -1310,7 +1263,6 @@ function RoundDetailContent() {
                                 <span className="text-lg font-bold text-blue-600 min-w-12 text-center">
                                   {currentDistance}
                                 </span>
-                                <span className="text-gray-600 text-sm">feet</span>
                                 <button
                                   onClick={() => {
                                     const newDistances = [...(editStats.puttDistances || [])]
