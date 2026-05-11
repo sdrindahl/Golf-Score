@@ -139,16 +139,16 @@ export default function NavBar() {
                 // Dispatch event to previous hole
                 window.dispatchEvent(new CustomEvent('navigatePreviousHole'));
               }}
-              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-sm transition bg-blue-600 hover:bg-blue-700 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-blue-600 hover:bg-blue-700 rounded-lg"
             >
-              <span className="text-4xl mb-1">⬅️</span>
+              <span className="text-3xl">⬅️</span>
               Previous Hole
             </button>
             <button
               onClick={() => router.push('/rounds-in-progress')}
-              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-sm transition bg-purple-600 hover:bg-purple-700 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-purple-600 hover:bg-purple-700 rounded-lg"
             >
-              <span className="text-2xl mb-1">📊</span>
+              <span className="text-xl">📊</span>
               Leaderboard
             </button>
             <button
@@ -156,9 +156,9 @@ export default function NavBar() {
                 // Dispatch event to next hole
                 window.dispatchEvent(new CustomEvent('navigateNextHole'));
               }}
-              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-sm transition bg-green-600 hover:bg-green-700 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-green-600 hover:bg-green-700 rounded-lg"
             >
-              <span className="text-4xl mb-1">➡️</span>
+              <span className="text-3xl">➡️</span>
               {isLastHole ? 'Save and Finish' : 'Save and Next Hole'}
             </button>
           </div>
@@ -167,22 +167,22 @@ export default function NavBar() {
           <div className="flex justify-around">
             <button
               onClick={() => router.push('/')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
                 isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
                   ? 'bg-green-600 text-white'
                   : 'hover:bg-green-600'
               }`}
             >
-              <img src="/apex_tracer.png" alt="Home" className="h-12 w-12 mb-1" />
+              <img src="/apex_tracer.png" alt="Home" className="h-10 w-10" />
               Home
             </button>
             <button
               onClick={() => router.push('/players')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
                 pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
               }`}
             >
-              <img src="/list_of_golfers.png" alt="Golfers" className="h-12 w-12 mb-1" />
+              <img src="/list_of_golfers.png" alt="Golfers" className="h-10 w-10" />
               Golfers
             </button>
             {/* Start/Return to Round Button (middle position) */}
@@ -195,7 +195,7 @@ export default function NavBar() {
                     router.push('/courses');
                   }
                 }}
-                className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition shadow-lg rounded ${
+                className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
                   currentRoundId
                     ? 'bg-red-600 hover:bg-red-700 text-white'
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -204,21 +204,21 @@ export default function NavBar() {
               >
                 {currentRoundId ? (
                   <>
-                    <img src="/Players.png" alt="Return to Round" className="h-12 w-12 mb-1" />
+                    <img src="/Players.png" alt="Return to Round" className="h-10 w-10" />
                     Return to
                     <br />
                     Round
                   </>
                 ) : (
                   <>
-                    <span className="text-lg mb-1">▶</span>
+                    <span className="text-lg">▶</span>
                     Start Round
                   </>
                 )}
               </button>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs text-black">
-                <img src="/Players.png" alt="Round in Process" className="h-12 w-12 mb-1 opacity-50" />
+              <div className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs text-black">
+                <img src="/Players.png" alt="Round in Process" className="h-10 w-10 opacity-50" />
                 Round in
                 <br />
                 Progress
@@ -226,22 +226,22 @@ export default function NavBar() {
             )}
             <button
               onClick={() => router.push('/courses')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
                 pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
                   ? 'bg-green-600 text-white'
                   : 'hover:bg-green-600'
-                }`}
+              }`}
             >
-              <img src="/courses.png" alt="Courses" className="h-12 w-12 mb-1" />
+              <img src="/courses.png" alt="Courses" className="h-10 w-10" />
               Courses
             </button>
             <button
               onClick={() => router.push('/settings')}
-              className={`flex-1 flex flex-col items-center justify-center py-3 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
                 pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
               }`}
             >
-              <img src="/settings1.png" alt="Settings" className="h-12 w-12 mb-1" />
+              <img src="/settings1.png" alt="Settings" className="h-10 w-10" />
               Settings
             </button>
           </div>

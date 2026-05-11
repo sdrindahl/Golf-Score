@@ -1006,7 +1006,7 @@ function TrackRoundContent() {
               const nineEndIndex = nineStartIndex + nineHoles.length - 1;
               const isCurrentNine = currentHoleIndex >= nineStartIndex && currentHoleIndex <= nineEndIndex;
               nines.push(
-                <div key={i} className={`p-3 rounded-lg transition ${isCurrentNine ? 'bg-green-200 border-2 border-green-700' : 'bg-transparent border border-transparent'}`}>
+                <div key={i} className={`p-3 pr-4 rounded-lg transition ${isCurrentNine ? 'bg-green-200 border-2 border-green-700' : 'bg-transparent border border-transparent'}`}>
                   <div className={`mb-0.5 font-bold text-xs ${isCurrentNine ? 'text-green-900 text-sm' : 'text-green-700'}`}>
                     {isCurrentNine && '▶ '}{label}{isCurrentNine && ' ◀'}
                   </div>
@@ -1108,7 +1108,7 @@ function TrackRoundContent() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className={`rounded-full font-bold shadow transition px-6 py-3 text-base whitespace-nowrap ${
+                  className={`rounded-full font-bold shadow transition px-3 py-2 text-sm whitespace-nowrap ${
                       perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
                         ? 'bg-blue-500 hover:bg-blue-600 text-white'
                         : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -1317,7 +1317,6 @@ function TrackRoundContent() {
                           });
                         }}
                       />
-                      <span className="ml-1">feet</span>
                       <button
                         type="button"
                         className="w-8 h-8 rounded bg-gray-200 text-xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border ml-1"
