@@ -65,6 +65,7 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('[DEBUG] Service role key present:', !!serviceRoleKey, 'Length:', serviceRoleKey.length);
     const round: Round = await req.json();
     console.log('[DEBUG] Raw incoming round payload:', round);
     console.log('[DEBUG] Incoming round payload (stringified):', JSON.stringify(round));
