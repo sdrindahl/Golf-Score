@@ -1142,19 +1142,21 @@ function TrackRoundContent() {
                         );
                         if (manualEntry !== null && manualEntry.trim()) {
                           const distance = parseInt(manualEntry, 10);
-                          if (!isNaN(distance) && distance >= 0) {
+                          if (!isNaN(distance) && distance >= 0 && userLocation) {
                             setPerHoleStats(stats => {
                               const updated = [...stats];
                               updated[currentHoleIndex] = {
                                 ...updated[currentHoleIndex],
                                 drive: {
-                                  start: { ...userLocation },
+                                  start: { lat: userLocation.lat, lng: userLocation.lng },
                                   end: undefined,
                                   yardage: distance,
                                 },
                               };
                               return updated;
                             });
+                          } else if (!userLocation) {
+                            alert('GPS location not available. Please move to the course.');
                           } else {
                             alert('Please enter a valid number');
                           }
