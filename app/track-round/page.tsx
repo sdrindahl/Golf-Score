@@ -48,6 +48,12 @@ function TrackRoundContent() {
   const [commentCount, setCommentCount] = useState(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [showDriveHelp, setShowDriveHelp] = useState(false);
+  const [driveHelpDismissed, setDriveHelpDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('driveHelpDismissed') === 'true';
+    }
+    return false;
+  });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   // Per-hole stats: FIR, GIR, puttDistances, drive tracking
   const [perHoleStats, setPerHoleStats] = useState<{
@@ -61,52 +67,99 @@ function TrackRoundContent() {
       yardage?: number;
     };
   }[]>([]);
-  // Drive tracking state
-  const [isTrackingDrive, setIsTrackingDrive] = useState(false);
-  // Start drive tracking for current hole
-  const handleStartDrive = () => {
+  // Drive tracking state - now captures tee location first
+  // Drive tracking state (no longer used - kept for compatibility)
+  // const [isTrackingDrive, setIsTrackingDrive] = useState(false);
+  
+  // Measure drive: single tap at ball location
+  // Calculate: Drive = Tee Yardage - (Distance from ball to pin)
+  const handleMeasureDrive = () => {
     if (!userLocation) {
-      alert('Location not available.');
+      alert('Location not available. Please enable GPS.');
       return;
     }
+
+    const hole = course?.holes[currentHoleIndex];
+    if (!hole || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') {
+      alert('Pin location not available for this hole.');
+      return;
+    }
+
+    // Get tee yardage based on selectedTee (e.g., "men", "women", "senior", "championship")
+    const teeKey = (selectedTee || 'men').toLowerCase() as 'men' | 'women' | 'senior' | 'championship';
+    const teeBox = hole[teeKey] || hole.men;
+    const teeYardage = teeBox?.yardage;
+
+    console.log('[DEBUG] handleMeasureDrive:', {
+      selectedTee,
+      teeKey,
+      teeBox,
+      teeYardage,
+      hole: hole.holeNumber,
+      greenLat: hole.greenLat,
+      greenLng: hole.greenLng,
+      userLocation
+    });
+
+    if (!teeYardage || teeYardage === 0) {
+      alert(`Tee yardage not available (key: ${teeKey})`);
+      return;
+    }
+
+    // Calculate distance from current location (ball) to pin
+    const distBallToPin = getDistanceYards(
+      userLocation.lat,
+      userLocation.lng,
+      hole.greenLat,
+      hole.greenLng
+    );
+
+    // Drive distance = Tee Yardage - Distance to Pin
+    const driveDistance = Math.round(teeYardage - distBallToPin);
+
+    console.log('[DEBUG] Drive calculation:', {
+      teeYardage,
+      distBallToPin: Math.round(distBallToPin),
+      driveDistance,
+      formula: `${teeYardage} - ${Math.round(distBallToPin)} = ${driveDistance}`
+    });
+
+    // Validate the measurement makes sense
+    // If distance to pin is way too far (>2x tee yardage), GPS is probably wrong
+    if (distBallToPin > teeYardage * 2) {
+      console.warn('[DEBUG] GPS location too far from pin - likely GPS error');
+      alert(`⚠️ GPS Error: You appear to be ${Math.round(distBallToPin)} yards from the pin.\n\nMake sure:\n• You're at the ball location\n• GPS is enabled and working\n• Course coordinates are correct`);
+      return;
+    }
+
+    // Cap at tee yardage (you can't hit farther than the hole)
+    const finalDriveDistance = Math.max(0, Math.min(driveDistance, teeYardage));
+
+    if (driveDistance < 0) {
+      console.warn('[DEBUG] Negative drive distance, capping to tee yardage');
+    }
+
     setPerHoleStats(stats => {
       const updated = [...stats];
       updated[currentHoleIndex] = {
         ...updated[currentHoleIndex],
         drive: {
-          start: { ...userLocation },
+          start: { ...userLocation }, // Ball location
           end: undefined,
-          yardage: undefined,
+          yardage: finalDriveDistance,
         },
       };
       return updated;
     });
-    setIsTrackingDrive(true);
   };
 
-  // End drive tracking for current hole
-  const handleEndDrive = () => {
-    if (!userLocation) {
-      alert('Location not available.');
-      return;
-    }
+  // Discard completed drive measurement
+  const handleDiscardDrive = () => {
     setPerHoleStats(stats => {
       const updated = [...stats];
-      const prev = updated[currentHoleIndex]?.drive;
-      if (prev && prev.start) {
-        const yardage = getDistanceYards(prev.start.lat, prev.start.lng, userLocation.lat, userLocation.lng);
-        updated[currentHoleIndex] = {
-          ...updated[currentHoleIndex],
-          drive: {
-            ...prev,
-            end: { ...userLocation },
-            yardage: Math.round(yardage),
-          },
-        };
-      }
+      updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: undefined };
       return updated;
     });
-    setIsTrackingDrive(false);
   };
   const [selectedTee, setSelectedTee] = useState<string>('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -123,18 +176,6 @@ function TrackRoundContent() {
   const handleFinishRound = async () => {
     setFinishing(true);
     setShowIncompleteWarning(false);
-    
-    // Safety check: if user is still measuring drive, discard incomplete measurement
-    if (isTrackingDrive) {
-      setIsTrackingDrive(false);
-      // Clear the incomplete drive data for this hole
-      setPerHoleStats(stats => {
-        const updated = [...stats];
-        updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: undefined };
-        return updated;
-      });
-      alert('Incomplete drive measurement discarded.');
-    }
     
     try {
       const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
@@ -721,36 +762,12 @@ function TrackRoundContent() {
 
   const handleNextHole = () => {
     if (!course) return;
-    // Safety check: if user is still measuring drive, discard incomplete measurement
-    if (isTrackingDrive) {
-      setIsTrackingDrive(false);
-      // Clear the incomplete drive data for this hole
-      setPerHoleStats(stats => {
-        const updated = [...stats];
-        updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: undefined };
-        return updated;
-      });
-      alert('Incomplete drive measurement discarded. Moving to next hole.');
-      return;
-    }
     if (currentHoleIndex < course.holes.length - 1) {
       setCurrentHoleIndex(currentHoleIndex + 1);
     }
   };
 
   const handlePreviousHole = () => {
-    // Safety check: if user is still measuring drive, discard incomplete measurement
-    if (isTrackingDrive) {
-      setIsTrackingDrive(false);
-      // Clear the incomplete drive data for this hole
-      setPerHoleStats(stats => {
-        const updated = [...stats];
-        updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: undefined };
-        return updated;
-      });
-      alert('Incomplete drive measurement discarded. Moving to previous hole.');
-      return;
-    }
     if (currentHoleIndex > 0) {
       setCurrentHoleIndex(currentHoleIndex - 1);
     }
@@ -1061,117 +1078,136 @@ function TrackRoundContent() {
           </div>
         )}
 
-        {/* Per-Hole Stats Card: FIR, GIR, Putts, Putt Distance */}
+        {/* Drive Distance and FIR Card */}
         {course.holes[currentHoleIndex] && (
-          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50 relative">
-            {/* Info button in upper right */}
+          <div className="mb-6 p-6 rounded-xl border-2 border-blue-600 bg-blue-50 relative">
+            {/* FIR on left, Drive Distance on right */}
+            <div className="flex items-center justify-between gap-4">
+              {/* FIR Section */}
+              <div className="flex items-center gap-2">
+                <span className="font-semibold">FIR:</span>
+                {['hit', 'L', 'R'].map((val, idx) => (
+                  <button
+                    key={val}
+                    className={`w-8 h-8 rounded border font-bold ${perHoleStats[currentHoleIndex]?.fairwayHit === val ? (val === 'hit' ? 'bg-green-200 border-green-600' : 'bg-blue-200 border-blue-600') : 'bg-white border-gray-400'} ${val === 'hit' ? '' : ''}`}
+                    onClick={() => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: updated[currentHoleIndex]?.fairwayHit === val ? undefined : val as 'hit' | 'L' | 'R' };
+                        return updated;
+                      });
+                    }}
+                    type="button"
+                  >
+                    {val === 'hit' ? '✓' : val}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Drive Distance Button */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className={`rounded-full font-bold shadow transition px-6 py-3 text-base whitespace-nowrap ${
+                      perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  onClick={() => {
+                    // Show help on first use if not dismissed
+                    if (!driveHelpDismissed && !perHoleStats[currentHoleIndex]?.drive?.yardage) {
+                      setShowDriveHelp(true);
+                      return;
+                    }
+                    
+                    if (perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0) {
+                      // Already measured - ask if they want to re-measure or clear
+                      if (confirm(`Current drive: ${perHoleStats[currentHoleIndex].drive.yardage} yd\n\nOK to re-measure | Cancel`)) {
+                        handleMeasureDrive();
+                      }
+                    } else {
+                      // No measurement yet - measure now or manually enter for testing
+                      const hole = course?.holes[currentHoleIndex];
+                      const distBallToPin = hole && userLocation ? getDistanceYards(
+                        userLocation.lat,
+                        userLocation.lng,
+                        hole.greenLat,
+                        hole.greenLng
+                      ) : 0;
+
+                      // If we're far from the course (testing from home), offer manual entry
+                      if (distBallToPin > (hole?.holeNumber ? 1000 : 500)) {
+                        const manualEntry = prompt(
+                          `You appear to be ${Math.round(distBallToPin / 1.09361)} miles from the course.\n\nEnter drive distance manually (yards) or cancel:\n\n(For testing, enter a number like 150, 200, etc.)`
+                        );
+                        if (manualEntry !== null && manualEntry.trim()) {
+                          const distance = parseInt(manualEntry, 10);
+                          if (!isNaN(distance) && distance >= 0) {
+                            setPerHoleStats(stats => {
+                              const updated = [...stats];
+                              updated[currentHoleIndex] = {
+                                ...updated[currentHoleIndex],
+                                drive: {
+                                  start: { ...userLocation },
+                                  end: undefined,
+                                  yardage: distance,
+                                },
+                              };
+                              return updated;
+                            });
+                          } else {
+                            alert('Please enter a valid number');
+                          }
+                        }
+                      } else {
+                        // At the course - use GPS measurement
+                        handleMeasureDrive();
+                      }
+                    }
+                  }}
+                >
+                  {perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
+                    ? `${perHoleStats[currentHoleIndex].drive.yardage} yd`
+                    : 'Drive Distance'
+                  }
+                </button>
+                {/* Clear Drive Button */}
+                {perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0 && (
+                  <button
+                    type="button"
+                    className="rounded-full bg-red-500 hover:bg-red-600 text-white font-bold w-8 h-8 flex items-center justify-center shadow transition text-sm"
+                    onClick={() => handleDiscardDrive()}
+                    title="Clear drive measurement"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Info button */}
             <button
               type="button"
               onClick={() => setShowDriveHelp(true)}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white border-2 border-blue-600 text-blue-600 flex items-center justify-center text-sm font-bold hover:bg-blue-50 transition"
+              className="absolute top-4 right-4 w-6 h-6 rounded-full bg-white border-2 border-blue-600 text-blue-600 flex items-center justify-center text-xs font-bold hover:bg-blue-50 transition"
               title="Show drive measurement instructions"
             >
               i
             </button>
-            {/* Header with FIR on left and Track Drive button on right */}
-            <div className="flex items-start justify-between mb-4 gap-4">
-              {/* FIR Section on the left */}
-              <div className="flex flex-col gap-2 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">FIR:</span>
-                  {['hit', 'L', 'R'].map((val, idx) => (
-                    <button
-                      key={val}
-                      className={`w-8 h-8 rounded border font-bold ${perHoleStats[currentHoleIndex]?.fairwayHit === val ? (val === 'hit' ? 'bg-green-200 border-green-600' : 'bg-blue-200 border-blue-600') : 'bg-white border-gray-400'} ${val === 'hit' ? '' : ''}`}
-                      onClick={() => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: updated[currentHoleIndex]?.fairwayHit === val ? undefined : val as 'hit' | 'L' | 'R' };
-                          return updated;
-                        });
-                      }}
-                      type="button"
-                    >
-                      {val === 'hit' ? '✓' : val}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {/* Track Drive Button on the right - fixed size, no resize */}
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  className={`rounded-full font-bold shadow transition flex items-center justify-center min-w-[140px] py-2 px-5 ${
-                    isTrackingDrive 
-                      ? 'bg-green-600 hover:bg-green-700 text-white' 
-                      : perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
-                      ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                  onClick={() => {
-                    if (isTrackingDrive) {
-                      // Get current distance before asking
-                      if (userLocation && perHoleStats[currentHoleIndex]?.drive?.start) {
-                        const dist = getDistanceYards(
-                          perHoleStats[currentHoleIndex].drive.start.lat,
-                          perHoleStats[currentHoleIndex].drive.start.lng,
-                          userLocation.lat,
-                          userLocation.lng
-                        );
-                        const roundedDist = Math.round(dist);
-                        if (confirm(`Save drive distance of ${roundedDist} yards?\n\nOK to save | Cancel to discard`)) {
-                          handleEndDrive();
-                        } else {
-                          // Cancel - discard the incomplete measurement
-                          setIsTrackingDrive(false);
-                          setPerHoleStats(stats => {
-                            const updated = [...stats];
-                            updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: undefined };
-                            return updated;
-                          });
-                        }
-                      }
-                    } else {
-                      handleStartDrive();
-                    }
-                  }}
-                >
-                  <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-sm font-bold whitespace-nowrap">
-                      {isTrackingDrive && userLocation && perHoleStats[currentHoleIndex]?.drive?.start
-                      ? (() => {
-                        const dist = getDistanceYards(
-                          perHoleStats[currentHoleIndex].drive.start.lat,
-                          perHoleStats[currentHoleIndex].drive.start.lng,
-                          userLocation.lat,
-                          userLocation.lng
-                        );
-                        return `${Math.round(dist)} yd`;
-                      })()
-                    : perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
-                    ? `${perHoleStats[currentHoleIndex].drive.yardage} yd`
-                    : 'Measure Drive'
-                  }
-                </span>
-                {!isTrackingDrive && !perHoleStats[currentHoleIndex]?.drive?.yardage && (
-                  <span className="text-xs opacity-75 font-normal">Stand at tee, tap to start</span>
-                )}
-                {isTrackingDrive && (
-                  <span className="text-xs opacity-75 font-normal">Walk to ball, tap to save</span>
-                )}
-              </div>
-                </button>
-              </div>
-            </div>
-            
+          </div>
+        )}
+
+        {/* GIR and Putts Card */}
+        {course.holes[currentHoleIndex] && (
+          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
             {/* Stats Row - GIR and Putts */}
-            <div className="flex flex-row flex-wrap gap-4 mt-2">
+            <div className="flex flex-row flex-wrap gap-4">
               {/* GIR */}
               <div className="flex items-center gap-2">
                 <span className="font-semibold">GIR</span>
                 <input
                   type="checkbox"
-                  className="w-5 h-5"
+                  className="w-8 h-8 rounded border font-bold bg-green-200 border-green-600 accent-green-600"
                   checked={!!perHoleStats[currentHoleIndex]?.gir}
                   onChange={e => {
                     setPerHoleStats(stats => {
@@ -1438,24 +1474,39 @@ function TrackRoundContent() {
             <div className="space-y-3 text-gray-700">
               <div className="flex items-start gap-3">
                 <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">①</span>
-                <span>Stand at the tee where you hit the ball</span>
+                <span>Walk to your Ball location after the drive.</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">②</span>
-                <span>Tap the "Measure Drive" button</span>
+                <span>Tap "Drive Distance" button to measure your drive.</span>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">③</span>
-                <span>Walk to where your ball landed</span>
+              <div className="text-sm text-gray-600 mt-4 p-3 bg-blue-50 rounded">
+                Distance calculated as:<br/>
+                <strong>Drive = Tee Yardage − Distance to Pin</strong>
               </div>
-              <div className="flex items-start gap-3">
-                <span className="text-lg font-bold bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">④</span>
-                <span>Tap the button again to save the distance</span>
-              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-4">
+              <input
+                type="checkbox"
+                id="dontShowAgain"
+                checked={driveHelpDismissed}
+                onChange={(e) => {
+                  setDriveHelpDismissed(e.target.checked);
+                  if (e.target.checked) {
+                    localStorage.setItem('driveHelpDismissed', 'true');
+                  } else {
+                    localStorage.removeItem('driveHelpDismissed');
+                  }
+                }}
+                className="w-4 h-4"
+              />
+              <label htmlFor="dontShowAgain" className="text-sm text-gray-600">
+                Don't show this again
+              </label>
             </div>
             <button
               onClick={() => setShowDriveHelp(false)}
-              className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+              className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
             >
               Got it
             </button>
