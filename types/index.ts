@@ -79,6 +79,10 @@ export interface PerHoleStats {
    * For tracking expanded putt editor state (UI only, not persisted)
    */
   puttExpanded?: number | null;
+  /**
+   * True if hole was conceded (score 0 with all stats cleared)
+   */
+  conceded?: boolean;
 }
 
 export interface Round {

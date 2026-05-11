@@ -24,6 +24,7 @@ function RoundDetailContent() {
   const [editStats, setEditStats] = useState<any>({})
   const [puttBeingEdited, setPuttBeingEdited] = useState<number | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [showEditHelpModal, setShowEditHelpModal] = useState(false)
 
   // Polling interval in ms
   const REFRESH_INTERVAL = 5000; // 5 seconds
@@ -43,73 +44,99 @@ function RoundDetailContent() {
         if (isMounted) setCurrentUser(user);
 
         try {
-          console.log('[DEBUG] round-detail: Fetching round with id:', roundId)
+          console.log('[DEBUG] round-detail: Fetching fresh round data from API for id:', roundId)
           const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
           
           if (!res.ok) {
             console.warn('[DEBUG] round-detail: API returned non-ok status:', res.status)
             if (isMounted) setRound(null);
-          } else {
-            const responseData = await res.json()
-            console.log('[DEBUG] round-detail: API response:', responseData)
-            
-            const data = responseData.round
-            const apiCourses = responseData.courses
-            
-            if (data && data.id) {
-              console.log('[DEBUG] round-detail: Processing round data:', data.id)
-              let courseIds: string[] = [];
-              if (apiCourses && apiCourses.length > 0) {
-                courseIds = apiCourses.map((c: any) => c.id)
-              } else if (data.course_id) {
-                courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-              }
-              // Convert snake_case to camelCase and map per_hole_stats
-              const camelRound: Round = {
-                id: data.id,
-                userId: data.user_id,
-                userName: data.user_name,
-                courseId: courseIds.join(','),
-                courseName: data.course_name,
-                selectedTee: data.selected_tee,
-                date: data.date,
-                scores: data.scores,
-                totalScore: data.total_score,
-                notes: data.notes,
-                in_progress: data.in_progress,
-                perHoleStats: data.per_hole_stats || [],
-              };
-              if (isMounted) setRound(camelRound);
-
-              // Fetch course info from localStorage (for now)
-              const savedCourses = localStorage.getItem('golfCourses');
-              if (savedCourses) {
-                const allCourses = JSON.parse(savedCourses) as Course[];
-                const courseIdsArr = courseIds;
-                let foundCourse: Course | null = null;
-                if (courseIdsArr.length > 1) {
-                  const selectedCourses = allCourses.filter(c => courseIdsArr.includes(c.id));
-                  if (selectedCourses.length > 0) {
-                    foundCourse = {
-                      ...selectedCourses[0],
-                      id: courseIdsArr.join(','),
-                      name: camelRound.courseName || 'Combined Course',
-                      holes: selectedCourses.flatMap(c => c.holes),
-                      holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
-                      par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
-                    };
-                  }
-                } else {
-                  foundCourse = allCourses.find(c => c.id === camelRound.courseId) || null;
-                }
-                if (foundCourse && isMounted) {
-                  setCourse(foundCourse);
-                }
-              }
-            } else {
-              console.warn('[DEBUG] round-detail: No round data in response:', responseData)
-              if (isMounted) setRound(null);
+            return;
+          }
+          
+          const responseData = await res.json()
+          console.log('[DEBUG] round-detail: API response:', responseData)
+          
+          const data = responseData.round
+          const apiCourses = responseData.courses
+          
+          if (data && data.id) {
+            console.log('[DEBUG] round-detail: Processing round data:', data.id)
+            let courseIds: string[] = [];
+            if (apiCourses && apiCourses.length > 0) {
+              courseIds = apiCourses.map((c: any) => c.id)
+            } else if (data.course_id) {
+              courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
             }
+            // Convert snake_case to camelCase and map per_hole_stats
+            let camelRound: Round = {
+              id: data.id,
+              userId: data.user_id,
+              userName: data.user_name,
+              courseId: courseIds.join(','),
+              courseName: data.course_name,
+              selectedTee: data.selected_tee,
+              date: data.date,
+              scores: data.scores,
+              totalScore: data.total_score,
+              notes: data.notes,
+              in_progress: data.in_progress,
+              perHoleStats: data.per_hole_stats || [],
+            };
+            console.log('[DEBUG] Loaded perHoleStats from API:', JSON.stringify(camelRound.perHoleStats));
+            
+            // Ensure perHoleStats array has proper structure (preserves conceded flag)
+            const ensuredRound = {
+              ...camelRound,
+              perHoleStats: (camelRound.perHoleStats || []).map((stat: any) => ({
+                ...stat, // Preserve all existing properties including 'conceded'
+              })) || [],
+            };
+            console.log('[DEBUG] After ensuring structure, perHoleStats:', JSON.stringify(ensuredRound.perHoleStats));
+            
+            if (isMounted) {
+              setRound(ensuredRound);
+              
+              // Also sync back to localStorage so local edits work
+              const savedRoundsStr = localStorage.getItem('golfRounds')
+              if (savedRoundsStr) {
+                try {
+                  const allRounds = JSON.parse(savedRoundsStr) as Round[]
+                  const updated = allRounds.map((r: Round) => r.id === roundId ? ensuredRound : r)
+                  localStorage.setItem('golfRounds', JSON.stringify(updated))
+                } catch (e) {
+                  console.warn('[DEBUG] Could not sync to localStorage:', e)
+                }
+              }
+            }
+
+            // Fetch course info from localStorage
+            const savedCourses = localStorage.getItem('golfCourses');
+            if (savedCourses) {
+              const allCourses = JSON.parse(savedCourses) as Course[];
+              let foundCourse: Course | null = null;
+              const courseIdsArr = courseIds;
+              if (courseIdsArr.length > 1) {
+                const selectedCourses = allCourses.filter(c => courseIdsArr.includes(c.id));
+                if (selectedCourses.length > 0) {
+                  foundCourse = {
+                    ...selectedCourses[0],
+                    id: courseIdsArr.join(','),
+                    name: ensuredRound.courseName || 'Combined Course',
+                    holes: selectedCourses.flatMap(c => c.holes),
+                    holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
+                    par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
+                  };
+                }
+              } else {
+                foundCourse = allCourses.find(c => c.id === ensuredRound.courseId) || null;
+              }
+              if (foundCourse && isMounted) {
+                setCourse(foundCourse);
+              }
+            }
+          } else {
+            console.warn('[DEBUG] round-detail: No round data in response:', responseData)
+            if (isMounted) setRound(null);
           }
         } catch (error) {
           console.error('[DEBUG] Error loading round detail:', error);
@@ -126,6 +153,18 @@ function RoundDetailContent() {
       if (intervalId) clearInterval(intervalId);
     };
   }, [roundId, isEditMode, hasUnsavedChanges]);
+
+  // Ensure edit mode is off when component loads
+  useEffect(() => {
+    if (roundId && isEditMode) {
+      console.log('[DEBUG] Force exiting edit mode on component load for roundId:', roundId)
+      setIsEditMode(false)
+      setSelectedHoleIndex(null)
+      setEditScore('')
+      setEditStats({})
+      setPuttBeingEdited(null)
+    }
+  }, [roundId]);
 
   // Check if user can edit this round
   const canEditRound = (): boolean => {
@@ -206,6 +245,8 @@ function RoundDetailContent() {
       alert('Cannot edit holes on a round older than 24 hours')
       return
     }
+    // Always show the help modal
+    setShowEditHelpModal(true)
     setIsEditMode(true)
     setSelectedHoleIndex(null)
   }
@@ -216,14 +257,30 @@ function RoundDetailContent() {
     setEditScore('')
     setEditStats({})
     setPuttBeingEdited(null)
+    
+    // Reload the round from localStorage to get the latest data with conceded flags
+    if (roundId) {
+      try {
+        const savedRounds = localStorage.getItem('golfRounds')
+        if (savedRounds) {
+          const allRounds = JSON.parse(savedRounds) as Round[]
+          const foundRound = allRounds.find(r => r.id === roundId)
+          if (foundRound) {
+            setRound(foundRound)
+          }
+        }
+      } catch (error) {
+        console.error('Error reloading round:', error)
+      }
+    }
   }
 
   const handleConfirmHoleScore = async () => {
     if (selectedHoleIndex === null || !round || !course) return
     
     const newScore = parseInt(String(editScore))
-    if (isNaN(newScore) || newScore < 1) {
-      alert('Please enter a valid score')
+    if (isNaN(newScore) || newScore < 0) {
+      alert('Please enter a valid score (0 or higher)')
       return
     }
 
@@ -244,6 +301,7 @@ function RoundDetailContent() {
       gir: editStats.gir,
       putts: editStats.putts,
       puttDistances: editStats.puttDistances,
+      conceded: false, // Clear conceded flag when a score is entered
     }
 
     // Update the round locally
@@ -285,6 +343,68 @@ function RoundDetailContent() {
     setPuttBeingEdited(null)
   }
 
+  const handleConcedeHole = async () => {
+    if (selectedHoleIndex === null || !round || !course) return
+    
+    // Create updated scores array with score of 0 for the edited hole
+    const updatedScores = round.scores.map((score, idx) => idx === selectedHoleIndex ? 0 : score)
+    
+    // Calculate total from the new scores array - sum all scores
+    const totalScore = updatedScores.reduce((sum, score) => {
+      const numScore = Number(score) || 0
+      return sum + numScore
+    }, 0)
+
+    // Update perHoleStats with cleared stats and conceded flag
+    const updatedPerHoleStats = [...(round.perHoleStats || [])]
+    updatedPerHoleStats[selectedHoleIndex] = {
+      conceded: true,
+      fairwayHit: undefined,
+      gir: false,
+      putts: 0,
+      puttDistances: [],
+    }
+    console.log('[DEBUG] Conceding hole', selectedHoleIndex, 'with perHoleStats:', JSON.stringify(updatedPerHoleStats[selectedHoleIndex]));
+
+    // Update the round locally
+    const updatedRound = {
+      ...round,
+      scores: updatedScores,
+      totalScore,
+      perHoleStats: updatedPerHoleStats,
+    }
+
+    setRound(updatedRound)
+    
+    // Immediately save to localStorage
+    const savedRoundsStr = localStorage.getItem('golfRounds')
+    if (savedRoundsStr) {
+      const allRounds = JSON.parse(savedRoundsStr) as Round[]
+      const updated = allRounds.map((r: Round) => r.id === roundId ? updatedRound : r)
+      localStorage.setItem('golfRounds', JSON.stringify(updated))
+      console.log('✅ Saved conceded hole to localStorage. Hole', selectedHoleIndex, 'conceded flag:', updatedRound.perHoleStats?.[selectedHoleIndex]?.conceded)
+    }
+    
+    // Immediately save to Supabase
+    try {
+      await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      })
+      console.log('✅ Synced conceded hole to Supabase:', updatedRound)
+    } catch (error) {
+      console.error('⚠️ Error syncing to Supabase:', error)
+      alert('Note: Changes saved locally but sync to Supabase failed')
+    }
+    
+    setHasUnsavedChanges(false)
+    setSelectedHoleIndex(null)
+    setEditScore('')
+    setEditStats({})
+    setPuttBeingEdited(null)
+  }
+
   const handleSaveAllChanges = async () => {
     console.log('🟢 Save Changes handler fired!')
     if (!round) {
@@ -310,10 +430,14 @@ function RoundDetailContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(round),
       })
+      // Clean up edit state before redirecting
+      exitEditMode()
       setHasUnsavedChanges(false)
       window.location.href = `/player?id=${round.userId}`
     } catch (error) {
       alert('Error saving changes to Supabase')
+      // Clean up edit state before redirecting
+      exitEditMode()
       setHasUnsavedChanges(false)
       window.location.href = `/player?id=${round.userId}`
     }
@@ -540,7 +664,17 @@ function RoundDetailContent() {
 
           {/* All Holes Grid - Grouped by Nines (Track Round style) */}
           <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
-            <div className="font-semibold text-green-900 mb-2 text-base">Holes Completed</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-green-900 text-base">Holes Completed</div>
+              {canEditRound() && !isEditMode && (
+                <button
+                  onClick={enterEditMode}
+                  className="text-blue-600 hover:text-blue-800 font-semibold transition-colors cursor-pointer"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
             {nines.map((nine, nineIdx) => {
               // Find the starting index for this nine's holes in the flat course.holes array
               const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
@@ -599,7 +733,9 @@ function RoundDetailContent() {
                         >
                           <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{hole.holeNumber}</span>
                           <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-base sm:text-lg font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
+                            <span className="text-base sm:text-lg font-extrabold w-full text-center">
+                              {round.perHoleStats?.[flatIdx]?.conceded ? 'C' : score > 0 ? score : ''}
+                            </span>
                           </span>
                           <span className="absolute left-0 right-0 text-[9px] font-medium break-words text-center w-full text-black" style={{bottom: 0}}>{score > 0 ? label : ''}</span>
                         </button>
@@ -839,9 +975,6 @@ function RoundDetailContent() {
                 )}
                 {canEditRound() && !hasUnsavedChanges && (
                   <>
-                    <button onClick={enterEditMode} className="flex-1 min-w-32 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                      ✏️ Edit Holes
-                    </button>
                     <button onClick={handleDeleteRound} className="flex-1 min-w-32 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
                       Delete Round
                     </button>
@@ -850,19 +983,9 @@ function RoundDetailContent() {
               </>
             ) : (
               <>
-                <button onClick={exitEditMode} className="flex-1 min-w-32 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                  Done Editing
+                <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                  Save All Edits
                 </button>
-                {hasUnsavedChanges && (
-                  <>
-                    <button onClick={handleDiscardChanges} className="flex-1 min-w-32 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                      Discard Changes
-                    </button>
-                    <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                      Save Changes
-                    </button>
-                  </>
-                )}
               </>
             )}
           </div>
@@ -886,7 +1009,7 @@ function RoundDetailContent() {
                     <button
                       onClick={() => {
                         const current = parseInt(String(editScore)) || round.scores[selectedHoleIndex] || 0
-                        setEditScore(Math.max(1, current - 1))
+                        setEditScore(Math.max(0, current - 1))
                       }}
                       className="w-12 h-12 rounded-lg bg-red-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-red-600 transition"
                     >
@@ -1141,10 +1264,34 @@ function RoundDetailContent() {
                   Back to Holes
                 </button>
                 <button
+                  onClick={handleConcedeHole}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Concede Hole
+                </button>
+                <button
                   onClick={handleConfirmHoleScore}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-all"
                 >
                   Save This Hole
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Help Modal */}
+          {showEditHelpModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">Edit Holes</h2>
+                <div className="space-y-3 text-gray-700 mb-4">
+                  <p className="text-center">Select hole to edit.</p>
+                </div>
+                <button
+                  onClick={() => setShowEditHelpModal(false)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+                >
+                  Got it
                 </button>
               </div>
             </div>
