@@ -211,9 +211,11 @@ function TrackRoundContent() {
           }
         }
       }
-      // Redirect to round details page
-      if (round) {
-        router.push(`/round-detail?id=${round.id}`);
+      // Redirect to player profile page
+      if (user) {
+        router.push(`/player?id=${user.id}`);
+      } else if (round?.userId) {
+        router.push(`/player?id=${round.userId}`);
       } else {
         router.push('/');
       }
@@ -283,7 +285,19 @@ function TrackRoundContent() {
   useEffect(() => {
     if (!roundId || !isClient) return;
     localStorage.setItem(`currentHoleIndex_${roundId}`, currentHoleIndex.toString());
-  }, [currentHoleIndex, roundId, isClient]);
+    
+    // Notify NavBar about current hole position
+    if (course) {
+      const isLastHole = currentHoleIndex === course.holes.length - 1;
+      window.dispatchEvent(new CustomEvent('holeIndexChanged', { 
+        detail: { 
+          currentHoleIndex, 
+          totalHoles: course.holes.length,
+          isLastHole 
+        } 
+      }));
+    }
+  }, [currentHoleIndex, roundId, isClient, course]);
 
   // Listen for navigation events from NavBar
   useEffect(() => {

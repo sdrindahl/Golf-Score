@@ -95,7 +95,7 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                   }
 
                   return (
-                    <tr key={round.id} className="border-b last:border-b-0 hover:bg-green-50 cursor-pointer" onClick={() => window.location.href = `/round-detail?id=${round.id}&from=rounds-in-progress`}>
+                    <tr key={round.id} className="border-b last:border-b-0">
                       <td className="px-2 py-2 align-middle w-8">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-800 text-xs font-bold">{idx + 1}</span>
                       </td>

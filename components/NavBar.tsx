@@ -15,6 +15,7 @@ export default function NavBar() {
 
   // State for current round in progress
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+  const [isLastHole, setIsLastHole] = useState(false)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
   // This ensures button disappears when user returns after round is deleted
@@ -59,6 +60,19 @@ export default function NavBar() {
     ) {
       router.push('/login')
     }
+  }, [])
+
+  // Listen for hole index changes from track-round page
+  useEffect(() => {
+    const handleHoleIndexChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setIsLastHole(customEvent.detail.isLastHole);
+    };
+    
+    window.addEventListener('holeIndexChanged', handleHoleIndexChange);
+    return () => {
+      window.removeEventListener('holeIndexChanged', handleHoleIndexChange);
+    };
   }, [])
 
   const isActive = (path: string) => {
@@ -132,7 +146,7 @@ export default function NavBar() {
             </button>
             <button
               onClick={() => router.push('/rounds-in-progress')}
-              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-sm transition hover:bg-green-600"
+              className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-sm transition bg-purple-600 hover:bg-purple-700 rounded-lg"
             >
               <span className="text-2xl mb-1">📊</span>
               Leaderboard
@@ -145,7 +159,7 @@ export default function NavBar() {
               className="flex-1 flex flex-col items-center justify-center py-3 font-semibold text-sm transition bg-green-600 hover:bg-green-700 rounded-lg"
             >
               <span className="text-4xl mb-1">➡️</span>
-              Next Hole
+              {isLastHole ? 'Save and Finish' : 'Save and Next Hole'}
             </button>
           </div>
         ) : (
