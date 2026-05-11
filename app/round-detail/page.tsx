@@ -354,11 +354,17 @@ function RoundDetailContent() {
     
     // Immediately save to Supabase
     try {
-      await fetch('/api/save-round', {
+      const saveRes = await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRound),
       })
+      
+      if (!saveRes.ok) {
+        const errorData = await saveRes.json()
+        throw new Error(`Save failed: ${saveRes.status} - ${errorData.error || 'Unknown error'}`)
+      }
+      
       console.log('✅ Synced hole to Supabase:', updatedRound)
       
       // Fetch fresh data after successful save to ensure UI is updated
@@ -451,11 +457,17 @@ function RoundDetailContent() {
     
     // Immediately save to Supabase
     try {
-      await fetch('/api/save-round', {
+      const saveRes = await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRound),
       })
+      
+      if (!saveRes.ok) {
+        const errorData = await saveRes.json()
+        throw new Error(`Save failed: ${saveRes.status} - ${errorData.error || 'Unknown error'}`)
+      }
+      
       console.log('✅ Synced conceded hole to Supabase:', updatedRound)
       
       // Fetch fresh data after successful save to ensure UI is updated
@@ -524,17 +536,23 @@ function RoundDetailContent() {
 
     // Save to Supabase via API
     try {
-      await fetch('/api/save-round', {
+      const saveRes = await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(round),
       })
+      
+      if (!saveRes.ok) {
+        const errorData = await saveRes.json()
+        throw new Error(`Save failed: ${saveRes.status} - ${errorData.error || 'Unknown error'}`)
+      }
+      
       // Clean up edit state before redirecting
       exitEditMode()
       setHasUnsavedChanges(false)
       window.location.href = `/player?id=${round.userId}`
     } catch (error) {
-      alert('Error saving changes to Supabase')
+      alert(`Error saving changes: ${error}`)
       // Clean up edit state before redirecting
       exitEditMode()
       setHasUnsavedChanges(false)
