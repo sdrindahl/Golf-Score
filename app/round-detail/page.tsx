@@ -258,20 +258,49 @@ function RoundDetailContent() {
     setEditStats({})
     setPuttBeingEdited(null)
     
-    // Reload the round from localStorage to get the latest data with conceded flags
+    // Fetch fresh data from API when exiting edit mode
     if (roundId) {
-      try {
-        const savedRounds = localStorage.getItem('golfRounds')
-        if (savedRounds) {
-          const allRounds = JSON.parse(savedRounds) as Round[]
-          const foundRound = allRounds.find(r => r.id === roundId)
-          if (foundRound) {
-            setRound(foundRound)
+      const fetchFreshData = async () => {
+        try {
+          const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+          if (res.ok) {
+            const responseData = await res.json()
+            const data = responseData.round
+            const apiCourses = responseData.courses
+            
+            if (data && data.id) {
+              let courseIds: string[] = [];
+              if (apiCourses && apiCourses.length > 0) {
+                courseIds = apiCourses.map((c: any) => c.id)
+              } else if (data.course_id) {
+                courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+              }
+              
+              const camelRound: Round = {
+                id: data.id,
+                userId: data.user_id,
+                userName: data.user_name,
+                courseId: courseIds.join(','),
+                courseName: data.course_name,
+                selectedTee: data.selected_tee,
+                date: data.date,
+                scores: data.scores,
+                totalScore: data.total_score,
+                notes: data.notes,
+                in_progress: data.in_progress,
+                perHoleStats: data.per_hole_stats || [],
+              };
+              
+              setRound(camelRound)
+              console.log('✅ Refreshed round data after exiting edit mode:', camelRound)
+            }
           }
+        } catch (error) {
+          console.error('Error refreshing round data:', error)
         }
-      } catch (error) {
-        console.error('Error reloading round:', error)
       }
+      
+      fetchFreshData()
     }
   }
 
@@ -331,6 +360,41 @@ function RoundDetailContent() {
         body: JSON.stringify(updatedRound),
       })
       console.log('✅ Synced hole to Supabase:', updatedRound)
+      
+      // Fetch fresh data after successful save to ensure UI is updated
+      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+      if (res.ok) {
+        const responseData = await res.json()
+        const data = responseData.round
+        const apiCourses = responseData.courses
+        
+        if (data && data.id) {
+          let courseIds: string[] = [];
+          if (apiCourses && apiCourses.length > 0) {
+            courseIds = apiCourses.map((c: any) => c.id)
+          } else if (data.course_id) {
+            courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+          }
+          
+          const camelRound: Round = {
+            id: data.id,
+            userId: data.user_id,
+            userName: data.user_name,
+            courseId: courseIds.join(','),
+            courseName: data.course_name,
+            selectedTee: data.selected_tee,
+            date: data.date,
+            scores: data.scores,
+            totalScore: data.total_score,
+            notes: data.notes,
+            in_progress: data.in_progress,
+            perHoleStats: data.per_hole_stats || [],
+          };
+          
+          setRound(camelRound)
+          console.log('✅ Refreshed UI with latest data:', camelRound)
+        }
+      }
     } catch (error) {
       console.error('⚠️ Error syncing to Supabase:', error)
       alert('Note: Changes saved locally but sync to Supabase failed')
@@ -393,6 +457,41 @@ function RoundDetailContent() {
         body: JSON.stringify(updatedRound),
       })
       console.log('✅ Synced conceded hole to Supabase:', updatedRound)
+      
+      // Fetch fresh data after successful save to ensure UI is updated
+      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+      if (res.ok) {
+        const responseData = await res.json()
+        const data = responseData.round
+        const apiCourses = responseData.courses
+        
+        if (data && data.id) {
+          let courseIds: string[] = [];
+          if (apiCourses && apiCourses.length > 0) {
+            courseIds = apiCourses.map((c: any) => c.id)
+          } else if (data.course_id) {
+            courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+          }
+          
+          const camelRound: Round = {
+            id: data.id,
+            userId: data.user_id,
+            userName: data.user_name,
+            courseId: courseIds.join(','),
+            courseName: data.course_name,
+            selectedTee: data.selected_tee,
+            date: data.date,
+            scores: data.scores,
+            totalScore: data.total_score,
+            notes: data.notes,
+            in_progress: data.in_progress,
+            perHoleStats: data.per_hole_stats || [],
+          };
+          
+          setRound(camelRound)
+          console.log('✅ Refreshed UI with latest data:', camelRound)
+        }
+      }
     } catch (error) {
       console.error('⚠️ Error syncing to Supabase:', error)
       alert('Note: Changes saved locally but sync to Supabase failed')
