@@ -218,7 +218,7 @@ function RoundDetailContent() {
     setPuttBeingEdited(null)
   }
 
-  const handleConfirmHoleScore = () => {
+  const handleConfirmHoleScore = async () => {
     if (selectedHoleIndex === null || !round || !course) return
     
     const newScore = parseInt(String(editScore))
@@ -255,10 +255,34 @@ function RoundDetailContent() {
     }
 
     setRound(updatedRound)
-    setHasUnsavedChanges(true)
+    
+    // Immediately save to localStorage
+    const savedRoundsStr = localStorage.getItem('golfRounds')
+    if (savedRoundsStr) {
+      const allRounds = JSON.parse(savedRoundsStr) as Round[]
+      const updated = allRounds.map((r: Round) => r.id === roundId ? updatedRound : r)
+      localStorage.setItem('golfRounds', JSON.stringify(updated))
+      console.log('✅ Saved hole to localStorage:', updatedRound)
+    }
+    
+    // Immediately save to Supabase
+    try {
+      await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      })
+      console.log('✅ Synced hole to Supabase:', updatedRound)
+    } catch (error) {
+      console.error('⚠️ Error syncing to Supabase:', error)
+      alert('Note: Changes saved locally but sync to Supabase failed')
+    }
+    
+    setHasUnsavedChanges(false)
     setSelectedHoleIndex(null)
     setEditScore('')
     setEditStats({})
+    setPuttBeingEdited(null)
   }
 
   const handleSaveAllChanges = async () => {
