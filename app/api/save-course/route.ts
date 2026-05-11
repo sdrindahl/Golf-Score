@@ -3,7 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const serviceRoleKey: string = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
 const supabase = createClient(supabaseUrl, supabaseKey);
+// Use service role key for writes to bypass RLS (required for custom auth)
+const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,8 +21,8 @@ export async function POST(req: NextRequest) {
       dbCourse.hole_count = dbCourse.holeCount;
       delete dbCourse.holeCount;
     }
-    // Upsert course by id
-    const { data, error } = await supabase
+    // Upsert course by id - use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('courses')
       .upsert([dbCourse], { onConflict: 'id' })
       .select();

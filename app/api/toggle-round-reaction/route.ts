@@ -16,6 +16,12 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    
+    // Use service role key for writes to bypass RLS
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // Check if this user already reacted with this emoji
     const { data: existing, error: checkError } = await supabase
@@ -30,9 +36,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: checkError.message }, { status: 500 });
     }
 
-    // If reaction exists, delete it (toggle off)
+    // If reaction exists, delete it (toggle off) - use admin client
     if (existing && existing.length > 0) {
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await supabaseAdmin
         .from('round_reactions')
         .delete()
         .eq('round_id', roundId)
@@ -47,8 +53,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ toggled: 'off' });
     }
 
-    // Otherwise add it (toggle on)
-    const { data: newReaction, error: insertError } = await supabase
+    // Otherwise add it (toggle on) - use admin client
+    const { data: newReaction, error: insertError } = await supabaseAdmin
       .from('round_reactions')
       .insert({
         round_id: roundId,

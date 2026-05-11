@@ -3,7 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl: string = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey: string = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const serviceRoleKey: string = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
 const supabase = createClient(supabaseUrl, supabaseKey);
+// Use service role key for writes to bypass RLS (required for custom auth)
+const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
 type Round = {
   id: string;
@@ -35,7 +39,7 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
   }
   
   // Remove any existing links for this round (idempotent)
-  const { error: deleteError } = await supabase.from('round_courses').delete().eq('round_id', roundId);
+  const { error: deleteError } = await supabaseAdmin.from('round_courses').delete().eq('round_id', roundId);
   if (deleteError) {
     console.error('[DEBUG] Error deleting old round_courses:', deleteError);
   }
@@ -49,7 +53,7 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
   console.log('[DEBUG] Inserting into round_courses - rows to insert:', JSON.stringify(rows));
   
   if (rows.length > 0) {
-    const { error } = await supabase.from('round_courses').insert(rows);
+    const { error } = await supabaseAdmin.from('round_courses').insert(rows);
     if (error) {
       console.error('[DEBUG] Error inserting into round_courses:', error);
       throw error;
@@ -134,8 +138,8 @@ export async function POST(req: NextRequest) {
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
     console.log('[DEBUG] selected_tee value being sent to Supabase:', roundData.selected_tee);
-    // Upsert round (only safe fields)
-    const { data, error } = await supabase
+    // Upsert round (only safe fields) - use admin client to bypass RLS
+    const { data, error } = await supabaseAdmin
       .from('rounds')
       .upsert([roundData], { onConflict: 'id' })
       .select();
