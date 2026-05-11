@@ -18,8 +18,11 @@ function RoundDetailContent() {
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
-  const [editingHoleIndex, setEditingHoleIndex] = useState<number | null>(null)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [selectedHoleIndex, setSelectedHoleIndex] = useState<number | null>(null)
   const [editScore, setEditScore] = useState<number | string>('')
+  const [editStats, setEditStats] = useState<any>({})
+  const [puttBeingEdited, setPuttBeingEdited] = useState<number | null>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Polling interval in ms
@@ -33,7 +36,7 @@ function RoundDetailContent() {
 
     const fetchRound = async () => {
         // Don't fetch if editing or there are unsaved changes
-        if (editingHoleIndex !== null || hasUnsavedChanges) return;
+        if (isEditMode || hasUnsavedChanges) return;
 
         // Get current user for permission checking
         const user = auth.getCurrentUser();
@@ -122,13 +125,23 @@ function RoundDetailContent() {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [roundId, editingHoleIndex, hasUnsavedChanges]);
+  }, [roundId, isEditMode, hasUnsavedChanges]);
 
   // Check if user can edit this round
   const canEditRound = (): boolean => {
     if (!currentUser || !round) return false
     if (currentUser.is_admin) return true
     return currentUser.id === round.userId
+  }
+
+  // Check if round is within 24 hours (can edit holes)
+  const isWithin24Hours = (): boolean => {
+    if (!round) return false
+    const roundDate = new Date(round.date)
+    const now = new Date()
+    const diffMs = now.getTime() - roundDate.getTime()
+    const diffHours = diffMs / (1000 * 60 * 60)
+    return diffHours < 24
   }
 
   const handleDeleteRound = async () => {
@@ -164,13 +177,49 @@ function RoundDetailContent() {
   }
 
   const handleHoleEdit = (holeIndex: number) => {
-    if (!canEditRound()) return
-    setEditingHoleIndex(holeIndex)
+    setSelectedHoleIndex(holeIndex)
     setEditScore(round?.scores[holeIndex] || '')
+    // Initialize stats from existing data or empty object
+    const existingStats = round?.perHoleStats?.[holeIndex] || {}
+    const existingPutts = existingStats.putts || 0
+    const existingDistances = Array.isArray(existingStats.puttDistances) ? [...existingStats.puttDistances] : []
+    
+    // Ensure puttDistances array matches the number of putts
+    let puttDistances = [...existingDistances]
+    while (puttDistances.length < existingPutts) {
+      puttDistances.push(0)
+    }
+    puttDistances = puttDistances.slice(0, existingPutts)
+    
+    setEditStats({
+      fairwayHit: existingStats.fairwayHit || undefined,
+      gir: existingStats.gir || false,
+      putts: existingPutts,
+      puttDistances: puttDistances,
+    })
+    setPuttBeingEdited(null)
+  }
+
+  const enterEditMode = () => {
+    if (!canEditRound()) return
+    if (!isWithin24Hours()) {
+      alert('Cannot edit holes on a round older than 24 hours')
+      return
+    }
+    setIsEditMode(true)
+    setSelectedHoleIndex(null)
+  }
+
+  const exitEditMode = () => {
+    setIsEditMode(false)
+    setSelectedHoleIndex(null)
+    setEditScore('')
+    setEditStats({})
+    setPuttBeingEdited(null)
   }
 
   const handleConfirmHoleScore = () => {
-    if (editingHoleIndex === null || !round || !course) return
+    if (selectedHoleIndex === null || !round || !course) return
     
     const newScore = parseInt(String(editScore))
     if (isNaN(newScore) || newScore < 1) {
@@ -179,7 +228,7 @@ function RoundDetailContent() {
     }
 
     // Create updated scores array with the new score for the edited hole
-    const updatedScores = round.scores.map((score, idx) => idx === editingHoleIndex ? newScore : score)
+    const updatedScores = round.scores.map((score, idx) => idx === selectedHoleIndex ? newScore : score)
     
     // Calculate total from the new scores array - sum all scores
     const totalScore = updatedScores.reduce((sum, score) => {
@@ -187,17 +236,29 @@ function RoundDetailContent() {
       return sum + numScore
     }, 0)
 
+    // Update perHoleStats with the edited stats
+    const updatedPerHoleStats = [...(round.perHoleStats || [])]
+    updatedPerHoleStats[selectedHoleIndex] = {
+      ...updatedPerHoleStats[selectedHoleIndex],
+      fairwayHit: editStats.fairwayHit,
+      gir: editStats.gir,
+      putts: editStats.putts,
+      puttDistances: editStats.puttDistances,
+    }
+
     // Update the round locally
     const updatedRound = {
       ...round,
       scores: updatedScores,
       totalScore,
+      perHoleStats: updatedPerHoleStats,
     }
 
     setRound(updatedRound)
     setHasUnsavedChanges(true)
-    setEditingHoleIndex(null)
+    setSelectedHoleIndex(null)
     setEditScore('')
+    setEditStats({})
   }
 
   const handleSaveAllChanges = async () => {
@@ -497,18 +558,27 @@ function RoundDetailContent() {
                       const par = hole.par;
                       const label = getResultLabel(score, par);
                       const colorClass = getColorClass(score, par);
+                      const isSelected = isEditMode && selectedHoleIndex === flatIdx;
                       return (
-                        <div
+                        <button
                           key={hole.holeNumber + '-' + nineIdx}
-                          className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg border font-bold text-xs sm:text-base transition p-0 flex flex-col items-center justify-center ${colorClass}`}
-                          title={score > 0 ? `Hole ${hole.holeNumber}: Score ${score} (${label})` : `Hole ${hole.holeNumber}`}
+                          onClick={() => {
+                            if (isEditMode) {
+                              handleHoleEdit(flatIdx)
+                            }
+                          }}
+                          disabled={!isEditMode}
+                          className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg border font-bold text-xs sm:text-base transition p-0 flex flex-col items-center justify-center ${colorClass} ${
+                            isEditMode ? 'hover:shadow-lg hover:scale-105 cursor-pointer' : 'cursor-default'
+                          } ${isSelected ? 'ring-4 ring-blue-500' : ''}`}
+                          title={isEditMode ? `Click to edit Hole ${hole.holeNumber}` : `Hole ${hole.holeNumber}`}
                         >
                           <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{hole.holeNumber}</span>
                           <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <span className="text-base sm:text-lg font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
                           </span>
                           <span className="absolute left-0 right-0 text-[9px] font-medium break-words text-center w-full text-black" style={{bottom: 0}}>{score > 0 ? label : ''}</span>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -714,93 +784,349 @@ function RoundDetailContent() {
 
           {/* Actions */}
           <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={() => {
-                const from = searchParams ? searchParams.get('from') : null;
-                if (from === 'rounds-in-progress') {
-                  router.push('/rounds-in-progress');
-                } else {
-                  router.push(`/player?id=${round.userId}`);
-                }
-              }}
-              className={`flex-1 min-w-32 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
-                isJustCompleted
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-white/90 hover:bg-white text-green-700 border border-white/20'
-              }`}
-            >
-              {isJustCompleted ? 'Complete Round' : '← Back'}
-            </button>
-            {hasUnsavedChanges && canEditRound() && (
+            {!isEditMode ? (
               <>
-                <button onClick={handleDiscardChanges} className="flex-1 min-w-32 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                  Discard Changes
+                <button
+                  onClick={() => {
+                    const from = searchParams ? searchParams.get('from') : null;
+                    if (from === 'rounds-in-progress') {
+                      router.push('/rounds-in-progress');
+                    } else {
+                      router.push(`/player?id=${round.userId}`);
+                    }
+                  }}
+                  className={`flex-1 min-w-32 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
+                    isJustCompleted
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      : 'bg-white/90 hover:bg-white text-green-700 border border-white/20'
+                  }`}
+                >
+                  {isJustCompleted ? 'Complete Round' : '← Back'}
                 </button>
-                <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                  Save Changes
+                {hasUnsavedChanges && canEditRound() && (
+                  <>
+                    <button onClick={handleDiscardChanges} className="flex-1 min-w-32 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                      Discard Changes
+                    </button>
+                    <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                      Save Changes
+                    </button>
+                  </>
+                )}
+                {canEditRound() && !hasUnsavedChanges && (
+                  <>
+                    <button onClick={enterEditMode} className="flex-1 min-w-32 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                      ✏️ Edit Holes
+                    </button>
+                    <button onClick={handleDeleteRound} className="flex-1 min-w-32 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                      Delete Round
+                    </button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <button onClick={exitEditMode} className="flex-1 min-w-32 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                  Done Editing
                 </button>
+                {hasUnsavedChanges && (
+                  <>
+                    <button onClick={handleDiscardChanges} className="flex-1 min-w-32 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                      Discard Changes
+                    </button>
+                    <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                      Save Changes
+                    </button>
+                  </>
+                )}
               </>
             )}
-            {canEditRound() && !hasUnsavedChanges && (
-              <button onClick={handleDeleteRound} className="flex-1 min-w-32 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                Delete Round
-              </button>
-            )}
           </div>
+
+          {/* Inline Edit Mode - Show editor when a hole is selected */}
+          {isEditMode && selectedHoleIndex !== null && course && round && (
+            <div className="mt-8 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+              {/* Header */}
+              <div className="mb-6 pb-4 border-b border-gray-300">
+                <div className="flex items-baseline gap-4">
+                  <span className="font-bold text-2xl">Hole {course.holes[selectedHoleIndex].holeNumber}</span>
+                  <span className="text-black text-lg">Par {course.holes[selectedHoleIndex].par}</span>
+                </div>
+              </div>
+              
+              {/* Score Card - styled like track-round */}
+              <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-lg text-gray-800">Score</span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        const current = parseInt(String(editScore)) || round.scores[selectedHoleIndex] || 0
+                        setEditScore(Math.max(1, current - 1))
+                      }}
+                      className="w-12 h-12 rounded-lg bg-red-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-red-600 transition"
+                    >
+                      −
+                    </button>
+                    <div className="w-16 h-12 rounded-lg bg-white border-2 border-blue-600 flex items-center justify-center">
+                      <span className="text-3xl font-extrabold text-blue-700">
+                        {editScore || 0}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const current = parseInt(String(editScore)) || round.scores[selectedHoleIndex] || 0
+                        setEditScore(current + 1)
+                      }}
+                      className="w-12 h-12 rounded-lg bg-green-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Card - styled like track-round */}
+              <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+                {/* FIR Section */}
+                <div className="mb-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-semibold text-gray-800">FIR:</span>
+                    <button
+                      onClick={() => setEditStats({ ...editStats, fairwayHit: 'hit' })}
+                      className={`w-8 h-8 rounded border font-bold transition-all ${
+                        editStats.fairwayHit === 'hit'
+                          ? 'bg-green-200 border-green-600'
+                          : 'bg-white border-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={() => setEditStats({ ...editStats, fairwayHit: 'L' })}
+                      className={`w-8 h-8 rounded border font-bold transition-all ${
+                        editStats.fairwayHit === 'L'
+                          ? 'bg-blue-200 border-blue-600'
+                          : 'bg-white border-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      L
+                    </button>
+                    <button
+                      onClick={() => setEditStats({ ...editStats, fairwayHit: 'R' })}
+                      className={`w-8 h-8 rounded border font-bold transition-all ${
+                        editStats.fairwayHit === 'R'
+                          ? 'bg-blue-200 border-blue-600'
+                          : 'bg-white border-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      R
+                    </button>
+                    <button
+                      onClick={() => setEditStats({ ...editStats, fairwayHit: undefined })}
+                      className={`w-8 h-8 rounded border font-bold text-xs transition-all ${
+                        editStats.fairwayHit === undefined
+                          ? 'bg-gray-400 border-gray-600 text-white'
+                          : 'bg-white border-gray-400 hover:border-gray-600'
+                      }`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                {/* GIR & Putts Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* GIR Section */}
+                  <div>
+                    <span className="block font-semibold text-gray-800 mb-2">GIR</span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setEditStats({ ...editStats, gir: true })}
+                        className={`flex-1 py-2 px-3 rounded border-2 font-semibold transition-all ${
+                          editStats.gir === true
+                            ? 'bg-green-200 border-green-600 text-gray-800'
+                            : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                        }`}
+                      >
+                        Yes ✓
+                      </button>
+                      <button
+                        onClick={() => setEditStats({ ...editStats, gir: false })}
+                        className={`flex-1 py-2 px-3 rounded border-2 font-semibold transition-all ${
+                          editStats.gir === false
+                            ? 'bg-red-200 border-red-600 text-gray-800'
+                            : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'
+                        }`}
+                      >
+                        No ✗
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Putts Section */}
+                  <div>
+                    <span className="block font-semibold text-gray-800 mb-2">Putts</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const newPutts = Math.max(0, editStats.putts - 1)
+                          const newDistances = (editStats.puttDistances || []).slice(0, newPutts)
+                          setEditStats({ ...editStats, putts: newPutts, puttDistances: newDistances })
+                          setPuttBeingEdited(null)
+                        }}
+                        className="w-10 h-10 rounded bg-red-500 text-lg font-bold text-white flex items-center justify-center hover:bg-red-600 transition"
+                      >
+                        −
+                      </button>
+                      <div className="flex-1 h-10 rounded border-2 border-blue-600 bg-white flex items-center justify-center">
+                        <span className="text-xl font-extrabold text-blue-700">
+                          {editStats.putts || 0}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newPutts = editStats.putts + 1
+                          const newDistances = [...(editStats.puttDistances || [])]
+                          if (newDistances.length < newPutts) {
+                            newDistances.push(0)
+                          }
+                          setEditStats({ ...editStats, putts: newPutts, puttDistances: newDistances })
+                        }}
+                        className="w-10 h-10 rounded bg-green-500 text-lg font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Putt Distances Section - Only show if putts > 0 */}
+              {editStats.putts > 0 && (
+                <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
+                  <span className="block font-semibold text-gray-800 mb-4">Putt Distances (feet)</span>
+                  
+                  {/* Putt distance inputs - track-round style */}
+                  <div className="space-y-4 mb-4">
+                    {Array.from({ length: editStats.putts || 0 }).map((_, idx) => {
+                      const currentDistance = (editStats.puttDistances || [])[idx] || 0;
+                      const isEditing = puttBeingEdited === idx;
+                      
+                      return (
+                        <div key={idx}>
+                          {/* Putt display/edit row */}
+                          <div className="flex items-center gap-3 mb-3 bg-white p-3 rounded-lg border-2 border-green-300">
+                            <span className="text-sm font-semibold text-gray-700 min-w-fit">Putt {idx + 1}:</span>
+                            
+                            {!isEditing ? (
+                              <>
+                                <span className="flex-1 text-gray-700 font-semibold">
+                                  {currentDistance > 0 ? `${currentDistance} feet` : 'Not set'}
+                                </span>
+                                <button
+                                  onClick={() => setPuttBeingEdited(idx)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded transition-all text-sm"
+                                >
+                                  Edit
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    const newDistances = [...(editStats.puttDistances || [])]
+                                    newDistances[idx] = Math.max(0, (newDistances[idx] || 0) - 1)
+                                    setEditStats({ ...editStats, puttDistances: newDistances })
+                                  }}
+                                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded transition-all text-sm"
+                                >
+                                  −
+                                </button>
+                                <span className="text-lg font-bold text-blue-600 min-w-12 text-center">
+                                  {currentDistance}
+                                </span>
+                                <span className="text-gray-600 text-sm">feet</span>
+                                <button
+                                  onClick={() => {
+                                    const newDistances = [...(editStats.puttDistances || [])]
+                                    newDistances[idx] = (newDistances[idx] || 0) + 1
+                                    setEditStats({ ...editStats, puttDistances: newDistances })
+                                  }}
+                                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded transition-all text-sm"
+                                >
+                                  +
+                                </button>
+                                <button
+                                  onClick={() => setPuttBeingEdited(null)}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded transition-all text-sm"
+                                >
+                                  Done
+                                </button>
+                              </>
+                            )}
+                          </div>
+                          
+                          {/* Preset distance buttons - only show when editing this putt */}
+                          {isEditing && (
+                            <div className="grid grid-cols-5 gap-2 mb-4">
+                              {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100].map((preset) => (
+                                <button
+                                  key={preset}
+                                  onClick={() => {
+                                    const newDistances = [...(editStats.puttDistances || [])]
+                                    newDistances[idx] = preset
+                                    setEditStats({ ...editStats, puttDistances: newDistances })
+                                  }}
+                                  className={`py-2 px-2 rounded font-semibold text-sm transition-all ${
+                                    currentDistance === preset
+                                      ? 'bg-blue-600 text-white'
+                                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                  }`}
+                                >
+                                  {preset}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Total distance display */}
+                  <div className="text-center pt-3 border-t border-green-300">
+                    <span className="text-gray-700 font-semibold">
+                      Total: {((editStats.puttDistances || []).reduce((sum, d) => sum + (d || 0), 0))} ft
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedHoleIndex(null)
+                    setEditScore('')
+                    setEditStats({})
+                    setPuttBeingEdited(null)
+                  }}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 rounded-lg transition-all"
+                >
+                  Back to Holes
+                </button>
+                <button
+                  onClick={handleConfirmHoleScore}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition-all"
+                >
+                  Save This Hole
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </PageWrapper>
-
-      {/* Edit Hole Modal */}
-      {editingHoleIndex !== null && course && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 shadow-lg max-w-sm w-full mx-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Hole {course.holes[editingHoleIndex].holeNumber}</h2>
-            <p className="text-sm text-gray-600 mb-6 text-center">Par: {course.holes[editingHoleIndex].par}</p>
-            
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <button
-                onClick={() => {
-                  const current = parseInt(String(editScore)) || round.scores[editingHoleIndex] || 0
-                  setEditScore(Math.max(1, current - 1))
-                }}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-xl text-3xl transition-all"
-              >
-                −
-              </button>
-              <div className="text-5xl font-bold text-blue-600 w-24 text-center">
-                {editScore || 0}
-              </div>
-              <button
-                onClick={() => {
-                  const current = parseInt(String(editScore)) || round.scores[editingHoleIndex] || 0
-                  setEditScore(current + 1)
-                }}
-                className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-xl text-3xl transition-all"
-              >
-                +
-              </button>
-            </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setEditingHoleIndex(null)
-                  setEditScore('')
-                }}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 rounded-lg transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmHoleScore}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Home Button - Fixed at Bottom */}
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 px-4 py-4 z-10">
