@@ -1097,7 +1097,7 @@ function RoundDetailContent() {
                   {/* Total distance display */}
                   <div className="text-center pt-3 border-t border-green-300">
                     <span className="text-gray-700 font-semibold">
-                      Total: {((editStats.puttDistances || []).reduce((sum, d) => sum + (d || 0), 0))} ft
+                      Total: {((editStats.puttDistances || []).reduce((sum: number, d) => sum + (d || 0), 0))} ft
                     </span>
                   </div>
                 </div>
