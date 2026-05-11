@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// You may want to move this to a shared util
-const supabase = createClient(
+// Use service role key for writes to bypass RLS
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function POST(req: NextRequest) {
@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Delete from round_courses first (if using join table)
-    await supabase.from('round_courses').delete().eq('round_id', roundId);
+    await supabaseAdmin.from('round_courses').delete().eq('round_id', roundId);
     // Delete the round itself
-    const { error } = await supabase.from('rounds').delete().eq('id', roundId);
+    const { error } = await supabaseAdmin.from('rounds').delete().eq('id', roundId);
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }

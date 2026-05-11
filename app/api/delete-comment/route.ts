@@ -16,6 +16,12 @@ export async function DELETE(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    
+    // Use service role key for writes to bypass RLS
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // Verify ownership
     const { data: comment, error: fetchError } = await supabase
@@ -31,8 +37,8 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Soft delete
-    const { error } = await supabase
+    // Soft delete - use admin client to bypass RLS
+    const { error } = await supabaseAdmin
       .from('comments')
       .update({ deleted: true })
       .eq('id', commentId);

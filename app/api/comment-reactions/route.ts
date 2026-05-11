@@ -16,6 +16,12 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    
+    // Use service role key for writes to bypass RLS
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
     // Check if reaction exists
     const { data: existing } = await supabase
@@ -26,23 +32,23 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (existing) {
-      // Update existing reaction
+      // Update existing reaction - use admin client
       const newCount = Math.max(0, existing.count + (increment ? 1 : -1));
       if (newCount === 0) {
         // Delete if count reaches 0
-        await supabase
+        await supabaseAdmin
           .from('comment_reactions')
           .delete()
           .eq('id', existing.id);
       } else {
-        await supabase
+        await supabaseAdmin
           .from('comment_reactions')
           .update({ count: newCount })
           .eq('id', existing.id);
       }
     } else if (increment) {
-      // Create new reaction
-      await supabase.from('comment_reactions').insert([
+      // Create new reaction - use admin client
+      await supabaseAdmin.from('comment_reactions').insert([
         {
           comment_id: commentId,
           emoji: emoji,
