@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function InstallPrompt() {
+  const pathname = usePathname()
   const [installPrompt, setInstallPrompt] = useState<any>(null)
   const [isInstalled, setIsInstalled] = useState(false)
   const [showPrompt, setShowPrompt] = useState(false)
@@ -76,8 +78,8 @@ export default function InstallPrompt() {
     }
   }
 
-  // Don't show anything if app is already installed
-  if (isInstalled) {
+  // Only show on login page - don't show on app pages
+  if (isInstalled || pathname !== '/login') {
     return null
   }
 

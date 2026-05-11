@@ -285,6 +285,31 @@ function TrackRoundContent() {
     localStorage.setItem(`currentHoleIndex_${roundId}`, currentHoleIndex.toString());
   }, [currentHoleIndex, roundId, isClient]);
 
+  // Listen for navigation events from NavBar
+  useEffect(() => {
+    if (!isClient || !course) return;
+    
+    const handlePreviousFromNav = () => {
+      if (currentHoleIndex > 0) {
+        setCurrentHoleIndex(currentHoleIndex - 1);
+      }
+    };
+    
+    const handleNextFromNav = () => {
+      if (currentHoleIndex < course.holes.length - 1 && scores[currentHoleIndex] > 0) {
+        setCurrentHoleIndex(currentHoleIndex + 1);
+      }
+    };
+    
+    window.addEventListener('navigatePreviousHole', handlePreviousFromNav);
+    window.addEventListener('navigateNextHole', handleNextFromNav);
+    
+    return () => {
+      window.removeEventListener('navigatePreviousHole', handlePreviousFromNav);
+      window.removeEventListener('navigateNextHole', handleNextFromNav);
+    };
+  }, [isClient, currentHoleIndex, scores, course]);
+
   // Helper function to find the first unscored hole (next hole to play)
   const getNextUnscoredholeIndex = (roundScores: number[]): number => {
     if (!roundScores) return 0;
@@ -1228,6 +1253,7 @@ function TrackRoundContent() {
                         min={0}
                         className="border rounded px-2 py-1 w-16 text-center mx-1"
                         value={dist}
+                        onFocus={e => { e.target.value = ''; }}
                         onChange={e => {
                           const val = parseInt(e.target.value, 10) || 0;
                           setPerHoleStats(stats => {
@@ -1270,26 +1296,32 @@ function TrackRoundContent() {
                         }}
                       >Done</button>
                     </div>
-                    <div className="flex items-center gap-2 w-full justify-center">
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        step={5}
-                        value={dist}
-                        className="flex-1 cursor-grab active:cursor-grabbing"
-                        onChange={e => {
-                          const val = parseInt(e.target.value, 10) || 0;
-                          setPerHoleStats(stats => {
-                            const updated = [...stats];
-                            const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
-                            puttDistances[idx] = val;
-                            updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
-                            return updated;
-                          });
-                        }}
-                      />
-                      <span className="ml-2 w-10 text-center">{dist} ft</span>
+                    <div className="w-full mt-4">
+                      <div className="grid grid-cols-5 gap-2">
+                        {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100].map(value => (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => {
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                const puttDistances = [...(updated[currentHoleIndex]?.puttDistances || [])];
+                                puttDistances[idx] = value;
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances };
+                                return updated;
+                              });
+                            }}
+                            className={`py-2 px-2 rounded text-sm font-semibold transition ${
+                              dist === value
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                            }`}
+                          >
+                            {value}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="text-center mt-3 font-semibold text-lg">{dist} ft</div>
                     </div>
                   </div>
                 </div>
@@ -1326,14 +1358,8 @@ function TrackRoundContent() {
         )}
       </div>
 
-      {/* Navigation Buttons - now outside the cards */}
+      {/* Navigation Buttons - removed as they're now in NavBar */}
       <div className="flex gap-4 mt-6">
-        {currentHoleIndex > 0 && (
-          <button type="button" onClick={handlePreviousHole} className="btn-secondary flex-1 !text-black">← Previous Hole</button>
-        )}
-        {scores[currentHoleIndex] > 0 && currentHoleIndex < course.holes.length - 1 && (
-          <button type="button" onClick={handleNextHole} className="btn-primary flex-1">Next Hole →</button>
-        )}
         {/* Show Finish Round only if all holes are scored */}
         {allScored && (
           <button
@@ -1342,7 +1368,7 @@ function TrackRoundContent() {
             onClick={handleFinishRound}
             disabled={finishing}
           >
-            {finishing ? 'Saving...' : 'Finish Round'}
+            {finishing ? 'Saving...' : 'Save and Finish Round'}
           </button>
         )}
       </div>
@@ -1356,7 +1382,7 @@ function TrackRoundContent() {
           disabled={deleting}
           title="Cancel round - does NOT save any data"
         >
-          🗑️ Cancel (No Save)
+          🗑️ Discard Round
         </button>
         <button
           type="button"
@@ -1365,7 +1391,7 @@ function TrackRoundContent() {
           disabled={finishing}
           title="Save and end round - saves all entered scores, even incomplete holes"
         >
-          💾 {finishing ? 'Saving...' : 'Save & End'}
+          💾 {finishing ? 'Saving...' : 'Save Incomplete Round'}
         </button>
       </div>
     
