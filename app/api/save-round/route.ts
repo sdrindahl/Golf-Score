@@ -65,7 +65,11 @@ async function insertRoundCourses(roundId: string, courseIds: string[]): Promise
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('[DEBUG] API Hit: /api/save-round');
     console.log('[DEBUG] Service role key present:', !!serviceRoleKey, 'Length:', serviceRoleKey.length);
+    if (!serviceRoleKey || serviceRoleKey.length === 0) {
+      console.error('[DEBUG] ⚠️ CRITICAL: Service role key is empty or undefined!');
+    }
     const round: Round = await req.json();
     console.log('[DEBUG] Raw incoming round payload:', round);
     console.log('[DEBUG] Incoming round payload (stringified):', JSON.stringify(round));
@@ -145,10 +149,12 @@ export async function POST(req: NextRequest) {
       .upsert([roundData], { onConflict: 'id' })
       .select();
     if (error) {
-      console.error('[DEBUG] Upsert error:', error);
+      console.error('[DEBUG] Upsert error:', JSON.stringify(error));
+      console.error('[DEBUG] Upsert error message:', error.message);
+      console.error('[DEBUG] Upsert error code:', error.code);
       throw error;
     }
-    // Insert into round_courses join table
+    console.log('[DEBUG] ✅ Upsert successful, data returned:', data ? data.length : 0, 'rows');
     let courseIds: string[] = [];
     if (Array.isArray(round.courseId)) {
       courseIds = round.courseId;
