@@ -175,14 +175,31 @@ export async function POST(req: NextRequest) {
       console.error('[DEBUG] VERIFICATION ERROR - Could not read back round:', verifyError.message);
     } else if (verifyData) {
       console.log('[DEBUG] VERIFICATION READ RESULT:', JSON.stringify(verifyData));
-      const dbPerHoleStats = JSON.stringify(verifyData.per_hole_stats);
-      const sentPerHoleStats = JSON.stringify(roundData.per_hole_stats);
-      if (dbPerHoleStats === sentPerHoleStats) {
+      
+      // Deep equality check (handles JSON property order differences from PostgreSQL JSONB)
+      const deepEqual = (obj1: any, obj2: any): boolean => {
+        if (obj1 === obj2) return true;
+        if (obj1 == null || obj2 == null) return obj1 === obj2;
+        if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return false;
+        
+        const keys1 = Object.keys(obj1);
+        const keys2 = Object.keys(obj2);
+        if (keys1.length !== keys2.length) return false;
+        
+        for (const key of keys1) {
+          if (!keys2.includes(key)) return false;
+          if (!deepEqual(obj1[key], obj2[key])) return false;
+        }
+        return true;
+      };
+      
+      const dataMatches = deepEqual(verifyData.per_hole_stats, roundData.per_hole_stats);
+      if (dataMatches) {
         console.log('[DEBUG] ✅ VERIFICATION PASSED - Database has the NEW data');
       } else {
         console.error('[DEBUG] ❌ VERIFICATION FAILED - Database still has OLD data!');
-        console.error('[DEBUG] Expected:', sentPerHoleStats);
-        console.error('[DEBUG] Got from DB:', dbPerHoleStats);
+        console.error('[DEBUG] Expected:', JSON.stringify(roundData.per_hole_stats));
+        console.error('[DEBUG] Got from DB:', JSON.stringify(verifyData.per_hole_stats));
       }
     }
     let courseIds: string[] = [];

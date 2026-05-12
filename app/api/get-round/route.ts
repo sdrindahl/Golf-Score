@@ -37,8 +37,11 @@ export async function GET(req: NextRequest) {
 
     const round = roundsData[0]
     console.log('[DEBUG] Round fetched successfully:', round.id)
+    console.log('[DEBUG] RAW round object from Supabase:', JSON.stringify(round))
     console.log('[DEBUG] per_hole_stats field exists:', !!round.per_hole_stats)
     console.log('[DEBUG] per_hole_stats length:', round.per_hole_stats?.length || 0)
+    console.log('[DEBUG] per_hole_stats type:', typeof round.per_hole_stats)
+    console.log('[DEBUG] per_hole_stats value:', round.per_hole_stats)
     console.log('[DEBUG] per_hole_stats content:', JSON.stringify(round.per_hole_stats))
 
     // Fetch associated course IDs from join table

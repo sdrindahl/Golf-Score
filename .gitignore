@@ -9,3 +9,5 @@ build/
 *.swp
 *.swo
 app/templete.csv
+.vercel
+.env*.local
