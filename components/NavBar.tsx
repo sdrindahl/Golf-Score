@@ -145,6 +145,16 @@ export default function NavBar() {
               Previous Hole
             </button>
             <button
+              onClick={() => {
+                // Dispatch event to toggle map
+                window.dispatchEvent(new CustomEvent('toggleHoleMap'));
+              }}
+              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-blue-500 hover:bg-blue-600 rounded-lg"
+            >
+              <span className="text-2xl">🗺️</span>
+              Map
+            </button>
+            <button
               onClick={() => router.push('/rounds-in-progress')}
               className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-purple-600 hover:bg-purple-700 rounded-lg"
             >

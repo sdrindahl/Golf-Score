@@ -357,13 +357,19 @@ function TrackRoundContent() {
         setCurrentHoleIndex(currentHoleIndex + 1);
       }
     };
+
+    const handleOpenMap = () => {
+      setShowHoleMap(prev => !prev);
+    };
     
     window.addEventListener('navigatePreviousHole', handlePreviousFromNav);
     window.addEventListener('navigateNextHole', handleNextFromNav);
+    window.addEventListener('toggleHoleMap', handleOpenMap);
     
     return () => {
       window.removeEventListener('navigatePreviousHole', handlePreviousFromNav);
       window.removeEventListener('navigateNextHole', handleNextFromNav);
+      window.removeEventListener('toggleHoleMap', handleOpenMap);
     };
   }, [isClient, currentHoleIndex, scores, course]);
 
@@ -1420,9 +1426,10 @@ function TrackRoundContent() {
         {course.holes[currentHoleIndex] && userLocation && (
           <button
             onClick={() => setShowHoleMap(true)}
-            className="w-full mb-4 p-4 rounded-xl border-2 border-purple-600 bg-purple-50 text-purple-900 font-semibold hover:bg-purple-100 transition flex items-center justify-center gap-2"
+            className="w-full mb-4 p-5 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-900 font-bold text-lg hover:bg-blue-100 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3"
           >
-            🗺️ View Hole Map
+            <span className="text-3xl">🗺️</span>
+            <span>View Hole Map</span>
           </button>
         )}
       </div>
@@ -1487,8 +1494,8 @@ function TrackRoundContent() {
 
       {/* Hole Map Modal */}
       {showHoleMap && course.holes[currentHoleIndex] && userLocation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl h-[80vh] overflow-auto shadow-2xl flex flex-col">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 pointer-events-none">
+          <div className="bg-white rounded-2xl w-full max-w-2xl h-[80vh] overflow-auto shadow-2xl flex flex-col pointer-events-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b bg-blue-50 flex-shrink-0">
               <h2 className="text-lg font-bold text-gray-800">
