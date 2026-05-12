@@ -17,6 +17,7 @@ export default function NavBar() {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const [isLastHole, setIsLastHole] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
+  const [currentHole, setCurrentHole] = useState<number>(1)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
   // This ensures button disappears when user returns after round is deleted
@@ -73,6 +74,9 @@ export default function NavBar() {
     const handleMapStateChange = (event: Event) => {
       const customEvent = event as CustomEvent;
       setIsMapOpen(customEvent.detail.isOpen);
+      if (customEvent.detail.currentHole) {
+        setCurrentHole(customEvent.detail.currentHole);
+      }
     };
     
     window.addEventListener('holeIndexChanged', handleHoleIndexChange);
@@ -163,8 +167,18 @@ export default function NavBar() {
                   : 'bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 border-cyan-400'
               }`}
             >
-              <span className="text-4xl mb-1">🗺️</span>
-              <span className="leading-tight">{isMapOpen ? 'Return to\nScoring' : 'Map'}</span>
+              {isMapOpen ? (
+                <span className="leading-tight text-center">
+                  <span className="text-black font-black">HOLE {currentHole}</span>
+                  <br />
+                  Return to Scoring
+                </span>
+              ) : (
+                <>
+                  <span className="text-3xl mb-1">🗺️</span>
+                  <span className="leading-tight">View Map</span>
+                </>
+              )}
             </button>
             <button
               onClick={() => router.push('/rounds-in-progress')}
