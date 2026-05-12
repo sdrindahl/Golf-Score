@@ -146,6 +146,8 @@ export async function POST(req: NextRequest) {
     console.log('[DEBUG] per_hole_stats about to be written:', JSON.stringify(roundData.per_hole_stats));
     console.log('[DEBUG] selected_tee value being sent to Supabase:', roundData.selected_tee);
     // Upsert round (only safe fields) - use admin client to bypass RLS
+    console.log('[DEBUG] UPSERT ABOUT TO EXECUTE - roundData.per_hole_stats type:', typeof roundData.per_hole_stats, 'value:', JSON.stringify(roundData.per_hole_stats));
+    console.log('[DEBUG] roundData.id:', roundData.id, 'Type:', typeof roundData.id);
     const { data, error } = await supabaseAdmin
       .from('rounds')
       .upsert([roundData], { onConflict: 'id' })
@@ -156,9 +158,49 @@ export async function POST(req: NextRequest) {
       console.error('[DEBUG] Upsert error code:', error.code);
       throw error;
     }
-    console.log('[DEBUG] ✅ Upsert successful, data returned:', data ? data.length : 0, 'rows');
+    console.log('[DEBUG] ✅ Upsert returned no error, data rows:', data ? data.length : 0, 'rows');
     if (data && data.length > 0) {
-      console.log('[DEBUG] Upserted round per_hole_stats returned from DB:', JSON.stringify(data[0].per_hole_stats));
+      console.log('[DEBUG] Upsert response per_hole_stats:', JSON.stringify(data[0].per_hole_stats));
+    }
+    
+    // CRITICAL: Verify the write actually happened by doing a read-back
+    console.log('[DEBUG] VERIFICATION: Reading back the round from database to confirm write...');
+    const { data: verifyData, error: verifyError } = await supabaseAdmin
+      .from('rounds')
+      .select('id, per_hole_stats, updated_at')
+      .eq('id', roundData.id)
+      .single();
+    
+    if (verifyError) {
+      console.error('[DEBUG] VERIFICATION ERROR - Could not read back round:', verifyError.message);
+    } else if (verifyData) {
+      console.log('[DEBUG] VERIFICATION READ RESULT:', JSON.stringify(verifyData));
+      
+      // Deep equality check (handles JSON property order differences from PostgreSQL JSONB)
+      const deepEqual = (obj1: any, obj2: any): boolean => {
+        if (obj1 === obj2) return true;
+        if (obj1 == null || obj2 == null) return obj1 === obj2;
+        if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return false;
+        
+        const keys1 = Object.keys(obj1);
+        const keys2 = Object.keys(obj2);
+        if (keys1.length !== keys2.length) return false;
+        
+        for (const key of keys1) {
+          if (!keys2.includes(key)) return false;
+          if (!deepEqual(obj1[key], obj2[key])) return false;
+        }
+        return true;
+      };
+      
+      const dataMatches = deepEqual(verifyData.per_hole_stats, roundData.per_hole_stats);
+      if (dataMatches) {
+        console.log('[DEBUG] ✅ VERIFICATION PASSED - Database has the NEW data');
+      } else {
+        console.error('[DEBUG] ❌ VERIFICATION FAILED - Database still has OLD data!');
+        console.error('[DEBUG] Expected:', JSON.stringify(roundData.per_hole_stats));
+        console.error('[DEBUG] Got from DB:', JSON.stringify(verifyData.per_hole_stats));
+      }
     }
     let courseIds: string[] = [];
     if (Array.isArray(round.courseId)) {

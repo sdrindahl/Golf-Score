@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
 
     // Use service role key for writes to bypass RLS
     const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ''
     );
 
     const { data, error } = await supabase

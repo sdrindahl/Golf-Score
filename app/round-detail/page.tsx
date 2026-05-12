@@ -34,7 +34,9 @@ function RoundDetailContent() {
     if (!roundId) return;
     try {
       console.log('[DEBUG] Refreshing round data from API...')
-      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+      // Add timestamp to cache-bust the request
+      const timestamp = Date.now()
+      const res = await fetch(`/api/get-round?id=${roundId}&t=${timestamp}`, { cache: 'no-store' })
       
       if (!res.ok) {
         console.warn('[DEBUG] Failed to refresh round:', res.status)
@@ -53,6 +55,10 @@ function RoundDetailContent() {
           courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
         }
         
+        // Deep copy the data to ensure React detects the change
+        const freshScores = [...(data.scores || [])];
+        const freshStats = (data.per_hole_stats || []).map((stat: any) => ({...stat}));
+        
         const camelRound: Round = {
           id: data.id,
           userId: data.user_id,
@@ -61,14 +67,20 @@ function RoundDetailContent() {
           courseName: data.course_name,
           selectedTee: data.selected_tee,
           date: data.date,
-          scores: data.scores,
+          scores: freshScores,
           totalScore: data.total_score,
           notes: data.notes,
           in_progress: data.in_progress,
-          perHoleStats: data.per_hole_stats || [],
+          perHoleStats: freshStats,
         };
         
-        console.log('[DEBUG] ✅ Round refreshed from API:', camelRound)
+        console.log('[DEBUG] ✅ Round refreshed from API with fresh arrays:', {
+          scores: camelRound.scores,
+          perHoleStats: camelRound.perHoleStats
+        })
+        console.log('[DEBUG] About to call setRound with:', JSON.stringify(camelRound))
+        
+        // Set the new round state - force React to see it as a new object
         setRound(camelRound)
         
         // Sync to localStorage
@@ -716,6 +728,13 @@ function RoundDetailContent() {
   const scoreDistribution = calculateScoreDistribution()
   const maxDistribution = Math.max(...Object.values(scoreDistribution), 1)
 
+  // Log every render to debug state updates
+  console.log('[RENDER] round-detail rendering with round:', {
+    id: round?.id,
+    scores: round?.scores,
+    perHoleStats: round?.perHoleStats,
+  })
+
   return (
 
     <>
@@ -791,7 +810,7 @@ function RoundDetailContent() {
                       const isSelected = isEditMode && selectedHoleIndex === flatIdx;
                       return (
                         <button
-                          key={hole.holeNumber + '-' + nineIdx}
+                          key={flatIdx}
                           onClick={() => {
                             if (isEditMode) {
                               handleHoleEdit(flatIdx)
@@ -1053,13 +1072,7 @@ function RoundDetailContent() {
                   </>
                 )}
               </>
-            ) : (
-              <>
-                <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                  Save All Edits
-                </button>
-              </>
-            )}
+            ) : null}
           </div>
 
           {/* Inline Edit Mode - Show editor when a hole is selected */}

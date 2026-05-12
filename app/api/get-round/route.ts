@@ -37,8 +37,11 @@ export async function GET(req: NextRequest) {
 
     const round = roundsData[0]
     console.log('[DEBUG] Round fetched successfully:', round.id)
+    console.log('[DEBUG] RAW round object from Supabase:', JSON.stringify(round))
     console.log('[DEBUG] per_hole_stats field exists:', !!round.per_hole_stats)
     console.log('[DEBUG] per_hole_stats length:', round.per_hole_stats?.length || 0)
+    console.log('[DEBUG] per_hole_stats type:', typeof round.per_hole_stats)
+    console.log('[DEBUG] per_hole_stats value:', round.per_hole_stats)
     console.log('[DEBUG] per_hole_stats content:', JSON.stringify(round.per_hole_stats))
 
     // Fetch associated course IDs from join table
@@ -83,7 +86,12 @@ export async function GET(req: NextRequest) {
     }
 
     console.log('[DEBUG] get-round returning: round id', round.id, 'courses count', courses.length)
-    return NextResponse.json({ round, courses })
+    const response = NextResponse.json({ round, courses })
+    // Prevent caching to ensure fresh data on every request
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    return response
   } catch (error) {
     console.error('[DEBUG] Unexpected error in get-round:', error)
     let errorMsg = 'Unknown error'
