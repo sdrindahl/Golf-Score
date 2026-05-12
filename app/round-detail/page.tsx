@@ -53,6 +53,10 @@ function RoundDetailContent() {
           courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
         }
         
+        // Deep copy the data to ensure React detects the change
+        const freshScores = [...(data.scores || [])];
+        const freshStats = (data.per_hole_stats || []).map((stat: any) => ({...stat}));
+        
         const camelRound: Round = {
           id: data.id,
           userId: data.user_id,
@@ -61,31 +65,28 @@ function RoundDetailContent() {
           courseName: data.course_name,
           selectedTee: data.selected_tee,
           date: data.date,
-          scores: data.scores,
+          scores: freshScores,
           totalScore: data.total_score,
           notes: data.notes,
           in_progress: data.in_progress,
-          perHoleStats: data.per_hole_stats || [],
+          perHoleStats: freshStats,
         };
         
-        // Apply same structure processing as main useEffect
-        const ensuredRound = {
-          ...camelRound,
-          perHoleStats: (camelRound.perHoleStats || []).map((stat: any) => ({
-            ...stat,
-          })) || [],
-        };
+        console.log('[DEBUG] ✅ Round refreshed from API with fresh arrays:', {
+          scores: camelRound.scores,
+          perHoleStats: camelRound.perHoleStats
+        })
+        console.log('[DEBUG] About to call setRound with:', JSON.stringify(camelRound))
         
-        console.log('[DEBUG] ✅ Round refreshed from API:', ensuredRound)
-        console.log('[DEBUG] perHoleStats after refresh:', JSON.stringify(ensuredRound.perHoleStats))
-        setRound(ensuredRound)
+        // Set the new round state - force React to see it as a new object
+        setRound(camelRound)
         
         // Sync to localStorage
         const savedRoundsStr = localStorage.getItem('golfRounds')
         if (savedRoundsStr) {
           try {
             const allRounds = JSON.parse(savedRoundsStr) as Round[]
-            const updated = allRounds.map((r: Round) => r.id === roundId ? ensuredRound : r)
+            const updated = allRounds.map((r: Round) => r.id === roundId ? camelRound : r)
             localStorage.setItem('golfRounds', JSON.stringify(updated))
           } catch (e) {
             console.warn('[DEBUG] Could not sync to localStorage:', e)
@@ -724,6 +725,13 @@ function RoundDetailContent() {
 
   const scoreDistribution = calculateScoreDistribution()
   const maxDistribution = Math.max(...Object.values(scoreDistribution), 1)
+
+  // Log every render to debug state updates
+  console.log('[RENDER] round-detail rendering with round:', {
+    id: round?.id,
+    scores: round?.scores,
+    perHoleStats: round?.perHoleStats,
+  })
 
   return (
 
