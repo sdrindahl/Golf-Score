@@ -599,7 +599,8 @@ function TrackRoundContent() {
           ? rawCourseId.split(',').map((id: string) => id.trim()).filter(Boolean)
           : [];
       console.log('Looking for courseIds:', courseIds, 'in', allCourses.map(c => c.id));
-      const foundCourses = allCourses.filter(c => courseIds.includes(c.id));
+      // Preserve order of courseIds when finding courses
+      const foundCourses = courseIds.map(id => allCourses.find(c => c.id === id)).filter(Boolean) as Course[];
       console.log('Found courses:', foundCourses);
       if (foundCourses.length > 0) {
         // Merge holes for multi-nine support
