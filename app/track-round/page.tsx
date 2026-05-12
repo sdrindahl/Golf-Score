@@ -859,6 +859,12 @@ function TrackRoundContent() {
             })()}
           </h1>
         </div>
+        {/* Tee Selection Display */}
+        <div className="text-center mb-4">
+          <p className="text-sm text-black font-semibold">
+            {selectedTee ? `${selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s Tee` : 'Tee Selection'}
+          </p>
+        </div>
         {/* Summary Bar */}
         <div className="grid grid-cols-3 gap-2 mb-6">
           <div className="p-2 bg-green-50 rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">

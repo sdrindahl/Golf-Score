@@ -217,6 +217,9 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
                 {childNames.map((name, idx) => (
                   <span key={idx} className="text-xs text-gray-600 mt-0.5">{name}</span>
                 ))}
+                {round.selectedTee && (
+                  <span className="text-xs text-gray-500 mt-2 font-semibold">{round.selectedTee.charAt(0).toUpperCase() + round.selectedTee.slice(1)}'s</span>
+                )}
               </div>
               {/* Right: Total Score */}
               <div className="flex flex-col items-end ml-auto">
