@@ -163,4 +163,14 @@ body {
 }
 
 /* iOS-style bottom nav */
+.mobile-navbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  -webkit-position: fixed;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+}
 

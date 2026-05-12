@@ -130,7 +130,7 @@ export default function NavBar() {
       </nav>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)' }}>
+      <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
         {isTrackRoundPage ? (
           // Track Round Mode - Minimal Navigation
           <div className="flex justify-around gap-1">
