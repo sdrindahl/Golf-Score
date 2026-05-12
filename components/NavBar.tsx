@@ -132,44 +132,44 @@ export default function NavBar() {
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
         {isTrackRoundPage ? (
-          // Track Round Mode - Minimal Navigation
-          <div className="flex justify-around gap-1">
+          // Track Round Mode - Enhanced Navigation
+          <div className="flex justify-around gap-2 px-2 py-3">
             <button
               onClick={() => {
                 // Dispatch event to previous hole
                 window.dispatchEvent(new CustomEvent('navigatePreviousHole'));
               }}
-              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-blue-600 hover:bg-blue-700 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 active:scale-95 shadow-md hover:shadow-lg border border-blue-400"
             >
-              <span className="text-3xl">⬅️</span>
-              Previous Hole
+              <span className="text-4xl mb-1">⬅️</span>
+              <span className="leading-tight">Previous</span>
             </button>
             <button
               onClick={() => {
                 // Dispatch event to toggle map
                 window.dispatchEvent(new CustomEvent('toggleHoleMap'));
               }}
-              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-blue-500 hover:bg-blue-600 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 active:scale-95 shadow-md hover:shadow-lg border border-cyan-400"
             >
-              <span className="text-2xl">🗺️</span>
-              Map
+              <span className="text-4xl mb-1">🗺️</span>
+              <span className="leading-tight">Map</span>
             </button>
             <button
               onClick={() => router.push('/rounds-in-progress')}
-              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-purple-600 hover:bg-purple-700 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-indigo-500 to-purple-700 hover:from-indigo-600 hover:to-purple-800 active:scale-95 shadow-md hover:shadow-lg border border-indigo-400"
             >
-              <span className="text-xl">📊</span>
-              Leaderboard
+              <span className="text-4xl mb-1">📊</span>
+              <span className="leading-tight">Leaderboard</span>
             </button>
             <button
               onClick={() => {
                 // Dispatch event to next hole
                 window.dispatchEvent(new CustomEvent('navigateNextHole'));
               }}
-              className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition bg-green-600 hover:bg-green-700 rounded-lg"
+              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-green-500 to-emerald-700 hover:from-green-600 hover:to-emerald-800 active:scale-95 shadow-md hover:shadow-lg border border-green-400"
             >
-              <span className="text-3xl">➡️</span>
-              {isLastHole ? 'Save and Finish' : 'Save and Next Hole'}
+              <span className="text-4xl mb-1">➡️</span>
+              <span className="leading-tight">{isLastHole ? 'Finish' : 'Next'}</span>
             </button>
           </div>
         ) : (
