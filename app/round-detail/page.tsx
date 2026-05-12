@@ -1072,13 +1072,7 @@ function RoundDetailContent() {
                   </>
                 )}
               </>
-            ) : (
-              <>
-                <button onClick={handleSaveAllChanges} className="flex-1 min-w-32 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
-                  Save All Edits
-                </button>
-              </>
-            )}
+            ) : null}
           </div>
 
           {/* Inline Edit Mode - Show editor when a hole is selected */}
