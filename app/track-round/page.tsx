@@ -29,6 +29,7 @@ import { Round, Course } from '@/types';
 import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
 import CommentsModal from '@/components/CommentsModal';
+import HoleMap from '@/components/HoleMap';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 import { supabase } from '@/lib/supabase';
 
@@ -47,6 +48,7 @@ function TrackRoundContent() {
   const [scores, setScores] = useState<number[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showHoleMap, setShowHoleMap] = useState(false);
   const [showDriveHelp, setShowDriveHelp] = useState(false);
   const [driveHelpDismissed, setDriveHelpDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -355,15 +357,31 @@ function TrackRoundContent() {
         setCurrentHoleIndex(currentHoleIndex + 1);
       }
     };
+
+    const handleOpenMap = () => {
+      setShowHoleMap(prev => !prev);
+    };
     
     window.addEventListener('navigatePreviousHole', handlePreviousFromNav);
     window.addEventListener('navigateNextHole', handleNextFromNav);
+    window.addEventListener('toggleHoleMap', handleOpenMap);
     
     return () => {
       window.removeEventListener('navigatePreviousHole', handlePreviousFromNav);
       window.removeEventListener('navigateNextHole', handleNextFromNav);
+      window.removeEventListener('toggleHoleMap', handleOpenMap);
     };
   }, [isClient, currentHoleIndex, scores, course]);
+
+  // Notify NavBar when map state changes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mapStateChanged', {
+      detail: { 
+        isOpen: showHoleMap,
+        currentHole: course?.holes?.[currentHoleIndex]?.holeNumber || currentHoleIndex + 1
+      }
+    }));
+  }, [showHoleMap, course, currentHoleIndex]);
 
   // Helper function to find the first unscored hole (next hole to play)
   const getNextUnscoredholeIndex = (roundScores: number[]): number => {
@@ -1471,6 +1489,24 @@ function TrackRoundContent() {
               .catch((error) => console.error('Failed to refresh comments:', error));
           }}
         />
+      )}
+
+      {/* Hole Map Modal */}
+      {showHoleMap && course.holes[currentHoleIndex] && userLocation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4 pb-24 pointer-events-none">
+          <div className="bg-white rounded-2xl w-full max-w-2xl h-[85vh] shadow-2xl flex flex-col pointer-events-auto relative">
+            {/* Map Container */}
+            <div className="flex-1 overflow-hidden relative">
+              <HoleMap
+                userLat={userLocation.lat}
+                userLng={userLocation.lng}
+                greenLat={course.holes[currentHoleIndex]?.greenLat || 0}
+                greenLng={course.holes[currentHoleIndex]?.greenLng || 0}
+                holeName={`Hole ${course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}`}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Drive Measurement Help Modal */}
