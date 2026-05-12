@@ -68,15 +68,24 @@ function RoundDetailContent() {
           perHoleStats: data.per_hole_stats || [],
         };
         
-        console.log('[DEBUG] ✅ Round refreshed from API:', camelRound)
-        setRound(camelRound)
+        // Apply same structure processing as main useEffect
+        const ensuredRound = {
+          ...camelRound,
+          perHoleStats: (camelRound.perHoleStats || []).map((stat: any) => ({
+            ...stat,
+          })) || [],
+        };
+        
+        console.log('[DEBUG] ✅ Round refreshed from API:', ensuredRound)
+        console.log('[DEBUG] perHoleStats after refresh:', JSON.stringify(ensuredRound.perHoleStats))
+        setRound(ensuredRound)
         
         // Sync to localStorage
         const savedRoundsStr = localStorage.getItem('golfRounds')
         if (savedRoundsStr) {
           try {
             const allRounds = JSON.parse(savedRoundsStr) as Round[]
-            const updated = allRounds.map((r: Round) => r.id === roundId ? camelRound : r)
+            const updated = allRounds.map((r: Round) => r.id === roundId ? ensuredRound : r)
             localStorage.setItem('golfRounds', JSON.stringify(updated))
           } catch (e) {
             console.warn('[DEBUG] Could not sync to localStorage:', e)
