@@ -86,7 +86,12 @@ export async function GET(req: NextRequest) {
     }
 
     console.log('[DEBUG] get-round returning: round id', round.id, 'courses count', courses.length)
-    return NextResponse.json({ round, courses })
+    const response = NextResponse.json({ round, courses })
+    // Prevent caching to ensure fresh data on every request
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    return response
   } catch (error) {
     console.error('[DEBUG] Unexpected error in get-round:', error)
     let errorMsg = 'Unknown error'

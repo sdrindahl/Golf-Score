@@ -34,7 +34,9 @@ function RoundDetailContent() {
     if (!roundId) return;
     try {
       console.log('[DEBUG] Refreshing round data from API...')
-      const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+      // Add timestamp to cache-bust the request
+      const timestamp = Date.now()
+      const res = await fetch(`/api/get-round?id=${roundId}&t=${timestamp}`, { cache: 'no-store' })
       
       if (!res.ok) {
         console.warn('[DEBUG] Failed to refresh round:', res.status)
