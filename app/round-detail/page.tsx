@@ -808,7 +808,7 @@ function RoundDetailContent() {
                       const isSelected = isEditMode && selectedHoleIndex === flatIdx;
                       return (
                         <button
-                          key={hole.holeNumber + '-' + nineIdx}
+                          key={flatIdx}
                           onClick={() => {
                             if (isEditMode) {
                               handleHoleEdit(flatIdx)
