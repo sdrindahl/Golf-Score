@@ -391,6 +391,7 @@ function RoundDetailContent() {
       alert('Note: Changes saved locally but sync to Supabase failed')
     }
     
+    setIsEditMode(false)
     setHasUnsavedChanges(false)
     setSelectedHoleIndex(null)
     setEditScore('')
@@ -462,6 +463,7 @@ function RoundDetailContent() {
       alert('Note: Changes saved locally but sync to Supabase failed')
     }
     
+    setIsEditMode(false)
     setHasUnsavedChanges(false)
     setSelectedHoleIndex(null)
     setEditScore('')
