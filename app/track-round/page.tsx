@@ -373,6 +373,13 @@ function TrackRoundContent() {
     };
   }, [isClient, currentHoleIndex, scores, course]);
 
+  // Notify NavBar when map state changes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mapStateChanged', {
+      detail: { isOpen: showHoleMap }
+    }));
+  }, [showHoleMap]);
+
   // Helper function to find the first unscored hole (next hole to play)
   const getNextUnscoredholeIndex = (roundScores: number[]): number => {
     if (!roundScores) return 0;
@@ -1494,23 +1501,18 @@ function TrackRoundContent() {
 
       {/* Hole Map Modal */}
       {showHoleMap && course.holes[currentHoleIndex] && userLocation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 pointer-events-none">
-          <div className="bg-white rounded-2xl w-full max-w-2xl h-[80vh] overflow-auto shadow-2xl flex flex-col pointer-events-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-blue-50 flex-shrink-0">
-              <h2 className="text-lg font-bold text-gray-800">
-                Hole {course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1} Map View
-              </h2>
-              <button
-                onClick={() => setShowHoleMap(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4 pb-24 pointer-events-none">
+          <div className="bg-white rounded-2xl w-full max-w-2xl h-[85vh] shadow-2xl flex flex-col pointer-events-auto relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowHoleMap(false)}
+              className="absolute top-3 right-3 z-10 text-gray-600 hover:text-gray-800 text-2xl font-bold bg-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-100 transition"
+            >
+              ✕
+            </button>
+            
             {/* Map Container */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden relative">
               <HoleMap
                 userLat={userLocation.lat}
                 userLng={userLocation.lng}

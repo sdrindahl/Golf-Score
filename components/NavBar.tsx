@@ -16,6 +16,7 @@ export default function NavBar() {
   // State for current round in progress
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const [isLastHole, setIsLastHole] = useState(false)
+  const [isMapOpen, setIsMapOpen] = useState(false)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
   // This ensures button disappears when user returns after round is deleted
@@ -68,10 +69,17 @@ export default function NavBar() {
       const customEvent = event as CustomEvent;
       setIsLastHole(customEvent.detail.isLastHole);
     };
+
+    const handleMapStateChange = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setIsMapOpen(customEvent.detail.isOpen);
+    };
     
     window.addEventListener('holeIndexChanged', handleHoleIndexChange);
+    window.addEventListener('mapStateChanged', handleMapStateChange);
     return () => {
       window.removeEventListener('holeIndexChanged', handleHoleIndexChange);
+      window.removeEventListener('mapStateChanged', handleMapStateChange);
     };
   }, [])
 
@@ -149,10 +157,14 @@ export default function NavBar() {
                 // Dispatch event to toggle map
                 window.dispatchEvent(new CustomEvent('toggleHoleMap'));
               }}
-              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 active:scale-95 shadow-md hover:shadow-lg border border-cyan-400"
+              className={`flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl active:scale-95 shadow-md hover:shadow-lg border-2 ${
+                isMapOpen
+                  ? 'bg-gradient-to-br from-cyan-400 to-blue-500 border-white ring-2 ring-white/50'
+                  : 'bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 border-cyan-400'
+              }`}
             >
               <span className="text-4xl mb-1">🗺️</span>
-              <span className="leading-tight">Map</span>
+              <span className="leading-tight">{isMapOpen ? 'Return to\nScoring' : 'Map'}</span>
             </button>
             <button
               onClick={() => router.push('/rounds-in-progress')}

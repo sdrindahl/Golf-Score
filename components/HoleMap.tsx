@@ -149,19 +149,13 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   }, [userLat, userLng, greenLat, greenLng]);
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg">
-      <div className="p-3 bg-blue-600 text-white font-semibold text-center border-b">
-        {holeName} - Hole Map View
-      </div>
+    <div className="flex flex-col h-full bg-white">
       <div ref={mapContainer} className="flex-1" style={{ height: '400px' }} />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
+        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
           <div className="text-gray-600">Loading map...</div>
         </div>
       )}
-      <div className="p-3 text-xs text-gray-600 border-t bg-gray-50">
-        💡 Tap anywhere on the map to measure distance from your position
-      </div>
     </div>
   );
 }
