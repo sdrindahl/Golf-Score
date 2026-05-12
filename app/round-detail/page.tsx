@@ -746,6 +746,9 @@ function RoundDetailContent() {
             <div className="text-2xl font-bold text-white text-center drop-shadow-md">{parentCourseName}</div>
             <div className="text-lg font-semibold text-white text-center mt-1 drop-shadow-md">{round.userName}</div>
             <div className="text-sm text-white text-center mt-0.5 drop-shadow-md">{new Date(round.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div className="text-sm text-white text-center mt-1 drop-shadow-md font-semibold">
+              {round.selectedTee ? `${round.selectedTee.charAt(0).toUpperCase() + round.selectedTee.slice(1)}'s Tee` : 'Tee Selection'}
+            </div>
             {round.notes && (
               <div className="mt-3 p-2 bg-blue-50 rounded-lg text-sm text-gray-700 border border-blue-200 w-full max-w-md text-center">
                 <strong>Notes:</strong> {round.notes}
