@@ -29,6 +29,7 @@ import { Round, Course } from '@/types';
 import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
 import CommentsModal from '@/components/CommentsModal';
+import HoleMap from '@/components/HoleMap';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 import { supabase } from '@/lib/supabase';
 
@@ -47,6 +48,7 @@ function TrackRoundContent() {
   const [scores, setScores] = useState<number[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  const [showHoleMap, setShowHoleMap] = useState(false);
   const [showDriveHelp, setShowDriveHelp] = useState(false);
   const [driveHelpDismissed, setDriveHelpDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1413,6 +1415,16 @@ function TrackRoundContent() {
             ))}
           </div>
         )}
+
+        {/* Hole Map Button */}
+        {course.holes[currentHoleIndex] && userLocation && (
+          <button
+            onClick={() => setShowHoleMap(true)}
+            className="w-full mb-4 p-4 rounded-xl border-2 border-purple-600 bg-purple-50 text-purple-900 font-semibold hover:bg-purple-100 transition flex items-center justify-center gap-2"
+          >
+            🗺️ View Hole Map
+          </button>
+        )}
       </div>
 
       {/* Navigation Buttons - removed as they're now in NavBar */}
@@ -1471,6 +1483,37 @@ function TrackRoundContent() {
               .catch((error) => console.error('Failed to refresh comments:', error));
           }}
         />
+      )}
+
+      {/* Hole Map Modal */}
+      {showHoleMap && course.holes[currentHoleIndex] && userLocation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl h-[80vh] overflow-auto shadow-2xl flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b bg-blue-50 flex-shrink-0">
+              <h2 className="text-lg font-bold text-gray-800">
+                Hole {course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1} Map View
+              </h2>
+              <button
+                onClick={() => setShowHoleMap(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Map Container */}
+            <div className="flex-1 overflow-hidden">
+              <HoleMap
+                userLat={userLocation.lat}
+                userLng={userLocation.lng}
+                greenLat={course.holes[currentHoleIndex]?.greenLat || 0}
+                greenLng={course.holes[currentHoleIndex]?.greenLng || 0}
+                holeName={`Hole ${course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}`}
+              />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Drive Measurement Help Modal */}

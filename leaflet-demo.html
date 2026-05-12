@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaflet Hole View Demo</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { height: 100vh; }
+    .info {
+      padding: 10px;
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      font-family: Arial;
+      font-size: 14px;
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 1000;
+    }
+    .distance-label {
+      background: rgba(255, 149, 0, 0.9) !important;
+      color: white !important;
+      border: none !important;
+      border-radius: 4px !important;
+      padding: 4px 8px !important;
+      font-weight: bold !important;
+      font-size: 14px !important;
+    }
+    .distance-label::before {
+      border-top-color: rgba(255, 149, 0, 0.9) !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="info">
+    <strong>Hole View Demo</strong><br>
+    Green: Flag 📍<br>
+    You: Blue dot 🔵<br>
+    Tap map to measure distance
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Example: Pebble Beach, Hole 7
+    const greenLat = 36.5658;
+    const greenLng = -121.9496;
+    const userLat = 36.5670;
+    const userLng = -121.9510;
+
+    const map = L.map('map').setView([36.567, -121.950], 18);
+    
+    // Use satellite view to see actual hole
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Esri',
+      maxZoom: 22
+    }).addTo(map);
+
+    // Green marker
+    L.circleMarker([greenLat, greenLng], {
+      radius: 8,
+      fillColor: '#22c55e',
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).addTo(map).bindPopup('Green Center 🚩');
+
+    // User position marker
+    L.circleMarker([userLat, userLng], {
+      radius: 6,
+      fillColor: '#0066ff',
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).addTo(map).bindPopup('Your Position 📍');
+
+    // Draw initial line from user to green
+    let measurementPolyline = L.polyline(
+      [[userLat, userLng], [greenLat, greenLng]],
+      { color: 'blue', weight: 2, opacity: 0.7 }
+    ).addTo(map);
+
+    // Store current tap marker and label so we can remove them
+    let currentTapMarker = null;
+    let currentLabel = null;
+
+    // Tap to add measurement point
+    map.on('click', (e) => {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+      
+      // Remove previous tap marker and label if they exist
+      if (currentTapMarker) {
+        map.removeLayer(currentTapMarker);
+      }
+      if (currentLabel) {
+        map.removeLayer(currentLabel);
+      }
+
+      // Add new marker at tap location
+      currentTapMarker = L.circleMarker([lat, lng], {
+        radius: 5,
+        fillColor: '#ff9500',
+        color: '#fff',
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.7
+      }).addTo(map);
+
+      // Calculate distance
+      function getDistance(lat1, lon1, lat2, lon2) {
+        const toRad = (v) => (v * Math.PI) / 180;
+        const R = 6371000;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + 
+                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return (R * c) * 1.09361; // meters to yards
+      }
+
+      // You → Tap point
+      const distYards = Math.round(getDistance(userLat, userLng, lat, lng));
+
+      // Add label next to marker
+      currentLabel = L.tooltip({
+        permanent: true,
+        direction: 'right',
+        className: 'distance-label',
+        offset: [15, 0]
+      })
+        .setContent(`<strong>${distYards} yd</strong>`)
+        .setLatLng([lat, lng])
+        .addTo(map);
+
+      // Tap point → Green
+      const dist2 = getDistance(lat, lng, greenLat, greenLng);
+
+      // Update the line to snap through the tap point
+      measurementPolyline.setLatLngs([
+        [userLat, userLng],
+        [lat, lng],
+        [greenLat, greenLng]
+      ]);
+    });
+  </script>
+</body>
+</html>
