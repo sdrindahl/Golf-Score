@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
     const round: Round = await req.json();
     console.log('[DEBUG] Raw incoming round payload:', round);
     console.log('[DEBUG] Incoming round payload (stringified):', JSON.stringify(round));
+    console.log('[DEBUG] perHoleStats from incoming payload:', JSON.stringify((round as any).perHoleStats));
     const validRound = ensureValidTotalScore(round);
     // Debug log for in_progress value and type
     console.log('[DEBUG] Received in_progress:', validRound.in_progress, 'Type:', typeof validRound.in_progress);
@@ -142,6 +143,7 @@ export async function POST(req: NextRequest) {
       // NOTE: course_id column was removed - use round_courses join table instead
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
+    console.log('[DEBUG] per_hole_stats about to be written:', JSON.stringify(roundData.per_hole_stats));
     console.log('[DEBUG] selected_tee value being sent to Supabase:', roundData.selected_tee);
     // Upsert round (only safe fields) - use admin client to bypass RLS
     const { data, error } = await supabaseAdmin
@@ -155,6 +157,9 @@ export async function POST(req: NextRequest) {
       throw error;
     }
     console.log('[DEBUG] ✅ Upsert successful, data returned:', data ? data.length : 0, 'rows');
+    if (data && data.length > 0) {
+      console.log('[DEBUG] Upserted round per_hole_stats returned from DB:', JSON.stringify(data[0].per_hole_stats));
+    }
     let courseIds: string[] = [];
     if (Array.isArray(round.courseId)) {
       courseIds = round.courseId;
