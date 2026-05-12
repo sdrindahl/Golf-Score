@@ -554,7 +554,8 @@ function RoundDetailContent() {
     const savedCourses = localStorage.getItem('golfCourses');
     if (savedCourses && courseIds.length > 1) {
       const allCourses = JSON.parse(savedCourses);
-      const selectedCourses = allCourses.filter((c: any) => courseIds.includes(c.id));
+      // Preserve order of courseIds when finding courses
+      const selectedCourses = courseIds.map((id: string) => allCourses.find((c: any) => c.id === id)).filter(Boolean);
       const ninesArr = selectedCourses.map((c: any) => ({ name: c.name, holes: c.holes }));
       setNines(ninesArr);
     } else {
