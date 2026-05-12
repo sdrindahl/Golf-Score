@@ -146,6 +146,8 @@ export async function POST(req: NextRequest) {
     console.log('[DEBUG] per_hole_stats about to be written:', JSON.stringify(roundData.per_hole_stats));
     console.log('[DEBUG] selected_tee value being sent to Supabase:', roundData.selected_tee);
     // Upsert round (only safe fields) - use admin client to bypass RLS
+    console.log('[DEBUG] UPSERT ABOUT TO EXECUTE - roundData.per_hole_stats type:', typeof roundData.per_hole_stats, 'value:', JSON.stringify(roundData.per_hole_stats));
+    console.log('[DEBUG] roundData.id:', roundData.id, 'Type:', typeof roundData.id);
     const { data, error } = await supabaseAdmin
       .from('rounds')
       .upsert([roundData], { onConflict: 'id' })
@@ -156,9 +158,32 @@ export async function POST(req: NextRequest) {
       console.error('[DEBUG] Upsert error code:', error.code);
       throw error;
     }
-    console.log('[DEBUG] ✅ Upsert successful, data returned:', data ? data.length : 0, 'rows');
+    console.log('[DEBUG] ✅ Upsert returned no error, data rows:', data ? data.length : 0, 'rows');
     if (data && data.length > 0) {
-      console.log('[DEBUG] Upserted round per_hole_stats returned from DB:', JSON.stringify(data[0].per_hole_stats));
+      console.log('[DEBUG] Upsert response per_hole_stats:', JSON.stringify(data[0].per_hole_stats));
+    }
+    
+    // CRITICAL: Verify the write actually happened by doing a read-back
+    console.log('[DEBUG] VERIFICATION: Reading back the round from database to confirm write...');
+    const { data: verifyData, error: verifyError } = await supabaseAdmin
+      .from('rounds')
+      .select('id, per_hole_stats, updated_at')
+      .eq('id', roundData.id)
+      .single();
+    
+    if (verifyError) {
+      console.error('[DEBUG] VERIFICATION ERROR - Could not read back round:', verifyError.message);
+    } else if (verifyData) {
+      console.log('[DEBUG] VERIFICATION READ RESULT:', JSON.stringify(verifyData));
+      const dbPerHoleStats = JSON.stringify(verifyData.per_hole_stats);
+      const sentPerHoleStats = JSON.stringify(roundData.per_hole_stats);
+      if (dbPerHoleStats === sentPerHoleStats) {
+        console.log('[DEBUG] ✅ VERIFICATION PASSED - Database has the NEW data');
+      } else {
+        console.error('[DEBUG] ❌ VERIFICATION FAILED - Database still has OLD data!');
+        console.error('[DEBUG] Expected:', sentPerHoleStats);
+        console.error('[DEBUG] Got from DB:', dbPerHoleStats);
+      }
     }
     let courseIds: string[] = [];
     if (Array.isArray(round.courseId)) {
