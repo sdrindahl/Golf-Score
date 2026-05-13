@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       .eq('user_id', userId)
       .order('date', { ascending: false });
     if (error) return NextResponse.json({ error: error.message, rounds: [] });
-    
+
     // Fetch course IDs for each round from round_courses join table
     if (data && data.length > 0) {
       const roundsWithCourses = await Promise.all(
@@ -26,12 +26,20 @@ export async function POST(req: NextRequest) {
             .select('course_id')
             .eq('round_id', round.id)
             .order('course_order');
-          
+
           if (courseLinks && courseLinks.length > 0) {
             const courseIds = courseLinks.map((rc: any) => rc.course_id);
+            // Always use camelCase 'courseId' for consistency
             return {
               ...round,
-              course_id: courseIds.join(',')
+              courseId: courseIds.join(',')
+            };
+          }
+          // If round already has course_id, rename to courseId for consistency
+          if (round.course_id) {
+            return {
+              ...round,
+              courseId: round.course_id
             };
           }
           return round;
@@ -39,8 +47,18 @@ export async function POST(req: NextRequest) {
       );
       return NextResponse.json({ rounds: roundsWithCourses });
     }
-    
-    return NextResponse.json({ rounds: data });
+
+    // If no rounds or no join table, still normalize course_id to courseId
+    const normalized = (data || []).map((round: any) => {
+      if (round.course_id) {
+        return {
+          ...round,
+          courseId: round.course_id
+        };
+      }
+      return round;
+    });
+    return NextResponse.json({ rounds: normalized });
   } catch (err: any) {
     return NextResponse.json({ error: err.message, rounds: [] });
   }
