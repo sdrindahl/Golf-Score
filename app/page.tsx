@@ -46,14 +46,14 @@ export default function Home() {
           // Map snake_case fields to camelCase for each round
           const mappedRounds = data.rounds.map((r: any) => ({
             id: r.id,
-            userId: r.user_id,
-            userName: r.user_name,
-            courseId: r.course_id,
-            courseName: r.course_name,
-            selectedTee: r.selected_tee,
+            userId: r.user_id || r.userId,
+            userName: r.user_name || r.userName,
+            courseId: r.courseId || r.course_id, // Use camelCase from API, fallback to snake_case
+            courseName: r.courseName || r.course_name,
+            selectedTee: r.selectedTee || r.selected_tee,
             date: r.date,
             scores: r.scores,
-            totalScore: r.total_score,
+            totalScore: r.totalScore || r.total_score,
             notes: r.notes,
             in_progress: r.in_progress,
             perHoleStats: r.perHoleStats || r.per_hole_stats // fallback for perHoleStats if present
