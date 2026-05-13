@@ -163,8 +163,13 @@ export default function Players() {
       const stats: Record<string, { roundCount: number; handicap: number }> = {}
       
       allUsers.forEach(user => {
-        // Rounds from Supabase have snake_case field names
-        const userRounds = allRounds.filter(r => r.user_id === user.id || r.userId === user.id)
+        // Normalize courseId for all rounds (camelCase preferred)
+        const userRounds = allRounds
+          .filter(r => r.user_id === user.id || r.userId === user.id)
+          .map(r => ({
+            ...r,
+            courseId: r.courseId || r.course_id
+          }))
         const roundCount = userRounds.length
         const completedRounds = userRounds.filter(r => !r.in_progress)
 
