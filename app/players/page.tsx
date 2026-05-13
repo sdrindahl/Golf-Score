@@ -350,21 +350,17 @@ export default function Players() {
                   return {
                     ...player,
                     handicap: stats.handicap,
-                    roundCount: stats.roundCount,
                   }
                 })
                 .sort((a, b) => {
                   // Sort by handicap (lowest/best first), then by name alphabetically
                   if (a.handicap !== b.handicap) {
-                    // Both have valid handicaps - sort by best (lowest) first
                     if (a.handicap < 99 && b.handicap < 99) {
                       return a.handicap - b.handicap
                     }
-                    // If one doesn't have a handicap, put it at the end
                     if (a.handicap === 99) return 1
                     if (b.handicap === 99) return -1
                   }
-                  // Same handicap or both have no handicap - sort alphabetically
                   return a.name.localeCompare(b.name)
                 })
 
@@ -444,7 +440,6 @@ export default function Players() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs text-gray-600">{player.roundCount || 0} Round{player.roundCount !== 1 ? 's' : ''}</span>
                                 <span className="text-xs font-semibold text-gray-600">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                               </div>
                               {currentUser?.is_admin && (
@@ -505,7 +500,6 @@ export default function Players() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs text-gray-600">{player.roundCount || 0} Round{player.roundCount !== 1 ? 's' : ''}</span>
                                 <span className="text-xs font-semibold text-gray-600">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                               </div>
                               {currentUser?.is_admin && (
