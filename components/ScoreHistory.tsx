@@ -161,8 +161,20 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
           let childNames: string[] = [];
           if (courses && courses.length && round.courseId) {
             const courseIds = round.courseId.split(',');
-            const childCourses = courses.filter((c: any) => courseIds.includes(c.id));
+            let childCourses = courses.filter((c: any) => courseIds.includes(c.id));
             if (childCourses.length > 0) {
+              // Sort so that 'Front 9' comes before 'Back 9' if both are present
+              childCourses = childCourses.sort((a: any, b: any) => {
+                const aIsFront = /front/i.test(a.name);
+                const bIsFront = /front/i.test(b.name);
+                const aIsBack = /back/i.test(a.name);
+                const bIsBack = /back/i.test(b.name);
+                if (aIsFront && !bIsFront) return -1;
+                if (!aIsFront && bIsFront) return 1;
+                if (aIsBack && !bIsBack) return 1;
+                if (!aIsBack && bIsBack) return -1;
+                return a.name.localeCompare(b.name);
+              });
               // Assume all children have same parent
               const parentId = childCourses[0].parent_id;
               if (parentId) {

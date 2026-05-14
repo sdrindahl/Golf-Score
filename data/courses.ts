@@ -1,7 +1,57 @@
 
 
 export const COURSES_DATABASE: any[] = [
-// Parent course for Bemdji Town and Country Club Golf Course
+
+  {
+    id: 'SCN',
+    name: 'St.Croix National',
+    location: 'Somerset',
+    state: 'WI',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+  {
+        id: '22a',
+        name: 'Front 9',
+        location: 'Somerset',
+        state: 'WI',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'SCN',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 11, greenLat: 45.09497154156926, greenLng: -92.73039222370161, men: { yardage: 346, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 320, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 320, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 389, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 2, par: 4, handicap: 13, greenLat: 45.09545877563691, greenLng: -92.72633673373689, men: { yardage: 328, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 320, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 320, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 336, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 3, par: 3, handicap: 15, greenLat: 45.09468671266449, greenLng: -92.72554301891878, men: { yardage: 194, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 141, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 141, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 212, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 4, par: 5, handicap: 3, greenLat: 45.09907884152735, greenLng: -92.72530991468277, men: { yardage: 560, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 497, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 497, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 569, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 5, par: 4, handicap: 9, greenLat: 45.09997723021906, greenLng: -92.72175791645567, men: { yardage: 404, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 390, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 390, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 418, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 6, par: 5, handicap: 1, greenLat: 45.09531328040392, greenLng: -92.72355738477701, men: { yardage: 557, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 543, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 543, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 576, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 7, par: 3, handicap: 17, greenLat: 45.09397731723371, greenLng: -92.72361469404954, men: { yardage: 142, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 128, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 128, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 152, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 8, par: 4, handicap: 5, greenLat: 45.0938265372735, greenLng: -92.72747019850564, men: { yardage: 389, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 352, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 352, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 428, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 9, par: 4, handicap: 7, greenLat: 45.092619588122794, greenLng: -92.73077648119647, men: { yardage: 388, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 366, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 366, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 426, courseRating: 73.9, slopeRating: 137 } },
+        ],
+      },
+      {
+        id: '22b',
+        name: 'Back 9',
+        location: 'Somerset',
+        state: 'WI',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'SCN',
+        holes: [
+          { holeNumber: 10, par: 4, handicap: 10, greenLat: 45.08836282291111, greenLng: -92.73174450771467, men: { yardage: 400, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 382, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 382, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 428, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 11, par: 4, handicap: 14, greenLat: 45.08600205543186, greenLng: -92.73358806990004, men: { yardage: 297, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 277, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 277, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 311, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 12, par: 5, handicap: 2, greenLat: 45.0830718646671, greenLng: -92.7353222233569, men: { yardage: 490, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 476, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 476, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 507, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 13, par: 4, handicap: 8, greenLat: 45.08655042857088, greenLng: -92.73564458699124, men: { yardage: 412, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 371, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 371, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 442, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 14, par: 4, handicap: 6, greenLat: 45.091307656085554, greenLng: -92.73395226626654, men: { yardage: 397, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 361, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 361, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 421, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 15, par: 3, handicap: 18, greenLat: 45.08990390249534, greenLng: -92.73308415333359, men: { yardage: 136, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 116, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 116, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 149, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 16, par: 4, handicap: 12, greenLat: 45.085999778144966, greenLng: -92.73440381421186, men: { yardage: 382, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 373, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 373, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 395, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 17, par: 3, handicap: 16, greenLat: 45.08718690282837, greenLng: -92.73540949734051, men: { yardage: 182, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 174, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 174, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 190, courseRating: 73.9, slopeRating: 137 } },
+          { holeNumber: 18, par: 5, handicap: 4, greenLat: 45.09184335916198, greenLng: -92.73398566515127, men: { yardage: 540, courseRating: 72.1, slopeRating: 133 }, women: { yardage: 515, courseRating: 75.6, slopeRating: 135 }, senior: { yardage: 515, courseRating: 70.3, slopeRating: 130 }, championship: { yardage: 560, courseRating: 73.9, slopeRating: 137 } },
+        ],
+      },
+
   {
     id: 'BTCC',
     name: 'Bemidji Town and Country Club',
