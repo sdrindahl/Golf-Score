@@ -59,36 +59,27 @@ export default function CourseInitializer() {
           if (Array.isArray(courses) && courses.length === 0) {
             localStorage.setItem('golfCourses', JSON.stringify(COURSES_DATABASE))
           } else if (Array.isArray(courses)) {
-            // Merge new courses from COURSES_DATABASE into localStorage without overwriting existing ones
-            const existingIds = new Set(courses.map((c: any) => c.id))
-            let merged = [...courses]
-            let added = 0
+            // Overwrite all official courses (by id) with the latest from COURSES_DATABASE
+            const dbById = Object.fromEntries(COURSES_DATABASE.map(c => [c.id, c]))
+            const merged = courses.map((course: any) => {
+              if (dbById[course.id]) {
+                // Overwrite with latest official data
+                return dbById[course.id]
+              }
+              // Preserve user-created/custom courses
+              return course
+            })
+            // Add any new official courses not present in localStorage
             for (const newCourse of COURSES_DATABASE) {
-              if (!existingIds.has(newCourse.id)) {
+              if (!merged.some((c: any) => c.id === newCourse.id)) {
                 merged.push(newCourse)
-                added++
                 console.log(`🆕 Added new course to localStorage: ${newCourse.name} (${newCourse.id})`)
               }
             }
-            // Migrate old courses to new tee box structure
-            const migratedCourses = merged.map((course: any) => {
-              if (!course.holes || course.holes.length === 0) return course
-              const firstHole = course.holes[0]
-              // Check if holes have old structure (flat yardage) instead of tee boxes
-              if (firstHole && 'yardage' in firstHole && !('men' in firstHole)) {
-                console.log(`⚠️ CourseInitializer - Migrating course ${course.name} to new tee box structure`)
-                // Find the matching course from COURSES_DATABASE to get the proper structure
-                const sourceCourse = COURSES_DATABASE.find(c => c.id === course.id)
-                if (sourceCourse) {
-                  return sourceCourse
-                }
-              }
-              return course
-            })
-            // If any migrations or additions occurred, update localStorage
-            if (JSON.stringify(courses) !== JSON.stringify(migratedCourses) || added > 0) {
-              console.log('💾 CourseInitializer - Updated courses to include new and migrated courses')
-              localStorage.setItem('golfCourses', JSON.stringify(migratedCourses))
+            // If any changes occurred, update localStorage
+            if (JSON.stringify(courses) !== JSON.stringify(merged)) {
+              console.log('💾 CourseInitializer - Synced all official courses to latest version')
+              localStorage.setItem('golfCourses', JSON.stringify(merged))
             }
           }
         } catch (error) {
