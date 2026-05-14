@@ -26,12 +26,21 @@ function RoundDetailContent() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [showEditHelpModal, setShowEditHelpModal] = useState(false)
 
+  // Now safe to log isEditMode and other debug info
+  console.log('[DEBUG] RoundDetailContent mounted');
+  console.log('[DEBUG] isEditMode (on mount):', isEditMode);
+  console.log('[DEBUG] roundId:', roundId);
+
   // Polling interval in ms
   const REFRESH_INTERVAL = 5000; // 5 seconds
 
   // Helper function to refresh round data from API
   const refreshRoundFromAPI = async () => {
-    if (!roundId) return;
+    if (!roundId) {
+      console.log('[DEBUG] refreshRoundFromAPI: roundId missing, skipping fetch');
+      return;
+    }
+    console.log('[DEBUG] refreshRoundFromAPI: Calling fetch for roundId', roundId);
     try {
       console.log('[DEBUG] Refreshing round data from API...')
       // Add timestamp to cache-bust the request
@@ -101,127 +110,130 @@ function RoundDetailContent() {
   }
 
   useEffect(() => {
+    console.log('[DEBUG] useEffect triggered: roundId =', roundId, 'isEditMode =', isEditMode);
     if (!roundId) return;
 
     let isMounted = true;
-    let intervalId: NodeJS.Timeout | null = null;
 
-    const fetchRound = async () => {
-        // Only fetch if NOT in edit mode
-        if (isEditMode) return;
+    // Only fetch if NOT in edit mode
+    if (isEditMode) return;
 
-        // Get current user for permission checking
-        const user = auth.getCurrentUser();
-        if (isMounted) setCurrentUser(user);
+    // Get current user for permission checking
+    const user = auth.getCurrentUser();
+    if (isMounted) setCurrentUser(user);
 
-        try {
-          console.log('[DEBUG] round-detail: Fetching fresh round data from API for id:', roundId)
-          const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
-          
-          if (!res.ok) {
-            console.warn('[DEBUG] round-detail: API returned non-ok status:', res.status)
-            if (isMounted) setRound(null);
-            return;
-          }
-          
-          const responseData = await res.json()
-          console.log('[DEBUG] round-detail: API response:', responseData)
-          
-          const data = responseData.round
-          const apiCourses = responseData.courses
-          
-          if (data && data.id) {
-            console.log('[DEBUG] round-detail: Processing round data:', data.id)
-            let courseIds: string[] = [];
-            if (apiCourses && apiCourses.length > 0) {
-              courseIds = apiCourses.map((c: any) => c.id)
-            } else if (data.course_id) {
-              courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
-            }
-            // Convert snake_case to camelCase and map per_hole_stats
-            let camelRound: Round = {
-              id: data.id,
-              userId: data.user_id,
-              userName: data.user_name,
-              courseId: courseIds.join(','),
-              courseName: data.course_name,
-              selectedTee: data.selected_tee,
-              date: data.date,
-              scores: data.scores,
-              totalScore: data.total_score,
-              notes: data.notes,
-              in_progress: data.in_progress,
-              perHoleStats: data.per_hole_stats || [],
-            };
-            console.log('[DEBUG] Loaded perHoleStats from API:', JSON.stringify(camelRound.perHoleStats));
-            
-            // Ensure perHoleStats array has proper structure (preserves conceded flag)
-            const ensuredRound = {
-              ...camelRound,
-              perHoleStats: (camelRound.perHoleStats || []).map((stat: any) => ({
-                ...stat, // Preserve all existing properties including 'conceded'
-              })) || [],
-            };
-            console.log('[DEBUG] After ensuring structure, perHoleStats:', JSON.stringify(ensuredRound.perHoleStats));
-            
-            if (isMounted) {
-              setRound(ensuredRound);
-              
-              // Also sync back to localStorage so local edits work
-              const savedRoundsStr = localStorage.getItem('golfRounds')
-              if (savedRoundsStr) {
-                try {
-                  const allRounds = JSON.parse(savedRoundsStr) as Round[]
-                  const updated = allRounds.map((r: Round) => r.id === roundId ? ensuredRound : r)
-                  localStorage.setItem('golfRounds', JSON.stringify(updated))
-                } catch (e) {
-                  console.warn('[DEBUG] Could not sync to localStorage:', e)
-                }
-              }
-            }
-
-            // Fetch course info from localStorage
-            const savedCourses = localStorage.getItem('golfCourses');
-            if (savedCourses) {
-              const allCourses = JSON.parse(savedCourses) as Course[];
-              let foundCourse: Course | null = null;
-              const courseIdsArr = courseIds;
-              if (courseIdsArr.length > 1) {
-                const selectedCourses = allCourses.filter(c => courseIdsArr.includes(c.id));
-                if (selectedCourses.length > 0) {
-                  foundCourse = {
-                    ...selectedCourses[0],
-                    id: courseIdsArr.join(','),
-                    name: ensuredRound.courseName || 'Combined Course',
-                    holes: selectedCourses.flatMap(c => c.holes),
-                    holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
-                    par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
-                  };
-                }
-              } else {
-                foundCourse = allCourses.find(c => c.id === ensuredRound.courseId) || null;
-              }
-              if (foundCourse && isMounted) {
-                setCourse(foundCourse);
-              }
-            }
-          } else {
-            console.warn('[DEBUG] round-detail: No round data in response:', responseData)
-            if (isMounted) setRound(null);
-          }
-        } catch (error) {
-          console.error('[DEBUG] Error loading round detail:', error);
-        } finally {
-          if (isMounted) setLoading(false);
+    const fetchData = async () => {
+      try {
+        console.log('[DEBUG] round-detail: Fetching fresh round data from API for id:', roundId)
+        const res = await fetch(`/api/get-round?id=${roundId}`, { cache: 'no-store' })
+        if (!res.ok) {
+          console.warn('[DEBUG] round-detail: API returned non-ok status:', res.status)
+          if (isMounted) setRound(null);
+          return;
         }
+
+        // Log all response headers for debugging
+        for (const [key, value] of res.headers.entries()) {
+          console.log(`[DEBUG] API response header: ${key}: ${value}`);
+        }
+
+        const responseData = await res.json()
+        console.log('[DEBUG] round-detail: API response (first load):', JSON.stringify(responseData, null, 2))
+
+        const data = responseData.round
+        const apiCourses = responseData.courses
+
+        if (data && data.id) {
+          console.log('[DEBUG] round-detail: Processing round data:', data.id)
+          let courseIds: string[] = [];
+          if (apiCourses && apiCourses.length > 0) {
+            courseIds = apiCourses.map((c: any) => c.id)
+          } else if (data.course_id) {
+            courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+          }
+          // Convert snake_case to camelCase and map per_hole_stats
+          let camelRound: Round = {
+            id: data.id,
+            userId: data.user_id,
+            userName: data.user_name,
+            courseId: courseIds.join(','),
+            courseName: data.course_name,
+            selectedTee: data.selected_tee,
+            date: data.date,
+            scores: data.scores,
+            totalScore: data.total_score,
+            notes: data.notes,
+            in_progress: data.in_progress,
+            perHoleStats: data.per_hole_stats || [],
+          };
+          console.log('[DEBUG] Loaded perHoleStats from API:', JSON.stringify(camelRound.perHoleStats));
+
+          // Ensure perHoleStats array has proper structure (preserves conceded flag)
+          const ensuredRound = {
+            ...camelRound,
+            perHoleStats: (camelRound.perHoleStats || []).map((stat: any) => ({
+              ...stat, // Preserve all existing properties including 'conceded'
+            })) || [],
+          };
+          console.log('[DEBUG] After ensuring structure, perHoleStats:', JSON.stringify(ensuredRound.perHoleStats));
+
+          if (isMounted) {
+            setRound(ensuredRound);
+
+            // Also sync back to localStorage so local edits work
+            const savedRoundsStr = localStorage.getItem('golfRounds')
+            if (savedRoundsStr) {
+              try {
+                const allRounds = JSON.parse(savedRoundsStr) as Round[]
+                const updated = allRounds.map((r: Round) => r.id === roundId ? ensuredRound : r)
+                localStorage.setItem('golfRounds', JSON.stringify(updated))
+              } catch (e) {
+                console.warn('[DEBUG] Could not sync to localStorage:', e)
+              }
+            }
+          }
+
+          // Fetch course info from localStorage
+          const savedCourses = localStorage.getItem('golfCourses');
+          if (savedCourses) {
+            const allCourses = JSON.parse(savedCourses) as Course[];
+            let foundCourse: Course | null = null;
+            const courseIdsArr = courseIds;
+            if (courseIdsArr.length > 1) {
+              const selectedCourses = allCourses.filter(c => courseIdsArr.includes(c.id));
+              if (selectedCourses.length > 0) {
+                foundCourse = {
+                  ...selectedCourses[0],
+                  id: courseIdsArr.join(','),
+                  name: ensuredRound.courseName || 'Combined Course',
+                  holes: selectedCourses.flatMap(c => c.holes),
+                  holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
+                  par: selectedCourses.reduce((sum, c) => sum + (c.par || 0), 0),
+                };
+              }
+            } else {
+              foundCourse = allCourses.find(c => c.id === ensuredRound.courseId) || null;
+            }
+            if (foundCourse && isMounted) {
+              setCourse(foundCourse);
+            }
+          }
+        } else {
+          console.warn('[DEBUG] round-detail: No round data in response:', responseData)
+          if (isMounted) setRound(null);
+        }
+      } catch (error) {
+        console.error('[DEBUG] Error loading round detail:', error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     };
 
-    fetchRound();
-    intervalId = setInterval(fetchRound, REFRESH_INTERVAL);
+    fetchData();
 
+    // Cleanup function
     return () => {
       isMounted = false;
-      if (intervalId) clearInterval(intervalId);
     };
   }, [roundId, isEditMode]);
 
@@ -508,12 +520,20 @@ function RoundDetailContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(round),
       })
-      
+
+      // Log all response headers for debugging
+      for (const [key, value] of saveRes.headers.entries()) {
+        console.log(`[DEBUG] save-round API response header: ${key}: ${value}`);
+      }
+
+      const saveResJson = await saveRes.clone().json().catch(() => ({}));
+      console.log('[DEBUG] save-round API response body:', JSON.stringify(saveResJson, null, 2));
+
       if (!saveRes.ok) {
-        const errorData = await saveRes.json()
+        const errorData = saveResJson
         throw new Error(`Save failed: ${saveRes.status} - ${errorData.error || 'Unknown error'}`)
       }
-      
+
       // Clean up edit state before redirecting
       exitEditMode()
       setHasUnsavedChanges(false)
@@ -555,7 +575,19 @@ function RoundDetailContent() {
     if (savedCourses && courseIds.length > 1) {
       const allCourses = JSON.parse(savedCourses);
       // Preserve order of courseIds when finding courses
-      const selectedCourses = courseIds.map((id: string) => allCourses.find((c: any) => c.id === id)).filter(Boolean);
+      let selectedCourses = courseIds.map((id: string) => allCourses.find((c: any) => c.id === id)).filter(Boolean);
+      // Sort so that 'Front 9' comes before 'Back 9' if both are present
+      selectedCourses = selectedCourses.sort((a: any, b: any) => {
+        const aIsFront = /front/i.test(a.name);
+        const bIsFront = /front/i.test(b.name);
+        const aIsBack = /back/i.test(a.name);
+        const bIsBack = /back/i.test(b.name);
+        if (aIsFront && !bIsFront) return -1;
+        if (!aIsFront && bIsFront) return 1;
+        if (aIsBack && !bIsBack) return 1;
+        if (!aIsBack && bIsBack) return -1;
+        return a.name.localeCompare(b.name);
+      });
       const ninesArr = selectedCourses.map((c: any) => ({ name: c.name, holes: c.holes }));
       setNines(ninesArr);
     } else {

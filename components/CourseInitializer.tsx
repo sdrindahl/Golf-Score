@@ -59,10 +59,20 @@ export default function CourseInitializer() {
           if (Array.isArray(courses) && courses.length === 0) {
             localStorage.setItem('golfCourses', JSON.stringify(COURSES_DATABASE))
           } else if (Array.isArray(courses)) {
+            // Merge new courses from COURSES_DATABASE into localStorage without overwriting existing ones
+            const existingIds = new Set(courses.map((c: any) => c.id))
+            let merged = [...courses]
+            let added = 0
+            for (const newCourse of COURSES_DATABASE) {
+              if (!existingIds.has(newCourse.id)) {
+                merged.push(newCourse)
+                added++
+                console.log(`🆕 Added new course to localStorage: ${newCourse.name} (${newCourse.id})`)
+              }
+            }
             // Migrate old courses to new tee box structure
-            const migratedCourses = courses.map((course: any) => {
+            const migratedCourses = merged.map((course: any) => {
               if (!course.holes || course.holes.length === 0) return course
-              
               const firstHole = course.holes[0]
               // Check if holes have old structure (flat yardage) instead of tee boxes
               if (firstHole && 'yardage' in firstHole && !('men' in firstHole)) {
@@ -75,10 +85,9 @@ export default function CourseInitializer() {
               }
               return course
             })
-            
-            // If any migrations occurred, update localStorage
-            if (JSON.stringify(courses) !== JSON.stringify(migratedCourses)) {
-              console.log('💾 CourseInitializer - Updated courses to new structure')
+            // If any migrations or additions occurred, update localStorage
+            if (JSON.stringify(courses) !== JSON.stringify(migratedCourses) || added > 0) {
+              console.log('💾 CourseInitializer - Updated courses to include new and migrated courses')
               localStorage.setItem('golfCourses', JSON.stringify(migratedCourses))
             }
           }
