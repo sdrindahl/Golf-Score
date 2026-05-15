@@ -26,12 +26,19 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
     // Prevent double initialization in React strict mode
     if (map.current) return;
 
+    // Defensive: check all coordinates are valid numbers
+    const allCoords = [userLat, userLng, greenLat, greenLng];
+    const allValid = allCoords.every((v) => typeof v === 'number' && !isNaN(v));
+    if (!allValid) {
+      console.warn('HoleMap: Invalid coordinates, skipping map initialization:', { userLat, userLng, greenLat, greenLng });
+      setIsLoading(false);
+      return;
+    }
+
     // Dynamically import Leaflet only on client
     import('leaflet').then((leaflet) => {
       const L = leaflet.default;
-      
       if (!mapContainer.current) return;
-
       // Double-check map isn't already initialized (race condition safety)
       if (map.current) return;
 
@@ -149,11 +156,11 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   }, [userLat, userLng, greenLat, greenLng]);
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div ref={mapContainer} className="flex-1" style={{ height: '400px' }} />
+    <div>
+      <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
-          <div className="text-gray-600">Loading map...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="text-white">Loading map...</div>
         </div>
       )}
     </div>

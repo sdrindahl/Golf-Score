@@ -1,4 +1,6 @@
+
 'use client'
+
 
 import { useState, useEffect, useRef, Suspense } from 'react';
 
@@ -48,7 +50,7 @@ function TrackRoundContent() {
   const [scores, setScores] = useState<number[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
-  const [showHoleMap, setShowHoleMap] = useState(false);
+  // Removed showHoleMap logic: map is always visible
   const [showDriveHelp, setShowDriveHelp] = useState(false);
   const [driveHelpDismissed, setDriveHelpDismissed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -58,17 +60,29 @@ function TrackRoundContent() {
   });
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   // Per-hole stats: FIR, GIR, puttDistances, drive tracking
-  const [perHoleStats, setPerHoleStats] = useState<{
-    fairwayHit?: 'hit' | 'L' | 'R';
-    gir?: boolean;
-    puttDistances?: number[];
-    puttExpanded?: number | null; // index of expanded putt, or null if all collapsed
-    drive?: {
-      start?: { lat: number; lng: number };
-      end?: { lat: number; lng: number };
-      yardage?: number;
-    };
-  }[]>([]);
+  // Define a stricter type for per-hole stats
+  type PerHoleStat = {
+    fairwayHit: 'hit' | 'L' | 'R' | null;
+    gir: boolean;
+    puttDistances: number[];
+    puttExpanded: number | null; // index of expanded putt, or null if all collapsed
+    drive: {
+      start: { lat: number; lng: number } | null;
+      end: { lat: number; lng: number } | null;
+      yardage: number | null;
+    } | null;
+  };
+
+  // Helper to create a default PerHoleStat
+  const defaultPerHoleStat = (): PerHoleStat => ({
+    fairwayHit: null,
+    gir: false,
+    puttDistances: [],
+    puttExpanded: null,
+    drive: null,
+  });
+
+  const [perHoleStats, setPerHoleStats] = useState<PerHoleStat[]>([]);
   // Drive tracking state - now captures tee location first
   // Drive tracking state (no longer used - kept for compatibility)
   // const [isTrackingDrive, setIsTrackingDrive] = useState(false);
@@ -143,11 +157,13 @@ function TrackRoundContent() {
 
     setPerHoleStats(stats => {
       const updated = [...stats];
+      // Ensure stat exists
+      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
       updated[currentHoleIndex] = {
         ...updated[currentHoleIndex],
         drive: {
-          start: { ...userLocation }, // Ball location
-          end: undefined,
+          start: { ...userLocation },
+          end: null,
           yardage: finalDriveDistance,
         },
       };
@@ -159,7 +175,8 @@ function TrackRoundContent() {
   const handleDiscardDrive = () => {
     setPerHoleStats(stats => {
       const updated = [...stats];
-      updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: undefined };
+      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+      updated[currentHoleIndex] = { ...updated[currentHoleIndex], drive: null };
       return updated;
     });
   };
@@ -328,60 +345,11 @@ function TrackRoundContent() {
   useEffect(() => {
     if (!roundId || !isClient) return;
     localStorage.setItem(`currentHoleIndex_${roundId}`, currentHoleIndex.toString());
-    
-    // Notify NavBar about current hole position
-    if (course) {
-      const isLastHole = currentHoleIndex === course.holes.length - 1;
-      window.dispatchEvent(new CustomEvent('holeIndexChanged', { 
-        detail: { 
-          currentHoleIndex, 
-          totalHoles: course.holes.length,
-          isLastHole 
-        } 
-      }));
-    }
-  }, [currentHoleIndex, roundId, isClient, course]);
+  }, [currentHoleIndex, roundId, isClient]);
 
-  // Listen for navigation events from NavBar
-  useEffect(() => {
-    if (!isClient || !course) return;
-    
-    const handlePreviousFromNav = () => {
-      if (currentHoleIndex > 0) {
-        setCurrentHoleIndex(currentHoleIndex - 1);
-      }
-    };
-    
-    const handleNextFromNav = () => {
-      if (currentHoleIndex < course.holes.length - 1 && scores[currentHoleIndex] > 0) {
-        setCurrentHoleIndex(currentHoleIndex + 1);
-      }
-    };
 
-    const handleOpenMap = () => {
-      setShowHoleMap(prev => !prev);
-    };
-    
-    window.addEventListener('navigatePreviousHole', handlePreviousFromNav);
-    window.addEventListener('navigateNextHole', handleNextFromNav);
-    window.addEventListener('toggleHoleMap', handleOpenMap);
-    
-    return () => {
-      window.removeEventListener('navigatePreviousHole', handlePreviousFromNav);
-      window.removeEventListener('navigateNextHole', handleNextFromNav);
-      window.removeEventListener('toggleHoleMap', handleOpenMap);
-    };
-  }, [isClient, currentHoleIndex, scores, course]);
 
-  // Notify NavBar when map state changes
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent('mapStateChanged', {
-      detail: { 
-        isOpen: showHoleMap,
-        currentHole: course?.holes?.[currentHoleIndex]?.holeNumber || currentHoleIndex + 1
-      }
-    }));
-  }, [showHoleMap, course, currentHoleIndex]);
+
 
   // Helper function to find the first unscored hole (next hole to play)
   const getNextUnscoredholeIndex = (roundScores: number[]): number => {
@@ -425,26 +393,19 @@ function TrackRoundContent() {
       if (found && found.scores) {
         const savedStats = found.perHoleStats || found.per_hole_stats || [];
         if (Array.isArray(savedStats) && savedStats.length === found.scores.length) {
-          // Use saved stats if available and correct length
-          setPerHoleStats(savedStats);
+          // Use saved stats if available and correct length, but fill with defaults for missing fields
+          setPerHoleStats(savedStats.map((stat: any) => ({
+            ...defaultPerHoleStat(),
+            ...stat,
+            drive: stat?.drive ?? null,
+            puttDistances: Array.isArray(stat?.puttDistances) ? stat.puttDistances : [],
+            fairwayHit: stat?.fairwayHit ?? null,
+            gir: stat?.gir ?? false,
+            puttExpanded: typeof stat?.puttExpanded === 'number' ? stat.puttExpanded : null,
+          })));
         } else {
-          // Create empty stats for any missing entries
-          setPerHoleStats((prev) => {
-            const result = Array(found.scores.length).fill({});
-            // Preserve any existing stats that match
-            if (prev.length === found.scores.length) {
-              return prev;
-            }
-            // Copy over saved stats if available
-            if (Array.isArray(savedStats)) {
-              savedStats.forEach((stat, idx) => {
-                if (idx < result.length) {
-                  result[idx] = stat || {};
-                }
-              });
-            }
-            return result;
-          });
+          // Create default stats for all holes
+          setPerHoleStats(Array(found.scores.length).fill(0).map(() => defaultPerHoleStat()));
         }
       }
       setLoading(false);
@@ -857,388 +818,87 @@ function TrackRoundContent() {
           </button>
         </div>
       )}
-      
-      <div className="max-w-2xl mx-auto py-4">
-        {/* Custom condensed header */}
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-black text-center mb-2">
-            {(() => {
-              if (!course) return '';
-              // Try to get parent name from localStorage courses
-              const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
-              if (savedCourses && course.parent_id) {
-                try {
-                  const allCourses = JSON.parse(savedCourses);
-                  const parent = allCourses.find((c: any) => c.id === course.parent_id);
-                  if (parent && parent.name) return parent.name;
-                } catch { }
-              }
-              // Fallback to course name
-              return course.name;
-            })()}
-          </h1>
-        </div>
-        {/* Tee Selection Display */}
-        <div className="text-center mb-4">
-          <p className="text-sm text-black font-semibold">
-            {selectedTee ? `${selectedTee.charAt(0).toUpperCase() + selectedTee.slice(1)}'s Tee` : 'Tee Selection'}
-          </p>
-        </div>
-        {/* Summary Bar */}
-        <div className="grid grid-cols-3 gap-2 mb-6">
-          <div className="p-2 bg-green-50 rounded-lg text-center border border-l-4 border-l-green-600 border-gray-200">
-            <p className="text-gray-700 text-xs font-semibold">SCORE</p>
-            <p className="text-2xl font-bold text-green-700">
-              {scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0)}
-            </p>
-          </div>
-          <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-purple-600 border-gray-200">
-            <p className="text-gray-700 text-xs font-semibold">vs PAR</p>
-            <p className={`text-2xl font-bold ${(() => {
-              const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
-              const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
-              const diff = totalScore - totalPar;
-              return diff < 0 ? 'text-green-700' : diff > 0 ? 'text-red-700' : 'text-gray-700';
-            })()}`}>
-              {(() => {
-                const totalScore = scores.reduce((sum, score) => sum + (score > 0 ? score : 0), 0);
-                const totalPar = course.holes.reduce((sum, hole, idx) => scores[idx] > 0 ? sum + hole.par : sum, 0);
-                const diff = totalScore - totalPar;
-                if (diff === 0) return 'E';
-                if (diff > 0) return '+' + diff;
-                // Only show -N for reasonable values, never large negatives
-                if (diff < 0 && diff > -20) return diff;
-                return 'E';
-              })()}
-            </p>
-          </div>
-          <div className="p-2 bg-white rounded-lg text-center border border-l-4 border-l-blue-600 border-gray-200">
-            <p className="text-gray-700 text-xs font-semibold">HOLES</p>
-            <p className="text-2xl font-bold text-blue-700">
-              {scores.filter(s => s > 0).length}/{course.holes.length}
-            </p>
-          </div>
-        </div>
 
-
-
-        {/* Holes Completed Card (responsive grid, never runs off card) */}
-        {/* Incomplete warning */}
-        {showIncompleteWarning && !allScored && (
-          <div className="mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900 rounded">
-            You haven&apos;t entered scores for all holes.
-          </div>
-        )}
-        <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50 relative">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowCommentsModal(true)}
-                className="absolute left-6 top-1 flex items-center gap-1 hover:opacity-70 transition-opacity"
-              >
-                <span className="text-lg">💬</span>
-                {commentCount > 0 && (
-                  <span className="text-xs font-semibold text-blue-700">{commentCount}</span>
-                )}
-              </button>
-            </div>
-            <span className="font-semibold text-green-900 text-base">Holes Completed</span>
-            <div className="flex-1" />
-            <div className="flex flex-col items-center">
-              <span className="text-black text-xs mb-0.5">Center of Green</span>
-              <span className="bg-green-100 rounded-full px-5 py-1 font-bold text-green-900 text-xl flex items-center min-w-[80px] justify-center border border-green-300">
-                {(() => {
-                  const hole = course.holes[currentHoleIndex];
-                  if (!hole || !userLocation || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
-                  const dist = getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng);
-                  return Math.round(dist) + ' yd';
-                })()}
-              </span>
-            </div>
-          </div>
+      {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
+      <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
+        {/* Map always visible as background */}
+        <div className="absolute inset-0 z-0">
           {(() => {
-            const holes = course.holes;
-            const getResultLabel = (score: number, par: number) => {
-              if (!score) return '';
-              const diff = score - par;
-              if (score === 1) return 'A';      // Ace
-              if (diff <= -3) return 'Alb';     // Albatross
-              if (diff === -2) return 'E';      // Eagle
-              if (diff === -1) return 'B';      // Birdie
-              if (diff === 0) return 'P';       // Par
-              if (diff === 1) return 'Bo';      // Bogey
-              if (diff === 2) return 'Db';      // Double Bogey
-              if (diff > 2) return 'Tb';        // Triple+ Bogey
-              return '';
-            };
-            const getColorClass = (score: number, par: number, isCurrent: boolean) => {
-              if (!score) return 'bg-gray-50 border-gray-300 text-gray-700';
-              const diff = score - par;
-              if (score === 1) return 'bg-purple-600 text-white';
-              if (diff <= -3) return 'bg-blue-900 text-white';
-              if (diff === -2) return 'bg-blue-600 text-white';
-              if (diff === -1) return 'bg-green-600 text-white';
-              if (diff === 0) return 'bg-gray-500 text-white';
-              if (diff === 1) return 'bg-orange-500 text-white';
-              if (diff === 2) return 'bg-red-600 text-white';
-              if (diff > 2) return 'bg-red-800 text-white';
-              return 'bg-gray-50 border-gray-300 text-gray-700';
-            };
-            // Responsive grid for holes
-            const renderHoleSquare = (hole: import('@/types').Hole, idx: number) => {
-              const score = scores[idx];
-              const par = hole.par;
-              const isCurrent = currentHoleIndex === idx;
-              const label = getResultLabel(score, par);
-              const colorClass = getColorClass(score, par, isCurrent);
+            const hole = course.holes[currentHoleIndex];
+            const hasValidGreen =
+              hole &&
+              typeof hole.greenLat === 'number' &&
+              !isNaN(hole.greenLat) &&
+              typeof hole.greenLng === 'number' &&
+              !isNaN(hole.greenLng);
+            const hasValidUser =
+              userLocation &&
+              typeof userLocation.lat === 'number' &&
+              !isNaN(userLocation.lat) &&
+              typeof userLocation.lng === 'number' &&
+              !isNaN(userLocation.lng);
+            if (!hasValidGreen || !hasValidUser) {
               return (
-                <button
-                  key={hole.holeNumber}
-                  className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg border font-bold text-xs sm:text-base transition p-0 ${colorClass} ${isCurrent ? 'ring-2 ring-green-600' : ''}`}
-                  style={{ minWidth: '2.5rem', minHeight: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}
-                  onClick={() => setCurrentHoleIndex(idx)}
-                >
-                  <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-gray-700" style={{ letterSpacing: '0.02em' }}>{hole.holeNumber}</span>
-                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-base sm:text-lg font-extrabold w-full text-center">{score > 0 ? score : ''}</span>
-                  </span>
-                  <span className="absolute left-0 right-0 text-[9px] font-medium break-words text-center w-full text-black" style={{ bottom: 0 }}>{score > 0 ? label : ''}</span>
-                </button>
-              );
-            };
-            // Dynamically label each 9 based on selected courses
-            let nineLabels: string[] = [];
-            if (course && typeof window !== 'undefined') {
-              const savedCourses = localStorage.getItem('golfCourses');
-              if (savedCourses) {
-                try {
-                  const allCourses = JSON.parse(savedCourses);
-                  // Get the courseIds used to merge this course
-                  const courseIds = course.id.split(',').map((id: string) => id.trim()).filter(Boolean);
-                  nineLabels = courseIds.map((id: string) => {
-                    const c = allCourses.find((cc: any) => cc.id === id);
-                    return c && c.name ? c.name : '';
-                  });
-                } catch { }
-              }
-            }
-            // Render each 9 with its label and holes
-            const nines = [];
-            for (let i = 0; i < Math.ceil(holes.length / 9); i++) {
-              const label = nineLabels[i] || `Nine ${i + 1}`;
-              const nineHoles = holes.slice(i * 9, (i + 1) * 9);
-              const nineStartIndex = i * 9;
-              const nineEndIndex = nineStartIndex + nineHoles.length - 1;
-              const isCurrentNine = currentHoleIndex >= nineStartIndex && currentHoleIndex <= nineEndIndex;
-              nines.push(
-                <div key={i} className={`p-3 pr-4 rounded-lg transition ${isCurrentNine ? 'bg-green-200 border-2 border-green-700' : 'bg-transparent border border-transparent'}`}>
-                  <div className={`mb-0.5 font-bold text-xs ${isCurrentNine ? 'text-green-900 text-sm' : 'text-green-700'}`}>
-                    {isCurrentNine && '▶ '}{label}{isCurrentNine && ' ◀'}
-                  </div>
-                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {nineHoles.map((hole, idx) => renderHoleSquare(hole, nineStartIndex + idx))}
+                <div style={{ width: '100vw', height: '100vh', background: 'black', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
+                  <div className="flex items-center justify-center w-full h-full">
+                    <div className="text-white text-lg animate-pulse">Loading map...</div>
                   </div>
                 </div>
               );
             }
-            return <>{nines}</>;
+            return (
+              <HoleMap
+                userLat={userLocation?.lat}
+                userLng={userLocation?.lng}
+                greenLat={hole?.greenLat}
+                greenLng={hole?.greenLng}
+                holeName={`Hole ${hole?.holeNumber || ''}`}
+
+
+              />
+            );
           })()}
         </div>
 
-        {/* Per-Hole Entry Card (styled, advanced stats, production layout) */}
-        {/* Per-Hole Main Card: Hole, Par, Yards, Score Stepper */}
-        {course.holes[currentHoleIndex] && (
-          <div className="mb-4 p-6 rounded-xl border-2 border-green-600 bg-green-50 flex items-center justify-between">
-            <div>
-              <span className="font-bold text-xl block">Hole {course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}</span>
-              <div className="mt-1 flex flex-row items-baseline gap-4">
-                <span className="text-black text-lg">Par {course.holes[currentHoleIndex]?.par || '-'}</span>
-                <span className="text-black text-base">
-                  {(() => {
-                    const hole = course.holes[currentHoleIndex];
-                    if (!hole) return '-';
-                    const tee = (round.selectedTee || (round as any).selected_tee || 'men') as keyof typeof hole;
-                    const teeBox = hole[tee] as any;
-                    const yardage = teeBox?.yardage;
-                    return typeof yardage === 'number' ? `${yardage}yd` : '-';
-                  })()}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const current = scores[currentHoleIndex] || 0;
-                  if (current > 0) {
-                    const newScores = [...scores];
-                    newScores[currentHoleIndex] = current - 1;
-                    setScores(newScores);
-                  }
-                }}
-                className="w-12 h-12 rounded-lg bg-red-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-red-600 transition"
-              >
-                −
-              </button>
-              <div className="w-16 h-12 rounded-lg bg-white border-2 border-blue-600 flex items-center justify-center">
-                <span className="text-3xl font-extrabold text-blue-700">
-                  {scores[currentHoleIndex] || 0}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const current = scores[currentHoleIndex] || 0;
-                  if (current < 20) {
-                    const newScores = [...scores];
-                    newScores[currentHoleIndex] = current + 1;
-                    setScores(newScores);
-                  }
-                }}
-                className="w-12 h-12 rounded-lg bg-green-500 text-2xl font-bold text-white flex items-center justify-center hover:bg-green-600 transition"
-              >
-                +
-              </button>
-            </div>
+        {/* Modern yardage overlay (left) */}
+        <div className="absolute top-8 left-4 z-20 flex flex-col items-center gap-4">
+          <div className="bg-black bg-opacity-90 border-2 border-white text-white rounded-2xl px-8 py-5 text-5xl font-extrabold shadow-2xl tracking-wide flex flex-col items-center" style={{boxShadow: '0 4px 24px 0 rgba(0,0,0,0.5)'}}>
+            <span className="text-base font-semibold text-gray-300 mb-1">Yards</span>
+            {(() => {
+              const hole = course.holes[currentHoleIndex];
+              if (!hole || !userLocation || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
+              const dist = getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng);
+              return Math.round(dist);
+            })()}
           </div>
-        )}
+        </div>
 
-        {/* Drive Distance and FIR Card */}
-        {course.holes[currentHoleIndex] && (
-          <div className="mb-6 p-6 rounded-xl border-2 border-blue-600 bg-blue-50 relative">
-            {/* FIR on left, Drive Distance on right */}
-            <div className="flex items-center justify-between gap-4">
-              {/* FIR Section */}
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">FIR:</span>
-                {['hit', 'L', 'R'].map((val, idx) => (
-                  <button
-                    key={val}
-                    className={`w-8 h-8 rounded border font-bold ${perHoleStats[currentHoleIndex]?.fairwayHit === val ? (val === 'hit' ? 'bg-green-200 border-green-600' : 'bg-blue-200 border-blue-600') : 'bg-white border-gray-400'} ${val === 'hit' ? '' : ''}`}
-                    onClick={() => {
-                      setPerHoleStats(stats => {
-                        const updated = [...stats];
-                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: updated[currentHoleIndex]?.fairwayHit === val ? undefined : val as 'hit' | 'L' | 'R' };
-                        return updated;
-                      });
-                    }}
-                    type="button"
-                  >
-                    {val === 'hit' ? '✓' : val}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Drive Distance Button */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className={`rounded-full font-bold shadow transition px-3 py-2 text-sm whitespace-nowrap ${
-                      perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
-                  onClick={() => {
-                    // Show help on first use if not dismissed
-                    if (!driveHelpDismissed && !perHoleStats[currentHoleIndex]?.drive?.yardage) {
-                      setShowDriveHelp(true);
-                      return;
-                    }
-                    
-                    if (perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0) {
-                      // Already measured - ask if they want to re-measure or clear
-                      if (confirm(`Current drive: ${perHoleStats[currentHoleIndex].drive.yardage} yd\n\nOK to re-measure | Cancel`)) {
-                        handleMeasureDrive();
-                      }
-                    } else {
-                      // No measurement yet - measure now or manually enter for testing
-                      const hole = course?.holes[currentHoleIndex];
-                      const distBallToPin = hole && userLocation ? getDistanceYards(
-                        userLocation.lat,
-                        userLocation.lng,
-                        hole.greenLat,
-                        hole.greenLng
-                      ) : 0;
 
-                      // If we're far from the course (testing from home), offer manual entry
-                      if (distBallToPin > (hole?.holeNumber ? 1000 : 500)) {
-                        const manualEntry = prompt(
-                          `You appear to be ${Math.round(distBallToPin / 1.09361)} miles from the course.\n\nEnter drive distance manually (yards) or cancel:\n\n(For testing, enter a number like 150, 200, etc.)`
-                        );
-                        if (manualEntry !== null && manualEntry.trim()) {
-                          const distance = parseInt(manualEntry, 10);
-                          if (!isNaN(distance) && distance >= 0 && userLocation) {
-                            setPerHoleStats(stats => {
-                              const updated = [...stats];
-                              updated[currentHoleIndex] = {
-                                ...updated[currentHoleIndex],
-                                drive: {
-                                  start: { lat: userLocation.lat, lng: userLocation.lng },
-                                  end: undefined,
-                                  yardage: distance,
-                                },
-                              };
-                              return updated;
-                            });
-                          } else if (!userLocation) {
-                            alert('GPS location not available. Please move to the course.');
-                          } else {
-                            alert('Please enter a valid number');
-                          }
-                        }
-                      } else {
-                        // At the course - use GPS measurement
-                        handleMeasureDrive();
-                      }
-                    }
-                  }}
-                >
-                  {perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0
-                    ? `${perHoleStats[currentHoleIndex].drive.yardage} yd`
-                    : 'Drive Distance'
-                  }
-                </button>
-                {/* Clear Drive Button */}
-                {perHoleStats[currentHoleIndex]?.drive?.yardage && perHoleStats[currentHoleIndex].drive.yardage > 0 && (
-                  <button
-                    type="button"
-                    className="rounded-full bg-red-500 hover:bg-red-600 text-white font-bold w-8 h-8 flex items-center justify-center shadow transition text-sm"
-                    onClick={() => handleDiscardDrive()}
-                    title="Clear drive measurement"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-            
-            {/* Info button */}
-            <button
-              type="button"
-              onClick={() => setShowDriveHelp(true)}
-              className="absolute top-4 right-4 w-6 h-6 rounded-full bg-white border-2 border-blue-600 text-blue-600 flex items-center justify-center text-xs font-bold hover:bg-blue-50 transition"
-              title="Show drive measurement instructions"
-            >
-              i
-            </button>
-          </div>
-        )}
 
-        {/* GIR and Putts Card */}
-        {course.holes[currentHoleIndex] && (
-          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
-            {/* Stats Row - GIR and Putts */}
-            <div className="flex flex-row flex-wrap gap-4">
-              {/* GIR */}
+        {/* Floating scoring button (lower right) */}
+        <div className="absolute bottom-24 right-6 z-20">
+          {/* TODO: Replace with actual scoring button logic */}
+          <button className="bg-green-500 hover:bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-xl text-3xl font-bold border-4 border-white">
+            ✏️
+          </button>
+        </div>
+
+
+        {/* Bottom bar for hole navigation and info removed as requested */}
+
+        {/* (Optional) Overlay for comments, stats, etc. can be added here */}
+      </div>
+
               <div className="flex items-center gap-2">
                 <span className="font-semibold">GIR</span>
                 <input
                   type="checkbox"
                   className="w-8 h-8 rounded border font-bold bg-green-200 border-green-600 accent-green-600"
-                  checked={!!perHoleStats[currentHoleIndex]?.gir}
+                  checked={perHoleStats[currentHoleIndex]?.gir ?? false}
                   onChange={e => {
                     setPerHoleStats(stats => {
                       const updated = [...stats];
+                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
                       updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: e.target.checked };
                       return updated;
                     });
@@ -1254,7 +914,8 @@ function TrackRoundContent() {
                   onClick={() => {
                     setPerHoleStats(stats => {
                       const updated = [...stats];
-                      const prev = updated[currentHoleIndex]?.puttDistances || [];
+                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                      const prev = updated[currentHoleIndex].puttDistances;
                       const currentCount = prev.length;
                       const newCount = Math.max(0, currentCount - 1);
                       updated[currentHoleIndex] = {
@@ -1269,14 +930,15 @@ function TrackRoundContent() {
                 >
                   −
                 </button>
-                <span className="text-lg font-bold w-6 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length || 0}</span>
+                <span className="text-lg font-bold w-6 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
                 <button
                   type="button"
                   className="w-8 h-8 rounded bg-green-500 text-xl font-bold text-white flex items-center justify-center hover:bg-green-600 border"
                   onClick={() => {
                     setPerHoleStats(stats => {
                       const updated = [...stats];
-                      const prev = updated[currentHoleIndex]?.puttDistances || [];
+                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                      const prev = updated[currentHoleIndex].puttDistances;
                       const currentCount = prev.length;
                       const newCount = Math.min(6, currentCount + 1);
                       updated[currentHoleIndex] = {
@@ -1292,13 +954,9 @@ function TrackRoundContent() {
                   +
                 </button>
               </div>
-            </div>
-            
-          </div>
-        )}
 
         {/* Putt Distance Entry */}
-        {perHoleStats[currentHoleIndex]?.puttDistances && perHoleStats[currentHoleIndex].puttDistances.length > 0 && (
+        {perHoleStats[currentHoleIndex]?.puttDistances?.length > 0 && (
           <div className="mt-4 p-4 rounded-xl border-2 border-green-600 bg-white relative">
             <div className="font-semibold mb-2">Putt Distance to the Cup.</div>
             {/* Expanded putt editor, absolutely positioned overlay */}
@@ -1405,7 +1063,7 @@ function TrackRoundContent() {
             })()}
             {/* Collapsed putts grid, excluding expanded */}
             {chunkArray(
-              perHoleStats[currentHoleIndex].puttDistances
+              (perHoleStats[currentHoleIndex]?.puttDistances ?? [])
                 .map((dist, idx) => ({ dist, idx }))
                 .filter(({ idx }) => perHoleStats[currentHoleIndex]?.puttExpanded !== idx),
               2
@@ -1432,45 +1090,7 @@ function TrackRoundContent() {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Navigation Buttons - removed as they're now in NavBar */}
-      <div className="flex gap-4 mt-6">
-        {/* Show Finish Round only if all holes are scored */}
-        {allScored && (
-          <button
-            type="button"
-            className="btn-primary flex-1"
-            onClick={handleFinishRound}
-            disabled={finishing}
-          >
-            {finishing ? 'Saving...' : 'Save and Finish Round'}
-          </button>
-        )}
-      </div>
-
-      {/* Delete Round Button (destructive, bottom of page) */}
-      <div className="mt-6 flex gap-2 justify-center">
-        <button
-          type="button"
-          onClick={handleDeleteRound}
-          className="text-red-600 hover:text-red-700 font-semibold text-sm px-3 py-2 rounded transition"
-          disabled={deleting}
-          title="Cancel round - does NOT save any data"
-        >
-          🗑️ Discard Round
-        </button>
-        <button
-          type="button"
-          onClick={handleEndEarly}
-          className="text-orange-600 hover:text-orange-700 font-semibold text-sm px-3 py-2 rounded transition"
-          disabled={finishing}
-          title="Save and end round - saves all entered scores, even incomplete holes"
-        >
-          💾 {finishing ? 'Saving...' : 'Save Incomplete Round'}
-        </button>
-      </div>
-    
       {/* Comments Modal */}
       {showCommentsModal && user && (
         <CommentsModal
@@ -1493,22 +1113,7 @@ function TrackRoundContent() {
       )}
 
       {/* Hole Map Modal */}
-      {showHoleMap && course.holes[currentHoleIndex] && userLocation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4 pb-24 pointer-events-none">
-          <div className="bg-white rounded-2xl w-full max-w-2xl h-[85vh] shadow-2xl flex flex-col pointer-events-auto relative">
-            {/* Map Container */}
-            <div className="flex-1 overflow-hidden relative">
-              <HoleMap
-                userLat={userLocation.lat}
-                userLng={userLocation.lng}
-                greenLat={course.holes[currentHoleIndex]?.greenLat || 0}
-                greenLng={course.holes[currentHoleIndex]?.greenLng || 0}
-                holeName={`Hole ${course.holes[currentHoleIndex]?.holeNumber || currentHoleIndex + 1}`}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed showHoleMap modal logic: map is always visible */}
 
       {/* Drive Measurement Help Modal */}
       {showDriveHelp && (
@@ -1557,8 +1162,8 @@ function TrackRoundContent() {
           </div>
         </div>
       )}
-      </PageWrapper >
-    );
+    </PageWrapper >
+  );
 }
 
 export default function TrackRound() {
