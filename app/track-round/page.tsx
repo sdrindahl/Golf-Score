@@ -36,7 +36,6 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
-
   // State declarations (must be before usage)
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -50,6 +49,35 @@ function TrackRoundContent() {
   const [scores, setScores] = useState<number[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [showCommentsModal, setShowCommentsModal] = useState(false);
+  // ...other state declarations...
+
+  // --- All state/vars must be declared before this point ---
+
+  // Load round from localStorage by roundId (must be after roundId is declared)
+  useEffect(() => {
+    if (!roundId) {
+      setLoading(false);
+      return;
+    }
+    // Try to load from localStorage
+    const savedRounds = typeof window !== 'undefined' ? localStorage.getItem('golfRounds') : null;
+    if (savedRounds) {
+      try {
+        const allRounds = JSON.parse(savedRounds);
+        const found = allRounds.find((r: any) => r.id === roundId);
+        if (found) {
+          setRound(found);
+          setLoading(false);
+          return;
+        }
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+    // If not found, set loading false
+    setLoading(false);
+  }, [roundId]);
+
   // Removed showHoleMap logic: map is always visible
   const [showDriveHelp, setShowDriveHelp] = useState(false);
   const [driveHelpDismissed, setDriveHelpDismissed] = useState(() => {
@@ -58,7 +86,13 @@ function TrackRoundContent() {
     }
     return false;
   });
+  // Debug: log loading/auth/user state changes
+  useEffect(() => {
+    console.log('[DEBUG] loading:', loading, 'auth:', auth, 'user:', auth?.getCurrentUser ? auth.getCurrentUser() : undefined, 'round:', round, 'course:', course);
+  }, [loading, auth, round, course]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // All code using 'loading' must be below this point!
   // Per-hole stats: FIR, GIR, puttDistances, drive tracking
   // Define a stricter type for per-hole stats
   type PerHoleStat = {
@@ -187,6 +221,95 @@ function TrackRoundContent() {
   const [finishing, setFinishing] = useState(false);
 
   // --- All state/vars must be declared before this point ---
+  // Heartbeat refs
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isPageVisibleRef = useRef<boolean>(true);
+  // Keep selectedTee in a ref for heartbeat
+  const selectedTeeRef = useRef<string>(selectedTee);
+  useEffect(() => { selectedTeeRef.current = selectedTee; }, [selectedTee]);
+  // Keep scores in a ref for heartbeat
+  const scoresRef = useRef<number[]>(scores);
+  useEffect(() => { scoresRef.current = scores; }, [scores]);
+  // Keep course in a ref for heartbeat
+  const courseRef = useRef<Course | null>(course);
+  useEffect(() => { courseRef.current = course; }, [course]);
+  // Keep round in a ref for heartbeat
+  const roundRef = useRef<Round | null>(round);
+  useEffect(() => { roundRef.current = round; }, [round]);
+  // Keep perHoleStats in a ref for heartbeat
+  const perHoleStatsRef = useRef<any[]>([]);
+  useEffect(() => { perHoleStatsRef.current = perHoleStats; }, [perHoleStats]);
+  // Heartbeat logic: auto-save round every 30s if page is visible
+  useEffect(() => {
+    if (!roundId || loading) return;
+
+    const startHeartbeat = () => {
+      if (heartbeatIntervalRef.current) return;
+      heartbeatIntervalRef.current = setInterval(async () => {
+        try {
+          const currentUser = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+          const currentRound = roundRef.current;
+          const currentCourse = courseRef.current;
+          if (!currentRound || !currentCourse) return;
+          const heartbeatRound = {
+            id: roundId,
+            userId: currentUser?.id,
+            userName: currentUser?.name,
+            courseId: currentRound.courseId || (currentRound as any).course_id || currentCourse.id,
+            courseName: currentCourse.name,
+            selectedTee: selectedTeeRef.current || currentRound.selectedTee || (currentRound as any).selected_tee,
+            date: currentRound.date,
+            scores: scoresRef.current.length > 0 ? scoresRef.current : currentRound.scores,
+            totalScore: currentRound.totalScore || (currentRound as any).total_score,
+            notes: currentRound.notes,
+            in_progress: currentRound.in_progress !== false,
+            perHoleStats: perHoleStatsRef.current.length > 0 ? perHoleStatsRef.current : (currentRound as any).perHoleStats || (currentRound as any).per_hole_stats || [],
+          };
+          // Debug
+          // console.log('[DEBUG] Heartbeat sending courseId:', heartbeatRound.courseId);
+          const res = await fetch('/api/save-round', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(heartbeatRound),
+          });
+          if (res.ok) {
+            // console.log('[DEBUG] Heartbeat: Updated round and round_courses join table');
+          } else {
+            // console.warn('[DEBUG] Heartbeat save failed:', res.status);
+          }
+        } catch (err) {
+          // console.error('[DEBUG] Heartbeat update failed:', err);
+        }
+      }, 30000);
+    };
+    const stopHeartbeat = () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+        // console.log('[DEBUG] Heartbeat stopped - page hidden');
+      }
+    };
+    // Listen for visibility changes
+    const handleVisibilityChange = () => {
+      const wasVisible = isPageVisibleRef.current;
+      isPageVisibleRef.current = !document.hidden;
+      // console.log('[DEBUG] Visibility changed - isPageVisible:', isPageVisibleRef.current, '(was:', wasVisible, ')');
+      if (!isPageVisibleRef.current && heartbeatIntervalRef.current) {
+        stopHeartbeat();
+      } else if (isPageVisibleRef.current && !heartbeatIntervalRef.current) {
+        startHeartbeat();
+      }
+    };
+    // Start heartbeat if page is initially visible
+    if (isPageVisibleRef.current) {
+      startHeartbeat();
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stopHeartbeat();
+    };
+  }, [roundId, loading, auth]);
 
   // Helper: check if all holes are scored
   const allScored = scores.length === course?.holes?.length && scores.every(s => s !== null && s !== undefined && s > 0);
@@ -318,7 +441,49 @@ function TrackRoundContent() {
       }
     };
   }, []);
+
   // ...existing code...
+
+  // --- Modern bottom bar for navigation and hole info ---
+  const renderBottomBar = () => {
+    if (!course) return null;
+    const hole = course.holes[currentHoleIndex];
+    return (
+      <div className="fixed bottom-0 left-0 w-full flex justify-center items-end z-50 pb-2 pointer-events-none">
+        <div className="bg-gray-800 bg-opacity-95 rounded-t-2xl shadow-2xl flex items-center justify-center w-[95vw] max-w-md mx-auto h-20 relative pointer-events-auto">
+          {/* Left Arrow */}
+          <button
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-2xl text-white border border-gray-600 shadow"
+            onClick={() => setCurrentHoleIndex(i => Math.max(0, i - 1))}
+            aria-label="Previous Hole"
+            disabled={currentHoleIndex === 0}
+            style={{ opacity: currentHoleIndex === 0 ? 0.5 : 1 }}
+          >
+            &#x25C0;
+          </button>
+          {/* Center Info */}
+          <div className="flex flex-col items-center justify-center px-12">
+            <div className="w-12 h-1 rounded-full bg-gray-600 mb-1" />
+            <div className="flex items-end gap-2">
+              <span className="text-3xl font-bold text-white">{hole?.holeNumber ?? currentHoleIndex + 1}</span>
+              <span className="text-lg text-gray-300 font-semibold ml-1">Par {hole?.par ?? '-'}</span>
+            </div>
+            <div className="text-sm text-gray-400 font-medium">Hdcp {hole?.handicap ?? '-'}</div>
+          </div>
+          {/* Right Arrow */}
+          <button
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-2xl text-white border border-gray-600 shadow"
+            onClick={() => setCurrentHoleIndex(i => Math.min(course.holes.length - 1, i + 1))}
+            aria-label="Next Hole"
+            disabled={currentHoleIndex === course.holes.length - 1}
+            style={{ opacity: currentHoleIndex === course.holes.length - 1 ? 0.5 : 1 }}
+          >
+            &#x25B6;
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // ...existing code...
 
@@ -331,206 +496,9 @@ function TrackRoundContent() {
     } catch (e) {
       console.log('[TrackRoundContent] auth.user: error', e);
     }
-    console.log('[TrackRoundContent] round:', round);
-    console.log('[TrackRoundContent] course:', course);
-  }, [auth, round, course]);
-  // ...existing code...
-
-  // Real-time sync subscription
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Save current hole index to localStorage whenever it changes
-  useEffect(() => {
-    if (!roundId || !isClient) return;
-    localStorage.setItem(`currentHoleIndex_${roundId}`, currentHoleIndex.toString());
-  }, [currentHoleIndex, roundId, isClient]);
+  }, [auth]);
 
 
-
-
-
-  // Helper function to find the first unscored hole (next hole to play)
-  const getNextUnscoredholeIndex = (roundScores: number[]): number => {
-    if (!roundScores) return 0;
-    // Find first hole with score of 0 or null
-    const unscored = roundScores.findIndex(score => !score || score === 0);
-    // If all holes are scored, return the last hole for review
-    return unscored >= 0 ? unscored : roundScores.length - 1;
-  };
-
-
-  useEffect(() => {
-    if (!isClient || !roundId) return;
-    let subscription: any;
-    getRoundsInProgress().then(async (data) => {
-      let found = data?.find((r: any) => r.id === roundId);
-      
-      // Fallback: if not found in in-progress list, try fetching by ID
-      // This handles auto-completed rounds that are no longer "in progress"
-      if (!found) {
-        console.log('[DEBUG] Round not in in-progress list, trying get-round-by-id API');
-        try {
-          const res = await fetch(`/api/get-round-by-id?id=${roundId}`);
-          if (res.ok) {
-            const { round: roundData } = await res.json();
-            found = roundData;
-          }
-        } catch (err) {
-          console.error('[DEBUG] Failed to fetch round by ID:', err);
-        }
-      }
-      
-      setRound(found || null);
-      setScores(found?.scores || []);
-      // Set current hole index to the first unscored hole
-      if (found?.scores) {
-        const nextHoleIdx = getNextUnscoredholeIndex(found.scores);
-        setCurrentHoleIndex(nextHoleIdx);
-      }
-      // Initialize perHoleStats: load from saved data or create empty objects
-      if (found && found.scores) {
-        const savedStats = found.perHoleStats || found.per_hole_stats || [];
-        if (Array.isArray(savedStats) && savedStats.length === found.scores.length) {
-          // Use saved stats if available and correct length, but fill with defaults for missing fields
-          setPerHoleStats(savedStats.map((stat: any) => ({
-            ...defaultPerHoleStat(),
-            ...stat,
-            drive: stat?.drive ?? null,
-            puttDistances: Array.isArray(stat?.puttDistances) ? stat.puttDistances : [],
-            fairwayHit: stat?.fairwayHit ?? null,
-            gir: stat?.gir ?? false,
-            puttExpanded: typeof stat?.puttExpanded === 'number' ? stat.puttExpanded : null,
-          })));
-        } else {
-          // Create default stats for all holes
-          setPerHoleStats(Array(found.scores.length).fill(0).map(() => defaultPerHoleStat()));
-        }
-      }
-      setLoading(false);
-      subscription = subscribeToRoundsInProgress(() => {
-        // Subscription is just a notification that data changed on Supabase.
-        // We don't fetch or update UI state here to avoid race conditions with local changes.
-        // The auto-save effect handles syncing local changes TO Supabase.
-        // Real-time syncing happens through the fetch on page load; subscription is just for awareness.
-      });
-    }).catch(() => setLoading(false));
-    return () => {
-      if (subscription && subscription.unsubscribe) subscription.unsubscribe();
-    };
-  }, [isClient, roundId]);
-
-  // 1A: Keep round active by updating its timestamp every 30 seconds
-  // This prevents the auto-complete feature from completing active rounds
-  // Also does a full save to ensure round_courses join table is populated
-  // Use refs to access latest state values without recreating interval
-  const roundRef = useRef(round);
-  const scoresRef = useRef(scores);
-  const selectedTeeRef = useRef(selectedTee);
-  const courseRef = useRef(course);
-  
-  // Update refs whenever state changes
-  useEffect(() => {
-    roundRef.current = round;
-    scoresRef.current = scores;
-    selectedTeeRef.current = selectedTee;
-    courseRef.current = course;
-  }, [round, scores, selectedTee, course]);
-
-  useEffect(() => {
-    // Don't start heartbeat until round data is loaded
-    if (!roundId || loading) return;
-    
-    let heartbeatInterval: NodeJS.Timeout | null = null;
-    let isPageVisible = !document.hidden;
-    
-    // Function to start the heartbeat
-    const startHeartbeat = () => {
-      if (heartbeatInterval) return; // Don't start if already running
-      
-      console.log('[DEBUG] Heartbeat started');
-      heartbeatInterval = setInterval(async () => {
-        console.log('[DEBUG] Heartbeat interval fired');
-        try {
-          const currentRound = roundRef.current;
-          if (!currentRound) {
-            console.log('[DEBUG] Heartbeat skipped - no round data');
-            return;
-          }
-
-          // Get current round data from refs (latest state)
-          const currentUser = auth.getCurrentUser();
-          const heartbeatRound = {
-            id: roundId,
-            userId: currentUser?.id,
-            userName: currentUser?.name,
-            courseId: currentRound.courseId || (currentRound as any).course_id || courseRef.current?.id,
-            courseName: courseRef.current?.name,
-            selectedTee: selectedTeeRef.current || currentRound.selectedTee || (currentRound as any).selected_tee,
-            date: currentRound.date,
-            scores: scoresRef.current.length > 0 ? scoresRef.current : currentRound.scores,
-            totalScore: currentRound.totalScore || (currentRound as any).total_score,
-            notes: currentRound.notes,
-            in_progress: currentRound.in_progress !== false,
-            // FIX: Use perHoleStatsRef for current user edits, not old database data
-            perHoleStats: perHoleStatsRef.current.length > 0 ? perHoleStatsRef.current : (currentRound as any).perHoleStats || (currentRound as any).per_hole_stats || [],
-          };
-          
-          console.log('[DEBUG] Heartbeat sending courseId:', heartbeatRound.courseId);
-          
-          const res = await fetch('/api/save-round', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(heartbeatRound),
-          });
-          
-          if (res.ok) {
-            console.log('[DEBUG] Heartbeat: Updated round and round_courses join table');
-          } else {
-            console.warn('[DEBUG] Heartbeat save failed:', res.status);
-          }
-        } catch (err) {
-          console.error('[DEBUG] Heartbeat update failed:', err);
-        }
-      }, 30000); // Update every 30 seconds
-    };
-    
-    // Function to stop the heartbeat
-    const stopHeartbeat = () => {
-      if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-        console.log('[DEBUG] Heartbeat stopped - page hidden');
-      }
-    };
-    
-    // Listen for visibility changes
-    const handleVisibilityChange = () => {
-      const wasVisible = isPageVisible;
-      isPageVisible = !document.hidden;
-      
-      console.log('[DEBUG] Visibility changed - isPageVisible:', isPageVisible, '(was:', wasVisible, ')');
-      
-      if (!isPageVisible && heartbeatInterval) {
-        stopHeartbeat();
-      } else if (isPageVisible && !heartbeatInterval) {
-        startHeartbeat();
-      }
-    };
-    
-    // Start heartbeat if page is initially visible
-    if (isPageVisible) {
-      startHeartbeat();
-    }
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      stopHeartbeat();
-    };
-  }, [roundId, loading]);
 
   // 1B: Set selectedTee from round if it exists and state is empty
   // Always sync selectedTee from round when round changes
@@ -548,7 +516,10 @@ function TrackRoundContent() {
 
   // Load course info from localStorage (as in round-detail)
   useEffect(() => {
-    if (!round) return;
+    if (!round) {
+      setLoading(false); // If round is missing, stop loading
+      return;
+    }
     const savedCourses = localStorage.getItem('golfCourses');
     if (savedCourses) {
       const allCourses = JSON.parse(savedCourses) as Course[];
@@ -577,10 +548,13 @@ function TrackRoundContent() {
       } else {
         setCourse(null);
       }
+      setLoading(false); // Done loading after course lookup
+    } else {
+      setLoading(false); // No courses found, stop loading
     }
   }, [round]);
 
-  const perHoleStatsRef = useRef<any[]>([]);
+  // (moved above)
 
   // Subscribe to real-time comment updates
   useEffect(() => {
