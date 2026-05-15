@@ -849,16 +849,10 @@ function TrackRoundContent() {
 
 
 
-        {/* Floating scoring button (lower right) */}
-        <div className="absolute bottom-24 right-6 z-20">
-          {/* TODO: Replace with actual scoring button logic */}
-          <button className="bg-green-500 hover:bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-xl text-3xl font-bold border-4 border-white">
-            ✏️
-          </button>
-        </div>
 
 
-        {/* Bottom bar for hole navigation and info removed as requested */}
+        {/* Bottom bar for hole navigation and info */}
+        {renderBottomBar()}
 
         {/* (Optional) Overlay for comments, stats, etc. can be added here */}
       </div>
