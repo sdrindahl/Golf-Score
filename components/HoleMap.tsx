@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
@@ -20,72 +19,37 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Ensure this only runs on client
-    if (typeof window === 'undefined') return;
-
-    // Prevent double initialization in React strict mode
-    if (map.current) return;
-
-    // Defensive: check all coordinates are valid numbers
-    const allCoords = [userLat, userLng, greenLat, greenLng];
-    const allValid = allCoords.every((v) => typeof v === 'number' && !isNaN(v));
-    if (!allValid) {
-      console.warn('HoleMap: Invalid coordinates, skipping map initialization:', { userLat, userLng, greenLat, greenLng });
-      setIsLoading(false);
-      return;
-    }
-
-    // Dynamically import Leaflet only on client
+    let leafletInstance: any = null;
+    let cleanup = () => {};
     import('leaflet').then((leaflet) => {
       const L = leaflet.default;
-      if (!mapContainer.current) return;
-      // Double-check map isn't already initialized (race condition safety)
-      if (map.current) return;
+      // Initialize map if not already
+      if (!map.current && mapContainer.current) {
+        map.current = L.map(mapContainer.current, {
+          center: [userLat, userLng],
+          zoom: 17,
+          zoomControl: false,
+          attributionControl: false,
+        });
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles © Esri',
+          maxZoom: 19,
+        }).addTo(map.current);
+        setIsLoading(false);
+      }
 
-      // Initialize map centered between user and green
-      const centerLat = (userLat + greenLat) / 2;
-      const centerLng = (userLng + greenLng) / 2;
+      // Defensive: check all coordinates are valid numbers
+      const allCoords = [userLat, userLng, greenLat, greenLng];
+      const allValid = allCoords.every((v) => typeof v === 'number' && !isNaN(v));
+      if (!allValid) return;
 
-      map.current = L.map(mapContainer.current).setView([centerLat, centerLng], 18);
+      // Remove previous polyline if exists
+      if (measurementPolyline.current) {
+        map.current.removeLayer(measurementPolyline.current);
+        measurementPolyline.current = null;
+      }
 
-      // Use satellite imagery
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Esri',
-        maxZoom: 22,
-      }).addTo(map.current);
-
-      // Green marker
-      L.circleMarker([greenLat, greenLng], {
-        radius: 8,
-        fillColor: '#22c55e',
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-      })
-        .addTo(map.current)
-        .bindPopup('Green Center 🚩');
-
-      // User position marker
-      L.circleMarker([userLat, userLng], {
-        radius: 6,
-        fillColor: '#0066ff',
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-      })
-        .addTo(map.current)
-        .bindPopup('Your Position 📍');
-
-      // Draw initial line from user to green
-      measurementPolyline.current = L.polyline([[userLat, userLng], [greenLat, greenLng]], {
-        color: 'blue',
-        weight: 2,
-        opacity: 0.7,
-      }).addTo(map.current);
-
-      // Calculate distance helper
+      // Helper to calculate distance
       const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const toRad = (v: number) => (v * Math.PI) / 180;
         const R = 6371000; // meters
@@ -141,20 +105,28 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         }
       };
 
+      // Draw new polyline
+      measurementPolyline.current = L.polyline([[userLat, userLng], [greenLat, greenLng]], {
+        color: 'red',
+        weight: 2,
+        opacity: 0.7,
+      }).addTo(map.current);
       map.current.on('click', handleMapClick);
-      setIsLoading(false);
 
-      return () => {
-        map.current?.off('click', handleMapClick);
-        map.current?.remove();
-        map.current = null;
+      // Always center the map on the green for the current hole
+      map.current.setView([greenLat, greenLng], 18); // 18 is a good zoom for a green
+
+      // Cleanup function for useEffect
+      cleanup = () => {
+        if (map.current) {
+          map.current.off('click');
+          map.current.remove();
+          map.current = null;
+        }
       };
-    }).catch((err) => {
-      console.error('Failed to load Leaflet:', err);
-      setIsLoading(false);
     });
+    return () => cleanup();
   }, [userLat, userLng, greenLat, greenLng]);
-
   return (
     <div>
       <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />

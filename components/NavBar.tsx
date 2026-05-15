@@ -141,11 +141,81 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation - hidden on Track Round page */}
-      {/* Mobile Bottom Navigation - hidden on Track Round page */}
-      {!isTrackRoundPage && (
+      {/* Mobile Bottom Navigation - hidden ONLY on Track Round page */}
+      {isTrackRoundPage ? null : (
         <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
-          {/* ...mobile navbar content here (restored if needed)... */}
+          <div className="flex justify-around">
+            <button
+              onClick={() => router.push('/')}
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+                isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
+                  ? 'bg-green-600 text-white'
+                  : 'hover:bg-green-600'
+              }`}
+            >
+              <img src="/apex_tracer.png" alt="Home" className="h-10 w-10" />
+              Home
+            </button>
+            <button
+              onClick={() => router.push('/players')}
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+                pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+              }`}
+            >
+              <img src="/list_of_golfers.png" alt="Golfers" className="h-10 w-10" />
+              Golfers
+            </button>
+            {/* Start/Return to Round Button (middle position) */}
+            <button
+              onClick={() => {
+                if (currentRoundId) {
+                  router.push(`/track-round?id=${currentRoundId}`);
+                } else {
+                  router.push('/courses');
+                }
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
+                currentRoundId
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+              style={{ minWidth: '0' }}
+            >
+              {currentRoundId ? (
+                <>
+                  <img src="/Players.png" alt="Return to Round" className="h-10 w-10" />
+                  Return to
+                  <br />
+                  Round
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">▶</span>
+                  Start Round
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => router.push('/courses')}
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+                pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
+                  ? 'bg-green-600 text-white'
+                  : 'hover:bg-green-600'
+              }`}
+            >
+              <img src="/courses.png" alt="Courses" className="h-10 w-10" />
+              Courses
+            </button>
+            <button
+              onClick={() => router.push('/settings')}
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+                pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+              }`}
+            >
+              <img src="/settings1.png" alt="Settings" className="h-10 w-10" />
+              Settings
+            </button>
+          </div>
         </nav>
       )}
     </>
