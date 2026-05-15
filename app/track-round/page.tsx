@@ -32,11 +32,14 @@ import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
 import CommentsModal from '@/components/CommentsModal';
 import HoleMap from '@/components/HoleMap';
+import { useMemo } from 'react';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
-  // State declarations (must be before usage)
+  // Show map or image?
+
+  const [showMap, setShowMap] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const roundId = searchParams ? searchParams.get('id') : null;
@@ -52,6 +55,24 @@ function TrackRoundContent() {
   // ...other state declarations...
 
   // --- All state/vars must be declared before this point ---
+
+  // List of available hole images (after course is declared)
+  const holeImages = [
+    '/hole1.png',
+    '/hole2.png',
+    '/hole3.png',
+  ];
+
+  // Memoized random image selection for each hole (stable for session)
+  const randomHoleImages = useMemo(() => {
+    if (!course || !Array.isArray(course.holes)) return [];
+    const numHoles = course.holes.length;
+    const arr: string[] = [];
+    for (let i = 0; i < numHoles; i++) {
+      arr.push(holeImages[Math.floor(Math.random() * holeImages.length)]);
+    }
+    return arr;
+  }, [course]);
 
   // Load round from localStorage by roundId (must be after roundId is declared)
   useEffect(() => {
@@ -470,6 +491,16 @@ function TrackRoundContent() {
             </div>
             <div className="text-sm text-gray-400 font-medium">Hdcp {hole?.handicap ?? '-'}</div>
           </div>
+          {/* Exit Map button (only when map is shown) */}
+          {showMap && (
+            <button
+              className="absolute right-16 top-1/2 -translate-y-1/2 h-10 px-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow border border-red-800 transition"
+              onClick={() => setShowMap(false)}
+              aria-label="Exit map"
+            >
+              Exit Map
+            </button>
+          )}
           {/* Right Arrow */}
           <button
             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-2xl text-white border border-gray-600 shadow"
@@ -795,43 +826,56 @@ function TrackRoundContent() {
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
-        {/* Map always visible as background */}
+        {/* Show placeholder image or map */}
         <div className="absolute inset-0 z-0">
-          {(() => {
-            const hole = course.holes[currentHoleIndex];
-            const hasValidGreen =
-              hole &&
-              typeof hole.greenLat === 'number' &&
-              !isNaN(hole.greenLat) &&
-              typeof hole.greenLng === 'number' &&
-              !isNaN(hole.greenLng);
-            const hasValidUser =
-              userLocation &&
-              typeof userLocation.lat === 'number' &&
-              !isNaN(userLocation.lat) &&
-              typeof userLocation.lng === 'number' &&
-              !isNaN(userLocation.lng);
-            if (!hasValidGreen || !hasValidUser) {
-              return (
-                <div style={{ width: '100vw', height: '100vh', background: 'black', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-                  <div className="flex items-center justify-center w-full h-full">
-                    <div className="text-white text-lg animate-pulse">Loading map...</div>
-                  </div>
-                </div>
-              );
-            }
-            return (
-              <HoleMap
-                userLat={userLocation?.lat}
-                userLng={userLocation?.lng}
-                greenLat={hole?.greenLat}
-                greenLng={hole?.greenLng}
-                holeName={`Hole ${hole?.holeNumber || ''}`}
-
-
-              />
-            );
-          })()}
+          {showMap ? (
+            <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+              {/* Close button removed, now in bottom bar as 'Exit Map' */}
+              {/* Map itself */}
+              {(() => {
+                const hole = course.holes[currentHoleIndex];
+                const hasValidGreen =
+                  hole &&
+                  typeof hole.greenLat === 'number' &&
+                  !isNaN(hole.greenLat) &&
+                  typeof hole.greenLng === 'number' &&
+                  !isNaN(hole.greenLng);
+                const hasValidUser =
+                  userLocation &&
+                  typeof userLocation.lat === 'number' &&
+                  !isNaN(userLocation.lat) &&
+                  typeof userLocation.lng === 'number' &&
+                  !isNaN(userLocation.lng);
+                if (!hasValidGreen || !hasValidUser) {
+                  return (
+                    <div style={{ width: '100vw', height: '100vh', background: 'black', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
+                      <div className="flex items-center justify-center w-full h-full">
+                        <div className="text-white text-lg animate-pulse">Loading map...</div>
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <HoleMap
+                    userLat={userLocation?.lat}
+                    userLng={userLocation?.lng}
+                    greenLat={hole?.greenLat}
+                    greenLng={hole?.greenLng}
+                    holeName={`Hole ${hole?.holeNumber || ''}`}
+                  />
+                );
+              })()}
+            </div>
+          ) : (
+            <img
+              src={randomHoleImages[currentHoleIndex] || '/hole1.png'}
+              alt="Hole preview"
+              className="w-full h-full object-cover cursor-pointer select-none"
+              style={{ width: '100vw', height: '100vh', objectFit: 'cover', background: 'black' }}
+              onClick={() => setShowMap(true)}
+              draggable={false}
+            />
+          )}
         </div>
 
         {/* Modern yardage overlay (left) */}

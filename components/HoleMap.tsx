@@ -17,6 +17,7 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const currentTapMarker = useRef<any>(null);
   const currentLabel = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMasked, setIsMasked] = useState(true);
 
   useEffect(() => {
     let leafletInstance: any = null;
@@ -127,11 +128,41 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
     });
     return () => cleanup();
   }, [userLat, userLng, greenLat, greenLng]);
+  // Spotlight mask style: ellipse centered on green, rest black
+  const maskStyle = isMasked
+    ? {
+        pointerEvents: 'auto',
+        position: 'absolute' as const,
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 20,
+        // Use CSS mask for ellipse (spotlight)
+        WebkitMaskImage: `radial-gradient(ellipse 35% 20% at 50% 40%, transparent 60%, black 100%)`,
+        maskImage: `radial-gradient(ellipse 35% 20% at 50% 40%, transparent 60%, black 100%)`,
+        background: 'rgba(0,0,0,0.92)',
+        transition: 'opacity 0.4s',
+        opacity: 1,
+      }
+    : { display: 'none' };
+
   return (
-    <div>
-      <div ref={mapContainer} style={{ width: '100vw', height: '100vh' }} />
+    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      <div
+        ref={mapContainer}
+        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0 }}
+        onClick={() => setIsMasked(false)}
+      />
+      {isMasked && (
+        <div
+          style={maskStyle}
+          onClick={() => setIsMasked(false)}
+          title="Tap to reveal full map"
+        />
+      )}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75" style={{ zIndex: 30 }}>
           <div className="text-white">Loading map...</div>
         </div>
       )}
