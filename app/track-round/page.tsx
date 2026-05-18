@@ -939,61 +939,143 @@ function TrackRoundContent() {
           </div>
         )}
 
-        {/* Floating score button (lower right) */}
-        <button
-          className="fixed bottom-24 right-6 z-50 w-16 h-16 rounded-xl bg-blue-700 text-white text-2xl font-bold shadow-2xl flex items-center justify-center border-4 border-white hover:bg-blue-800 transition-all"
-          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
-          onClick={() => setShowScoreModal(true)}
-        >
+
+      {/* Floating score button (lower right, outside flex/relative containers) */}
+      <button
+        className="fixed block visible z-50 w-16 h-16 rounded-full bg-blue-700 text-white shadow-2xl flex items-center justify-center border-4 border-white hover:bg-blue-800 transition-all pointer-events-auto bottom-24 right-6"
+        style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
+        onClick={() => setShowScoreModal(true)}
+        aria-label="Enter score"
+      >
+        <span className="text-2xl font-bold">
           {totalScore > 0 ? `+${totalScore}` : totalScore === 0 ? 'E' : totalScore}
-        </button>
+        </span>
+        <span className="absolute -bottom-3 -right-3">
+          <span className="bg-white rounded-full p-1 shadow-lg flex items-center justify-center" style={{ width: '32px', height: '32px' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-blue-700">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h12" />
+            </svg>
+          </span>
+        </span>
+      </button>
 
         {/* Bottom bar for hole navigation and info */}
         {renderBottomBar()}
       {/* Score Entry Modal */}
+
       {showScoreModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative">
-            <button
-              className="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800"
-              onClick={() => setShowScoreModal(false)}
-              aria-label="Close score entry"
-            >
-              ×
-            </button>
+
+
+            {/* Hole navigation and picker */}
+            <div className="flex items-center justify-between mb-4">
+              <button
+                className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-bold text-lg border hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => setCurrentHoleIndex(i => Math.max(0, i - 1))}
+                disabled={currentHoleIndex === 0}
+                aria-label="Previous Hole"
+              >
+                &#x25C0;
+              </button>
+              <div className="flex items-center gap-2">
+                <label htmlFor="hole-picker" className="font-semibold text-gray-700">Hole</label>
+                <select
+                  id="hole-picker"
+                  className="border rounded px-2 py-1 text-lg font-bold bg-white text-gray-800"
+                  value={currentHoleIndex}
+                  onChange={e => setCurrentHoleIndex(Number(e.target.value))}
+                >
+                  {course?.holes?.map((h, idx) => (
+                    <option key={idx} value={idx}>
+                      {h.holeNumber ?? idx + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-bold text-lg border hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => setCurrentHoleIndex(i => Math.min(course.holes.length - 1, i + 1))}
+                disabled={currentHoleIndex === course.holes.length - 1}
+                aria-label="Next Hole"
+              >
+                &#x25B6;
+              </button>
+            </div>
+
             <h2 className="text-xl font-bold mb-4 text-gray-800">Enter Score for Hole {course?.holes?.[currentHoleIndex]?.holeNumber ?? currentHoleIndex + 1}</h2>
 
-            {/* Scorecard Table */}
+            {/* Scorecard Table - 9 holes per row, with totals */}
             {course && course.holes && course.holes.length > 0 && (
               <div className="overflow-x-auto mb-6">
-                <table className="min-w-full border text-center text-xs">
-                  <thead>
-                    <tr>
-                      <th className="px-1 py-1 font-bold">Hole</th>
-                      {course.holes.map((h, i) => (
-                        <th key={i} className={`px-1 py-1 font-bold ${i === currentHoleIndex ? 'bg-blue-100' : ''}`}>{h.holeNumber ?? i + 1}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td className="px-1 py-1 font-semibold">Par</td>
-                      {course.holes.map((h, i) => (
-                        <td key={i} className={`px-1 py-1 ${i === currentHoleIndex ? 'bg-blue-50' : ''}`}>{h.par ?? '-'}</td>
-                      ))}
-                    </tr>
-                    <tr>
-                      <td className="px-1 py-1 font-semibold">Score</td>
-                      {course.holes.map((h, i) => (
-                        <td key={i} className={`px-1 py-1 ${i === currentHoleIndex ? 'bg-blue-200 font-bold' : ''}`}>{typeof scores[i] === 'number' && scores[i] > 0 ? scores[i] : ''}</td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
+                {[0, 9].map((startIdx, sectionIdx) => {
+                  const holes = course.holes.slice(startIdx, startIdx + 9);
+                  const isFrontNine = startIdx === 0;
+                  const parTotal = holes.reduce((sum, h) => sum + (h.par || 0), 0);
+                  const scoreTotal = holes.reduce((sum, h, i) => sum + (typeof scores[startIdx + i] === 'number' && scores[startIdx + i] > 0 ? scores[startIdx + i] : 0), 0);
+                  // Compute yardages for selected tee
+                  const yardages = holes.map(h => h?.[selectedTee]?.yardage ?? '-');
+                  const yardageTotal = holes.reduce((sum, h) => sum + (h?.[selectedTee]?.yardage || 0), 0);
+                  return (
+                    <table key={sectionIdx} className="min-w-full border text-center text-xs mb-2">
+                      <thead>
+                        <tr>
+                          <th className="px-1 py-1 font-bold">Hole</th>
+                          {holes.map((h, i) => (
+                            <th key={i} className={`px-1 py-1 font-bold ${startIdx + i === currentHoleIndex ? 'bg-blue-100' : ''}`}>{h.holeNumber ?? startIdx + i + 1}</th>
+                          ))}
+                          <th className="px-1 py-1 font-bold">{isFrontNine ? 'Out' : 'In'}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="px-1 py-1 font-semibold">Yardage</td>
+                          {yardages.map((y, i) => (
+                            <td key={i} className="px-1 py-1">{y}</td>
+                          ))}
+                          <td className="px-1 py-1 font-bold bg-gray-100">{yardageTotal > 0 ? yardageTotal : ''}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-1 py-1 font-semibold">Par</td>
+                          {holes.map((h, i) => (
+                            <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'bg-blue-50' : ''}`}>{h.par ?? '-'}</td>
+                          ))}
+                          <td className="px-1 py-1 font-bold bg-gray-100">{parTotal}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-1 py-1 font-semibold">Score</td>
+                          {holes.map((h, i) => (
+                            <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'bg-blue-200 font-bold' : ''}`}>{typeof scores[startIdx + i] === 'number' && scores[startIdx + i] > 0 ? scores[startIdx + i] : ''}</td>
+                          ))}
+                          <td className="px-1 py-1 font-bold bg-gray-100">{scoreTotal > 0 ? scoreTotal : ''}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  );
+                })}
+                {/* Overall total row if all 18 holes */}
+                {course.holes.length === 18 && (
+                  <table className="min-w-full border text-center text-xs">
+                    <tbody>
+                      <tr>
+                        <td className="px-1 py-1 font-bold">Total</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200">{course.holes.slice(0, 9).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200">{course.holes.slice(9, 18).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
+                        <td className="px-1 py-1 font-bold bg-yellow-100">{course.holes.reduce((sum, h) => sum + (h.par || 0), 0)}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-1 py-1 font-bold">Score</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100">{scores.slice(0, 9).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100">{scores.slice(9, 18).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
+                        <td className="px-1 py-1 font-bold bg-yellow-100">{scores.reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
               </div>
             )}
             <div className="mb-4">
-              <label className="block font-semibold mb-1">Score</label>
+              <label className="block font-semibold mb-2 text-lg">Enter Hole Score</label>
               <div className="flex items-center gap-3">
                 <button
                   className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
@@ -1058,65 +1140,63 @@ function TrackRoundContent() {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
                         if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: true };
+                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: !updated[currentHoleIndex].gir };
                         return updated;
                       });
                     }}
                   >Y</button>
-                  <button
-                    className={`px-4 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.gir === false ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                    onClick={() => {
-                      setPerHoleStats(stats => {
-                        const updated = [...stats];
-                        if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                        updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: false };
-                        return updated;
-                      });
-                    }}
-                  >N</button>
                 </div>
               </div>
             </div>
             <div className="mb-4">
               <label className="block font-semibold mb-1">Putts</label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <button
+                    className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                    onClick={() => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                        const prev = updated[currentHoleIndex].puttDistances;
+                        const currentCount = prev.length;
+                        const newCount = Math.max(0, currentCount - 1);
+                        updated[currentHoleIndex] = {
+                          ...updated[currentHoleIndex],
+                          puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
+                        };
+                        return updated;
+                      });
+                    }}
+                    aria-label="Decrease putts"
+                  >−</button>
+                  <span className="text-2xl font-bold w-10 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
+                  <button
+                    className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                    onClick={() => {
+                      setPerHoleStats(stats => {
+                        const updated = [...stats];
+                        if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                        const prev = updated[currentHoleIndex].puttDistances;
+                        const currentCount = prev.length;
+                        const newCount = Math.min(6, currentCount + 1);
+                        updated[currentHoleIndex] = {
+                          ...updated[currentHoleIndex],
+                          puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
+                        };
+                        return updated;
+                      });
+                    }}
+                    aria-label="Increase putts"
+                  >+</button>
+                </div>
                 <button
-                  className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                  onClick={() => {
-                    setPerHoleStats(stats => {
-                      const updated = [...stats];
-                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                      const prev = updated[currentHoleIndex].puttDistances;
-                      const currentCount = prev.length;
-                      const newCount = Math.max(0, currentCount - 1);
-                      updated[currentHoleIndex] = {
-                        ...updated[currentHoleIndex],
-                        puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
-                      };
-                      return updated;
-                    });
-                  }}
-                  aria-label="Decrease putts"
-                >−</button>
-                <span className="text-2xl font-bold w-10 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
-                <button
-                  className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                  onClick={() => {
-                    setPerHoleStats(stats => {
-                      const updated = [...stats];
-                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                      const prev = updated[currentHoleIndex].puttDistances;
-                      const currentCount = prev.length;
-                      const newCount = Math.min(6, currentCount + 1);
-                      updated[currentHoleIndex] = {
-                        ...updated[currentHoleIndex],
-                        puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0),
-                      };
-                      return updated;
-                    });
-                  }}
-                  aria-label="Increase putts"
-                >+</button>
+                  className="ml-auto px-4 py-2 rounded bg-gray-200 text-gray-700 font-bold text-base border hover:bg-gray-300 transition"
+                  onClick={() => setShowScoreModal(false)}
+                  aria-label="Close score entry"
+                >
+                  Close
+                </button>
               </div>
             </div>
             {perHoleStats[currentHoleIndex]?.puttDistances?.length > 0 && (
@@ -1198,8 +1278,18 @@ function TrackRoundContent() {
             ) : (
               <button
                 className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 rounded-xl mt-2 text-lg"
-                onClick={() => setShowScoreModal(false)}
-              >Save</button>
+                onClick={() => {
+                  // Save and go to next hole
+                  setShowScoreModal(false);
+                  setCurrentHoleIndex(idx => {
+                    if (!course) return idx;
+                    if (idx < course.holes.length - 1) {
+                      return idx + 1;
+                    }
+                    return idx;
+                  });
+                }}
+              >Save and Next Hole</button>
             )}
           </div>
         </div>
