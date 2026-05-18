@@ -1044,9 +1044,73 @@ function TrackRoundContent() {
                         </tr>
                         <tr>
                           <td className="px-1 py-1 font-semibold">Score</td>
-                          {holes.map((h, i) => (
-                            <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'bg-blue-200 font-bold' : ''}`}>{typeof scores[startIdx + i] === 'number' && scores[startIdx + i] > 0 ? scores[startIdx + i] : ''}</td>
-                          ))}
+                          {holes.map((h, i) => {
+                            const score = scores[startIdx + i];
+                            const par = h.par ?? 0;
+                            let shape = '';
+                            let bg = '';
+                            let text = 'text-gray-900';
+                            let border = '';
+                            let label = '';
+                            if (typeof score === 'number' && score > 0) {
+                              const diff = score - par;
+                              if (score === 1) {
+                                // Ace
+                                shape = 'rounded-full';
+                                bg = 'bg-yellow-400';
+                                border = 'border-2 border-yellow-600';
+                                label = 'Ace';
+                              } else if (diff <= -2) {
+                                // Eagle or better
+                                shape = 'rounded-full';
+                                bg = 'bg-blue-400';
+                                border = 'border-2 border-blue-700';
+                                label = 'Eagle';
+                              } else if (diff === -1) {
+                                // Birdie
+                                shape = 'rounded-full';
+                                bg = 'bg-red-400';
+                                border = 'border-2 border-red-600';
+                                label = 'Birdie';
+                              } else if (diff === 0) {
+                                // Par
+                                shape = 'rounded-full';
+                                bg = 'bg-gray-200';
+                                border = 'border-2 border-gray-400';
+                                label = 'Par';
+                              } else if (diff === 1) {
+                                // Bogey
+                                shape = 'rounded';
+                                bg = 'bg-yellow-200';
+                                border = 'border-2 border-yellow-400';
+                                label = 'Bogey';
+                              } else if (diff === 2) {
+                                // Double Bogey
+                                shape = 'rounded';
+                                bg = 'bg-orange-300';
+                                border = 'border-2 border-orange-500';
+                                label = 'Double Bogey';
+                              } else if (diff > 2) {
+                                // Worse
+                                shape = 'rounded';
+                                bg = 'bg-black text-white';
+                                border = 'border-2 border-black';
+                                text = 'text-white';
+                                label = 'Triple+';
+                              }
+                            }
+                            return (
+                              <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'bg-blue-200 font-bold' : ''}`}
+                                title={label}
+                              >
+                                {typeof score === 'number' && score > 0 ? (
+                                  <span className={`inline-flex items-center justify-center w-6 h-6 ${shape} ${bg} ${border} ${text} font-semibold text-xs`}>
+                                    {score}
+                                  </span>
+                                ) : ''}
+                              </td>
+                            );
+                          })}
                           <td className="px-1 py-1 font-bold bg-gray-100">{scoreTotal > 0 ? scoreTotal : ''}</td>
                         </tr>
                       </tbody>
