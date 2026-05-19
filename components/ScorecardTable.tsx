@@ -70,10 +70,18 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
               <tbody>
                 <tr className="bg-gray-100">
                   <td className="px-1 py-1 font-semibold border border-gray-300">Yardage</td>
-                  {section.map((h, i) => (
-                    <td key={i} className="px-1 py-1 text-[10px] text-gray-700">{h.yardage ?? '-'}</td>
-                  ))}
-                  <td className="px-1 py-1 font-bold bg-gray-200 text-[10px] text-gray-700">{yardageTotal > 0 ? yardageTotal : ''}</td>
+                  {section.map((h, i) => {
+                    let yard = '-';
+                    if (isValidTee(selectedTee) && h[selectedTee] && typeof h[selectedTee].yardage === 'number') {
+                      yard = h[selectedTee].yardage;
+                    } else if (typeof h.yardage === 'number') {
+                      yard = h.yardage;
+                    }
+                    return (
+                      <td key={i} className="px-1 py-1 text-[10px] text-gray-700 font-bold border border-gray-300">{yard}</td>
+                    );
+                  })}
+                  <td className="px-1 py-1 font-bold bg-gray-200 text-[10px] text-gray-700 border border-gray-300">{yardageTotal > 0 ? yardageTotal : ''}</td>
                 </tr>
                 <tr className="bg-gray-50">
                   <td className="px-1 py-1 font-semibold border border-gray-300">Par</td>
@@ -148,19 +156,27 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
           );
         })}
         {showTotals && holes.length === 18 && (
-          <table className="min-w-full border text-center text-xs">
+          <table className="min-w-full border-separate border-spacing-0 text-center text-xs" style={{ borderCollapse: 'separate' }}>
+            <thead>
+              <tr className="bg-gray-200">
+                <th className="px-1 py-1 font-bold border border-gray-400"></th>
+                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">Front 9</th>
+                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">Back 9</th>
+                <th className="px-1 py-1 font-bold border border-gray-400">Total</th>
+              </tr>
+            </thead>
             <tbody>
               <tr>
-                <td className="px-1 py-1 font-bold">Total</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200">{parTotals[0]}</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200">{parTotals[1]}</td>
-                <td className="px-1 py-1 font-bold bg-yellow-100">{totalPar}</td>
+                <td className="px-1 py-1 font-bold border border-gray-300">Total</td>
+                <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200 border border-gray-300">{parTotals[0]}</td>
+                <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200 border border-gray-300">{parTotals[1]}</td>
+                <td className="px-1 py-1 font-bold bg-yellow-100 border border-gray-300">{totalPar}</td>
               </tr>
               <tr>
-                <td className="px-1 py-1 font-bold">Score</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100">{scoreTotals[0] || ''}</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100">{scoreTotals[1] || ''}</td>
-                <td className="px-1 py-1 font-bold bg-yellow-100">{totalScore || ''}</td>
+                <td className="px-1 py-1 font-bold border border-gray-300">Score</td>
+                <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100 border border-gray-300">{scoreTotals[0] || ''}</td>
+                <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100 border border-gray-300">{scoreTotals[1] || ''}</td>
+                <td className="px-1 py-1 font-bold bg-yellow-100 border border-gray-300">{totalScore || ''}</td>
               </tr>
             </tbody>
           </table>
