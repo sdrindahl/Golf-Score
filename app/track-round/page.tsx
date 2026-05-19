@@ -32,11 +32,14 @@ import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
 import CommentsModal from '@/components/CommentsModal';
 import HoleMap from '@/components/HoleMap';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
+        // ...existing code...
+      // Ensure isClient is true in browser for immediate saves
+      // (Only declare once at the top of the component)
     // Live drive yardage overlay (shows only while measuring drive)
     const renderLiveDriveOverlay = () => {
       if (driveStart && userLocation) {
@@ -67,7 +70,7 @@ function TrackRoundContent() {
   const [round, setRound] = useState<Round | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
+  // Use typeof window !== 'undefined' for client-only logic
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
   const [scores, setScores] = useState<number[]>([]);
 
@@ -78,6 +81,7 @@ function TrackRoundContent() {
   // ...other state declarations...
 
   // --- All state/vars must be declared before this point ---
+  const isClient = typeof window !== 'undefined';
 
   // List of available hole images (after course is declared)
   const holeImages = [
@@ -648,25 +652,16 @@ function TrackRoundContent() {
   const statsDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const statsRequestInFlightRef = useRef(false);
 
-  // Auto-save per-hole stats changes (debounced)
+  // Debounced auto-save for per-hole stats (for background/heartbeat)
   useEffect(() => {
     if (!round || !course || !isClient) return;
-
     const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
     if (!user) return;
-
-    // Clear any pending debounce timer
     if (statsDebounceRef.current) {
       clearTimeout(statsDebounceRef.current);
     }
-
-    // Debounce Supabase sync for stats - wait 500ms in case more changes are coming
     statsDebounceRef.current = setTimeout(() => {
-      // Skip if a request is already in flight
-      if (statsRequestInFlightRef.current) {
-        return;
-      }
-
+      if (statsRequestInFlightRef.current) return;
       try {
         statsRequestInFlightRef.current = true;
         const userId = round.userId || user?.id;
@@ -687,9 +682,8 @@ function TrackRoundContent() {
           startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
           perHoleStats,
         };
-
         // Also save to localStorage as a backup
-        if (typeof window !== 'undefined') {
+        if (isClient) {
           const savedRounds = localStorage.getItem('golfRounds');
           if (savedRounds) {
             try {
@@ -704,7 +698,6 @@ function TrackRoundContent() {
             }
           }
         }
-
         fetch('/api/save-round', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -718,13 +711,92 @@ function TrackRoundContent() {
         statsRequestInFlightRef.current = false;
       }
     }, 500);
-
     return () => {
       if (statsDebounceRef.current) {
         clearTimeout(statsDebounceRef.current);
       }
     };
   }, [perHoleStats, scores, round, course, isClient]);
+
+
+  // Helper: Immediate save-round API call (must be above debouncedImmediateSaveRound)
+  const immediateSaveRound = async () => {
+    console.log('[DEBUG] immediateSaveRound called', { round, course, isClient, scores, perHoleStats });
+    if (!round || !course || !isClient) {
+      console.log('[DEBUG] immediateSaveRound abort: missing round/course/isClient', { round, course, isClient });
+      return;
+    }
+    const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+    if (!user) {
+      console.log('[DEBUG] immediateSaveRound abort: missing user');
+      return;
+    }
+    const userId = round.userId || user?.id;
+    const userName = round.userName || user?.name;
+    const courseName = round.courseName || course.name;
+    const updatedRound = {
+      id: round.id,
+      userId,
+      userName,
+      courseId: round.courseId || course.id,
+      courseName,
+      selectedTee: round.selectedTee || 'men',
+      date: round.date || new Date().toISOString(),
+      scores,
+      totalScore: scores.reduce((a, b) => a + b, 0),
+      notes: round.notes || '',
+      in_progress: typeof round.in_progress === 'boolean' ? round.in_progress : true,
+      startingHole: (round as any).startingHole || (round as any).starting_hole || 1,
+      perHoleStats,
+    };
+    try {
+      console.log('[DEBUG] immediateSaveRound sending fetch', updatedRound);
+      await fetch('/api/save-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRound),
+      });
+    } catch (e) {
+      // Optionally show error/toast
+      console.error('Immediate save-round failed', e);
+    }
+  };
+
+  // --- Debounced Immediate Save for Score Modal ---
+  // This debounce persists across renders and only fires after user pauses
+  const popupSaveDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedImmediateSaveRound = useCallback(() => {
+    if (popupSaveDebounceRef.current) {
+      clearTimeout(popupSaveDebounceRef.current);
+    }
+    popupSaveDebounceRef.current = setTimeout(() => {
+      immediateSaveRound();
+    }, 300);
+  }, [immediateSaveRound]);
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (popupSaveDebounceRef.current) {
+        clearTimeout(popupSaveDebounceRef.current);
+      }
+    };
+  }, []);
+  
+  useEffect(() => {
+    // Only debounce saves in the popup
+    if (!showScoreModal) return;
+    if (!round || !course || !isClient) return;
+    debouncedImmediateSaveRound();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores, perHoleStats, showScoreModal]);
+  useEffect(() => {
+    return () => {
+      if (popupSaveDebounceRef.current) {
+        clearTimeout(popupSaveDebounceRef.current);
+      }
+    };
+  }, []);
 
   const handleScoreChange = () => {
     // This function is no longer used - scores are updated directly via button clicks
@@ -785,6 +857,18 @@ function TrackRoundContent() {
   if (loading || !auth || !user) return <div className="p-8 text-center">Loading user and round data...</div>;
   if (!round || !course) return (
     <div className="p-8 text-center">
+      <div className="bg-red-100 border-2 border-red-500 text-red-900 px-6 py-4 rounded-lg shadow-lg mb-4">
+        <p className="font-semibold text-lg">Track Round Error</p>
+        <p className="text-sm mt-2">{!round ? 'No round found for this ID.' : 'No course found for this round.'}</p>
+        <p className="text-xs mt-2">Debug info:</p>
+        <pre className="text-xs text-left whitespace-pre-wrap bg-white p-2 rounded border mt-2 overflow-x-auto" style={{maxWidth: 400, margin: '0 auto'}}>
+          roundId: {JSON.stringify(roundId)}
+          round: {JSON.stringify(round, null, 2)}
+          course: {JSON.stringify(course, null, 2)}
+          localStorage.golfRounds: {typeof window !== 'undefined' ? localStorage.getItem('golfRounds') : ''}
+          localStorage.golfCourses: {typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : ''}
+        </pre>
+      </div>
       {toastMessage && (
         <div className="bg-amber-100 border-2 border-amber-500 text-amber-900 px-6 py-4 rounded-lg shadow-lg">
           <p className="font-semibold text-lg">{toastMessage}</p>
@@ -793,6 +877,7 @@ function TrackRoundContent() {
       )}
     </div>
   );
+
 
   return (
     <PageWrapper title="" userName={round.userName}>
@@ -1014,8 +1099,15 @@ function TrackRoundContent() {
                   const parTotal = holes.reduce((sum, h) => sum + (h.par || 0), 0);
                   const scoreTotal = holes.reduce((sum, h, i) => sum + (typeof scores[startIdx + i] === 'number' && scores[startIdx + i] > 0 ? scores[startIdx + i] : 0), 0);
                   // Compute yardages for selected tee
-                  const yardages = holes.map(h => h?.[selectedTee]?.yardage ?? '-');
-                  const yardageTotal = holes.reduce((sum, h) => sum + (h?.[selectedTee]?.yardage || 0), 0);
+                  // Only allow known tee names to avoid type error
+                  const teeNames = ['men', 'women', 'senior', 'championship'] as const;
+                  const isValidTee = (tee: string): tee is typeof teeNames[number] => teeNames.includes(tee as any);
+                  const yardages = holes.map(h =>
+                    isValidTee(selectedTee) ? h[selectedTee]?.yardage ?? '-' : '-'
+                  );
+                  const yardageTotal = holes.reduce((sum, h) =>
+                    isValidTee(selectedTee) ? sum + (h[selectedTee]?.yardage || 0) : sum
+                  , 0);
                   return (
                     <table key={sectionIdx} className="min-w-full border text-center text-xs mb-2">
                       <thead>
@@ -1150,6 +1242,7 @@ function TrackRoundContent() {
                       updated[currentHoleIndex] = Math.max(0, current - 1);
                       return updated;
                     });
+                    debouncedImmediateSaveRound();
                   }}
                   aria-label="Decrease score"
                 >−</button>
@@ -1163,6 +1256,7 @@ function TrackRoundContent() {
                       updated[currentHoleIndex] = Math.min(20, current + 1);
                       return updated;
                     });
+                    debouncedImmediateSaveRound();
                   }}
                   aria-label="Increase score"
                 >+</button>
@@ -1183,13 +1277,14 @@ function TrackRoundContent() {
                     <button
                       key={opt}
                       className={`px-2 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.fairwayHit === opt ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                      onClick={() => {
+                      onClick={async () => {
                         setPerHoleStats(stats => {
                           const updated = [...stats];
                           if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
                           updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: opt };
                           return updated;
                         });
+                        await immediateSaveRound();
                       }}
                     >{opt}</button>
                   ))}
@@ -1200,13 +1295,14 @@ function TrackRoundContent() {
                 <div className="flex gap-1">
                   <button
                     className={`px-4 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.gir ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-                    onClick={() => {
+                    onClick={async () => {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
                         if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
                         updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: !updated[currentHoleIndex].gir };
                         return updated;
                       });
+                      await immediateSaveRound();
                     }}
                   >Y</button>
                 </div>
@@ -1218,7 +1314,7 @@ function TrackRoundContent() {
                 <div className="flex items-center gap-3">
                   <button
                     className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                    onClick={() => {
+                    onClick={async () => {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
                         if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
@@ -1231,13 +1327,14 @@ function TrackRoundContent() {
                         };
                         return updated;
                       });
+                      await immediateSaveRound();
                     }}
                     aria-label="Decrease putts"
                   >−</button>
                   <span className="text-2xl font-bold w-10 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
                   <button
                     className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
-                    onClick={() => {
+                    onClick={async () => {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
                         if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
@@ -1250,6 +1347,7 @@ function TrackRoundContent() {
                         };
                         return updated;
                       });
+                      await immediateSaveRound();
                     }}
                     aria-label="Increase putts"
                   >+</button>
@@ -1333,7 +1431,8 @@ function TrackRoundContent() {
             {scores.length === course?.holes?.length && scores.every(s => typeof s === 'number' && s > 0) ? (
               <button
                 className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 rounded-xl mt-2 text-lg"
-                onClick={() => {
+                onClick={async () => {
+                  await immediateSaveRound();
                   setShowScoreModal(false);
                   // Optionally mark round as finished here
                   router.push(`/round-detail/${roundId}`);
@@ -1342,8 +1441,8 @@ function TrackRoundContent() {
             ) : (
               <button
                 className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 rounded-xl mt-2 text-lg"
-                onClick={() => {
-                  // Save and go to next hole
+                onClick={async () => {
+                  await immediateSaveRound();
                   setShowScoreModal(false);
                   setCurrentHoleIndex(idx => {
                     if (!course) return idx;
