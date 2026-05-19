@@ -41,6 +41,7 @@ function TrackRoundContent() {
       // Ensure isClient is true in browser for immediate saves
       // (Only declare once at the top of the component)
     // Live drive yardage overlay (shows only while measuring drive)
+    console.log('[DEBUG] TrackRoundContent mounted');
     const renderLiveDriveOverlay = () => {
       if (driveStart && userLocation) {
         return (
@@ -326,6 +327,7 @@ function TrackRoundContent() {
 
   // Save/finish round handler
   const handleFinishRound = async () => {
+    console.log('[handleFinishRound] called');
     setFinishing(true);
     setShowIncompleteWarning(false);
     
@@ -336,7 +338,6 @@ function TrackRoundContent() {
       const updatedRound = {
         ...round,
         scores,
-        in_progress: false, // Always boolean
         completed_at: new Date().toISOString(),
         userId: round?.userId || user?.id,
         userName: round?.userName || user?.name,
@@ -345,6 +346,7 @@ function TrackRoundContent() {
         selectedTee: teeToSend,
         // Always use the perHoleStats state
         perHoleStats,
+        in_progress: false, // Always set LAST to override any previous value
       };
       // Remove any snake_case fields if present (defensive)
       if ('selected_tee' in updatedRound) delete (updatedRound as any).selected_tee;
@@ -365,6 +367,7 @@ function TrackRoundContent() {
               const courseToSave = allCourses.find((c: any) => c.id === courseId);
               if (courseToSave) {
                 console.log('[handleFinishRound] Saving course to Supabase:', courseToSave.name);
+                console.log('[handleFinishRound] Outgoing payload:', JSON.stringify(updatedRound));
                 await fetch('/api/save-course', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -1432,10 +1435,8 @@ function TrackRoundContent() {
               <button
                 className="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 rounded-xl mt-2 text-lg"
                 onClick={async () => {
-                  await immediateSaveRound();
+                  await handleFinishRound();
                   setShowScoreModal(false);
-                  // Optionally mark round as finished here
-                  router.push(`/round-detail/${roundId}`);
                 }}
               >Finish Round</button>
             ) : (
