@@ -57,33 +57,33 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
           const yardageTotal = yardageTotals[sectionIdx];
           const yardages = section.map(h => isValidTee(selectedTee) ? h[selectedTee]?.yardage ?? '-' : '-');
           return (
-            <table key={sectionIdx} className="min-w-full border text-center text-xs mb-2">
+            <table key={sectionIdx} className="min-w-full border-separate border-spacing-0 text-center text-xs mb-2" style={{ borderCollapse: 'separate' }}>
               <thead>
-                <tr>
-                  <th className="px-1 py-1 font-bold">Hole</th>
+                <tr className="bg-gray-200">
+                  <th className="px-1 py-1 font-bold border border-gray-400">Hole</th>
                   {section.map((h, i) => (
-                    <th key={i} className="px-1 py-1 font-bold">{h.holeNumber ?? startIdx + i + 1}</th>
+                    <th key={i} className="px-1 py-1 font-bold border border-gray-400">{h.holeNumber ?? startIdx + i + 1}</th>
                   ))}
-                  <th className="px-1 py-1 font-bold">{isFrontNine ? 'Out' : 'In'}</th>
+                  <th className="px-1 py-1 font-bold border border-gray-400">{isFrontNine ? 'Out' : 'In'}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="px-1 py-1 font-semibold">Yardage</td>
-                  {yardages.map((y, i) => (
-                    <td key={i} className="px-1 py-1">{y}</td>
-                  ))}
-                  <td className="px-1 py-1 font-bold bg-gray-100">{yardageTotal > 0 ? yardageTotal : ''}</td>
-                </tr>
-                <tr>
-                  <td className="px-1 py-1 font-semibold">Par</td>
+                <tr className="bg-gray-100">
+                  <td className="px-1 py-1 font-semibold border border-gray-300">Yardage</td>
                   {section.map((h, i) => (
-                    <td key={i} className="px-1 py-1">{h.par ?? '-'}</td>
+                    <td key={i} className="px-1 py-1 text-[10px] text-gray-700">{h.yardage ?? '-'}</td>
                   ))}
-                  <td className="px-1 py-1 font-bold bg-gray-100">{parTotal}</td>
+                  <td className="px-1 py-1 font-bold bg-gray-200 text-[10px] text-gray-700">{yardageTotal > 0 ? yardageTotal : ''}</td>
+                </tr>
+                <tr className="bg-gray-50">
+                  <td className="px-1 py-1 font-semibold border border-gray-300">Par</td>
+                  {section.map((h, i) => (
+                    <td key={i} className="px-1 py-1 border border-gray-300">{h.par ?? '-'}</td>
+                  ))}
+                  <td className="px-1 py-1 font-bold bg-gray-100 border border-gray-300">{parTotal}</td>
                 </tr>
                 <tr>
-                  <td className="px-1 py-1 font-semibold">Score</td>
+                  <td className="px-1 py-1 font-semibold border border-gray-300">Score</td>
                   {section.map((h, i) => {
                     const score = scores[startIdx + i];
                     const par = h.par ?? 0;
@@ -132,16 +132,16 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
                       }
                     }
                     return (
-                      <td key={i} className={`px-1 py-1`} title={label}>
+                      <td key={i} className={`px-1 py-1 border border-gray-300`} title={label}>
                         {typeof score === 'number' && score > 0 ? (
-                          <span className={`inline-block w-6 h-6 ${shape} ${bg} ${border} text-base font-semibold flex items-center justify-center`}>
+                          <span className={`inline-block w-5 h-5 ${shape} ${bg} ${border} text-xs font-semibold flex items-center justify-center`}>
                             {score}
                           </span>
                         ) : ''}
                       </td>
                     );
                   })}
-                  <td className="px-1 py-1 font-bold bg-gray-100">{scoreTotal > 0 ? scoreTotal : ''}</td>
+                  <td className="px-1 py-1 font-bold bg-gray-100 border border-gray-300">{scoreTotal > 0 ? scoreTotal : ''}</td>
                 </tr>
               </tbody>
             </table>
