@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
+import { ScorecardTable } from '@/components/ScorecardTable'
 import { useAuth } from '@/lib/useAuth'
 import PageWrapper from '@/components/PageWrapper'
 
@@ -789,109 +790,15 @@ function RoundDetailContent() {
             )}
           </div>
 
-          {/* All Holes Grid - Grouped by Nines (Track Round style) */}
-          <div className="mb-6 p-6 rounded-xl border-2 border-green-600 bg-green-50">
-            <div className="flex items-center justify-between mb-2">
-              <div className="font-semibold text-green-900 text-base">Holes Completed</div>
-              {canEditRound() && !isEditMode && (
-                <button
-                  onClick={enterEditMode}
-                  className="text-blue-600 hover:text-blue-800 font-semibold transition-colors cursor-pointer"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            {nines.map((nine, nineIdx) => {
-              // Find the starting index for this nine's holes in the flat course.holes array
-              const startIdx = nines.slice(0, nineIdx).reduce((sum, n) => sum + n.holes.length, 0)
-              // Helper for abbreviation
-              const getResultLabel = (score: number, par: number) => {
-                if (!score) return '';
-                const diff = score - par;
-                if (score === 1) return 'A';      // Ace
-                if (diff <= -3) return 'Alb';     // Albatross
-                if (diff === -2) return 'E';      // Eagle
-                if (diff === -1) return 'B';      // Birdie
-                if (diff === 0) return 'P';       // Par
-                if (diff === 1) return 'Bo';      // Bogey
-                if (diff === 2) return 'Db';      // Double Bogey
-                if (diff > 2) return 'Tb';        // Triple+ Bogey
-                return '';
-              };
-              // Helper for color
-              const getColorClass = (score: number, par: number) => {
-                if (!score) return 'bg-gray-50 border-gray-300 text-gray-700';
-                const diff = score - par;
-                if (score === 1) return 'bg-purple-600 text-white';
-                if (diff <= -3) return 'bg-blue-900 text-white';
-                if (diff === -2) return 'bg-blue-600 text-white';
-                if (diff === -1) return 'bg-green-600 text-white';
-                if (diff === 0) return 'bg-gray-500 text-white';
-                if (diff === 1) return 'bg-orange-500 text-white';
-                if (diff === 2) return 'bg-red-600 text-white';
-                if (diff > 2) return 'bg-red-800 text-white';
-                return 'bg-gray-50 border-gray-300 text-gray-700';
-              };
-              return (
-                <div key={nineIdx}>
-                  <div className="font-semibold text-green-700 mb-1 text-xs pl-1">{nine.name}</div>
-                  <div className="grid grid-cols-9 gap-1 mb-1 w-full">
-                    {nine.holes.map((hole, idx) => {
-                      const flatIdx = startIdx + idx;
-                      const score = round.scores[flatIdx];
-                      const par = hole.par;
-                      const label = getResultLabel(score, par);
-                      const colorClass = getColorClass(score, par);
-                      const isSelected = isEditMode && selectedHoleIndex === flatIdx;
-                      return (
-                        <button
-                          key={flatIdx}
-                          onClick={() => {
-                            if (isEditMode) {
-                              handleHoleEdit(flatIdx)
-                            }
-                          }}
-                          disabled={!isEditMode}
-                          className={`relative w-10 h-10 sm:w-12 sm:h-12 rounded-lg border font-bold text-xs sm:text-base transition p-0 flex flex-col items-center justify-center ${colorClass} ${
-                            isEditMode ? 'hover:shadow-lg hover:scale-105 cursor-pointer' : 'cursor-default'
-                          } ${isSelected ? 'ring-4 ring-blue-500' : ''}`}
-                          title={isEditMode ? `Click to edit Hole ${hole.holeNumber}` : `Hole ${hole.holeNumber}`}
-                        >
-                          <span className="absolute top-0.5 left-0.5 text-[10px] font-semibold text-gray-700" style={{letterSpacing: '0.02em'}}>{hole.holeNumber}</span>
-                          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-base sm:text-lg font-extrabold w-full text-center">
-                              {round.perHoleStats?.[flatIdx]?.conceded ? 'C' : score > 0 ? score : ''}
-                            </span>
-                          </span>
-                          <span className="absolute left-0 right-0 text-[9px] font-medium break-words text-center w-full text-black" style={{bottom: 0}}>{score > 0 ? label : ''}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            <div className="flex items-center p-2 rounded-lg font-semibold text-sm bg-gray-100 mt-3">
-              {(() => {
-                // Only count completed holes for score and vs par
-                const completed = round.scores.map((s, i) => ({ score: s, par: course.holes[i]?.par })).filter(x => x.score > 0);
-                const completedScore = completed.reduce((sum, x) => sum + x.score, 0);
-                // Par for the displayed holes (all holes in this card)
-                const displayedPar = nines.reduce((sum, nine) => sum + nine.holes.reduce((s, h) => s + (h.par || 0), 0), 0);
-                // Par for completed holes (for vs par)
-                const completedPar = completed.reduce((sum, x) => sum + (x.par || 0), 0);
-                const diff = completedScore - completedPar;
-                return <>
-                  <span className="text-gray-800 mr-2">Total</span>
-                  <span className="text-blue-600 font-bold text-lg mr-4">{completedScore}</span>
-                  <span className="text-gray-700 mr-4">Par {displayedPar}</span>
-                  <span className={diff < 0 ? 'text-green-600' : diff > 0 ? 'text-red-600' : 'text-gray-700'}>
-                    {diff === 0 ? 'E' : (diff < 0 ? diff : '+' + diff)}
-                  </span>
-                </>;
-              })()}
-            </div>
+          {/* Holes Completed Card using ScorecardTable */}
+          <div className="mb-6">
+            <ScorecardTable
+              holes={course.holes}
+              scores={round.scores}
+              selectedTee={round.selectedTee}
+              showTotals={true}
+              onEdit={canEditRound() && !isEditMode ? enterEditMode : undefined}
+            />
           </div>
 
 
