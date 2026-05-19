@@ -1197,62 +1197,64 @@ function RoundDetailContent() {
                         const currentDistance = (editStats.puttDistances || [])[idx] || 0;
                         const isEditing = puttBeingEdited === idx;
                         return (
-                          <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-lg border">
-                            <span className="text-sm font-semibold text-gray-700 min-w-fit">Putt {idx + 1}:</span>
-                            {!isEditing ? (
-                              <>
-                                <span className="flex-1 text-gray-700 font-semibold">{currentDistance > 0 ? `${currentDistance} feet` : 'Not set'}</span>
-                                <button
-                                  onClick={() => setPuttBeingEdited(idx)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded transition-all text-sm"
-                                >Edit</button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    const newDistances = [...(editStats.puttDistances || [])];
-                                    newDistances[idx] = Math.max(0, (newDistances[idx] || 0) - 1);
-                                    setEditStats({ ...editStats, puttDistances: newDistances });
-                                  }}
-                                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded transition-all text-sm"
-                                >−</button>
-                                <span className="text-lg font-bold text-blue-600 min-w-12 text-center">{currentDistance}</span>
-                                <button
-                                  onClick={() => {
-                                    const newDistances = [...(editStats.puttDistances || [])];
-                                    newDistances[idx] = (newDistances[idx] || 0) + 1;
-                                    setEditStats({ ...editStats, puttDistances: newDistances });
-                                  }}
-                                  className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded transition-all text-sm"
-                                >+</button>
-                                <button
-                                  onClick={() => setPuttBeingEdited(null)}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded transition-all text-sm"
-                                >Done</button>
-                              </>
-                            )}
-                            {isEditing && (
-                              <div className="grid grid-cols-5 gap-2 ml-2">
-                                {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100].map((preset) => (
+                          <div key={idx} className="flex flex-col gap-1 bg-white p-2 rounded-lg border">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold text-gray-700 min-w-fit">Putt {idx + 1}:</span>
+                              {!isEditing ? (
+                                <>
+                                  <span className="flex-1 text-gray-700 font-semibold">{currentDistance > 0 ? `${currentDistance} feet` : 'Not set'}</span>
                                   <button
-                                    key={preset}
+                                    onClick={() => setPuttBeingEdited(idx)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded transition-all text-sm"
+                                  >Edit</button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
                                     onClick={() => {
                                       const newDistances = [...(editStats.puttDistances || [])];
-                                      newDistances[idx] = preset;
+                                      newDistances[idx] = Math.max(0, (newDistances[idx] || 0) - 1);
                                       setEditStats({ ...editStats, puttDistances: newDistances });
                                     }}
-                                    className={`py-2 px-2 rounded font-semibold text-sm transition-all ${currentDistance === preset ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                                  >{preset}</button>
-                                ))}
+                                    className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded transition-all text-sm"
+                                  >−</button>
+                                  <span className="text-lg font-bold text-blue-600 min-w-12 text-center">{currentDistance}</span>
+                                  <button
+                                    onClick={() => {
+                                      const newDistances = [...(editStats.puttDistances || [])];
+                                      newDistances[idx] = (newDistances[idx] || 0) + 1;
+                                      setEditStats({ ...editStats, puttDistances: newDistances });
+                                    }}
+                                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded transition-all text-sm"
+                                  >+</button>
+                                  <button
+                                    onClick={() => setPuttBeingEdited(null)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1 rounded transition-all text-sm"
+                                  >Done</button>
+                                </>
+                              )}
+                            </div>
+                            {isEditing && (
+                              <div className="w-full flex flex-col items-center mt-2">
+                                <div className="grid grid-cols-5 gap-1 w-full">
+                                  {[5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100].map((preset) => (
+                                    <button
+                                      key={preset}
+                                      onClick={() => {
+                                        const newDistances = [...(editStats.puttDistances || [])];
+                                        newDistances[idx] = preset;
+                                        setEditStats({ ...editStats, puttDistances: newDistances });
+                                      }}
+                                      className={`py-1 px-1 rounded font-semibold text-xs transition-all ${currentDistance === preset ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                                      style={{ minWidth: '2.2rem' }}
+                                    >{preset}</button>
+                                  ))}
+                                </div>
                               </div>
                             )}
                           </div>
                         );
                       })}
-                    </div>
-                    <div className="text-center pt-3 border-t border-green-300 mt-2">
-                      <span className="text-gray-700 font-semibold">Total: {((editStats.puttDistances || []).reduce((sum: number, d: number) => sum + (d || 0), 0))} ft</span>
                     </div>
                   </div>
                 )}
