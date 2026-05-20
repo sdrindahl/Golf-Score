@@ -897,16 +897,41 @@ function TrackRoundContent() {
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
 
-        {/* Discard Round Button (fixed bottom left) */}
-        <button
-          className="fixed bottom-24 left-6 z-50 w-48 h-14 rounded-xl bg-red-700 hover:bg-red-800 text-white text-lg font-bold shadow-2xl flex items-center justify-center border-4 border-white transition-all"
-          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
-          disabled={deleting}
-          onClick={() => setShowDeleteWarning(true)}
-          aria-label="Discard round"
-        >
-          {deleting ? 'Discarding...' : 'Discard Round'}
-        </button>
+
+        {/* Modern Bottom Action Bar with Icons */}
+        <div className="fixed bottom-0 left-0 w-full flex flex-col items-center pb-4 z-50">
+          <div className="flex gap-4 mb-2">
+            <button
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow transition-transform duration-100 active:scale-95"
+              disabled={finishing}
+              onClick={() => {
+                if (scores.length !== course.holes.length || scores.some(s => !s || s <= 0)) {
+                  setShowIncompleteWarning(true);
+                } else {
+                  handleFinishRound();
+                }
+              }}
+              aria-label="Save incomplete round"
+            >
+              <span role="img" aria-label="Save">💾</span> {finishing ? 'Saving...' : 'Save Incomplete'}
+            </button>
+            <button
+              className="flex items-center gap-2 px-6 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold shadow transition-transform duration-100 active:scale-95"
+              disabled={deleting}
+              onClick={() => setShowDeleteWarning(true)}
+              aria-label="Discard round"
+            >
+              <span role="img" aria-label="Discard">🗑️</span> {deleting ? 'Discarding...' : 'Discard'}
+            </button>
+          </div>
+          <button
+            className="flex items-center gap-2 w-56 py-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg transition-transform duration-100 active:scale-95"
+            onClick={() => {/* TODO: Hook up Track Drive logic here */}}
+            aria-label="Track Drive"
+          >
+            <span role="img" aria-label="Track Drive">🚩</span> Track Drive
+          </button>
+        </div>
 
         {/* Delete Round Modal */}
         {showDeleteWarning && (
@@ -936,23 +961,6 @@ function TrackRoundContent() {
             </div>
           </div>
         )}
-
-        {/* Save Incomplete Round Button (fixed bottom left, above Discard) */}
-        <button
-          className="fixed bottom-40 left-6 z-50 w-48 h-14 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-lg font-bold shadow-2xl flex items-center justify-center border-4 border-white transition-all"
-          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
-          disabled={finishing}
-          onClick={() => {
-            if (scores.length !== course.holes.length || scores.some(s => !s || s <= 0)) {
-              setShowIncompleteWarning(true);
-            } else {
-              handleFinishRound();
-            }
-          }}
-          aria-label="Save incomplete round"
-        >
-          {finishing ? 'Saving...' : 'Save Incomplete Round'}
-        </button>
 
         {/* Incomplete Round Modal */}
         {showIncompleteWarning && (
