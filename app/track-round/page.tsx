@@ -894,6 +894,46 @@ function TrackRoundContent() {
         </div>
       )}
 
+
+
+      {/* Top Left Corner Card - Yardage, Hole Info, Track Drive */}
+      {course && course.holes && course.holes[currentHoleIndex] && (
+        <div className="fixed top-4 left-4 z-40 flex flex-col items-start">
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start min-w-[170px] max-w-xs border border-green-400" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            <div className="flex items-end gap-2">
+              <span className="text-5xl font-extrabold text-white leading-none">
+                {(() => {
+                  const hole = course.holes[currentHoleIndex];
+                  if (!hole || typeof userLocation?.lat !== 'number' || typeof userLocation?.lng !== 'number' || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
+                  const yards = Math.round(getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng));
+                  return String(yards).slice(0, 3);
+                })()}
+              </span>
+              <span className="text-lg font-bold text-green-400 mb-1">yds</span>
+            </div>
+            <div className="mt-1 text-white text-base font-semibold flex gap-2 items-center">
+              Hole {currentHoleIndex + 1}
+              <span className="text-xl font-light text-white">•</span>
+              Par {course.holes[currentHoleIndex].par ?? '-'}
+            </div>
+            <div className="text-green-200 text-sm font-medium mb-2">Hcp {course.holes[currentHoleIndex].handicap ?? '-'}</div>
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-400 bg-black bg-opacity-40 hover:bg-green-900 text-green-200 font-bold shadow transition-transform duration-100 active:scale-95 text-base mt-1"
+              onClick={() => {/* TODO: Hook up Track Drive logic here */}}
+              aria-label="Track Drive"
+            >
+              <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="4" cy="12" r="2" fill="#4ade80"/>
+                <circle cx="10" cy="14" r="1.5" fill="#4ade80"/>
+                <circle cx="16" cy="10" r="1" fill="#4ade80"/>
+                <rect x="17.5" y="2" width="3" height="8" rx="1.5" fill="#4ade80"/>
+              </svg>
+              <span className="text-green-200 font-semibold">Track Drive</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
 
