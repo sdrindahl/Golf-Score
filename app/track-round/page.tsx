@@ -1537,7 +1537,7 @@ function TrackRoundContent() {
                     }}
                     aria-label="Decrease putts"
                   >−</button>
-                  <span className="text-2xl font-bold w-10 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
+                  <span className="text-2xl font-bold w-12 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
                   <button
                     className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
                     onClick={async () => {
