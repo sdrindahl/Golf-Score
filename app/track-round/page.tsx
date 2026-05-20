@@ -24,7 +24,7 @@ function getDistanceYards(lat1: number, lon1: number, lat2: number, lon2: number
   return meters * 1.09361; // convert to yards
 }
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Round, Course } from '@/types';
+import { Round, Course, User } from '@/types';
 import { useAuth } from '@/lib/useAuth';
 import PageWrapper from '@/components/PageWrapper';
 import CommentsModal from '@/components/CommentsModal';
@@ -34,10 +34,30 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
-          // State for 3-dot menu
-          const [showMenu, setShowMenu] = useState(false);
-            // Add missing state for Add Players modal
-            const [showAddPlayers, setShowAddPlayers] = useState(false);
+  // Move useAuth to the very top to ensure 'auth' is always initialized before any usage
+  const auth = useAuth();
+  // State for 3-dot menu
+  const [showMenu, setShowMenu] = useState(false);
+  // Add missing state for Add Players modal
+  const [showAddPlayers, setShowAddPlayers] = useState(false);
+  // State for selected players (up to 3)
+  const [selectedPlayers, setSelectedPlayers] = useState<User[]>([]);
+  // State for all available players
+  const [allPlayers, setAllPlayers] = useState<User[]>([]);
+
+  // Get current user
+  const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
+
+  // Load all players on mount (simulate API call or useAuth)
+  useEffect(() => {
+    async function fetchPlayers() {
+      if (auth && auth.getAllUsersAsync) {
+        const users = await auth.getAllUsersAsync();
+        setAllPlayers(users.filter(u => u.id !== user?.id)); // Exclude self
+      }
+    }
+    if (showAddPlayers) fetchPlayers();
+  }, [showAddPlayers, auth, user]);
         // ...existing code...
       // Ensure isClient is true in browser for immediate saves
       // (Only declare once at the top of the component)
@@ -56,7 +76,6 @@ function TrackRoundContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roundId = searchParams ? searchParams.get('id') : null;
-  const auth = useAuth();
   const [round, setRound] = useState<Round | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -851,7 +870,6 @@ function TrackRoundContent() {
     router.push('/');
   };
 
-  const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
   if (loading || !auth || !user) return <div className="p-8 text-center">Loading user and round data...</div>;
   if (!round || !course) return (
     <div className="p-8 text-center">
@@ -936,8 +954,55 @@ function TrackRoundContent() {
 
       {/* Top Left Corner Card - Yardage, Hole Info, Track Drive */}
       {course && course.holes && course.holes[currentHoleIndex] && (
-        <div className="fixed top-4 left-4 z-40 flex flex-col items-start">
-          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start min-w-[170px] max-w-xs border border-green-400" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+        <div className="fixed top-4 left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs">
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400 relative" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            {/* Main yardage/score card content */}
+            <div>
+              {/* ...existing yardage, hole, par, hcp, and drive button code... */}
+            </div>
+                  {/* Add Players Modal */}
+                  {showAddPlayers && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">Add Players (up to 3)</h2>
+                        <button className="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800" onClick={() => setShowAddPlayers(false)} aria-label="Close">×</button>
+                        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+                          {allPlayers.length === 0 && <div className="text-gray-500 text-center py-8">No other players found.</div>}
+                          {allPlayers.map(player => {
+                            const alreadyAdded = selectedPlayers.some(p => p.id === player.id);
+                            return (
+                              <div key={player.id} className="flex items-center justify-between px-2 py-2 rounded hover:bg-gray-100">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm" style={{ background: '#2e3a2f' }}>
+                                    {player.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
+                                  </div>
+                                  <span className="font-semibold text-gray-800">{player.name}</span>
+                                </div>
+                                <button
+                                  className={`ml-2 p-2 rounded-full ${alreadyAdded || selectedPlayers.length >= 3 ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                                  disabled={alreadyAdded || selectedPlayers.length >= 3}
+                                  onClick={() => {
+                                    if (!alreadyAdded && selectedPlayers.length < 3) {
+                                      setSelectedPlayers(prev => [...prev, player]);
+                                    }
+                                  }}
+                                  aria-label="Add player"
+                                >
+                                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                          <button className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-bold text-base border hover:bg-gray-300" onClick={() => setShowAddPlayers(false)}>Done</button>
+                          {selectedPlayers.length > 0 && (
+                            <button className="px-4 py-2 rounded bg-red-600 text-white font-bold text-base border hover:bg-red-700" onClick={() => setSelectedPlayers([])}>Clear</button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
             <div className="flex items-end gap-2">
               <span className="text-5xl font-extrabold text-white leading-none">
                 {(() => {
@@ -1058,6 +1123,29 @@ function TrackRoundContent() {
           </div>
         </div>
       )}
+
+      {selectedPlayers.length > 0 && (
+  <div
+    className="fixed z-40 flex flex-col items-start justify-start gap-2"
+    style={{ 
+      top: '700px',   // Increased from 205px to push it DOWN
+      left: '20px'    // Replaced centering with a fixed LEFT margin (16px / 1rem)
+    }}
+  >
+    {selectedPlayers.map((p, idx) => (
+      <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+        {/* Avatar */}
+        <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
+          {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
+        </div>
+        {/* Score badge */}
+        <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
+          E
+        </span>
+      </div>
+    ))}
+  </div>
+)}
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
