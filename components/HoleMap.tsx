@@ -129,10 +129,10 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
     return () => cleanup();
   }, [userLat, userLng, greenLat, greenLng]);
   // Spotlight mask style: ellipse centered on green, rest black
-  const maskStyle = isMasked
+  const maskStyle: React.CSSProperties = isMasked
     ? {
         pointerEvents: 'auto',
-        position: 'absolute' as const,
+        position: 'absolute',
         top: 0,
         left: 0,
         width: '100vw',

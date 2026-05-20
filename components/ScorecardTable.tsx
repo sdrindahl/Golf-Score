@@ -73,9 +73,9 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
                   {section.map((h, i) => {
                     let yard = '-';
                     if (isValidTee(selectedTee) && h[selectedTee] && typeof h[selectedTee].yardage === 'number') {
-                      yard = h[selectedTee].yardage;
+                      yard = h[selectedTee].yardage.toString();
                     } else if (typeof h.yardage === 'number') {
-                      yard = h.yardage;
+                      yard = h.yardage.toString();
                     }
                     return (
                       <td key={i} className="px-1 py-1 text-[10px] text-gray-700 font-bold border border-gray-300">{yard}</td>
