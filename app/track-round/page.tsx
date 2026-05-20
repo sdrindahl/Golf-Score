@@ -1085,17 +1085,6 @@ function TrackRoundContent() {
         {/* Modern yardage overlay (left) */}
           {/* Live drive yardage overlay (shows only while measuring drive) */}
           {renderLiveDriveOverlay()}
-        <div className="absolute top-8 left-4 z-20 flex flex-col items-center gap-4">
-          <div className="bg-black bg-opacity-90 border-2 border-white text-white rounded-2xl px-8 py-5 text-5xl font-extrabold shadow-2xl tracking-wide flex flex-col items-center" style={{boxShadow: '0 4px 24px 0 rgba(0,0,0,0.5)'}}>
-            <span className="text-base font-semibold text-gray-300 mb-1">Yards</span>
-            {(() => {
-              const hole = course.holes[currentHoleIndex];
-              if (!hole || !userLocation || typeof hole.greenLat !== 'number' || typeof hole.greenLng !== 'number') return '—';
-              const dist = getDistanceYards(userLocation.lat, userLocation.lng, hole.greenLat, hole.greenLng);
-              return Math.round(dist);
-            })()}
-          </div>
-        </div>
 
 
 
