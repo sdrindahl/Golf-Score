@@ -1,6 +1,6 @@
 {
-  "version": "5.0.9",
-  "buildDate": "2026-15-05",
-  "buildTime": "08:42:00",
+  "version": "5.1.0",
+  "buildDate": "2026-20-05",
+  "buildTime": "01:33:00",
   "description": "ApexTracer - A golf score tracking application built with React and TypeScript."
 }
