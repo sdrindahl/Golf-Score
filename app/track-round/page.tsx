@@ -36,6 +36,8 @@ import { supabase } from '@/lib/supabase';
 function TrackRoundContent() {
           // State for 3-dot menu
           const [showMenu, setShowMenu] = useState(false);
+            // Add missing state for Add Players modal
+            const [showAddPlayers, setShowAddPlayers] = useState(false);
         // ...existing code...
       // Ensure isClient is true in browser for immediate saves
       // (Only declare once at the top of the component)
