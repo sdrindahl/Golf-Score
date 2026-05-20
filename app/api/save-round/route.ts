@@ -134,13 +134,11 @@ export async function POST(req: NextRequest) {
       scores: validRound.scores,
       total_score: validRound.totalScore,
       notes: validRound.notes,
-      in_progress: inProgressValue,
+      in_progress: inProgressValue, // <-- use in_progress to match DB
       selected_tee: selectedTeeFinal,
       per_hole_stats: (validRound as any).perHoleStats || [],
       updated_at: new Date().toISOString(),
-      // Only update last_activity_at if there are actual score/note changes
       ...(hasScoreChanges && { last_activity_at: new Date().toISOString() }),
-      // NOTE: course_id column was removed - use round_courses join table instead
     };
     console.log('[DEBUG] Upserting round data:', JSON.stringify(roundData));
     console.log('[DEBUG] per_hole_stats about to be written:', JSON.stringify(roundData.per_hole_stats));
@@ -152,6 +150,8 @@ export async function POST(req: NextRequest) {
       .from('rounds')
       .upsert([roundData], { onConflict: 'id' })
       .select();
+    // EXTRA DEBUG LOGGING
+    console.log('[DEBUG] Upsert result:', { data, error });
     if (error) {
       console.error('[DEBUG] Upsert error:', JSON.stringify(error));
       console.error('[DEBUG] Upsert error message:', error.message);

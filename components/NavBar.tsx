@@ -141,65 +141,9 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
-        {isTrackRoundPage ? (
-          // Track Round Mode - Enhanced Navigation
-          <div className="flex justify-around gap-2 px-2 py-3">
-            <button
-              onClick={() => {
-                // Dispatch event to previous hole
-                window.dispatchEvent(new CustomEvent('navigatePreviousHole'));
-              }}
-              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 hover:from-blue-600 hover:to-blue-800 active:scale-95 shadow-md hover:shadow-lg border border-blue-400"
-            >
-              <span className="text-4xl mb-1">⬅️</span>
-              <span className="leading-tight">Previous</span>
-            </button>
-            <button
-              onClick={() => {
-                // Dispatch event to toggle map
-                window.dispatchEvent(new CustomEvent('toggleHoleMap'));
-              }}
-              className={`flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl active:scale-95 shadow-md hover:shadow-lg border-2 ${
-                isMapOpen
-                  ? 'bg-gradient-to-br from-cyan-400 to-blue-500 border-white ring-2 ring-white/50'
-                  : 'bg-gradient-to-br from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 border-cyan-400'
-              }`}
-            >
-              {isMapOpen ? (
-                <span className="leading-tight text-center">
-                  <span className="text-black font-black">HOLE {currentHole}</span>
-                  <br />
-                  Return to Scoring
-                </span>
-              ) : (
-                <>
-                  <span className="text-3xl mb-1">🗺️</span>
-                  <span className="leading-tight">View Map</span>
-                </>
-              )}
-            </button>
-            <button
-              onClick={() => router.push('/rounds-in-progress')}
-              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-indigo-500 to-purple-700 hover:from-indigo-600 hover:to-purple-800 active:scale-95 shadow-md hover:shadow-lg border border-indigo-400"
-            >
-              <span className="text-4xl mb-1">📊</span>
-              <span className="leading-tight">Leaderboard</span>
-            </button>
-            <button
-              onClick={() => {
-                // Dispatch event to next hole
-                window.dispatchEvent(new CustomEvent('navigateNextHole'));
-              }}
-              className="flex-1 flex flex-col items-center justify-center py-3 px-1 font-semibold text-xs transition rounded-xl bg-gradient-to-br from-green-500 to-emerald-700 hover:from-green-600 hover:to-emerald-800 active:scale-95 shadow-md hover:shadow-lg border border-green-400"
-            >
-              <span className="text-4xl mb-1">➡️</span>
-              <span className="leading-tight">{isLastHole ? 'Finish' : 'Next'}</span>
-            </button>
-          </div>
-        ) : (
-          // Normal Navigation
+      {/* Mobile Bottom Navigation - hidden ONLY on Track Round page */}
+      {isTrackRoundPage ? null : (
+        <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
           <div className="flex justify-around">
             <button
               onClick={() => router.push('/')}
@@ -222,44 +166,35 @@ export default function NavBar() {
               Golfers
             </button>
             {/* Start/Return to Round Button (middle position) */}
-            {!isTrackRoundPage ? (
-              <button
-                onClick={() => {
-                  if (currentRoundId) {
-                    router.push(`/track-round?id=${currentRoundId}`);
-                  } else {
-                    router.push('/courses');
-                  }
-                }}
-                className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
-                  currentRoundId
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-                style={{ minWidth: '0' }}
-              >
-                {currentRoundId ? (
-                  <>
-                    <img src="/Players.png" alt="Return to Round" className="h-10 w-10" />
-                    Return to
-                    <br />
-                    Round
-                  </>
-                ) : (
-                  <>
-                    <span className="text-lg">▶</span>
-                    Start Round
-                  </>
-                )}
-              </button>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs text-black">
-                <img src="/Players.png" alt="Round in Process" className="h-10 w-10 opacity-50" />
-                Round in
-                <br />
-                Progress
-              </div>
-            )}
+            <button
+              onClick={() => {
+                if (currentRoundId) {
+                  router.push(`/track-round?id=${currentRoundId}`);
+                } else {
+                  router.push('/courses');
+                }
+              }}
+              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
+                currentRoundId
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+              style={{ minWidth: '0' }}
+            >
+              {currentRoundId ? (
+                <>
+                  <img src="/Players.png" alt="Return to Round" className="h-10 w-10" />
+                  Return to
+                  <br />
+                  Round
+                </>
+              ) : (
+                <>
+                  <span className="text-lg">▶</span>
+                  Start Round
+                </>
+              )}
+            </button>
             <button
               onClick={() => router.push('/courses')}
               className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
@@ -281,8 +216,8 @@ export default function NavBar() {
               Settings
             </button>
           </div>
-        )}
-      </nav>
+        </nav>
+      )}
     </>
   )
 }

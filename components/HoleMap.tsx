@@ -1,5 +1,4 @@
-'use client';
-
+"use client";
 import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
@@ -18,67 +17,40 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const currentTapMarker = useRef<any>(null);
   const currentLabel = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMasked, setIsMasked] = useState(true);
 
   useEffect(() => {
-    // Ensure this only runs on client
-    if (typeof window === 'undefined') return;
-
-    // Prevent double initialization in React strict mode
-    if (map.current) return;
-
-    // Dynamically import Leaflet only on client
+    let leafletInstance: any = null;
+    let cleanup = () => {};
     import('leaflet').then((leaflet) => {
       const L = leaflet.default;
-      
-      if (!mapContainer.current) return;
+      // Initialize map if not already
+      if (!map.current && mapContainer.current) {
+        map.current = L.map(mapContainer.current, {
+          center: [userLat, userLng],
+          zoom: 17,
+          zoomControl: false,
+          attributionControl: false,
+        });
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles © Esri',
+          maxZoom: 19,
+        }).addTo(map.current);
+        setIsLoading(false);
+      }
 
-      // Double-check map isn't already initialized (race condition safety)
-      if (map.current) return;
+      // Defensive: check all coordinates are valid numbers
+      const allCoords = [userLat, userLng, greenLat, greenLng];
+      const allValid = allCoords.every((v) => typeof v === 'number' && !isNaN(v));
+      if (!allValid) return;
 
-      // Initialize map centered between user and green
-      const centerLat = (userLat + greenLat) / 2;
-      const centerLng = (userLng + greenLng) / 2;
+      // Remove previous polyline if exists
+      if (measurementPolyline.current) {
+        map.current.removeLayer(measurementPolyline.current);
+        measurementPolyline.current = null;
+      }
 
-      map.current = L.map(mapContainer.current).setView([centerLat, centerLng], 18);
-
-      // Use satellite imagery
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Esri',
-        maxZoom: 22,
-      }).addTo(map.current);
-
-      // Green marker
-      L.circleMarker([greenLat, greenLng], {
-        radius: 8,
-        fillColor: '#22c55e',
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-      })
-        .addTo(map.current)
-        .bindPopup('Green Center 🚩');
-
-      // User position marker
-      L.circleMarker([userLat, userLng], {
-        radius: 6,
-        fillColor: '#0066ff',
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.8,
-      })
-        .addTo(map.current)
-        .bindPopup('Your Position 📍');
-
-      // Draw initial line from user to green
-      measurementPolyline.current = L.polyline([[userLat, userLng], [greenLat, greenLng]], {
-        color: 'blue',
-        weight: 2,
-        opacity: 0.7,
-      }).addTo(map.current);
-
-      // Calculate distance helper
+      // Helper to calculate distance
       const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const toRad = (v: number) => (v * Math.PI) / 180;
         const R = 6371000; // meters
@@ -134,26 +106,64 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         }
       };
 
+      // Draw new polyline
+      measurementPolyline.current = L.polyline([[userLat, userLng], [greenLat, greenLng]], {
+        color: 'red',
+        weight: 2,
+        opacity: 0.7,
+      }).addTo(map.current);
       map.current.on('click', handleMapClick);
-      setIsLoading(false);
 
-      return () => {
-        map.current?.off('click', handleMapClick);
-        map.current?.remove();
-        map.current = null;
+      // Always center the map on the green for the current hole
+      map.current.setView([greenLat, greenLng], 18); // 18 is a good zoom for a green
+
+      // Cleanup function for useEffect
+      cleanup = () => {
+        if (map.current) {
+          map.current.off('click');
+          map.current.remove();
+          map.current = null;
+        }
       };
-    }).catch((err) => {
-      console.error('Failed to load Leaflet:', err);
-      setIsLoading(false);
     });
+    return () => cleanup();
   }, [userLat, userLng, greenLat, greenLng]);
+  // Spotlight mask style: ellipse centered on green, rest black
+  const maskStyle: React.CSSProperties = isMasked
+    ? {
+        pointerEvents: 'auto',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 20,
+        // Use CSS mask for ellipse (spotlight)
+        WebkitMaskImage: `radial-gradient(ellipse 35% 20% at 50% 40%, transparent 60%, black 100%)`,
+        maskImage: `radial-gradient(ellipse 35% 20% at 50% 40%, transparent 60%, black 100%)`,
+        background: 'rgba(0,0,0,0.92)',
+        transition: 'opacity 0.4s',
+        opacity: 1,
+      }
+    : { display: 'none' };
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      <div ref={mapContainer} className="flex-1" style={{ height: '400px' }} />
+    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+      <div
+        ref={mapContainer}
+        style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0 }}
+        onClick={() => setIsMasked(false)}
+      />
+      {isMasked && (
+        <div
+          style={maskStyle}
+          onClick={() => setIsMasked(false)}
+          title="Tap to reveal full map"
+        />
+      )}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
-          <div className="text-gray-600">Loading map...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75" style={{ zIndex: 30 }}>
+          <div className="text-white">Loading map...</div>
         </div>
       )}
     </div>
