@@ -473,6 +473,22 @@ function TrackRoundContent() {
           >
             &#x25C0;
           </button>
+
+          {/* Map Icon Button */}
+          <button
+            className={`absolute left-16 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center border border-gray-600 shadow transition ${showMap ? 'bg-green-700' : 'bg-gray-700'} hover:bg-green-700`}
+            onClick={() => setShowMap((prev) => !prev)}
+            aria-label="Show Map"
+            title="Show Map"
+            type="button"
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={showMap ? '#4ade80' : 'white'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+          </button>
+
           {/* Center Info */}
           <div className="flex flex-col items-center justify-center px-12">
             <div className="w-12 h-1 rounded-full bg-gray-600 mb-1" />
@@ -482,16 +498,6 @@ function TrackRoundContent() {
             </div>
             <div className="text-sm text-gray-400 font-medium">Hdcp {hole?.handicap ?? '-'}</div>
           </div>
-          {/* Exit Map button (only when map is shown) */}
-          {showMap && (
-            <button
-              className="absolute right-16 top-1/2 -translate-y-1/2 h-10 px-4 rounded-full bg-red-600 hover:bg-red-700 text-white font-semibold shadow border border-red-800 transition"
-              onClick={() => setShowMap(false)}
-              aria-label="Exit map"
-            >
-              Exit Map
-            </button>
-          )}
           {/* Right Arrow */}
           <button
             className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-2xl text-white border border-gray-600 shadow"
@@ -980,10 +986,26 @@ function TrackRoundContent() {
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
 
 
+        {/* Golf Ball Icon above Bottom NavBar */}
+        <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
+          <button
+            className="focus:outline-none pointer-events-auto"
+            style={{ background: 'none', border: 'none', padding: 0 }}
+            onClick={() => setShowScoreModal(true)}
+            aria-label="Enter score"
+          >
+            <img
+              src="/golf_ball_score.png"
+              alt="Golf Ball Icon"
+              className="w-32 h-32 drop-shadow-lg"
+              style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}
+              draggable={false}
+            />
+          </button>
+        </div>
         {/* Modern Bottom Action Bar with Icons */}
         <div className="fixed bottom-0 left-0 w-full flex flex-col items-center pb-4 z-50">
-          <div className="flex gap-4 mb-2">
-          </div>
+          <div className="flex gap-4 mb-2"></div>
           <button
             className="flex items-center gap-2 w-56 py-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg transition-transform duration-100 active:scale-95"
             onClick={() => {/* TODO: Hook up Track Drive logic here */}}
@@ -1094,9 +1116,8 @@ function TrackRoundContent() {
             <img
               src={randomHoleImages[currentHoleIndex] || '/hole1.png'}
               alt="Hole preview"
-              className="w-full h-full object-cover cursor-pointer select-none"
+              className="w-full h-full object-cover select-none"
               style={{ width: '100vw', height: '100vh', objectFit: 'cover', background: 'black' }}
-              onClick={() => setShowMap(true)}
               draggable={false}
             />
           )}
@@ -1112,25 +1133,7 @@ function TrackRoundContent() {
 
 
 
-        {/* Floating drive distance button (above score button) */}
-        <div className="fixed bottom-44 right-6 z-50 flex flex-col items-end gap-2">
-          <button
-            className={`w-32 h-16 rounded-xl ${driveStart ? 'bg-yellow-500' : 'bg-green-700'} text-white text-lg font-bold shadow-2xl flex items-center justify-center border-4 border-white hover:bg-green-800 transition-all`}
-            style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
-            onClick={handleMeasureDrive}
-          >
-            <span className="text-base whitespace-nowrap">{driveStart ? 'Save Drive' : 'Track Drive'}</span>
-          </button>
-          {driveStart && (
-            <button
-              className="w-32 h-10 rounded-xl bg-gray-300 text-gray-800 text-base font-semibold shadow flex items-center justify-center border-2 border-white hover:bg-gray-400 transition-all"
-              style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.15)' }}
-              onClick={handleDiscardDrive}
-            >
-              Cancel
-            </button>
-          )}
-        </div>
+
         {/* Toast message for drive workflow */}
         {toastMessage && !driveHelpDismissed && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-orange-500 text-white px-6 py-4 rounded-xl shadow-xl flex flex-col gap-2 max-w-md w-full" style={{maxWidth: 400}}>
@@ -1168,24 +1171,7 @@ function TrackRoundContent() {
         )}
 
 
-      {/* Floating score button (lower right, outside flex/relative containers) */}
-      <button
-        className="fixed block visible z-50 w-16 h-16 rounded-full bg-blue-700 text-white shadow-2xl flex items-center justify-center border-4 border-white hover:bg-blue-800 transition-all pointer-events-auto bottom-24 right-6"
-        style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
-        onClick={() => setShowScoreModal(true)}
-        aria-label="Enter score"
-      >
-        <span className="text-2xl font-bold">
-          {totalScore > 0 ? `+${totalScore}` : totalScore === 0 ? 'E' : totalScore}
-        </span>
-        <span className="absolute -bottom-3 -right-3">
-          <span className="bg-white rounded-full p-1 shadow-lg flex items-center justify-center" style={{ width: '32px', height: '32px' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-blue-700">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13zm-6 6h12" />
-            </svg>
-          </span>
-        </span>
-      </button>
+
 
         {/* Bottom bar for hole navigation and info */}
         {renderBottomBar()}
