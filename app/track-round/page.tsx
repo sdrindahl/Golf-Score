@@ -34,6 +34,8 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
+          // State for 3-dot menu
+          const [showMenu, setShowMenu] = useState(false);
         // ...existing code...
       // Ensure isClient is true in browser for immediate saves
       // (Only declare once at the top of the component)
@@ -881,6 +883,46 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
+      {/* Top Right Corner 3-dot Menu */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          className="p-3 rounded-full bg-black bg-opacity-80 hover:bg-opacity-100 shadow-lg border border-gray-700 flex items-center justify-center"
+          aria-label="Menu"
+          onClick={() => setShowMenu(prev => !prev)}
+        >
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="6" cy="14" r="2" fill="#fff"/>
+            <circle cx="14" cy="14" r="2" fill="#fff"/>
+            <circle cx="22" cy="14" r="2" fill="#fff"/>
+          </svg>
+        </button>
+        {showMenu && (
+          <div className="absolute right-0 mt-2 w-44 bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 z-50 backdrop-blur-md" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            <ul className="py-2">
+              <li>
+                <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-white font-medium" onClick={() => { setShowMenu(false); setShowIncompleteWarning(true); }}>
+                  <span role="img" aria-label="Save" className="text-lg">💾</span> Save Incomplete
+                </button>
+              </li>
+              <li>
+                <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-red-400 font-medium" onClick={() => { setShowMenu(false); setShowDeleteWarning(true); }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M6 7h12M9 7V5a3 3 0 0 1 6 0v2m2 0v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7h12z" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M10 11v6M14 11v6" stroke="#f87171" strokeWidth="2" strokeLinecap="round"/></svg> Discard Round
+                </button>
+              </li>
+              <li>
+                <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-white font-medium" onClick={() => { setShowMenu(false); setShowAddPlayers(true); }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-8 0v2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="#fff" strokeWidth="2"/><path d="M22 11v2m-1 1h2" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg> Add Players
+                </button>
+              </li>
+              <li>
+                <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-white font-medium" onClick={() => { setShowMenu(false); router.push('/'); }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 17v-2a4 4 0 0 1 8 0v2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="#fff" strokeWidth="2"/><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg> Exit Round
+                </button>
+              </li>
+            </ul>
+          </div>
+        )}
+      </div>
       {/* Toast notification - More prominent with close button */}
       {toastMessage && (
         <div className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-lg shadow-xl z-50 border-l-4 border-white flex items-center justify-between gap-4">
@@ -941,28 +983,6 @@ function TrackRoundContent() {
         {/* Modern Bottom Action Bar with Icons */}
         <div className="fixed bottom-0 left-0 w-full flex flex-col items-center pb-4 z-50">
           <div className="flex gap-4 mb-2">
-            <button
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold shadow transition-transform duration-100 active:scale-95"
-              disabled={finishing}
-              onClick={() => {
-                if (scores.length !== course.holes.length || scores.some(s => !s || s <= 0)) {
-                  setShowIncompleteWarning(true);
-                } else {
-                  handleFinishRound();
-                }
-              }}
-              aria-label="Save incomplete round"
-            >
-              <span role="img" aria-label="Save">💾</span> {finishing ? 'Saving...' : 'Save Incomplete'}
-            </button>
-            <button
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold shadow transition-transform duration-100 active:scale-95"
-              disabled={deleting}
-              onClick={() => setShowDeleteWarning(true)}
-              aria-label="Discard round"
-            >
-              <span role="img" aria-label="Discard">🗑️</span> {deleting ? 'Discarding...' : 'Discard'}
-            </button>
           </div>
           <button
             className="flex items-center gap-2 w-56 py-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg transition-transform duration-100 active:scale-95"
