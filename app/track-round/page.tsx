@@ -41,19 +41,7 @@ function TrackRoundContent() {
       // (Only declare once at the top of the component)
     // Live drive yardage overlay (shows only while measuring drive)
     console.log('[DEBUG] TrackRoundContent mounted');
-    const renderLiveDriveOverlay = () => {
-      if (driveStart && userLocation) {
-        return (
-          <div className="fixed top-8 right-4 z-30 flex flex-col items-center gap-4">
-            <div className="bg-yellow-600 bg-opacity-95 border-2 border-white text-white rounded-2xl px-8 py-5 text-5xl font-extrabold shadow-2xl tracking-wide flex flex-col items-center" style={{boxShadow: '0 4px 24px 0 rgba(0,0,0,0.5)'}}>
-              <span className="text-base font-semibold text-gray-200 mb-1">Drive</span>
-              {Math.round(getDistanceYards(driveStart.lat, driveStart.lng, userLocation.lat, userLocation.lng))} <span className="text-lg font-bold ml-1">yd</span>
-            </div>
-          </div>
-        );
-      }
-      return null;
-    };
+    // Removed yellow Drive yd overlay per user request
   // State for editing a putt distance
   const [puttEdit, setPuttEdit] = useState<{ idx: number, value: number } | null>(null);
 
@@ -965,19 +953,106 @@ function TrackRoundContent() {
               Par {course.holes[currentHoleIndex].par ?? '-'}
             </div>
             <div className="text-green-200 text-sm font-medium mb-2">Hcp {course.holes[currentHoleIndex].handicap ?? '-'}</div>
-            <button
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-400 bg-black bg-opacity-40 hover:bg-green-900 text-green-200 font-bold shadow transition-transform duration-100 active:scale-95 text-base mt-1"
-              onClick={() => {/* TODO: Hook up Track Drive logic here */}}
-              aria-label="Track Drive"
-            >
-              <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="4" cy="12" r="2" fill="#4ade80"/>
-                <circle cx="10" cy="14" r="1.5" fill="#4ade80"/>
-                <circle cx="16" cy="10" r="1" fill="#4ade80"/>
-                <rect x="17.5" y="2" width="3" height="8" rx="1.5" fill="#4ade80"/>
-              </svg>
-              <span className="text-green-200 font-semibold">Track Drive</span>
-            </button>
+            {/* Track Drive Button Workflow */}
+            {(() => {
+              const drive = perHoleStats[currentHoleIndex]?.drive;
+              // Step 2: Tracking (driveStart is set, not finished)
+              if (driveStart && userLocation) {
+                const liveDistance = Math.round(getDistanceYards(driveStart.lat, driveStart.lng, userLocation.lat, userLocation.lng));
+                return (
+                  <div className="flex flex-col gap-2 mt-1 items-start">
+                    {/* Tracking label */}
+                    <hr className="w-full border-t border-green-500 opacity-60 my-2" />
+                    <div className="flex items-center gap-2 mt-1 mb-1">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeWidth="2.2" fill="none" />
+                        <path d="M12 6v6l4 2" stroke="#22c55e" strokeWidth="2.2" fill="none" />
+                      </svg>
+                      <span className="text-green-400 text-base">Tracking Drive...</span>
+                    </div>
+                    {/* Live distance with Save icon */}
+                    <div className="flex items-end gap-2 mt-2 mb-2">
+                      <span className="text-5xl font-semibold text-white leading-none">{liveDistance}</span>
+                      <span className="text-lg font-bold text-green-400 mb-1">yds</span>
+                      <button
+                        className="ml-2 flex items-center justify-center p-1 rounded-full bg-green-700 hover:bg-green-800 transition"
+                        style={{ border: '1.5px solid #22c55e' }}
+                        onClick={() => {
+                          // Finish drive
+                          const start = driveStart;
+                          const end = userLocation;
+                          const driveDistance = Math.round(getDistanceYards(start.lat, start.lng, end.lat, end.lng));
+                          setPerHoleStats(stats => {
+                            const updated = [...stats];
+                            if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                            updated[currentHoleIndex] = {
+                              ...updated[currentHoleIndex],
+                              drive: { start, end, yardage: driveDistance },
+                            };
+                            return updated;
+                          });
+                          setDriveStart(null);
+                        }}
+                        aria-label="Save Drive"
+                      >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11.17a2 2 0 0 1 1.41.59l2.83 2.83A2 2 0 0 1 21 7.83V19a2 2 0 0 1-2 2z"/>
+                          <polyline points="17 21 17 13 7 13 7 21"/>
+                          <polyline points="7 3 7 8 15 8"/>
+                        </svg>
+                      </button>
+                      <button
+                        className="ml-1 flex items-center justify-center p-1 rounded-full bg-gray-700 hover:bg-red-600 transition border border-gray-400"
+                        onClick={() => {
+                          setDriveStart(null);
+                        }}
+                        aria-label="Cancel Drive Tracking"
+                        title="Cancel Drive Tracking"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+              // Step 3: Drive saved (show drive distance, allow new drive)
+              if (drive && drive.yardage != null) {
+                return (
+                  <div className="flex flex-col gap-2 mt-1">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-500 bg-black bg-opacity-60 text-green-400 font-bold shadow text-base">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+                        <circle cx="12" cy="12" r="10" stroke="#22c55e" strokeWidth="2.5" fill="none" />
+                        <path d="M8 12.5l2.5 2.5 5-5" stroke="#22c55e" strokeWidth="2.5" fill="none" />
+                      </svg>
+                      <span className="font-semibold">Drive:</span>
+                      <span className="ml-1 text-lg font-bold">{drive.yardage} yds</span>
+                    </div>
+                  </div>
+                );
+              }
+              // Step 1: Idle (ready to start tracking)
+              return (
+                <button
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-400 bg-black bg-opacity-40 hover:bg-green-900 text-green-200 font-bold shadow transition-transform duration-100 active:scale-95 text-base mt-1"
+                  onClick={() => {
+                    if (!userLocation) return;
+                    setDriveStart({ ...userLocation });
+                  }}
+                  aria-label="Track Drive"
+                >
+                  <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="4" cy="12" r="2" fill="#4ade80"/>
+                    <circle cx="10" cy="14" r="1.5" fill="#4ade80"/>
+                    <circle cx="16" cy="10" r="1" fill="#4ade80"/>
+                    <rect x="17.5" y="2" width="3" height="8" rx="1.5" fill="#4ade80"/>
+                  </svg>
+                  <span className="text-green-200 font-semibold">Track Drive</span>
+                </button>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -1125,7 +1200,7 @@ function TrackRoundContent() {
 
         {/* Modern yardage overlay (left) */}
           {/* Live drive yardage overlay (shows only while measuring drive) */}
-          {renderLiveDriveOverlay()}
+          {/* Removed renderLiveDriveOverlay per user request */}
 
 
 
