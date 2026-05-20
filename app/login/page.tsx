@@ -154,6 +154,7 @@ export default function Login() {
                 }}
                 placeholder="0000"
                 maxLength={4}
+                autoComplete="current-password"
                 className="input-field text-center text-2xl tracking-widest font-mono"
               />
               <button
