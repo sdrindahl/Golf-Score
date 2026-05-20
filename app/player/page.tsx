@@ -52,7 +52,7 @@ function PlayerProfileContent() {
 
     window.addEventListener('beforeunload', handleBeforeUnload)
     document.addEventListener('visibilitychange', handleVisibilityChange)
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -66,193 +66,193 @@ function PlayerProfileContent() {
     sessionStorage.removeItem('navigating')
   }, [playerId, refreshKey])
 
-    useEffect(() => {
-      if (!playerId) return;
+  useEffect(() => {
+    if (!playerId) return;
 
-      const loadPlayerData = async () => {
-        try {
-          // Get current user
-          const user = auth.getCurrentUser();
-          setCurrentUser(user);
+    const loadPlayerData = async () => {
+      try {
+        // Get current user
+        const user = auth.getCurrentUser();
+        setCurrentUser(user);
 
-          // Find the player locally first
-          let allUsers = auth.getAllUsers();
-          let foundPlayer = allUsers.find(u => u.id === playerId);
+        // Find the player locally first
+        let allUsers = auth.getAllUsers();
+        let foundPlayer = allUsers.find(u => u.id === playerId);
 
-          // If not found locally, try Supabase
-          if (!foundPlayer && isSupabaseConfigured() && supabase) {
-            const { data, error } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', playerId)
-              .single();
-            if (!error && data) {
-              foundPlayer = {
-                id: data.id,
-                name: data.name,
-                password: '',
-                is_admin: data.is_admin
-              };
-            }
+        // If not found locally, try Supabase
+        if (!foundPlayer && isSupabaseConfigured() && supabase) {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', playerId)
+            .single();
+          if (!error && data) {
+            foundPlayer = {
+              id: data.id,
+              name: data.name,
+              password: '',
+              is_admin: data.is_admin
+            };
           }
+        }
 
-          if (foundPlayer) {
-            setPlayer(foundPlayer);
+        if (foundPlayer) {
+          setPlayer(foundPlayer);
 
-            // Fetch player's rounds directly from Supabase
-            if (isSupabaseConfigured() && supabase) {
-              const { data, error } = await supabase
-                .from('rounds')
-                .select('*')
-                .eq('user_id', playerId)
-                .order('date', { ascending: false });
-              console.log('[DEBUG] Supabase rounds fetch:', { error, data });
-              if (error) {
-                setRounds([]);
-              } else if (data) {
-                // Fetch course IDs for each round from round_courses join table
-                const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
-                  let courseId = '';
-                  if (r.id && supabase) {
-                    const { data: courseData, error: courseError } = await supabase
-                      .from('round_courses')
-                      .select('course_id')
-                      .eq('round_id', r.id)
-                      .order('course_order', { ascending: true });
-                    if (!courseError && courseData && courseData.length > 0) {
-                      courseId = courseData.map((rc: any) => rc.course_id).join(',');
-                    }
-                  }
-                  return {
-                    id: r.id,
-                    userId: r.user_id,
-                    userName: r.user_name,
-                    courseId: courseId,
-                    courseName: '',
-                    selectedTee: r.selected_tee,
-                    date: r.date,
-                    scores: r.scores,
-                    totalScore: r.total_score,
-                    notes: r.notes,
-                    in_progress: r.in_progress,
-                    perHoleStats: r.perHoleStats || r.per_hole_stats,
-                  };
-                }));
-                console.log('[DEBUG] Parsed playerRounds:', playerRounds);
-                setRounds(playerRounds);
-              }
-            } else {
+          // Fetch player's rounds directly from Supabase
+          if (isSupabaseConfigured() && supabase) {
+            const { data, error } = await supabase
+              .from('rounds')
+              .select('*')
+              .eq('user_id', playerId)
+              .order('date', { ascending: false });
+            console.log('[DEBUG] Supabase rounds fetch:', { error, data });
+            if (error) {
               setRounds([]);
+            } else if (data) {
+              // Fetch course IDs for each round from round_courses join table
+              const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
+                let courseId = '';
+                if (r.id && supabase) {
+                  const { data: courseData, error: courseError } = await supabase
+                    .from('round_courses')
+                    .select('course_id')
+                    .eq('round_id', r.id)
+                    .order('course_order', { ascending: true });
+                  if (!courseError && courseData && courseData.length > 0) {
+                    courseId = courseData.map((rc: any) => rc.course_id).join(',');
+                  }
+                }
+                return {
+                  id: r.id,
+                  userId: r.user_id,
+                  userName: r.user_name,
+                  courseId: courseId,
+                  courseName: '',
+                  selectedTee: r.selected_tee,
+                  date: r.date,
+                  scores: r.scores,
+                  totalScore: r.total_score,
+                  notes: r.notes,
+                  in_progress: r.in_progress,
+                  perHoleStats: r.perHoleStats || r.per_hole_stats,
+                };
+              }));
+              console.log('[DEBUG] Parsed playerRounds:', playerRounds);
+              setRounds(playerRounds);
             }
           } else {
-            setPlayer(null);
+            setRounds([]);
           }
-        } catch (error) {
-          setRounds([]);
+        } else {
+          setPlayer(null);
         }
-        setLoading(false);
-      };
+      } catch (error) {
+        setRounds([]);
+      }
+      setLoading(false);
+    };
 
-      loadPlayerData();
-    }, [playerId, refreshKey]);
+    loadPlayerData();
+  }, [playerId, refreshKey]);
 
-    // Real-time subscription to update rounds when they change in Supabase
-    useEffect(() => {
-      if (!playerId || !isSupabaseConfigured() || !supabase) return;
+  // Real-time subscription to update rounds when they change in Supabase
+  useEffect(() => {
+    if (!playerId || !isSupabaseConfigured() || !supabase) return;
 
-      const getRoundsForPlayer = async () => {
-        if (!supabase) return;
-        try {
-          const { data, error } = await supabase
-            .from('rounds')
-            .select('*')
-            .eq('user_id', playerId)
-            .order('date', { ascending: false });
+    const getRoundsForPlayer = async () => {
+      if (!supabase) return;
+      try {
+        const { data, error } = await supabase
+          .from('rounds')
+          .select('*')
+          .eq('user_id', playerId)
+          .order('date', { ascending: false });
 
-          if (!error && data) {
-            // Fetch course IDs for each round from round_courses join table
-            const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
-              let courseId = '';
-              if (r.id && supabase) {
-                const { data: courseData, error: courseError } = await supabase
-                  .from('round_courses')
-                  .select('course_id')
-                  .eq('round_id', r.id)
-                  .order('course_order', { ascending: true });
-                if (!courseError && courseData && courseData.length > 0) {
-                  courseId = courseData.map((rc: any) => rc.course_id).join(',');
-                }
+        if (!error && data) {
+          // Fetch course IDs for each round from round_courses join table
+          const playerRounds: Round[] = await Promise.all(data.map(async (r: any) => {
+            let courseId = '';
+            if (r.id && supabase) {
+              const { data: courseData, error: courseError } = await supabase
+                .from('round_courses')
+                .select('course_id')
+                .eq('round_id', r.id)
+                .order('course_order', { ascending: true });
+              if (!courseError && courseData && courseData.length > 0) {
+                courseId = courseData.map((rc: any) => rc.course_id).join(',');
               }
-              return {
-                id: r.id,
-                userId: r.user_id,
-                userName: r.user_name,
-                courseId: courseId,
-                courseName: '',
-                selectedTee: r.selected_tee,
-                date: r.date,
-                scores: r.scores,
-                totalScore: r.total_score,
-                notes: r.notes,
-                in_progress: r.in_progress,
-                perHoleStats: r.perHoleStats || r.per_hole_stats,
-              };
-            }));
-            setRounds(playerRounds);
-          }
-        } catch (error) {
-          console.error('Error fetching updated rounds:', error);
+            }
+            return {
+              id: r.id,
+              userId: r.user_id,
+              userName: r.user_name,
+              courseId: courseId,
+              courseName: '',
+              selectedTee: r.selected_tee,
+              date: r.date,
+              scores: r.scores,
+              totalScore: r.total_score,
+              notes: r.notes,
+              in_progress: r.in_progress,
+              perHoleStats: r.perHoleStats || r.per_hole_stats,
+            };
+          }));
+          setRounds(playerRounds);
         }
-      };
+      } catch (error) {
+        console.error('Error fetching updated rounds:', error);
+      }
+    };
 
-      const subscription = supabase
-        .channel(`player-rounds:${playerId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'rounds',
-            filter: `user_id=eq.${playerId}`,
-          },
-          () => {
-            // Refetch rounds when they change
-            getRoundsForPlayer();
-          }
-        )
-        .subscribe();
+    const subscription = supabase
+      .channel(`player-rounds:${playerId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rounds',
+          filter: `user_id=eq.${playerId}`,
+        },
+        () => {
+          // Refetch rounds when they change
+          getRoundsForPlayer();
+        }
+      )
+      .subscribe();
 
-      return () => {
-        subscription.unsubscribe();
-      };
-    }, [playerId]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [playerId]);
 
-    if (loading) {
-      return (
-        <PageWrapper title="Player Profile">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
-              <p className="text-gray-500">Loading profile...</p>
-            </div>
+  if (loading) {
+    return (
+      <PageWrapper title="Player Profile">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
+            <p className="text-gray-500">Loading profile...</p>
           </div>
-        </PageWrapper>
-      );
-    }
+        </div>
+      </PageWrapper>
+    );
+  }
 
-    if (!player) {
-      return (
-        <PageWrapper title="Player Profile">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
-              <p className="text-gray-500">Player not found</p>
-              <Link href="/">
-                <button className="btn-primary mt-4">Back to Home</button>
-              </Link>
-            </div>
+  if (!player) {
+    return (
+      <PageWrapper title="Player Profile">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center">
+            <p className="text-gray-500">Player not found</p>
+            <Link href="/">
+              <button className="btn-primary mt-4">Back to Home</button>
+            </Link>
           </div>
-        </PageWrapper>
-      );
-    }
+        </div>
+      </PageWrapper>
+    );
+  }
 
   const calculateHandicapLocal = (): number => {
     if (!isClient) return 0
@@ -272,19 +272,19 @@ function PlayerProfileContent() {
 
   const getHandicapTrend = () => {
     if (rounds.length < 2) return null;
-    const completedRounds = rounds.filter(r => !r.in_progress).sort((a, b) => 
+    const completedRounds = rounds.filter(r => !r.in_progress).sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
     if (completedRounds.length < 2) return null;
-    
+
     const lastRounds = completedRounds.slice(0, 3);
     let totalBefore = 0;
     let totalAfter = 0;
-    
+
     if (lastRounds.length >= 2) {
       totalAfter = lastRounds[0].totalScore || 0;
       totalBefore = lastRounds[lastRounds.length - 1].totalScore || 0;
-      
+
       if (totalAfter < totalBefore) return '↓'; // Improving (scores going down)
       if (totalAfter > totalBefore) return '↑'; // Declining (scores going up)
     }
@@ -294,18 +294,34 @@ function PlayerProfileContent() {
   const calculateAverageDriveDistance = (): number | null => {
     let totalDriveDistance = 0
     let driveCount = 0
-    
+
+    // for (const round of rounds) {
+    //   if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
+    //     for (const holeStats of round.perHoleStats) {
+    //       if (holeStats.drive?.yardage && typeof holeStats.drive.yardage === 'number') {
+    //         totalDriveDistance += holeStats.drive.yardage
+    //         driveCount++
+    //       }
+    //     }
+    //   }
     for (const round of rounds) {
-      if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
-        for (const holeStats of round.perHoleStats) {
-          if (holeStats.drive?.yardage && typeof holeStats.drive.yardage === 'number') {
-            totalDriveDistance += holeStats.drive.yardage
-            driveCount++
-          }
+      // Guard: Skip if there are no stats for this round
+      if (!round?.perHoleStats || !Array.isArray(round.perHoleStats)) continue;
+
+      for (const holeStats of round.perHoleStats) {
+        // Guard: Skip if the hole data itself is null or undefined
+        if (!holeStats) continue;
+
+        const yardage = holeStats.drive?.yardage;
+
+        // Now it's 100% safe to check and add the yardage
+        if (typeof yardage === 'number') {
+          totalDriveDistance += yardage;
+          driveCount++;
         }
       }
     }
-    
+
     if (driveCount === 0) return null
     return Math.round(totalDriveDistance / driveCount)
   }

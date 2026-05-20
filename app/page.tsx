@@ -228,13 +228,14 @@ export default function Home() {
     if (!isClient || rounds.length === 0) return null
     let totalDriveDistance = 0
     let driveCount = 0
-    
+
     // Only use completed rounds
     const completedRounds = rounds.filter(r => !r.in_progress)
-    
+
     for (const round of completedRounds) {
       if (round.perHoleStats && Array.isArray(round.perHoleStats)) {
         for (const holeStats of round.perHoleStats) {
+          if (!holeStats) continue;
           if (holeStats.drive?.yardage && typeof holeStats.drive.yardage === 'number') {
             totalDriveDistance += holeStats.drive.yardage
             driveCount++
@@ -242,7 +243,7 @@ export default function Home() {
         }
       }
     }
-    
+
     if (driveCount === 0) return null
     return Math.round(totalDriveDistance / driveCount)
   }

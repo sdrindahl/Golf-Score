@@ -898,7 +898,7 @@ function TrackRoundContent() {
   return (
     <PageWrapper title="" userName={round.userName}>
       {/* Top Right Corner 3-dot Menu */}
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 z-50">
         <button
           className="p-3 rounded-full bg-black bg-opacity-80 hover:bg-opacity-100 shadow-lg border border-gray-700 flex items-center justify-center"
           aria-label="Menu"
@@ -954,8 +954,9 @@ function TrackRoundContent() {
 
       {/* Top Left Corner Card - Yardage, Hole Info, Track Drive */}
       {course && course.holes && course.holes[currentHoleIndex] && (
-        <div className="fixed top-4 left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs">
-          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400 relative" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+        //<div className="fixed top-4 left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs">
+        <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs"> 
+         <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400 relative" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
             {/* Main yardage/score card content */}
             <div>
               {/* ...existing yardage, hole, par, hcp, and drive button code... */}
@@ -1125,27 +1126,27 @@ function TrackRoundContent() {
       )}
 
       {selectedPlayers.length > 0 && (
-  <div
-    className="fixed z-40 flex flex-col items-start justify-start gap-2"
-    style={{ 
-      top: '700px',   // Increased from 205px to push it DOWN
-      left: '20px'    // Replaced centering with a fixed LEFT margin (16px / 1rem)
-    }}
-  >
-    {selectedPlayers.map((p, idx) => (
-      <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-        {/* Avatar */}
-        <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
-          {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
+        <div
+          className="fixed z-40 flex flex-col items-start justify-start gap-2"
+          style={{ 
+            top: '600px',
+            left: '20px'
+          }}
+        >
+          {selectedPlayers.map((p, idx) => (
+            <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              {/* Avatar */}
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
+                {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
+              </div>
+              {/* Score badge */}
+              <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
+                E
+              </span>
+            </div>
+          ))}
         </div>
-        {/* Score badge */}
-        <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
-          E
-        </span>
-      </div>
-    ))}
-  </div>
-)}
+      )}
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
