@@ -1,7 +1,4 @@
-
-
-
-'use client'
+"use client";
 import { useState, useEffect, useRef, Suspense } from 'react';
 
 // Helper to chunk an array into subarrays of given size
@@ -821,11 +818,11 @@ function TrackRoundContent() {
 
   // Delete round handler
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
 
   const handleDeleteRound = async () => {
     if (deleting) return;
     if (!round) return;
-    if (!confirm('Are you sure you want to delete this round? This action cannot be undone.')) return;
     setDeleting(true);
     // Remove from localStorage
     const savedRounds = localStorage.getItem('golfRounds');
@@ -899,6 +896,92 @@ function TrackRoundContent() {
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
+
+        {/* Discard Round Button (fixed bottom left) */}
+        <button
+          className="fixed bottom-24 left-6 z-50 w-48 h-14 rounded-xl bg-red-700 hover:bg-red-800 text-white text-lg font-bold shadow-2xl flex items-center justify-center border-4 border-white transition-all"
+          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
+          disabled={deleting}
+          onClick={() => setShowDeleteWarning(true)}
+          aria-label="Discard round"
+        >
+          {deleting ? 'Discarding...' : 'Discard Round'}
+        </button>
+
+        {/* Delete Round Modal */}
+        {showDeleteWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full flex flex-col items-center">
+              <div className="text-lg font-semibold text-gray-900 mb-6 text-center">
+                Are you sure you want to delete this round?<br />This action cannot be undone.
+              </div>
+              <div className="flex gap-4 mt-2">
+                <button
+                  className="px-6 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold text-lg transition"
+                  onClick={() => setShowDeleteWarning(false)}
+                >
+                  No
+                </button>
+                <button
+                  className="px-6 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-lg transition"
+                  onClick={async () => {
+                    setShowDeleteWarning(false);
+                    await handleDeleteRound();
+                  }}
+                  autoFocus
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Save Incomplete Round Button (fixed bottom left, above Discard) */}
+        <button
+          className="fixed bottom-40 left-6 z-50 w-48 h-14 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-lg font-bold shadow-2xl flex items-center justify-center border-4 border-white transition-all"
+          style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.4)' }}
+          disabled={finishing}
+          onClick={() => {
+            if (scores.length !== course.holes.length || scores.some(s => !s || s <= 0)) {
+              setShowIncompleteWarning(true);
+            } else {
+              handleFinishRound();
+            }
+          }}
+          aria-label="Save incomplete round"
+        >
+          {finishing ? 'Saving...' : 'Save Incomplete Round'}
+        </button>
+
+        {/* Incomplete Round Modal */}
+        {showIncompleteWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full flex flex-col items-center">
+              <div className="text-lg font-semibold text-gray-900 mb-6 text-center">
+                You haven't entered scores for all holes.<br />Are you sure you want to save and end round?
+              </div>
+              <div className="flex gap-4 mt-2">
+                <button
+                  className="px-6 py-2 rounded-lg bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold text-lg transition"
+                  onClick={() => setShowIncompleteWarning(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-6 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold text-lg transition"
+                  onClick={async () => {
+                    setShowIncompleteWarning(false);
+                    await handleFinishRound();
+                  }}
+                  autoFocus
+                >
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {/* Show placeholder image or map */}
         <div className="absolute inset-0 z-0">
           {showMap ? (
