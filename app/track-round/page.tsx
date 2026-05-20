@@ -1061,23 +1061,25 @@ function TrackRoundContent() {
       <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
 
 
-        {/* Golf Ball Icon above Bottom NavBar */}
-        <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
-          <button
-            className="focus:outline-none pointer-events-auto"
-            style={{ background: 'none', border: 'none', padding: 0 }}
-            onClick={() => setShowScoreModal(true)}
-            aria-label="Enter score"
-          >
-            <img
-              src="/golf_ball_score.png"
-              alt="Golf Ball Icon"
-              className="w-32 h-32 drop-shadow-lg"
-              style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}
-              draggable={false}
-            />
-          </button>
-        </div>
+        {/* Golf Ball Icon above Bottom NavBar (hidden in map view) */}
+        {!showMap && (
+          <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
+            <button
+              className="focus:outline-none pointer-events-auto"
+              style={{ background: 'none', border: 'none', padding: 0 }}
+              onClick={() => setShowScoreModal(true)}
+              aria-label="Enter score"
+            >
+              <img
+                src="/golf_ball_score.png"
+                alt="Golf Ball Icon"
+                className="w-32 h-32 drop-shadow-lg"
+                style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}
+                draggable={false}
+              />
+            </button>
+          </div>
+        )}
         {/* Modern Bottom Action Bar with Icons */}
         <div className="fixed bottom-0 left-0 w-full flex flex-col items-center pb-4 z-50">
           <div className="flex gap-4 mb-2"></div>
