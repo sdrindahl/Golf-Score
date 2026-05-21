@@ -935,7 +935,7 @@ function TrackRoundContent() {
               </li>
               <li>
                 <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-white font-medium" onClick={() => { setShowMenu(false); router.push('/'); }}>
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 17v-2a4 4 0 0 1 8 0v2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="#fff" strokeWidth="2"/><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg> Exit Round
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M9 17v-2a4 4 0 0 1 8 0v2" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="#fff" strokeWidth="2"/><path d="M19 21H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg> Home
                 </button>
               </li>
             </ul>
