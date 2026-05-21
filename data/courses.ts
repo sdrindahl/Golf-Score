@@ -2,6 +2,56 @@
 
 export const COURSES_DATABASE: any[] = [
 
+{
+    id: 'HDG',
+    name: 'Hidden Greens Golf',
+    location: 'Hastings',
+    state: 'MN',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+  {
+        id: '23a',
+        name: 'Front 9',
+        location: 'Hastings',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'HDG',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 8, greenLat: 44.65539855114668, greenLng: -92.84296577500294, men: { yardage: 369, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 349, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 349, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 388, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 2, par: 4, handicap: 10, greenLat: 44.65550842441591, greenLng: -92.84025771388977, men: { yardage: 290, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 263, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 263, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 313, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 3, par: 5, handicap: 4, greenLat: 44.65987888784352,  greenLng: -92.83856041769619, men: { yardage: 527, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 473, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 473, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 537, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 4, par: 4, handicap: 12, greenLat: 44.660574822686065, greenLng: -92.83413046743365, men: { yardage: 372, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 346, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 346, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 388, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 5, par: 4, handicap: 14, greenLat: 44.659791475726536, greenLng: -92.83773394694944, men: { yardage: 331, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 319, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 319, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 371, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 6, par: 5, handicap: 6, greenLat: 44.65626711436577, greenLng: -92.84038444132717, men: { yardage: 501, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 441, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 441, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 521, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 7, par: 3, handicap: 18, greenLat: 44.65540178810441, greenLng: -92.8412763735358, men: { yardage: 142, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 135, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 135, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 152, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 8, par: 4, handicap: 2, greenLat: 44.65768462807576, greenLng: -92.84246151576335, men: { yardage: 281, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 265, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 265, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 291, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 9, par: 3, handicap: 16, greenLat: 44.65941212569342, greenLng: -92.8427772474692, men: { yardage: 164, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 154, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 154, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 194, courseRating: 70.2, slopeRating: 123 } },
+        ],
+      },
+      {
+        id: '23b',
+        name: 'Back 9',
+        location: 'Hastings',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'HDG',
+        holes: [
+          { holeNumber: 10, par: 5, handicap: 5, greenLat: 44.66358049417535, greenLng: -92.84163480245432, men: { yardage: 476, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 410, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 410, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 486, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 11, par: 3, handicap: 17, greenLat: 44.66307038966611, greenLng: -92.8396504486982, men: { yardage: 158, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 154, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 154, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 180, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 12, par: 4, handicap: 3, greenLat: 44.66321993790886, greenLng: -92.83453447107274, men: { yardage: 391, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 365, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 365, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 413, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 13, par: 4, handicap: 11, greenLat: 44.66070936472207, greenLng: -92.83349157513086, men: { yardage: 336, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 323, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 323, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 351, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 14, par: 4, handicap: 9, greenLat: 44.662807346016386, greenLng: -92.83617855652454, men: { yardage: 295, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 268, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 268, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 315, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 15, par: 4, handicap: 13, greenLat: 44.6610942022534, greenLng: -92.83498319910855, men: { yardage: 293, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 279, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 279, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 310, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 16, par: 4, handicap: 1, greenLat: 44.66327022502503, greenLng: -92.83879225975993, men: { yardage: 395, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 343, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 343, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 413, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 17, par: 3, handicap: 15, greenLat: 44.66442418414359, greenLng: -92.84178671962046, men: { yardage: 153, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 143, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 143, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 174, courseRating: 70.2, slopeRating: 123 } },
+          { holeNumber: 18, par: 3, handicap: 7, greenLat: 44.6601478867681, greenLng: -92.84307438502003, men: { yardage: 480, courseRating: 68.7, slopeRating: 120 }, women: { yardage: 410, courseRating: 71.4, slopeRating: 125 }, senior: { yardage: 410, courseRating: 66.4, slopeRating: 115 }, championship: { yardage: 492, courseRating: 70.2, slopeRating: 123 } },
+          ],
+      },
+
   {
     id: 'SCN',
     name: 'St.Croix National',
@@ -233,7 +283,7 @@ export const COURSES_DATABASE: any[] = [
         // par removed for parent course
         holes: [],
       },
-      // Gold Front 9
+      // Southern Hills Front 9
       {
         id: '17a',
         name: 'Front 9 (Par 35)',
@@ -254,7 +304,7 @@ export const COURSES_DATABASE: any[] = [
            { holeNumber: 9, par: 5, handicap: 17, greenLat: 44.67465618349328, greenLng: -93.13264792001945, men: { yardage: 462, courseRating: 69.2, slopeRating: 128 }, women: { yardage: 413, courseRating: 64.4, slopeRating: 125 }, senior: { yardage: 420, courseRating: 68.8, slopeRating: 125 }, championship: { yardage: 484, courseRating: 74.5, slopeRating: 137 } },
         ],
       },
-      // Gold Back 9 Southern Hills
+      // Southern Hills Back 9
       {
         id: '17b',
         name: 'Back 9 (Par 36)',
