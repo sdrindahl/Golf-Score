@@ -53,8 +53,8 @@ export const COURSES_DATABASE: any[] = [
         },
 
 {
-    id: 'MOGC',
-    name: 'Majestic Oaks Golf Club',
+    id: 'MOGCS',
+    name: 'Majestic Oaks Golf Club - SIGNATURE',
     location: 'Ham Lake',
     state: 'MN',
     holeCount: 18,
@@ -68,7 +68,7 @@ export const COURSES_DATABASE: any[] = [
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'MOGC',
+        parent_id: 'MOGCS',
         holes: [
           { holeNumber: 1, par: 5, handicap: 11, greenLat: 45.223408681764006, greenLng: -93.25842151969916, men: { yardage: 532, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 430, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 497, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 546, courseRating: 75.1, slopeRating: 130 } },
           { holeNumber: 2, par: 4, handicap: 15, greenLat: 45.225525512523205, greenLng: -93.2557224590095, men: { yardage: 372, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 302, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 353, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 380, courseRating: 75.1, slopeRating: 130 } },
@@ -88,7 +88,7 @@ export const COURSES_DATABASE: any[] = [
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'MOGC',
+        parent_id: 'MOGCS',
         holes: [
           { holeNumber: 10, par: 4, handicap: 4, greenLat: 45.225812239032315, greenLng: -93.25476422995274, men: { yardage: 395, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 320, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 383, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 410, courseRating: 75.1, slopeRating: 130 } },
           { holeNumber: 11, par: 4, handicap: 2, greenLat: 45.22905337854619, greenLng: -93.25394162729123, men: { yardage: 424, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 325, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 399, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 450, courseRating: 75.1, slopeRating: 130 } },
