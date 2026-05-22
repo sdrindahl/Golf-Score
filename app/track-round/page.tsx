@@ -95,14 +95,6 @@ function TrackRoundContent() {
   // List of available hole images (after course is declared)
   const holeImages = [
     '/hole1.png',
-    '/hole2.png',
-    '/hole3.png',
-    '/hole4.png',
-    '/hole5.png',
-    '/hole6.png',
-    '/hole7.png',
-    '/hole8.png',
-    '/hole9.png',
   ];
 
   // Memoized random image selection for each hole (stable for session)
@@ -1290,7 +1282,7 @@ function TrackRoundContent() {
               src={randomHoleImages[currentHoleIndex] || '/hole1.png'}
               alt="Hole preview"
               className="w-full h-full object-cover select-none"
-              style={{ width: '100vw', height: '100vh', objectFit: 'cover', background: 'black' }}
+              style={{ width: '90vw', height: '90vh', objectFit: 'cover', background: 'black' }}
               draggable={false}
             />
           )}
