@@ -53,8 +53,8 @@ export const COURSES_DATABASE: any[] = [
         },
 
 {
-    id: 'MOGCS',
-    name: 'Majestic Oaks Golf Club - SIGNATURE',
+    id: 'MOS',
+    name: 'Majestic Oaks - SIGNATURE',
     location: 'Ham Lake',
     state: 'MN',
     holeCount: 18,
@@ -68,7 +68,7 @@ export const COURSES_DATABASE: any[] = [
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'MOGCS',
+        parent_id: 'MOS',
         holes: [
           { holeNumber: 1, par: 5, handicap: 11, greenLat: 45.223408681764006, greenLng: -93.25842151969916, men: { yardage: 532, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 430, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 497, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 546, courseRating: 75.1, slopeRating: 130 } },
           { holeNumber: 2, par: 4, handicap: 15, greenLat: 45.225525512523205, greenLng: -93.2557224590095, men: { yardage: 372, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 302, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 353, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 380, courseRating: 75.1, slopeRating: 130 } },
@@ -88,7 +88,7 @@ export const COURSES_DATABASE: any[] = [
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'MOGCS',
+        parent_id: 'MOS',
         holes: [
           { holeNumber: 10, par: 4, handicap: 4, greenLat: 45.225812239032315, greenLng: -93.25476422995274, men: { yardage: 395, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 320, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 383, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 410, courseRating: 75.1, slopeRating: 130 } },
           { holeNumber: 11, par: 4, handicap: 2, greenLat: 45.22905337854619, greenLng: -93.25394162729123, men: { yardage: 424, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 325, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 399, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 450, courseRating: 75.1, slopeRating: 130 } },
@@ -99,6 +99,56 @@ export const COURSES_DATABASE: any[] = [
           { holeNumber: 16, par: 5, handicap: 8, greenLat: 45.223669004932695, greenLng: -93.24054177429727, men: { yardage: 542, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 432, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 523, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 602, courseRating: 75.1, slopeRating: 130 } },
           { holeNumber: 17, par: 4, handicap: 14, greenLat: 45.22285491358759, greenLng: -93.24497465817446, men: { yardage: 388, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 218, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 367, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 412, courseRating: 75.1, slopeRating: 130 } },
           { holeNumber: 18, par: 4, handicap: 6, greenLat: 45.22234813111886, greenLng: -93.25022325260339, men: { yardage: 422, courseRating: 73.1, slopeRating: 126 }, women: { yardage: 337, courseRating: 70.2, slopeRating: 118 }, senior: { yardage: 390, courseRating: 71.1, slopeRating: 126 }, championship: { yardage: 429, courseRating: 75.1, slopeRating: 130 } },
+          ],
+        },
+
+{
+    id: 'MOCR',
+    name: 'Majestic Oaks - CROSSROADS',
+    location: 'Ham Lake',
+    state: 'MN',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+{
+        id: '26a',
+        name: 'Front 9',
+        location: 'Ham Lake',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'MOCR',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 9, greenLat: 45.22313494607127, greenLng: -93.24563743610729, men: { yardage: 351, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 283, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 283, courseRating: 64, slopeRating: 113 }, championship: { yardage: 376, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 2, par: 4, handicap: 1, greenLat: 45.2228434867839, greenLng: -93.24072796304166, men: { yardage: 404, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 321, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 321, courseRating: 64, slopeRating: 113 }, championship: { yardage: 433, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 3, par: 5, handicap: 3, greenLat: 45.219358070245676, greenLng: -93.24320002224128, men: { yardage: 463, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 395, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 395, courseRating: 64, slopeRating: 113 }, championship: { yardage: 489, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 4, par: 4, handicap: 15, greenLat: 45.21581724634226, greenLng: -93.24211033473534, men: { yardage: 285, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 266, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 266, courseRating: 64, slopeRating: 113 }, championship: { yardage: 310, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 5, par: 3, handicap: 17, greenLat: 45.21494825764364, greenLng: -93.24028750122261, men: { yardage: 140, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 117, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 117, courseRating: 64, slopeRating: 113 }, championship: { yardage: 157, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 6, par: 4, handicap: 11, greenLat: 45.215811732341734, greenLng: -93.24313447069028, men: { yardage: 299, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 259, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 259, courseRating: 64, slopeRating: 113 }, championship: { yardage: 336, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 7, par: 4, handicap: 5, greenLat: 45.21252067769374, greenLng: -93.24362154947954, men: { yardage: 342, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 289, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 289, courseRating: 64, slopeRating: 113 }, championship: { yardage: 379, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 8, par: 3, handicap: 13, greenLat: 45.21176416871122, greenLng: -93.24436023415092, men: { yardage: 150, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 119, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 119, courseRating: 64, slopeRating: 113 }, championship: { yardage: 176, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 9, par: 5, handicap: 7, greenLat: 45.215870706743814, greenLng: -93.2444982635888, men: { yardage: 472, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 406, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 406, courseRating: 64, slopeRating: 113 }, championship: { yardage: 509, courseRating: 71, slopeRating: 129 } },
+        ],
+      },
+      {
+        id: '26b',
+        name: 'Back 9',
+        location: 'Ham Lake',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'MOCR',
+        holes: [
+          { holeNumber: 10, par: 4, handicap: 10, greenLat: 45.216720361264926, greenLng: -93.24801457087356, men: { yardage: 305, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 256, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 256, courseRating: 64, slopeRating: 113 }, championship: { yardage: 335, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 11, par: 4, handicap: 6, greenLat: 45.21346763023213, greenLng: -93.24837525246004, men: { yardage: 328, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 282, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 282, courseRating: 64, slopeRating: 113 }, championship: { yardage: 352, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 12, par: 5, handicap: 4, greenLat: 45.217019507649304, greenLng: -93.25107644558771, men: { yardage: 486, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 394, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 394, courseRating: 64, slopeRating: 113 }, championship: { yardage: 516, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 13, par: 3, handicap: 12, greenLat: 45.217878877936165, greenLng: -93.25358935006443, men: { yardage: 174, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 135, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 135, courseRating: 64, slopeRating: 113 }, championship: { yardage: 204, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 14, par: 4, handicap: 2, greenLat: 45.21717364657601, greenLng: -93.24942177011654, men: { yardage: 387, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 263, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 263, courseRating: 64, slopeRating: 113 }, championship: { yardage: 412, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 15, par: 4, handicap: 18, greenLat: 45.21660262346079, greenLng: -93.24422503632874, men: { yardage: 336, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 284, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 284, courseRating: 64, slopeRating: 113 }, championship: { yardage: 365, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 16, par: 4, handicap: 14, greenLat: 45.21827749158563, greenLng: -93.2431157086406, men: { yardage: 284, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 244, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 244, courseRating: 64, slopeRating: 113 }, championship: { yardage: 324, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 17, par: 3, handicap: 16, greenLat: 45.2212066746731, greenLng: -93.243871788681, men: { yardage: 170, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 145, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 145, courseRating: 64, slopeRating: 113 }, championship: { yardage: 195, courseRating: 71, slopeRating: 129 } },
+          { holeNumber: 18, par: 5, handicap: 8, greenLat: 45.22179948471398, greenLng: -93.24973622979365, men: { yardage: 502, courseRating: 68.6, slopeRating: 123 }, women: { yardage: 390, courseRating: 68.3, slopeRating: 120 }, senior: { yardage: 390, courseRating: 64, slopeRating: 113 }, championship: { yardage: 528, courseRating: 71, slopeRating: 129 } },
           ],
         },
 {
@@ -497,11 +547,11 @@ export const COURSES_DATABASE: any[] = [
       },
       // Parent course for Emerald Greens
       {
-        id: 'EG',
-        name: 'Emerald Greens Golf Course',
+        id: 'EGG',
+        name: 'Emerald Greens - GOLD',
         location: 'Minnesota',
         state: 'MN',
-        holeCount: 36,
+        holeCount: 18,
         // par removed for parent course
         holes: [],
       },
@@ -513,7 +563,7 @@ export const COURSES_DATABASE: any[] = [
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'EG',
+        parent_id: 'EGG',
         holes: [
           // holes 1-9 from Gold Course
           { holeNumber: 1, par: 5, handicap: 13, greenLat: 44.734210959170944, greenLng: -92.9619085340716, men: { yardage: 484, courseRating: 70.1, slopeRating: 121 }, women: { yardage: 379, courseRating: 68.4, slopeRating: 112 }, senior: { yardage: 427, courseRating: 69.2, slopeRating: 117 }, championship: { yardage: 499, courseRating: 71.1, slopeRating: 124 } },
@@ -535,7 +585,7 @@ export const COURSES_DATABASE: any[] = [
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'EG',
+        parent_id: 'EGG',
         holes: [
           // holes 10-18 from Gold Course
           { holeNumber: 10, par: 4, handicap: 6, greenLat: 44.735210389453634, greenLng: -92.96249947699816, men: { yardage: 364, courseRating: 70.1, slopeRating: 121 }, women: { yardage: 280, courseRating: 68.4, slopeRating: 112 }, senior: { yardage: 350, courseRating: 69.2, slopeRating: 117 }, championship: { yardage: 371, courseRating: 71.1, slopeRating: 124 } },
@@ -549,15 +599,24 @@ export const COURSES_DATABASE: any[] = [
           { holeNumber: 18, par: 4, handicap: 2, greenLat: 44.73830960500155, greenLng: -92.96717603921003, men: { yardage: 396, courseRating: 70.1, slopeRating: 121 }, women: { yardage: 295, courseRating: 68.4, slopeRating: 112 }, senior: { yardage: 309, courseRating: 69.2, slopeRating: 117 }, championship: { yardage: 407, courseRating: 71.1, slopeRating: 124 } },
         ],
       },
-      // Silver Front 9
+      
       {
-        id: '13a',
+        id: 'EGS',
+        name: 'Emerald Greens - SILVER',
+        location: 'Minnesota',
+        state: 'MN',
+        holeCount: 18,
+        // par removed for parent course
+        holes: [],
+      },// Silver Front 9
+      {
+        id: '28a',
         name: 'Silver Front 9 (Par 36)',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'EG',
+        parent_id: 'EGS',
         holes: [
           // holes 1-9 from Silver Course
           { holeNumber: 1, par: 4, handicap: 9, greenLat: 44.741018112290625, greenLng: -92.96854456672878, men: { yardage: 380, courseRating: 71.9, slopeRating: 129 }, women: { yardage: 253, courseRating: 68.8, slopeRating: 117 }, senior: { yardage: 312, courseRating: 70.5, slopeRating: 124 }, championship: { yardage: 400, courseRating: 73.6, slopeRating: 132 } },
@@ -573,13 +632,13 @@ export const COURSES_DATABASE: any[] = [
       },
       // Silver Back 9
       {
-        id: '13b',
+        id: '28b',
         name: 'Silver Back 9 (Par 36)',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
         par: 36,
-        parent_id: 'EG',
+        parent_id: 'EGS',
         holes: [
           // holes 10-18 from Silver Course
           { holeNumber: 10, par: 4, handicap: 10, greenLat: 44.7344699012515, greenLng: -92.9706698244718, men: { yardage: 358, courseRating: 71.9, slopeRating: 129 }, women: { yardage: 264, courseRating: 68.8, slopeRating: 117 }, senior: { yardage: 348, courseRating: 70.5, slopeRating: 124 }, championship: { yardage: 382, courseRating: 73.6, slopeRating: 132 } },
