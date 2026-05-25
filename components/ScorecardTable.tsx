@@ -30,7 +30,9 @@ const isValidTee = (tee: string): tee is typeof teeNames[number] => teeNames.inc
 
 export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, selectedTee = 'men', showTotals = true, onEdit }) => {
   if (!holes || holes.length === 0) return null;
-  const sections = chunkArray(holes, 9);
+  // Ensure holes are sorted by holeNumber so Front 9 comes before Back 9
+  const sortedHoles = [...holes].sort((a, b) => (a.holeNumber ?? 0) - (b.holeNumber ?? 0));
+  const sections = chunkArray(sortedHoles, 9);
 
   // Compute totals
   const parTotals = sections.map(section => section.reduce((sum, h) => sum + (h.par || 0), 0));
