@@ -4,20 +4,20 @@ import './globals.css'
 import ClientLayout from './ClientLayout'
 
 export const metadata: Metadata = {
-  title: 'ApexTracer - Golf Scorecard',
-  description: 'Your personal golf caddie - track scores, calculate handicaps, and compete with friends',
+  title: 'Just Tap It - Golf Scorecard',
+  description: 'Just Tap It - Your personal golf caddie: track scores, calculate handicaps, and compete with friends',
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/apex_tracer.png', sizes: '192x192', type: 'image/png' },
-      { url: '/apex_tracer.png', sizes: '512x512', type: 'image/png' },
+      { url: '/JustTapIt_Logo.png', sizes: '192x192', type: 'image/png' },
+      { url: '/JustTapIt_Logo.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/apex_tracer.png',
+    apple: '/JustTapIt_Logo.png',
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ApexTracer',
+    title: 'Just Tap It',
   },
   formatDetection: {
     telephone: false,
