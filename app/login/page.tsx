@@ -91,11 +91,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-[#101010] pt-8">
-      <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-40 w-40 mb-4 mt-2" />
+      <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-40 w-40 mb-4 mt-2" />
       <div
         className="card max-w-md w-full relative overflow-hidden"
         style={{
-          background: "#111 url(/JustTapIt_Logo.png) center center / cover no-repeat",
+          background: "#111 url(/JustTapIT_Logo.png) center center / cover no-repeat",
           border: "2px solid #39FF14",
           boxShadow: "0 0 24px #39FF14, 0 2px 24px #000a",
         }}

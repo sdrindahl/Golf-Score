@@ -390,7 +390,7 @@ export default function Home() {
           <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
           <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">{currentUser?.name || 'Golfer'}</h1>
         </div>
-        <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-16 w-16" />
+        <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-16 w-16" />
       </div>
 
       {/* Main Content */}

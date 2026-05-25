@@ -9,10 +9,10 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/JustTapIt_Logo.png', sizes: '192x192', type: 'image/png' },
-      { url: '/JustTapIt_Logo.png', sizes: '512x512', type: 'image/png' },
+      { url: '/JustTapIT_Logo.png', sizes: '192x192', type: 'image/png' },
+      { url: '/JustTapIT_Logo.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/JustTapIt_Logo.png',
+    apple: '/JustTapIT_Logo.png',
   },
   appleWebApp: {
     capable: true,
