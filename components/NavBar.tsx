@@ -153,7 +153,7 @@ export default function NavBar() {
                   : 'hover:bg-green-600'
               }`}
             >
-              <img src="/apex_tracer.png" alt="Home" className="h-10 w-10" />
+              <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-10 w-10" />
               Home
             </button>
             <button

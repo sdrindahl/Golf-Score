@@ -1,7 +1,7 @@
 {
-  "name": "ApexTracer - Golf Scorecard",
-  "short_name": "ApexTracer",
-  "description": "Your personal golf caddie - track scores, calculate handicaps, and compete with friends",
+  "name": "Just Tap It - Golf Scorecard",
+  "short_name": "Just Tap It",
+  "description": "Just Tap It - Your personal golf caddie: track scores, calculate handicaps, and compete with friends",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,13 +10,13 @@
   "theme_color": "#22c55e",
   "icons": [
     {
-      "src": "/apex_tracer.png",
+      "src": "/JustTapIT_Logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/apex_tracer.png",
+      "src": "/JustTapIT_Logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

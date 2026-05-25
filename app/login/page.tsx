@@ -90,55 +90,30 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="card max-w-md w-full">
-        <div className="flex items-center justify-center mb-6">
-          <img src="/apex_tracer.png" alt="ApexTracer Golf" className="h-16 w-16" />
-        </div>
-        <h1 className="text-3xl font-bold mb-8 text-center text-green-700">ApexTracer Golf</h1>
+    <div className="min-h-screen flex flex-col items-center justify-start bg-[#101010] pt-8">
+      <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-40 w-40 mb-4 mt-2" />
+      <div
+        className="card max-w-md w-full relative overflow-hidden"
+        style={{
+          background: "#111 url(/JustTapIT_Logo.png) center center / cover no-repeat",
+          border: "2px solid #39FF14",
+          boxShadow: "0 0 24px #39FF14, 0 2px 24px #000a",
+        }}
+      >
+        {/* Overlay for contrast */}
+        <div className="absolute inset-0 bg-black/70 z-0" />
 
-        <div className="flex gap-4 mb-6">
-          <button
-            onClick={() => {
-              setIsLogin(true)
-              setError('')
-              setName('')
-              setPassword('')
-            }}
-            className={`flex-1 py-2 px-4 rounded font-semibold transition ${
-              isLogin
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => {
-              setIsLogin(false)
-              setError('')
-              setName('')
-              setPassword('')
-            }}
-            className={`flex-1 py-2 px-4 rounded font-semibold transition ${
-              !isLogin
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            Sign Up
-          </button>
-        </div>
+        {/* Removed Login/Sign Up toggle buttons for cleaner UI */}
 
-        <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+        <form onSubmit={isLogin ? handleLogin : handleRegister} className="relative z-10 space-y-4">
           <div>
             <label className="label">Player Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isLogin ? 'Enter your name' : 'Your name'}
-              className="input-field"
+              placeholder="Enter Name / Username"
+              className="input-field rounded-xl bg-black/70 border-2 border-[#39FF14] text-black placeholder:text-black focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] shadow-lg"
             />
           </div>
 
@@ -152,15 +127,15 @@ export default function Login() {
                   const value = e.target.value.slice(0, 4)
                   setPassword(value)
                 }}
-                placeholder="0000"
+                placeholder="Enter 4 Digit Password"
                 maxLength={4}
                 autoComplete="current-password"
-                className="input-field text-center text-2xl tracking-widest font-mono"
+                className="input-field text-center text-2xl tracking-widest font-mono rounded-xl bg-black/70 border-2 border-[#39FF14] text-black placeholder:text-black focus:ring-2 focus:ring-[#39FF14] focus:border-[#39FF14] shadow-lg"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3 text-gray-600 text-sm"
+                className="absolute right-3 top-3 text-[#39FF14] text-lg hover:scale-110 transition"
               >
                 {showPassword ? '👁️' : '👁️‍🗨️'}
               </button>
@@ -178,23 +153,42 @@ export default function Login() {
             </div>
           )}
 
-          <button type="submit" className="btn-primary w-full mt-6">
-            {isLogin ? '🔓 Login' : '✨ Create Account'}
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 text-lg rounded-xl bg-[#39FF14] text-black font-bold py-2 mt-2 shadow-lg hover:bg-[#53ff1a] focus:ring-2 focus:ring-[#39FF14] focus:outline-none transition"
+            disabled={(!isLogin && (name.length === 0 || password.length !== 4)) || (isLogin && (name.length === 0 || password.length !== 4))}
+          >
+            {isLogin ? '🔒 Login' : 'Sign Up'}
           </button>
         </form>
 
-        {isLogin && (
-          <div className="mt-6 pt-6 border-t">
-            <p className="text-sm text-gray-600 text-center mb-4">
+        {isLogin ? (
+          <div className="mt-6 pt-6 border-t border-[#39FF14]">
+            <p className="text-sm text-[#39FF14] text-center mb-4 drop-shadow-lg">
               Don't have an account?{' '}
               <button
                 onClick={() => {
                   setIsLogin(false)
                   setError('')
                 }}
-                className="text-green-600 font-semibold hover:underline"
+                className="font-bold hover:underline"
               >
                 Sign up here
+              </button>
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 pt-6 border-t border-[#39FF14]">
+            <p className="text-sm text-[#39FF14] text-center mb-4 drop-shadow-lg">
+              Already have an account?{' '}
+              <button
+                onClick={() => {
+                  setIsLogin(true)
+                  setError('')
+                }}
+                className="font-bold hover:underline"
+              >
+                Log in here
               </button>
             </p>
           </div>
