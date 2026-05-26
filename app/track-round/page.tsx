@@ -472,9 +472,35 @@ function TrackRoundContent() {
   const renderBottomBar = () => {
     if (!course) return null;
     const hole = course.holes[currentHoleIndex];
+        // Determine the result for the current hole
+        let holeResultLabel = null;
+        const score = scores[currentHoleIndex];
+        const par = hole?.par;
+        if (typeof score === 'number' && typeof par === 'number' && score > 0) {
+          const diff = score - par;
+          if (score === 1) {
+            holeResultLabel = { label: 'Ace', color: 'bg-yellow-400 text-black' };
+          } else if (diff <= -3) {
+            holeResultLabel = { label: 'Albatross', color: 'bg-blue-700 text-white' };
+          } else if (diff === -2) {
+            holeResultLabel = { label: 'Eagle', color: 'bg-blue-500 text-white' };
+          } else if (diff === -1) {
+            holeResultLabel = { label: 'Birdie', color: 'bg-green-500 text-white' };
+          } else if (diff === 0) {
+            holeResultLabel = { label: 'Par', color: 'bg-gray-500 text-white' };
+          } else if (diff === 1) {
+            holeResultLabel = { label: 'Bogey', color: 'bg-orange-500 text-white' };
+          } else if (diff === 2) {
+            holeResultLabel = { label: 'Double Bogey', color: 'bg-orange-700 text-white' };
+          } else if (diff === 3) {
+            holeResultLabel = { label: 'Triple Bogey', color: 'bg-red-600 text-white' };
+          } else if (diff > 3) {
+            holeResultLabel = { label: `${diff}+ Bogey`, color: 'bg-red-900 text-white' };
+          }
+        }
     return (
       <div className="fixed bottom-0 left-0 w-full flex justify-center items-end z-50 pb-2 pointer-events-none">
-        <div className="bg-gray-800 bg-opacity-95 rounded-t-2xl shadow-2xl flex items-center justify-center w-[95vw] max-w-md mx-auto h-20 relative pointer-events-auto">
+        <div className="bg-gray-800 bg-opacity-95 rounded-t-2xl shadow-2xl flex items-center justify-center w-[95vw] max-w-md mx-auto h-24 relative pointer-events-auto">
           {/* Left Arrow */}
           <button
             className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-2xl text-white border border-gray-600 shadow"
@@ -504,11 +530,19 @@ function TrackRoundContent() {
           {/* Center Info */}
           <div className="flex flex-col items-center justify-center px-12">
             <div className="w-12 h-1 rounded-full bg-gray-600 mb-1" />
-            <div>
+            <div className="flex items-center gap-2">
               <span className="text-3xl font-bold text-white">{hole?.holeNumber ?? currentHoleIndex + 1}</span>
               <span className="text-lg text-gray-300 font-semibold ml-1">Par {hole?.par ?? '-'}</span>
+              {/* Result indicator */}
+              {holeResultLabel ? (
+                <span className={`ml-2 px-2 py-0.5 rounded-full ${holeResultLabel.color} text-xs font-bold`}>{holeResultLabel.label}</span>
+              ) : (
+                <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-500 text-white text-xs font-bold">Not Scored</span>
+              )}
             </div>
             <div className="text-sm text-gray-400 font-medium">Hdcp {hole?.handicap ?? '-'}</div>
+            {/* Show current total score */}
+            <div className="mt-1 text-base font-bold text-green-300">Current Score: {totalScore}</div>
           </div>
           {/* Right Arrow */}
           <button
