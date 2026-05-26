@@ -9,6 +9,10 @@ import { calculateHandicap } from '@/lib/handicapCalculator'
 import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function Home() {
+  // Collapsible card state
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [showFIR, setShowFIR] = useState(false);
+  const [showPutt, setShowPutt] = useState(false);
   const [rounds, setRounds] = useState<Round[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [isClient, setIsClient] = useState(false)
@@ -385,203 +389,198 @@ export default function Home() {
       {/* Debug: Show rounds array for troubleshooting */}
       {/* Debug output removed for production */}
       {/* Welcome Banner */}
-      <div className="px-4 pt-8 pb-4 flex justify-between items-start">
-        <div>
-          <p className="text-xs text-[var(--text-secondary)] mb-1 font-medium">Welcome back</p>
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">{currentUser?.name || 'Golfer'}</h1>
+      <div className="px-4 pt-8 pb-4 flex flex-col items-center justify-center">
+        <div className="w-full flex flex-row items-center mb-2">
+          <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-16 w-16 mr-3 self-start" style={{marginLeft: 0}} />
+          <h1 className="text-3xl font-bold tracking-tight text-white">{currentUser?.name || 'Golfer'}</h1>
         </div>
-        <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-16 w-16" />
       </div>
 
       {/* Main Content */}
       <div className="px-4 space-y-4 max-w-md w-full mx-auto pt-8">
         {/* Stats Cards */}
         <div className="flex gap-2 justify-between">
-          {/* Rounds Card */}
+          {/* Rounds Card - new style */}
           <button
             onClick={handleViewRounds}
-            className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg hover:bg-opacity-80 transition-all"
+            className="bg-black bg-opacity-70 rounded-2xl shadow-2xl flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer border border-green-400 hover:shadow-xl hover:bg-opacity-90 transition-all min-w-0"
+            style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}
           >
             <div className="relative">
               <img src="/scorecard.png" alt="scorecard" className="h-16 w-16 object-contain" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold text-black">{rounds.length}</span>
+                <span className="text-2xl font-bold text-white">{rounds.length}</span>
               </div>
             </div>
-            <div className="text-[9px] text-black text-center font-semibold uppercase tracking-wide mt-0.5 leading-tight">Tap to view<br />round history</div>
+            <div className="text-[9px] text-green-400 text-center font-semibold uppercase tracking-wide mt-0.5 leading-tight">Tap to view<br />round history</div>
           </button>
 
-          {/* Current Active Rounds Card */}
+          {/* Current Active Rounds Card - new style */}
           <button
             onClick={() => router.push('/rounds-in-progress')}
-            className="card flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer hover:shadow-lg transition-all"
+            className="bg-black bg-opacity-70 rounded-2xl shadow-2xl flex-1 flex flex-col items-center justify-center gap-1 cursor-pointer border border-green-400 hover:shadow-xl hover:bg-opacity-90 transition-all min-w-0"
+            style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}
           >
             <div className="relative">
-              <div className="text-2xl">🏌️</div>
+              <div className="text-2xl text-white">🏌️</div>
               {activeRoundsCount > 0 && (
                 <div className="absolute -top-2 -right-3 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
                   {activeRoundsCount}
                 </div>
               )}
             </div>
-            <div className="text-sm font-bold leading-tight text-center" style={{ color: '#007aff' }}>
+            <div className="text-sm font-bold leading-tight text-center text-green-400">
               Live<br />Leaderboard
             </div>
-            <div className="text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5" style={{ color: '#007aff' }}>Rounds in Progress</div>
+            <div className="text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5 text-green-400">Rounds in Progress</div>
           </button>
 
-          {/* Handicap Card */}
-          <div className="card flex-1 flex flex-col items-center justify-center gap-1 min-w-0">
+          {/* Handicap Card - new style */}
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl flex-1 flex flex-col items-center justify-center gap-1 min-w-0 border border-green-400" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
             <div className="flex items-center gap-0.5 min-w-0">
-              <div className={`text-4xl font-bold truncate ${getHandicapColor(handicap)}`}>
+              <div className={`text-4xl font-bold truncate text-green-400`}>
                 {isClient && rounds.length > 0 && courses.length > 0 ? handicap : '—'}
               </div>
-              {getHandicapTrend() && <div className={`text-sm flex-shrink-0 ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
+              {getHandicapTrend() && <div className="text-sm flex-shrink-0 text-green-400">{getHandicapTrend()}</div>}
             </div>
-            <div className={`text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5 ${getHandicapColor(handicap)}`}>My HCP</div>
+            <div className="text-[10px] text-center font-semibold uppercase tracking-wide mt-0.5 text-green-400">My HCP</div>
           </div>
         </div>
 
-        {/* Performance Breakdown: Always show, even if no rounds */}
-        <div className="card p-4">
-          <h3 className="text-lg font-bold mb-4">Performance Breakdown</h3>
-          {/* Column Headers */}
-          <div className="flex items-center justify-between mb-3 px-1">
-            <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</span>
-            <div className="flex items-center gap-4">
-              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-8 text-center">Total</span>
-              <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase w-12 text-right">Avg/Rnd</span>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {Object.entries(distribution).map(([type, count]) => {
-              const percentage = (count / maxDistribution) * 100
-              const colors: { [key: string]: string } = {
-                'Hole in 1': 'from-purple-500 to-purple-400',
-                'Eagle': 'from-blue-500 to-blue-400',
-                'Birdie': 'from-green-500 to-green-400',
-                'Par': 'from-yellow-500 to-yellow-400',
-                'Bogey': 'from-orange-500 to-orange-400',
-                'Double+': 'from-red-500 to-red-400',
-              }
-              const emojis: { [key: string]: string } = {
-                'Hole in 1': '⭐',
-                'Eagle': '🦅',
-                'Birdie': '🐦',
-                'Par': '✔️',
-                'Bogey': '⚠️',
-                'Double+': '❌',
-              }
-              return (
-                <div key={type}>
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{emojis[type]}</span>
-                      <span className="text-sm font-semibold">{type}</span>
+        {/* Performance Breakdown: Collapsible */}
+        <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-2 flex flex-col items-start w-full border border-green-400 relative mb-2" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+          <button className="w-full flex items-center justify-between py-2 focus:outline-none" onClick={() => setShowPerformance(v => !v)}>
+            <h3 className="text-2xl font-extrabold text-white">Performance Breakdown</h3>
+            <span className="text-green-400 text-2xl font-bold">{showPerformance ? '−' : '+'}</span>
+          </button>
+          {showPerformance && (
+            <>
+              <div className="w-full flex flex-row justify-between items-center mb-4">
+                <span className="text-base text-gray-300 font-semibold">Type</span>
+                <span className="text-base text-green-400 font-semibold">Total</span>
+                <span className="text-base text-green-400 font-semibold">Avg/Rnd</span>
+              </div>
+              <div className="w-full flex flex-col gap-2">
+                {Object.entries(distribution).map(([type, count]) => {
+                  const percentage = (count / maxDistribution) * 100;
+                  const colors: { [key: string]: string } = {
+                    'Hole in 1': 'from-purple-500 to-purple-400',
+                    'Eagle': 'from-blue-500 to-blue-400',
+                    'Birdie': 'from-green-500 to-green-400',
+                    'Par': 'from-yellow-500 to-yellow-400',
+                    'Bogey': 'from-orange-500 to-orange-400',
+                    'Double+': 'from-red-500 to-red-400',
+                  };
+                  const emojis: { [key: string]: string } = {
+                    'Hole in 1': '⭐',
+                    'Eagle': '🦅',
+                    'Birdie': '🐦',
+                    'Par': '✔️',
+                    'Bogey': '⚠️',
+                    'Double+': '❌',
+                  };
+                  return (
+                    <div key={type} className="flex flex-row items-center w-full gap-2">
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl text-white">{emojis[type]}</span>
+                          <span className="text-lg font-bold text-white truncate">{type}</span>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-2 mt-1">
+                          <div
+                            className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                      <span className="text-lg font-bold text-green-400 w-10 text-center">{count}</span>
+                      <span className="text-base font-semibold text-green-400 w-14 text-right">{rounds.length > 0 ? (count / rounds.length).toFixed(2) : '0.00'}</span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-bold w-8 text-center">{count}</span>
-                      <span className="text-xs w-12 text-right">{rounds.length > 0 ? (count / rounds.length).toFixed(2) : '0.00'}</span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Drive Distance Stats */}
         {averageDriveDistance !== null && (
-          <div className="card p-4 bg-blue-50 border-l-4 border-l-blue-600">
-            <div className="flex items-center justify-between">
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="text-lg">📏</span>
-                <span className="font-semibold">Avg Drive Distance</span>
+                <span className="text-lg text-white">📏</span>
+                <span className="font-semibold text-white">Avg Drive Distance</span>
               </div>
-              <span className="text-2xl font-bold text-blue-600">{averageDriveDistance} yd</span>
+              <span className="text-2xl font-bold text-green-400">{averageDriveDistance} yd</span>
             </div>
           </div>
         )}
 
-        {/* FIR Stats */}
+        {/* FIR Stats - Collapsible */}
         {firStats !== null && (
-          <div className="card p-4 bg-green-50 border-l-4 border-l-green-600">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">⛳</span>
-                  <span className="font-semibold">Fairway Hit Rate</span>
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-2 flex flex-col items-start w-full border border-green-400 mb-2" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            <button className="w-full flex items-center justify-between py-2 focus:outline-none" onClick={() => setShowFIR(v => !v)}>
+              <span className="text-lg font-semibold text-white flex items-center gap-2">
+                <span>⛳</span> Fairway Hit Rate
+              </span>
+              <span className="text-green-400 text-2xl font-bold">{showFIR ? '−' : '+'}</span>
+            </button>
+            {showFIR && (
+              <div className="space-y-2 w-full">
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white">Fairway Hit Rate</span>
+                  </div>
+                  <span className="text-2xl font-bold text-green-400">{firStats.hitPercent}%</span>
                 </div>
-                <span className="text-2xl font-bold text-green-600">{firStats.hitPercent}%</span>
+                <div className="text-xs text-gray-300 space-y-1 pl-6">
+                  <div>Miss Left: <span className="text-green-400">{firStats.missLeftPercent}%</span></div>
+                  <div>Miss Right: <span className="text-green-400">{firStats.missRightPercent}%</span></div>
+                </div>
               </div>
-              <div className="text-xs text-gray-600 space-y-1 pl-6">
-                <div>Miss Left: {firStats.missLeftPercent}%</div>
-                <div>Miss Right: {firStats.missRightPercent}%</div>
-              </div>
-            </div>
+            )}
           </div>
         )}
 
         {/* GIR Stats */}
         {girStats !== null && (
-          <div className="card p-4 bg-indigo-50 border-l-4 border-l-indigo-600">
-            <div className="flex items-center justify-between">
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-2">
-                <span className="text-lg">🎯</span>
-                <span className="font-semibold">Green in Regulation</span>
+                <span className="text-lg text-white">🎯</span>
+                <span className="font-semibold text-white">Green in Regulation</span>
               </div>
-              <span className="text-2xl font-bold text-indigo-600">{girStats.girPercent}%</span>
+              <span className="text-2xl font-bold text-green-400">{girStats.girPercent}%</span>
             </div>
           </div>
         )}
 
-        {/* Putt Success by Distance */}
+        {/* Putt Success by Distance - Collapsible */}
         {puttSuccessStats !== null && (
-          <div className="card p-4 bg-orange-50 border-l-4 border-l-orange-600">
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <span>🏌️</span>
-              <span>Putt Success Rate</span>
-            </h3>
-            <div className="space-y-2">
-              {Object.entries(puttSuccessStats).map(([key, stats]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-700">{stats.name}</span>
-                    <span className="text-xs text-gray-500">({stats.makes}/{stats.attempts})</span>
+          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-2 flex flex-col items-start w-full border border-green-400 mb-2" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+            <button className="w-full flex items-center justify-between py-2 focus:outline-none" onClick={() => setShowPutt(v => !v)}>
+              <span className="text-lg font-semibold text-white flex items-center gap-2">
+                <span>🏌️</span> Putt Success Rate
+              </span>
+              <span className="text-green-400 text-2xl font-bold">{showPutt ? '−' : '+'}</span>
+            </button>
+            {showPutt && (
+              <div className="space-y-2 w-full">
+                {Object.entries(puttSuccessStats).map(([key, stats]) => (
+                  <div key={key} className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-medium text-white">{stats.name}</span>
+                      <span className="text-xs text-gray-300">({stats.makes}/{stats.attempts})</span>
+                    </div>
+                    <span className="text-lg font-bold text-green-400">{stats.percent}%</span>
                   </div>
-                  <span className="text-lg font-bold text-orange-600">{stats.percent}%</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
-        {/* View Courses and Golfers */}
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <button
-            onClick={handleViewCourses}
-            className="btn-secondary flex items-center justify-center gap-2 text-xs font-semibold py-2"
-            style={{ color: 'black' }}
-          >
-            <span className="text-base">⛳</span>
-            <span>Courses</span>
-          </button>
-
-          <button
-            onClick={handleViewGolfers}
-            className="btn-secondary flex items-center justify-center gap-2 text-xs font-semibold py-2"
-            style={{ color: 'black' }}
-          >
-            <span className="text-base">👥</span>
-            <span>Golfers</span>
-          </button>
-        </div>
+        {/* View Courses and Golfers buttons removed as requested */}
       </div>
 
 
