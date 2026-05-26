@@ -54,27 +54,29 @@ export default function CoursesPage() {
   return (
     <PageWrapper title="Courses">
       <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by course name, city, or state..."
-          value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            const term = e.target.value.toLowerCase();
-            if (!term) {
-              setDisplayedCourses(allCourses);
-              return;
-            }
-            setDisplayedCourses(
-              allCourses.filter(course =>
-                course.name.toLowerCase().includes(term) ||
-                (course.location && course.location.toLowerCase().includes(term)) ||
-                (course.state && course.state.toLowerCase().includes(term))
-              )
-            );
-          }}
-          className="input-field mb-4 w-full"
-        />
+        <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+          <input
+            type="text"
+            placeholder="Search by course name, city, or state..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              const term = e.target.value.toLowerCase();
+              if (!term) {
+                setDisplayedCourses(allCourses);
+                return;
+              }
+              setDisplayedCourses(
+                allCourses.filter(course =>
+                  course.name.toLowerCase().includes(term) ||
+                  (course.location && course.location.toLowerCase().includes(term)) ||
+                  (course.state && course.state.toLowerCase().includes(term))
+                )
+              );
+            }}
+            className="w-full bg-transparent text-white placeholder:text-green-400 px-2 py-2 focus:outline-none"
+          />
+        </div>
       </div>
       <div className="space-y-4">
         {parentCourses.length === 0 ? (

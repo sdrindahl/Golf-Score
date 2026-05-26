@@ -271,15 +271,17 @@ export default function Players() {
             </div>
           )}
 
-          {/* Search Input */}
+          {/* Search Input - Card Style */}
           <div className="mb-4">
-            <input
-              type="text"
-              placeholder="🔍 Search players..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-600 focus:outline-none bg-white shadow-sm"
-            />
+            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+              <input
+                type="text"
+                placeholder="🔍 Search players..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-white placeholder:text-green-400 px-2 py-2 focus:outline-none"
+              />
+            </div>
           </div>
 
           {/* View All Players / View Favorites Toggle Buttons */}
