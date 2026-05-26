@@ -69,7 +69,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col pb-24">
+    <div className="min-h-screen flex flex-col pb-24">
       <PageWrapper title="Account Settings">
         <div className="max-w-xl mx-auto space-y-4">
           <div className="flex flex-col gap-4">
