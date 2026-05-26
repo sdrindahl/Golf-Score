@@ -381,7 +381,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
+    <div className="min-h-screen flex flex-col pb-24">
       {/* Debug: Show rounds array for troubleshooting */}
       {/* Debug output removed for production */}
       {/* Welcome Banner */}

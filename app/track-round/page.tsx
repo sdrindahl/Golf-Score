@@ -1146,7 +1146,7 @@ function TrackRoundContent() {
       )}
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
-      <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-black overflow-hidden">
+      <div className="relative w-full min-h-[100vh] flex flex-col justify-end items-stretch bg-transparent overflow-hidden">
 
 
         {/* Golf Ball Icon above Bottom NavBar (hidden in map view) */}
@@ -1237,11 +1237,10 @@ function TrackRoundContent() {
             </div>
           </div>
         )}
-        {/* Show placeholder image or map */}
-        <div className="absolute inset-0 z-0">
-          {showMap ? (
+        {/* Show map overlay if enabled, otherwise nothing (background handled globally) */}
+        {showMap && (
+          <div className="absolute inset-0 z-0">
             <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-              {/* Close button removed, now in bottom bar as 'Exit Map' */}
               {/* Map itself */}
               {(() => {
                 const hole = course.holes[currentHoleIndex];
@@ -1277,16 +1276,8 @@ function TrackRoundContent() {
                 );
               })()}
             </div>
-          ) : (
-            <img
-              src={randomHoleImages[currentHoleIndex] || '/hole1.png'}
-              alt="Hole preview"
-              className="w-full h-full object-cover select-none"
-              style={{ width: '90vw', height: '90vh', objectFit: 'cover', background: 'black' }}
-              draggable={false}
-            />
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Modern yardage overlay (left) */}
           {/* Live drive yardage overlay (shows only while measuring drive) */}

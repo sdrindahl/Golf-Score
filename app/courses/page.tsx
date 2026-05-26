@@ -85,7 +85,7 @@ export default function CoursesPage() {
           parentCourses.map((parent) => (
             <div key={parent.id}>
               <div
-                className="card cursor-pointer transition-all hover:ring-2 hover:ring-green-500 hover:bg-green-50"
+                className="card cursor-pointer transition-all hover:ring-2 hover:ring-green-500"
                 onClick={() => router.push(`/course-nines?id=${parent.id}`)}
               >
                 <h3 className="text-lg font-bold">{parent.name}</h3>

@@ -251,7 +251,7 @@ export default function Players() {
   const handleSettings = () => router.push('/settings')
 
   return (
-    <div className="min-h-screen flex flex-col pb-32" style={{ background: 'var(--green-bg)' }}>
+    <div className="min-h-screen flex flex-col pb-32">
       {/* Custom Header with Players Icon */}
       <div className="px-6 py-8 text-white flex justify-between items-start">
         <div>
@@ -440,7 +440,7 @@ export default function Players() {
                       }
                       return (
                         <Link key={player.id} href={`/player?id=${player.id}`}>
-                          <div className={`bg-gradient-to-br ${bgGradient} card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
+                          <div className={`card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
                             <div className="text-2xl flex-shrink-0">{medal}</div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
@@ -500,7 +500,7 @@ export default function Players() {
                       }
                       return (
                         <Link key={player.id} href={`/player?id=${player.id}`}>
-                          <div className={`bg-gradient-to-br ${bgGradient} card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
+                          <div className={`card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
                             <div className="text-2xl flex-shrink-0">🏌️</div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">

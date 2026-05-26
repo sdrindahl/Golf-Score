@@ -10,7 +10,7 @@ interface PageWrapperProps {
 
 export default function PageWrapper({ title, userName, children }: PageWrapperProps) {
   return (
-    <div className="min-h-screen pb-32" style={{ background: 'var(--green-bg)' }}>
+    <div className="min-h-screen pb-32">
       {/* Header */}
       {title && (
         <div className="px-6 py-8 text-white">
