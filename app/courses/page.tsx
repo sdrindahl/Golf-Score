@@ -85,13 +85,14 @@ export default function CoursesPage() {
           parentCourses.map((parent) => (
             <div key={parent.id}>
               <div
-                className="card cursor-pointer transition-all hover:ring-2 hover:ring-green-500"
+                className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 px-6 py-4 w-full"
+                style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}
                 onClick={() => router.push(`/course-nines?id=${parent.id}`)}
               >
-                <h3 className="text-lg font-bold">{parent.name}</h3>
+                <h3 className="text-lg font-bold text-white">{parent.name}</h3>
                 <div className="mt-2 flex gap-4 text-sm">
-                  <span>⛳ {parent.holeCount} Holes</span>
-                  {parent.par && <span>📍 Par {parent.par}</span>}
+                  <span className="text-green-400">⛳ {parent.holeCount} Holes</span>
+                  {parent.par && <span className="text-green-400">📍 Par {parent.par}</span>}
                 </div>
               </div>
             </div>
