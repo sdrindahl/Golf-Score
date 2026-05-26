@@ -64,14 +64,36 @@ body {
   background: none !important;
 }
 
-html, body {
+
+html {
   font-family: 'Inter', 'system-ui', 'sans-serif';
-  background: url('/hole1.png') no-repeat center center fixed !important;
-  background-size: cover !important;
+  background: none !important;
   min-height: 100vh;
   margin: 0;
   padding: 0;
   scroll-behavior: smooth;
+}
+
+body {
+  font-family: inherit;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+  color: var(--text-primary);
+  transition: background-color 0.3s cubic-bezier(.4,0,.2,1), color 0.3s cubic-bezier(.4,0,.2,1);
+  position: relative;
+  /* No background image here, handled by ::before */
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: url('/hole1.png') no-repeat center center;
+  background-size: cover;
+  pointer-events: none;
 }
 
 
