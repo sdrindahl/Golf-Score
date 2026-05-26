@@ -390,31 +390,29 @@ function PlayerProfileContent() {
 
           {/* Header Stats - Compact */}
           <div className="grid grid-cols-4 gap-2">
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center flex flex-col items-center justify-center min-w-0">
+            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 text-center flex flex-col items-center justify-center min-w-0 p-3" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
               <div className="flex items-center gap-1 justify-center min-w-0">
-                <div className={`text-3xl font-bold truncate ${getHandicapColor(handicap)}`}>
-                  {handicap}
-                </div>
-                {getHandicapTrend() && <div className={`text-sm flex-shrink-0 ${getHandicapColor(handicap)}`}>{getHandicapTrend()}</div>}
+                <div className={`text-3xl font-bold truncate text-green-400`}>{handicap}</div>
+                {getHandicapTrend() && <div className="text-sm flex-shrink-0 text-green-400">{getHandicapTrend()}</div>}
               </div>
-              <div className={`text-xs font-semibold uppercase mt-2 ${getHandicapColor(handicap)}`}>HCP</div>
+              <div className="text-xs font-semibold uppercase mt-2 text-green-400">HCP</div>
             </div>
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
+            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 text-center flex flex-col items-center justify-center min-w-0 p-3" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
               <div className="w-12 h-12 flex items-center justify-center mb-1 mx-auto">
                 <img src="/scorecard.png" alt="scorecard" className="w-full h-full object-contain" />
               </div>
-              <div className="text-xl font-bold text-black mb-1">{rounds.length}</div>
-              <div className="text-xs text-gray-600 font-semibold uppercase">Rounds</div>
+              <div className="text-xl font-bold text-white mb-1">{rounds.length}</div>
+              <div className="text-xs text-green-400 font-semibold uppercase">Rounds</div>
             </div>
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
-              <div className="text-2xl mb-1">⛳</div>
-              <div className="text-lg font-bold text-green-600">{firStats ? `${firStats.hitPercent}%` : '—'}</div>
-              <div className="text-xs text-gray-600 font-semibold uppercase">FIR</div>
+            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 text-center flex flex-col items-center justify-center min-w-0 p-3" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+              <div className="text-2xl mb-1 text-white">⛳</div>
+              <div className="text-lg font-bold text-green-400">{firStats ? `${firStats.hitPercent}%` : '—'}</div>
+              <div className="text-xs text-green-400 font-semibold uppercase">FIR</div>
             </div>
-            <div className="bg-white/95 backdrop-blur rounded-2xl p-3 shadow-lg border border-white/20 text-center">
-              <div className="text-2xl mb-1">🎯</div>
-              <div className="text-lg font-bold text-indigo-600">{girStats ? `${girStats.girPercent}%` : '—'}</div>
-              <div className="text-xs text-gray-600 font-semibold uppercase">GIR</div>
+            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 text-center flex flex-col items-center justify-center min-w-0 p-3" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+              <div className="text-2xl mb-1 text-white">🎯</div>
+              <div className="text-lg font-bold text-green-400">{girStats ? `${girStats.girPercent}%` : '—'}</div>
+              <div className="text-xs text-green-400 font-semibold uppercase">GIR</div>
             </div>
           </div>
 
@@ -473,26 +471,26 @@ function PlayerProfileContent() {
             const dateStr = best18.date ? new Date(best18.date).toLocaleDateString() : '';
             return (
               <div
-                className="bg-gradient-to-r from-green-100 via-emerald-50 to-green-200 rounded-2xl shadow border border-green-200/60 mb-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg"
-                style={{ padding: '0.5rem 0.5rem 0.5rem 1.25rem', minHeight: 0 }}
+                className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 mb-6 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg px-5 py-3"
+                style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)', minHeight: 0}}
                 onClick={() => router.push(`/round-detail?id=${best18.id}`)}
                 title="View this round"
               >
                 <div className="flex flex-row items-center justify-between relative" style={{ minHeight: 0 }}>
                   <div className="flex flex-col justify-center py-1">
-                    <h2 className="text-base font-bold mb-1 text-emerald-800">Best 18 Hole Round</h2>
+                    <h2 className="text-base font-bold mb-1 text-green-400">Best 18 Hole Round</h2>
                     {parentName && (
-                      <span className="font-semibold text-gray-800 text-xs md:text-sm leading-tight">{parentName}</span>
+                      <span className="font-semibold text-white text-xs md:text-sm leading-tight">{parentName}</span>
                     )}
                     {childNames.map((name, idx) => (
-                      <span key={idx} className="text-xs text-gray-600 mt-0.5">{name}</span>
+                      <span key={idx} className="text-xs text-green-400 mt-0.5">{name}</span>
                     ))}
                   </div>
                   <div className="flex flex-col items-end ml-auto pl-2">
-                    <span className="text-lg font-bold text-gray-800">{best18.totalScore}</span>
-                    <span className="absolute top-1 right-2 text-xs text-gray-500">{dateStr}</span>
+                    <span className="text-lg font-bold text-green-400">{best18.totalScore}</span>
+                    <span className="absolute top-1 right-2 text-xs text-gray-300">{dateStr}</span>
                   </div>
-                  <div className="text-xl text-emerald-400 ml-2">→</div>
+                  <div className="text-xl text-green-400 ml-2">→</div>
                 </div>
               </div>
             );

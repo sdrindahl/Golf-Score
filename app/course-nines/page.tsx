@@ -48,16 +48,27 @@ function CourseNinesPageInner() {
           childCourses.map((child) => {
             const isSelected = selectedChildIds.includes(child.id);
             return (
-              <div key={child.id} className={`flex items-center gap-2 card bg-green-100 hover:bg-green-200 transition-all p-2 mb-2`}>
+              <div
+                key={child.id}
+                className={
+                  [
+                    "flex items-center gap-2 w-full mb-2 px-4 py-3",
+                    "bg-black bg-opacity-70 rounded-2xl border border-green-400",
+                    "shadow-2xl transition-all",
+                    isSelected ? "ring-2 ring-green-400" : "hover:bg-opacity-80",
+                  ].join(" ")
+                }
+                style={{ boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)' }}
+              >
                 <div>
-                  <h4 className="text-base font-semibold">{child.name}</h4>
-                  <div className="mt-1 flex gap-4 text-xs">
+                  <h4 className="text-base font-semibold text-white">{child.name}</h4>
+                  <div className="mt-1 flex gap-4 text-xs text-green-300">
                     <span>⛳ {child.holeCount} Holes</span>
                     {child.par && <span>📍 Par {child.par}</span>}
                   </div>
                 </div>
                 <button
-                  className={`ml-auto px-3 py-1 rounded ${isSelected ? 'bg-red-400 text-white' : 'bg-blue-500 text-white'} disabled:opacity-50`}
+                  className={`ml-auto px-3 py-1 rounded-full border font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50 ${isSelected ? 'bg-green-500 border-green-400 text-white' : 'bg-green-900 border-green-400 text-green-300 hover:bg-green-800'}`}
                   onClick={() => {
                     if (isSelected) {
                       setSelectedChildIds(selectedChildIds.filter((id) => id !== child.id));

@@ -153,7 +153,7 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
 
   return (
     <div>
-      <h2 className="text-xl font-bold mb-4 text-gray-800">{sectionTitle || 'Saved Rounds'}</h2>
+      <h2 className="text-xl font-bold mb-4 text-white">{sectionTitle || 'Saved Rounds'}</h2>
       <div className="space-y-3">
         {sortedRounds.map((round) => {
           // Multi-child support: if courseId is comma-separated, show all child names under parent
@@ -201,7 +201,8 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
             <div
               key={round.id}
               onClick={() => router.push(`/round-detail?id=${round.id}`)}
-              className="bg-white/95 backdrop-blur rounded-xl p-4 shadow border border-white/20 cursor-pointer transition-all active:scale-95 active:shadow-lg relative flex flex-row items-center justify-between"
+              className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 cursor-pointer transition-all active:scale-95 active:shadow-lg relative flex flex-row items-center justify-between px-4 py-4 w-full"
+              style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}
             >
               {/* Comments Button */}
               <div className="absolute -top-5 -left-5 flex gap-3">
@@ -220,24 +221,24 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
                 </button>
               </div>
               {/* Date in top right */}
-              <span className="absolute top-2 right-2 text-xs text-gray-500">{dateStr}</span>
+              <span className="absolute top-2 right-2 text-xs text-green-400">{dateStr}</span>
               {/* Left: Parent and Child course names */}
               <div className="flex flex-col items-start">
                 {parentName && (
-                  <span className="font-semibold text-gray-800 text-sm md:text-base leading-tight">{parentName}</span>
+                  <span className="font-semibold text-green-400 text-sm md:text-base leading-tight">{parentName}</span>
                 )}
                 {childNames.map((name, idx) => (
-                  <span key={idx} className="text-xs text-gray-600 mt-0.5">{name}</span>
+                  <span key={idx} className="text-xs text-white mt-0.5">{name}</span>
                 ))}
                 {round.selectedTee && (
-                  <span className="text-xs text-gray-500 mt-2 font-semibold">{round.selectedTee.charAt(0).toUpperCase() + round.selectedTee.slice(1)}'s</span>
+                  <span className="text-xs text-green-400 mt-2 font-semibold">{round.selectedTee.charAt(0).toUpperCase() + round.selectedTee.slice(1)}'s</span>
                 )}
               </div>
               {/* Right: Total Score */}
               <div className="flex flex-col items-end ml-auto">
-                <span className="text-2xl font-bold text-gray-800">{round.totalScore}</span>
+                <span className="text-2xl font-bold text-green-400">{round.totalScore}</span>
               </div>
-              <div className="text-2xl text-gray-400 ml-2">→</div>
+              <div className="text-2xl text-green-400 ml-2">→</div>
             </div>
           );
         })}

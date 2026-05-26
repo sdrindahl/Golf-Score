@@ -271,15 +271,17 @@ export default function Players() {
             </div>
           )}
 
-          {/* Search Input */}
+          {/* Search Input - Card Style */}
           <div className="mb-4">
-            <input
-              type="text"
-              placeholder="🔍 Search players..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-green-600 focus:outline-none bg-white shadow-sm"
-            />
+            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+              <input
+                type="text"
+                placeholder="🔍 Search players..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-white placeholder:text-green-400 px-2 py-2 focus:outline-none"
+              />
+            </div>
           </div>
 
           {/* View All Players / View Favorites Toggle Buttons */}
@@ -440,12 +442,14 @@ export default function Players() {
                       }
                       return (
                         <Link key={player.id} href={`/player?id=${player.id}`}>
-                          <div className={`card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
-                            <div className="text-2xl flex-shrink-0">{medal}</div>
+                          <div className={
+                            `bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 flex items-center gap-2 cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 py-3 px-4 min-h-0 w-full`
+                          } style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)', minHeight:'0'}}>
+                            <div className="text-2xl flex-shrink-0 text-white">{medal}</div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
+                                <h3 className="text-base font-bold text-white truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
+                                <span className="text-xs font-semibold text-green-400">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                               </div>
                               {currentUser?.is_admin && (
                                 <button
@@ -466,7 +470,7 @@ export default function Players() {
                                 e.stopPropagation()
                                 toggleFavorite(player.id)
                               }}
-                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform"
+                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform text-green-400"
                               title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
                             >
                               {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
@@ -500,12 +504,14 @@ export default function Players() {
                       }
                       return (
                         <Link key={player.id} href={`/player?id=${player.id}`}>
-                          <div className={`card cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 flex items-center gap-2 border-2 ${borderColor} ${shadow} py-2 px-3 min-h-0`} style={{minHeight:'0',paddingTop:'0.5rem',paddingBottom:'0.5rem',paddingLeft:'0.75rem',paddingRight:'0.75rem'}}>
-                            <div className="text-2xl flex-shrink-0">🏌️</div>
+                          <div className={
+                            `bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 flex items-center gap-2 cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 py-3 px-4 min-h-0 w-full`
+                          } style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)', minHeight:'0'}}>
+                            <div className="text-2xl flex-shrink-0 text-white">🏌️</div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-base font-bold text-gray-800 truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs font-semibold text-gray-600">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
+                                <h3 className="text-base font-bold text-white truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
+                                <span className="text-xs font-semibold text-green-400">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                               </div>
                               {currentUser?.is_admin && (
                                 <button
@@ -526,7 +532,7 @@ export default function Players() {
                                 e.stopPropagation()
                                 toggleFavorite(player.id)
                               }}
-                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform"
+                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform text-green-400"
                               title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
                             >
                               {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
