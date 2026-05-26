@@ -76,13 +76,24 @@ function TrackRoundContent() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   // Use typeof window !== 'undefined' for client-only logic
-  const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
+  // Restore last viewed hole index from localStorage or round
+  const [currentHoleIndex, setCurrentHoleIndex] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const idx = localStorage.getItem('currentHoleIndex');
+      if (idx !== null) return Number(idx);
+    }
+    return 0;
+  });
   const [scores, setScores] = useState<number[]>([]);
 
   // Restore scores from round when round is loaded
   useEffect(() => {
     if (round && Array.isArray(round.scores)) {
       setScores(round.scores);
+    }
+    // Restore perHoleStats if present
+    if (round && Array.isArray(round.perHoleStats)) {
+      setPerHoleStats(round.perHoleStats);
     }
   }, [round]);
 
@@ -246,6 +257,12 @@ function TrackRoundContent() {
   // Heartbeat refs
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPageVisibleRef = useRef<boolean>(true);
+  // Persist currentHoleIndex to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentHoleIndex', String(currentHoleIndex));
+    }
+  }, [currentHoleIndex]);
   // Keep selectedTee in a ref for heartbeat
   const selectedTeeRef = useRef<string>(selectedTee);
   useEffect(() => { selectedTeeRef.current = selectedTee; }, [selectedTee]);
