@@ -1282,10 +1282,10 @@ function TrackRoundContent() {
           <div style={{ position: 'absolute', inset: 0, zIndex: 0, width: '100vw', height: '100vh' }}>
             <HoleMap
               key="static-map"
-              userLat={userLocation?.lat}
-              userLng={userLocation?.lng}
-              greenLat={course.holes[currentHoleIndex]?.greenLat}
-              greenLng={course.holes[currentHoleIndex]?.greenLng}
+              userLat={userLocation?.lat ?? 0}
+              userLng={userLocation?.lng ?? 0}
+              greenLat={course.holes[currentHoleIndex]?.greenLat ?? 0}
+              greenLng={course.holes[currentHoleIndex]?.greenLng ?? 0}
               holeName={`Hole ${course.holes[currentHoleIndex]?.holeNumber || ''}`}
             />
           </div>
