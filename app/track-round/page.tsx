@@ -10,7 +10,15 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return result;
 }
 
-export default TrackRoundContent;
+
+// Wrap in Suspense to support useSearchParams
+export default function TrackRoundPageWrapper(props: any) {
+  return (
+    <Suspense>
+      <TrackRoundContent {...props} />
+    </Suspense>
+  );
+}
 
 function getDistanceYards(lat1: number, lon1: number, lat2: number, lon2: number) {
   const toRad = (v: number) => (v * Math.PI) / 180;
