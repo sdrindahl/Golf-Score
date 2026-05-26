@@ -91,9 +91,13 @@ function TrackRoundContent() {
     if (round && Array.isArray(round.scores)) {
       setScores(round.scores);
     }
-    // Restore perHoleStats if present
+    // Restore perHoleStats if present, normalizing types
     if (round && Array.isArray(round.perHoleStats)) {
-      setPerHoleStats(round.perHoleStats);
+      const normalizedStats = round.perHoleStats.map((stat: any) => ({
+        ...stat,
+        fairwayHit: stat.fairwayHit === undefined ? null : stat.fairwayHit,
+      }));
+      setPerHoleStats(normalizedStats);
     }
   }, [round]);
 
