@@ -1,6 +1,6 @@
 {
-  "version": "5.2.4",
-  "buildDate": "2026-25-05",
-  "buildTime": "02:27:00",
+  "version": "5.2.5",
+  "buildDate": "2026-26-05",
+  "buildTime": "10:45:00",
   "description": "TapIt - A golf score tracking application built with React and TypeScript."
 }

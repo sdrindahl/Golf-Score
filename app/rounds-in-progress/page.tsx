@@ -4,7 +4,7 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 import CommentsModal from '@/components/CommentsModal';
-// import Link from 'next/link';
+import PageWrapper from '@/components/PageWrapper';
 
 // LeaderboardByCourse component renders leaderboard tables grouped by parent course
 // Type definitions for leaderboard
@@ -325,10 +325,8 @@ export default function RoundsInProgressPage() {
   const handleSettings = () => router.push('/settings')
 
   return (
-    <div className="min-h-screen flex flex-col pb-24" style={{ background: 'var(--green-bg)' }}>
+    <PageWrapper title="Rounds in Progress">
       <div className="max-w-xl mx-auto px-2 sm:px-4 py-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4 drop-shadow-lg text-center">Rounds in Progress</h1>
-        
         {/* View All Players / View Selected Toggle Button */}
         <div className="mb-4 flex justify-center gap-3 flex-wrap">
           <button
@@ -352,7 +350,6 @@ export default function RoundsInProgressPage() {
             Favorites
           </button>
         </div>
-        
         {/* Helper text for last 3 holes symbols */}
         <div className="w-full text-center text-xs text-black mb-1">
           Symbols below +/- show last 3 holes
@@ -391,7 +388,6 @@ export default function RoundsInProgressPage() {
           </>
         )}
       </div>
-
       {/* Comments Modal */}
       {openCommentsModal && currentUser && (
         <CommentsModal
@@ -401,7 +397,7 @@ export default function RoundsInProgressPage() {
           onClose={() => setOpenCommentsModal(null)}
         />
       )}
-    </div>
+    </PageWrapper>
   );
 }
 // Legend symbol component
