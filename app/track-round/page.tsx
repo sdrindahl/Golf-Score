@@ -67,11 +67,7 @@ function TrackRoundContent() {
   // State for editing a putt distance
   const [puttEdit, setPuttEdit] = useState<{ idx: number, value: number } | null>(null);
 
-  // Score entry modal state
-  const [showScoreModal, setShowScoreModal] = useState(false);
-
   // Show map or image?
-
   const [showMap, setShowMap] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -82,6 +78,16 @@ function TrackRoundContent() {
   // Use typeof window !== 'undefined' for client-only logic
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0);
   const [scores, setScores] = useState<number[]>([]);
+
+  // Restore scores from round when round is loaded
+  useEffect(() => {
+    if (round && Array.isArray(round.scores)) {
+      setScores(round.scores);
+    }
+  }, [round]);
+
+  // Score entry modal state
+  const [showScoreModal, setShowScoreModal] = useState(false);
 
   // Helper: calculate total score (sum of scores array)
   const totalScore = scores.reduce((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
