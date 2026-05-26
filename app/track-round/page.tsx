@@ -1279,43 +1279,15 @@ function TrackRoundContent() {
         )}
         {/* Show map overlay if enabled, otherwise nothing (background handled globally) */}
         {showMap && (
-          <div className="absolute inset-0 z-0">
-            <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-              {/* Map itself */}
-              {(() => {
-                const hole = course.holes[currentHoleIndex];
-                const hasValidGreen =
-                  hole &&
-                  typeof hole.greenLat === 'number' &&
-                  !isNaN(hole.greenLat) &&
-                  typeof hole.greenLng === 'number' &&
-                  !isNaN(hole.greenLng);
-                const hasValidUser =
-                  userLocation &&
-                  typeof userLocation.lat === 'number' &&
-                  !isNaN(userLocation.lat) &&
-                  typeof userLocation.lng === 'number' &&
-                  !isNaN(userLocation.lng);
-                if (!hasValidGreen || !hasValidUser) {
-                  return (
-                    <div style={{ width: '100vw', height: '100vh', background: 'black', position: 'absolute', top: 0, left: 0, zIndex: 0 }}>
-                      <div className="flex items-center justify-center w-full h-full">
-                        <div className="text-white text-lg animate-pulse">Loading map...</div>
-                      </div>
-                    </div>
-                  );
-                }
-                return (
-                  <HoleMap
-                    userLat={userLocation?.lat}
-                    userLng={userLocation?.lng}
-                    greenLat={hole?.greenLat}
-                    greenLng={hole?.greenLng}
-                    holeName={`Hole ${hole?.holeNumber || ''}`}
-                  />
-                );
-              })()}
-            </div>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0, width: '100vw', height: '100vh' }}>
+            <HoleMap
+              key="static-map"
+              userLat={userLocation?.lat}
+              userLng={userLocation?.lng}
+              greenLat={course.holes[currentHoleIndex]?.greenLat}
+              greenLng={course.holes[currentHoleIndex]?.greenLng}
+              holeName={`Hole ${course.holes[currentHoleIndex]?.holeNumber || ''}`}
+            />
           </div>
         )}
 
