@@ -148,7 +148,17 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
     : { display: 'none' };
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 100,
+        background: '#000',
+      }}
+    >
       <div
         ref={mapContainer}
         style={{ width: '100vw', height: '100vh', position: 'absolute', top: 0, left: 0 }}
