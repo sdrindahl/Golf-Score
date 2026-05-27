@@ -1000,7 +1000,7 @@ function TrackRoundContent() {
             } catch {}
           }
           return (
-            <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-green-900 bg-opacity-95 text-white px-6 py-2 rounded-2xl shadow-2xl border border-green-400 max-w-[95vw] text-center pointer-events-auto flex flex-col items-center" style={{minWidth: 200, boxShadow: '0 4px 24px 0 rgba(0,0,0,0.35)'}}>
+            <div className="fixed left-1/2 -translate-x-1/2 z-50 bg-green-900 bg-opacity-95 text-white px-6 py-2 rounded-2xl shadow-2xl border border-green-400 max-w-[95vw] text-center pointer-events-auto flex flex-col items-center pt-[env(safe-area-inset-top)] mt-2" style={{minWidth: 200, boxShadow: '0 4px 24px 0 rgba(0,0,0,0.35)', top: '0'}}>
               {parentName ? (
                 <div className="text-base md:text-lg font-bold leading-tight">{parentName}</div>
               ) : (
