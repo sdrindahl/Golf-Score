@@ -86,7 +86,7 @@ function TrackRoundContent() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   // Use typeof window !== 'undefined' for client-only logic
-  // Restore last viewed hole index from localStorage or round
+  // Restore last viewed hole index from localStorage, URL, or round.startingHole
   const [currentHoleIndex, setCurrentHoleIndex] = useState(() => {
     if (typeof window !== 'undefined') {
       const idx = localStorage.getItem('currentHoleIndex');
@@ -94,6 +94,23 @@ function TrackRoundContent() {
     }
     return 0;
   });
+
+  // Set currentHoleIndex from URL (?hole=) or round.startingHole after round/searchParams are loaded
+  useEffect(() => {
+    // Only run after round and searchParams are available
+    if (!round) return;
+    // Try to get ?hole= from URL
+    const holeParam = searchParams ? searchParams.get('hole') : null;
+    if (holeParam && !isNaN(Number(holeParam))) {
+      setCurrentHoleIndex(Math.max(0, Number(holeParam) - 1));
+      return;
+    }
+    // Else, use round.startingHole if present
+    const startingHole = (round as any).startingHole || (round as any).starting_hole;
+    if (startingHole && !isNaN(Number(startingHole))) {
+      setCurrentHoleIndex(Math.max(0, Number(startingHole) - 1));
+    }
+  }, [round, searchParams]);
   const [scores, setScores] = useState<number[]>([]);
 
   // Restore scores from round when round is loaded
@@ -101,12 +118,14 @@ function TrackRoundContent() {
     if (round && Array.isArray(round.scores)) {
       setScores(round.scores);
     }
-    // Restore perHoleStats if present, normalizing types
+    // Restore perHoleStats if present, normalizing types, skip null/undefined
     if (round && Array.isArray(round.perHoleStats)) {
-      const normalizedStats = round.perHoleStats.map((stat: any) => ({
-        ...stat,
-        fairwayHit: stat.fairwayHit === undefined ? null : stat.fairwayHit,
-      }));
+      const normalizedStats = round.perHoleStats
+        .filter((stat: any) => stat != null)
+        .map((stat: any) => ({
+          ...stat,
+          fairwayHit: stat.fairwayHit === undefined ? null : stat.fairwayHit,
+        }));
       setPerHoleStats(normalizedStats);
     }
   }, [round]);
