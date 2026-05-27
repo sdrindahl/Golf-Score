@@ -3,6 +3,56 @@
 export const COURSES_DATABASE: any[] = [
 
 {
+    id: 'GLW',
+    name: 'Glacier Wood Golf',
+    location: 'Iola',
+    state: 'WI',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+{
+        id: '30a',
+        name: 'Front 9',
+        location: 'Iola',
+        state: 'WI',
+        holeCount: 9,
+        par: 35,
+        parent_id: 'GLW',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 14, greenLat: 44.51287078217308, greenLng: -89.12104505349406, men: { yardage: 345, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 337, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 310, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 359, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 2, par: 5, handicap: 2, greenLat: 44.508328744230695, greenLng: -89.12049830940714, men: { yardage: 465, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 413, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 404, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 475, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 3, par: 3, handicap: 18, greenLat: 44.507860956698785, greenLng: -89.11869274757089, men: { yardage: 128, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 128, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 119, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 182, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 4, par: 4, handicap: 10, greenLat: 44.51139001751606, greenLng: -89.11964649599899, men: { yardage: 356, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 262, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 232, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 365, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 5, par: 4, handicap: 6, greenLat: 44.509608104829994, greenLng: -89.11583240868138, men: { yardage: 360, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 313, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 302, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 381, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 6, par: 3, handicap: 16, greenLat: 44.50990629696095, greenLng: -89.11233784635661, men: { yardage: 184, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 143, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 133, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 207, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 7, par: 4, handicap: 12, greenLat: 44.5106160822195, greenLng: -89.11637460856277, men: { yardage: 339, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 290, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 280, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 363, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 8, par: 4, handicap: 4, greenLat: 44.512335569040445, greenLng: -89.12004890130379, men: { yardage: 381, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 320, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 281, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 399, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 9, par: 4, handicap: 8, greenLat: 44.515556162743174, greenLng: -89.12106092718449, men: { yardage: 353, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 339, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 332, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 364, courseRating: 71.6, slopeRating: 135 } },
+        ],
+      },
+      {
+        id: '30b',
+        name: 'Back 9',
+        location: 'Iola',
+        state: 'WI',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'GLW',
+        holes: [
+          { holeNumber: 10, par: 4, handicap: 5, greenLat: 44.51295663487905, greenLng: -89.11743021746358, men: { yardage: 401, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 312, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 264, courseRating: 68.9, slopeRating: 109 }, championship: { yardage: 409, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 11, par: 4, handicap: 11, greenLat: 44.512396353204714, greenLng: -89.1131149541197, men: { yardage: 345, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 294, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 286, courseRating: 68.9, slopeRating: 109 }, championship: { yardage: 375, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 12, par: 3, handicap: 15, greenLat: 44.51291010154217, greenLng: -89.11079045857743, men: { yardage: 157, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 157, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 113, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 178, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 13, par: 4, handicap: 13, greenLat: 44.515708213365606, greenLng: -89.11108991036238, men: { yardage: 320, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 297, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 287, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 378, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 14, par: 4, handicap: 19, greenLat: 44.51312915832724, greenLng: -89.10996749540432, men: { yardage: 349, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 314, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 306, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 375, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 15, par: 5, handicap: 1, greenLat: 44.51031253360018, greenLng: -89.1115133525042, men: { yardage: 491, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 455, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 425, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 523, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 16, par: 4, handicap: 7, greenLat: 44.5112404462337, greenLng: -89.11683519578355, men: { yardage: 382, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 321, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 312, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 410, courseRating: 71.6, slopeRating: 130 } },
+          { holeNumber: 17, par: 3, handicap: 17, greenLat: 44.51233239851344, greenLng: -89.11573885996586, men: { yardage: 175, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 175, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 153, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 188, courseRating: 71.6, slopeRating: 135 } },
+          { holeNumber: 18, par: 5, handicap: 3, greenLat: 44.516485571983246, greenLng: -89.11802578719124, men: { yardage: 537, courseRating: 69.7, slopeRating: 126 }, women: { yardage: 444, courseRating: 71.1, slopeRating: 120 }, senior: { yardage: 437, courseRating: 64.5, slopeRating: 109 }, championship: { yardage: 547, courseRating: 71.6, slopeRating: 135 } },
+          ],
+        },
+
+{
     id: 'CMX',
     name: 'Chomonix Golf Club',
     location: 'Lino Lakes',
