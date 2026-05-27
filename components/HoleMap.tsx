@@ -135,13 +135,21 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         if (map.current) map.current.off('click', handleMapClick);
       };
 
-      // Always center the map on the green for the current hole
-      map.current.setView([greenLat, greenLng], 18); // 18 is a good zoom for a green
+      // Only recenter the map when the hole changes (holeName)
+      // This prevents recentering on every prop update or user interaction
     });
     return () => {
       cleanupClick();
     };
-  }, [userLat, userLng, greenLat, greenLng]);
+  }, [userLat, userLng, greenLat, greenLng, holeName]);
+
+  // Recenter the map only when the hole changes
+  useEffect(() => {
+    import('leaflet').then((leaflet) => {
+      if (!map.current) return;
+      map.current.setView([greenLat, greenLng], 18); // Only on hole change
+    });
+  }, [holeName, greenLat, greenLng]);
   // Spotlight mask removed: always show map
   return (
     <div
