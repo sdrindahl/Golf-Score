@@ -37,7 +37,7 @@ function CourseNinesPageInner() {
     <PageWrapper title="">
       <div className="max-w-lg mx-auto mt-8 flex flex-col gap-6">
         <h1 className="text-3xl font-bold mb-4 text-center text-white">{parentCourseName}</h1>
-        <h2 className="text-xl font-bold mb-2 text-center">
+        <h2 className="text-xl font-bold mb-2 text-center text-white">
           {childCourses.length === 1 
             ? "Select this course" 
             : "Choose your 9 or 18 Holes"}
