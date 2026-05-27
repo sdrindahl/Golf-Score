@@ -17,7 +17,21 @@ export default function Players() {
   const [deleteModal, setDeleteModal] = useState<{ userId: string; userName: string } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [showAllPlayers, setShowAllPlayers] = useState(true)
+  // Tab: 'all', 'favorites', 'top3'
+  const [playerTab, setPlayerTab] = useState<'all' | 'favorites' | 'top3'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedFavorites = localStorage.getItem('favoritePlayerIds');
+      if (savedFavorites) {
+        try {
+          const parsed = JSON.parse(savedFavorites);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return 'favorites';
+          }
+        } catch {}
+      }
+    }
+    return 'all';
+  });
   const [favoritePlayerIds, setFavoritePlayerIds] = useState<Set<string>>(new Set())
   const [isClient, setIsClient] = useState(false)
   const [courses, setCourses] = useState<any[]>([])
@@ -271,45 +285,63 @@ export default function Players() {
             </div>
           )}
 
-          {/* Search Input - Card Style */}
-          <div className="mb-4">
-            <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
-              <input
-                type="text"
-                placeholder="🔍 Search players..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent text-white placeholder:text-green-400 px-2 py-2 focus:outline-none"
-              />
+          {/* Only render search, tab bar, and player list after client mount to avoid hydration mismatch */}
+          {isClient && <>
+            {/* Search Input - Card Style */}
+            <div className="mb-4">
+              <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border-2 border-blue-600 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+                <input
+                  type="text"
+                  placeholder="🔍 Search players..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/80 text-blue-600 placeholder:text-blue-600 text-lg px-2 py-2 rounded focus:outline-none"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* View All Players / View Favorites Toggle Buttons */}
-          <div className="mb-4 flex justify-center gap-3 flex-wrap">
-            <button
-              onClick={() => setShowAllPlayers(true)}
-              className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
-                showAllPlayers
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-400 hover:bg-gray-500 text-white'
-              }`}
-            >
-              All Players
-            </button>
-            <button
-              onClick={() => setShowAllPlayers(false)}
-              disabled={favoritePlayerIds.size === 0}
-              className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
-                !showAllPlayers && favoritePlayerIds.size > 0
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : favoritePlayerIds.size === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-gray-400 hover:bg-gray-500 text-white'
-              }`}
-            >
-              ⭐ Favorites ({favoritePlayerIds.size})
-            </button>
-          </div>
+            {/* Tab Bar Filter */}
+            <div className="mb-4 flex justify-center">
+              <div className="flex bg-transparent border-b-0">
+                <button
+                  onClick={() => setPlayerTab('all')}
+                  className={`px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none
+                    rounded-t-xl border border-b-0
+                    ${playerTab === 'all'
+                      ? 'text-green-400 bg-black bg-opacity-70 border-green-400 shadow-lg -mb-1 z-10 scale-105'
+                      : 'text-green-200 bg-black bg-opacity-70 border-green-400 opacity-80'}
+                  `}
+                >
+                  All Players
+                </button>
+                <button
+                  onClick={() => setPlayerTab('favorites')}
+                  disabled={favoritePlayerIds.size === 0}
+                  className={`px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none
+                    rounded-t-xl border border-b-0
+                    ${playerTab === 'favorites'
+                      ? 'text-green-400 bg-black bg-opacity-70 border-green-400 shadow-lg -mb-1 z-10 scale-105'
+                      : favoritePlayerIds.size === 0
+                        ? 'text-gray-400 bg-black bg-opacity-70 border-green-400 cursor-not-allowed opacity-60'
+                        : 'text-green-200 bg-black bg-opacity-70 border-green-400 opacity-80'}
+                  `}
+                >
+                  ⭐ Favorites
+                </button>
+                <button
+                  onClick={() => setPlayerTab('top3')}
+                  className={`px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none
+                    rounded-t-xl border border-b-0
+                    ${playerTab === 'top3'
+                      ? 'text-green-400 bg-black bg-opacity-70 border-green-400 shadow-lg -mb-1 z-10 scale-105'
+                      : 'text-green-200 bg-black bg-opacity-70 border-green-400 opacity-80'}
+                  `}
+                >
+                  Top 3 Golfers
+                </button>
+              </div>
+            </div>
+          </>}
 
           {deleteModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -340,6 +372,7 @@ export default function Players() {
 
 
 
+          {/* Player List Filtered by Tab */}
           {players.length === 0 ? (
             <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
               <p className="text-gray-500 text-lg">No players yet</p>
@@ -378,52 +411,32 @@ export default function Players() {
                 )
               }
 
-              // Apply favorites filter
-              if (!showAllPlayers && favoritePlayerIds.size > 0) {
-                filteredPlayers = filteredPlayers.filter(player =>
-                  favoritePlayerIds.has(player.id)
-                )
+              // Tab filtering
+              if (playerTab === 'favorites') {
+                filteredPlayers = filteredPlayers.filter(player => favoritePlayerIds.has(player.id))
+              } else if (playerTab === 'top3') {
+                filteredPlayers = filteredPlayers.slice(0, 3)
               }
-
-              const topThree = filteredPlayers.slice(0, 3)
-              const rest = filteredPlayers.slice(3)
 
               if (filteredPlayers.length === 0) {
                 return (
                   <div className="bg-white/95 backdrop-blur rounded-3xl p-8 shadow-lg text-center border border-white/20">
                     <p className="text-gray-500 font-semibold">
-                      {searchQuery ? `No players found matching "${searchQuery}"` : 'No favorite players yet'}
+                      {searchQuery ? `No players found matching "${searchQuery}"` : playerTab === 'favorites' ? 'No favorite players yet' : 'No players to show'}
                     </p>
                   </div>
                 )
               }
 
               return (
-                <>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-800">Top 3 Golfers</h3>
-                    <button
-                      onClick={async () => {
-                        setRefreshing(true)
-                        await loadPlayers()
-                        setRefreshing(false)
-                      }}
-                      disabled={refreshing}
-                      className={`font-semibold py-1 px-4 rounded-full shadow transition-all duration-150 text-sm ${
-                        refreshing
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-purple-600 hover:bg-purple-700 text-white'
-                      }`}
-                    >
-                      {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Stats'}
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    {topThree.map((player, index) => {
-                      let bgGradient = 'from-gray-50 to-gray-100'
-                      let borderColor = 'border-white/40'
-                      let shadow = ''
-                      let medal = null
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  {filteredPlayers.map((player, index) => {
+                    let bgGradient = 'from-gray-50 to-gray-100'
+                    let borderColor = 'border-white/40'
+                    let shadow = ''
+                    let medal = null
+                    // Show medals only for top3 tab
+                    if (playerTab === 'top3') {
                       if (index === 0) {
                         bgGradient = 'from-yellow-300 via-yellow-400 to-yellow-500'
                         borderColor = 'border-yellow-400'
@@ -440,52 +453,7 @@ export default function Players() {
                         shadow = 'shadow-[0_0_0_4px_rgba(251,191,36,0.3)]'
                         medal = '🥉'
                       }
-                      return (
-                        <Link key={player.id} href={`/player?id=${player.id}`}>
-                          <div className={
-                            `bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 flex items-center gap-2 cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 py-3 px-4 min-h-0 w-full`
-                          } style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)', minHeight:'0'}}>
-                            <div className="text-2xl flex-shrink-0 text-white">{medal}</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-base font-bold text-white truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs font-semibold text-green-400">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
-                              </div>
-                              {currentUser?.is_admin && (
-                                <button
-                                  onClick={e => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setDeleteModal({ userId: player.id, userName: player.name })
-                                  }}
-                                  className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
-                                >
-                                  🗑️ Delete
-                                </button>
-                              )}
-                            </div>
-                            <button
-                              onClick={e => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                toggleFavorite(player.id)
-                              }}
-                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform text-green-400"
-                              title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
-                            >
-                              {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
-                            </button>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-800 mb-2">All Golfers</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {rest.map((player, index) => {
-                      let bgGradient = 'from-gray-50 to-gray-100'
-                      let borderColor = 'border-white/40'
-                      let shadow = ''
+                    } else {
                       if (player.handicap <= 0) {
                         bgGradient = 'from-blue-100 to-blue-200'
                         borderColor = 'border-blue-400'
@@ -502,47 +470,48 @@ export default function Players() {
                         bgGradient = 'from-pink-100 to-pink-200'
                         borderColor = 'border-pink-300'
                       }
-                      return (
-                        <Link key={player.id} href={`/player?id=${player.id}`}>
-                          <div className={
-                            `bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 flex items-center gap-2 cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 py-3 px-4 min-h-0 w-full`
-                          } style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)', minHeight:'0'}}>
-                            <div className="text-2xl flex-shrink-0 text-white">🏌️</div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-base font-bold text-white truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
-                                <span className="text-xs font-semibold text-green-400">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
-                              </div>
-                              {currentUser?.is_admin && (
-                                <button
-                                  onClick={e => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    setDeleteModal({ userId: player.id, userName: player.name })
-                                  }}
-                                  className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
-                                >
-                                  🗑️ Delete
-                                </button>
-                              )}
+                    }
+                    return (
+                      <Link key={player.id} href={`/player?id=${player.id}`}>
+                        <div className={
+                          `bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 flex items-center gap-2 cursor-pointer transition-all hover:shadow-2xl hover:scale-105 hover:-translate-y-1 py-3 px-4 min-h-0 w-full`
+                        } style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)', minHeight:'0'}}>
+                          {playerTab === 'top3' && <div className="text-2xl flex-shrink-0 text-white">{medal}</div>}
+                          {playerTab !== 'top3' && <div className="text-2xl flex-shrink-0 text-white">🏌️</div>}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-base font-bold text-white truncate" style={{maxWidth:'7.5rem'}}>{player.name}</h3>
+                              <span className="text-xs font-semibold text-green-400">HCP {player.handicap >= 99 ? '—' : player.handicap.toFixed(1)}</span>
                             </div>
-                            <button
-                              onClick={e => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                                toggleFavorite(player.id)
-                              }}
-                              className="flex-shrink-0 text-lg hover:scale-125 transition-transform text-green-400"
-                              title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
-                            >
-                              {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
-                            </button>
+                            {currentUser?.is_admin && (
+                              <button
+                                onClick={e => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  setDeleteModal({ userId: player.id, userName: player.name })
+                                }}
+                                className="mt-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
+                              >
+                                🗑️ Delete
+                              </button>
+                            )}
                           </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </>
+                          <button
+                            onClick={e => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              toggleFavorite(player.id)
+                            }}
+                            className="flex-shrink-0 text-lg hover:scale-125 transition-transform text-green-400"
+                            title={favoritePlayerIds.has(player.id) ? 'Remove from favorites' : 'Add to favorites'}
+                          >
+                            {favoritePlayerIds.has(player.id) ? '⭐' : '☆'}
+                          </button>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
               )
             })()
           )}

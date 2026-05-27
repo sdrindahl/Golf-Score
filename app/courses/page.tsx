@@ -49,12 +49,14 @@ export default function CoursesPage() {
   // ...other logic and hooks...
 
   // Helper to get parent and child courses
-  const parentCourses = displayedCourses.filter(course => !course.parent_id);
+  const parentCourses = displayedCourses
+    .filter(course => !course.parent_id)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <PageWrapper title="Courses">
       <div className="mb-4">
-        <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+        <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl border-2 border-blue-600 px-4 py-3 w-full flex items-center" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
           <input
             type="text"
             placeholder="Search by course name, city, or state..."
@@ -74,7 +76,7 @@ export default function CoursesPage() {
                 )
               );
             }}
-            className="w-full bg-transparent text-white placeholder:text-green-400 px-2 py-2 focus:outline-none"
+            className="w-full bg-white/80 text-blue-600 placeholder:text-blue-600 text-lg px-2 py-2 rounded focus:outline-none"
           />
         </div>
       </div>
