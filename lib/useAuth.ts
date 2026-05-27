@@ -166,31 +166,40 @@ export function useAuth() {
   }
 
   async function updateName(userId: string, newName: string): Promise<void> {
-    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers()
-    const userIndex = users.findIndex(u => u.id === userId)
+    const users = isSupabaseActive() ? await getAllUsersAsync() : getAllUsers();
+    const userIndex = users.findIndex(u => u.id === userId);
 
     if (userIndex >= 0) {
-      users[userIndex].name = newName
+      users[userIndex].name = newName;
 
       if (isSupabaseActive() && supabase) {
         try {
-          const { error } = await supabase
+          // Update user name in users table
+          const { error: userError } = await supabase
             .from('users')
             .update({ name: newName })
-            .eq('id', userId)
+            .eq('id', userId);
 
-          if (error) throw error
+          if (userError) throw userError;
+
+          // Update user_name in all rounds for this user
+          const { error: roundsError } = await supabase
+            .from('rounds')
+            .update({ user_name: newName })
+            .eq('user_id', userId);
+
+          if (roundsError) throw roundsError;
         } catch (error) {
-          console.error('Error updating name in Supabase:', error)
+          console.error('Error updating name in Supabase or rounds:', error);
         }
       }
 
-      localStorage.setItem('golfUsers', JSON.stringify(users))
+      localStorage.setItem('golfUsers', JSON.stringify(users));
 
-      const currentUser = getCurrentUser()
+      const currentUser = getCurrentUser();
       if (currentUser && currentUser.id === userId) {
-        currentUser.name = newName
-        localStorage.setItem('currentUser', JSON.stringify(currentUser))
+        currentUser.name = newName;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
       }
     }
   }

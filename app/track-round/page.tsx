@@ -984,6 +984,35 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
+      {/* Top: Course Name Banner with Parent */}
+      {course && (
+        (() => {
+          // Try to get parent course name from localStorage (same as course loading logic)
+          let parentName = '';
+          if (course.parent_id) {
+            try {
+              const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+              if (savedCourses) {
+                const allCourses = JSON.parse(savedCourses);
+                const parent = allCourses.find((c: any) => c.id === course.parent_id);
+                if (parent) parentName = parent.name;
+              }
+            } catch {}
+          }
+          return (
+            <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50 bg-green-900 bg-opacity-95 text-white px-6 py-2 rounded-2xl shadow-2xl border border-green-400 max-w-[95vw] text-center pointer-events-auto flex flex-col items-center" style={{minWidth: 200, boxShadow: '0 4px 24px 0 rgba(0,0,0,0.35)'}}>
+              {parentName ? (
+                <div className="text-base md:text-lg font-bold leading-tight">{parentName}</div>
+              ) : (
+                <div className="text-base md:text-lg font-bold leading-tight">{course.name}</div>
+              )}
+              <div className="text-sm md:text-base font-semibold opacity-90">
+                Hole {course.holes && course.holes[currentHoleIndex] ? course.holes[currentHoleIndex].holeNumber ?? (currentHoleIndex + 1) : ''}
+              </div>
+            </div>
+          );
+        })()
+      )}
       {/* Top Right Corner 3-dot Menu */}
       <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 z-50">
         <button
@@ -1042,7 +1071,7 @@ function TrackRoundContent() {
       {/* Top Left Corner Card - Yardage, Hole Info, Track Drive */}
       {course && course.holes && course.holes[currentHoleIndex] && (
         //<div className="fixed top-4 left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs">
-        <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs"> 
+        <div className="fixed left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs" style={{ top: '100px' }}> 
          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400 relative" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
             {/* Main yardage/score card content */}
             <div>
