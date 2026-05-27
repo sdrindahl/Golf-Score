@@ -1311,7 +1311,6 @@ function TrackRoundContent() {
         {showMap && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 0, width: '100vw', height: '100vh' }}>
             <HoleMap
-              key="static-map"
               userLat={userLocation?.lat ?? 0}
               userLng={userLocation?.lng ?? 0}
               greenLat={course.holes[currentHoleIndex]?.greenLat ?? 0}

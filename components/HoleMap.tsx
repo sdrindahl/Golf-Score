@@ -17,13 +17,15 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const currentTapMarker = useRef<any>(null);
   const currentLabel = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [tapPoint, setTapPoint] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Only initialize the map once
   useEffect(() => {
     let leafletInstance: any = null;
-    let cleanup = () => {};
+    let isMounted = true;
     import('leaflet').then((leaflet) => {
+      if (!isMounted) return;
       const L = leaflet.default;
-      // Initialize map if not already
       if (!map.current && mapContainer.current) {
         map.current = L.map(mapContainer.current, {
           center: [userLat, userLng],
@@ -37,6 +39,25 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         }).addTo(map.current);
         setIsLoading(false);
       }
+    });
+    return () => {
+      isMounted = false;
+      if (map.current) {
+        map.current.off('click');
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  // Update map overlays and view when props change
+  useEffect(() => {
+    let leafletInstance: any = null;
+    let L: any = null;
+    let cleanupClick = () => {};
+    import('leaflet').then((leaflet) => {
+      L = leaflet.default;
+      if (!map.current) return;
 
       // Defensive: check all coordinates are valid numbers
       const allCoords = [userLat, userLng, greenLat, greenLng];
@@ -47,6 +68,16 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
       if (measurementPolyline.current) {
         map.current.removeLayer(measurementPolyline.current);
         measurementPolyline.current = null;
+      }
+
+      // Remove previous tap marker and label if they exist
+      if (currentTapMarker.current) {
+        map.current?.removeLayer(currentTapMarker.current);
+        currentTapMarker.current = null;
+      }
+      if (currentLabel.current) {
+        map.current?.removeLayer(currentLabel.current);
+        currentLabel.current = null;
       }
 
       // Helper to calculate distance
@@ -66,17 +97,15 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
       const handleMapClick = (e: any) => {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
+        setTapPoint({ lat, lng });
+      };
 
-        // Remove previous tap marker and label if they exist
-        if (currentTapMarker.current) {
-          map.current?.removeLayer(currentTapMarker.current);
-        }
-        if (currentLabel.current) {
-          map.current?.removeLayer(currentLabel.current);
-        }
-
-        // Add new marker at tap location
-        currentTapMarker.current = L.circleMarker([lat, lng], {
+      // Draw polyline: user -> tapPoint -> green if tapPoint exists, else user -> green
+      let polylinePoints;
+      if (tapPoint) {
+        polylinePoints = [[userLat, userLng], [tapPoint.lat, tapPoint.lng], [greenLat, greenLng]];
+        // Add tap marker and label
+        currentTapMarker.current = L.circleMarker([tapPoint.lat, tapPoint.lng], {
           radius: 5,
           fillColor: '#ff9500',
           color: '#fff',
@@ -84,11 +113,7 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
           opacity: 1,
           fillOpacity: 0.7,
         }).addTo(map.current!);
-
-        // Calculate distance from user to tap point
-        const distYards = Math.round(getDistance(userLat, userLng, lat, lng));
-
-        // Add label next to marker
+        const distYards = Math.round(getDistance(userLat, userLng, tapPoint.lat, tapPoint.lng));
         currentLabel.current = L.tooltip({
           permanent: true,
           direction: 'right',
@@ -96,36 +121,38 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
           offset: [15, 0],
         })
           .setContent(`<strong>${distYards} yd</strong>`)
-          .setLatLng([lat, lng])
+          .setLatLng([tapPoint.lat, tapPoint.lng])
           .addTo(map.current!);
-
-        if (measurementPolyline.current) {
-          measurementPolyline.current.setLatLngs([[userLat, userLng], [lat, lng], [greenLat, greenLng]]);
-        }
-      };
-
-      // Draw new polyline
-      measurementPolyline.current = L.polyline([[userLat, userLng], [greenLat, greenLng]], {
+      } else {
+        polylinePoints = [[userLat, userLng], [greenLat, greenLng]];
+      }
+      measurementPolyline.current = L.polyline(polylinePoints, {
         color: 'red',
         weight: 2,
         opacity: 0.7,
       }).addTo(map.current);
       map.current.on('click', handleMapClick);
-
-      // Always center the map on the green for the current hole
-      map.current.setView([greenLat, greenLng], 18); // 18 is a good zoom for a green
-
-      // Cleanup function for useEffect
-      cleanup = () => {
-        if (map.current) {
-          map.current.off('click');
-          map.current.remove();
-          map.current = null;
-        }
+      cleanupClick = () => {
+        if (map.current) map.current.off('click', handleMapClick);
       };
     });
-    return () => cleanup();
-  }, [userLat, userLng, greenLat, greenLng]);
+    return () => {
+      cleanupClick();
+    };
+  }, [userLat, userLng, greenLat, greenLng, holeName, tapPoint]);
+
+  // Reset tapPoint when the hole changes
+  useEffect(() => {
+    setTapPoint(null);
+  }, [holeName]);
+
+  // Recenter the map only when the hole changes
+  useEffect(() => {
+    import('leaflet').then((leaflet) => {
+      if (!map.current) return;
+      map.current.setView([greenLat, greenLng], 18); // Only on hole change
+    });
+  }, [holeName, greenLat, greenLng]);
   // Spotlight mask removed: always show map
   return (
     <div
