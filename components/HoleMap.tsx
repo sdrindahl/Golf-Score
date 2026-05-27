@@ -18,12 +18,13 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const currentLabel = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Only initialize the map once
   useEffect(() => {
     let leafletInstance: any = null;
-    let cleanup = () => {};
+    let isMounted = true;
     import('leaflet').then((leaflet) => {
+      if (!isMounted) return;
       const L = leaflet.default;
-      // Initialize map if not already
       if (!map.current && mapContainer.current) {
         map.current = L.map(mapContainer.current, {
           center: [userLat, userLng],
@@ -37,6 +38,25 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         }).addTo(map.current);
         setIsLoading(false);
       }
+    });
+    return () => {
+      isMounted = false;
+      if (map.current) {
+        map.current.off('click');
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  // Update map overlays and view when props change
+  useEffect(() => {
+    let leafletInstance: any = null;
+    let L: any = null;
+    let cleanupClick = () => {};
+    import('leaflet').then((leaflet) => {
+      L = leaflet.default;
+      if (!map.current) return;
 
       // Defensive: check all coordinates are valid numbers
       const allCoords = [userLat, userLng, greenLat, greenLng];
@@ -111,20 +131,16 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         opacity: 0.7,
       }).addTo(map.current);
       map.current.on('click', handleMapClick);
+      cleanupClick = () => {
+        if (map.current) map.current.off('click', handleMapClick);
+      };
 
       // Always center the map on the green for the current hole
       map.current.setView([greenLat, greenLng], 18); // 18 is a good zoom for a green
-
-      // Cleanup function for useEffect
-      cleanup = () => {
-        if (map.current) {
-          map.current.off('click');
-          map.current.remove();
-          map.current = null;
-        }
-      };
     });
-    return () => cleanup();
+    return () => {
+      cleanupClick();
+    };
   }, [userLat, userLng, greenLat, greenLng]);
   // Spotlight mask removed: always show map
   return (
