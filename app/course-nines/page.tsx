@@ -86,7 +86,8 @@ function CourseNinesPageInner() {
           })
         )}
         <button
-          className="btn btn-primary mt-2 w-full"
+          className={`mt-2 px-4 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-semibold border border-blue-700 transition-all text-base mx-auto ${selectedChildIds.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+          style={{ minWidth: '120px', maxWidth: '200px', display: 'block' }}
           disabled={selectedChildIds.length === 0}
           onClick={async () => {
             // Prevent starting a round if one is already in progress
@@ -156,11 +157,12 @@ function CourseNinesPageInner() {
           }}
           type="button"
         >
-          Start Round
+          Next
         </button>
         <button
-          className="mt-2 px-8 py-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold border border-gray-300 shadow transition-all"
-          onClick={() => router.push("/courses")}
+          className="mt-2 px-4 py-1 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold border border-gray-400 transition-all text-base mx-auto"
+          style={{ minWidth: '120px', maxWidth: '200px', display: 'block' }}
+          onClick={() => router.push('/courses')}
           type="button"
         >
           Back to Courses
