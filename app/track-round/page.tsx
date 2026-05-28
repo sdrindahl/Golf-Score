@@ -55,11 +55,29 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
+  // Ref for menu and button to handle outside clicks (must be at top level)
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // State for 3-dot menu (must be before useEffect that uses it)
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Close menu on outside click (must be at top level, not inside JSX)
+  useEffect(() => {
+    if (!showMenu) return;
+    function handleClick(e: MouseEvent) {
+      const menu = menuRef.current;
+      const btn = menuButtonRef.current;
+      if (menu && !menu.contains(e.target as Node) && btn && !btn.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showMenu]);
   const [tapItPressed, tapItPress] = useTapItPressed();
   // Move useAuth to the very top to ensure 'auth' is always initialized before any usage
   const auth = useAuth();
-  // State for 3-dot menu
-  const [showMenu, setShowMenu] = useState(false);
   // Add missing state for Add Players modal
   const [showAddPlayers, setShowAddPlayers] = useState(false);
   // State for selected players (up to 3)
@@ -979,75 +997,142 @@ function TrackRoundContent() {
 
   if (loading || !auth || !user) return <div className="p-8 text-center">Loading user and round data...</div>;
   if (!round || !course) return (
-    <div className="p-8 text-center">
-      <div className="bg-red-100 border-2 border-red-500 text-red-900 px-6 py-4 rounded-lg shadow-lg mb-4">
-        <p className="font-semibold text-lg">Track Round Error</p>
-        <p className="text-sm mt-2">{!round ? 'No round found for this ID.' : 'No course found for this round.'}</p>
-        <p className="text-xs mt-2">Debug info:</p>
-        <pre className="text-xs text-left whitespace-pre-wrap bg-white p-2 rounded border mt-2 overflow-x-auto" style={{maxWidth: 400, margin: '0 auto'}}>
-          roundId: {JSON.stringify(roundId)}
-          round: {JSON.stringify(round, null, 2)}
-          course: {JSON.stringify(course, null, 2)}
-          localStorage.golfRounds: {typeof window !== 'undefined' ? localStorage.getItem('golfRounds') : ''}
-          localStorage.golfCourses: {typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : ''}
-        </pre>
-      </div>
-      {toastMessage && (
-        <div className="bg-amber-100 border-2 border-amber-500 text-amber-900 px-6 py-4 rounded-lg shadow-lg">
-          <p className="font-semibold text-lg">{toastMessage}</p>
-          <p className="text-sm mt-2">Redirecting to home...</p>
+    <PageWrapper title="" userName={round?.userName}>
+      <div className="p-8 text-center">
+        <div className="bg-red-100 border-2 border-red-500 text-red-900 px-6 py-4 rounded-lg shadow-lg mb-4">
+          <p className="font-semibold text-lg">Track Round Error</p>
+          <p className="text-sm mt-2">{!round ? 'No round found for this ID.' : 'No course found for this round.'}</p>
+          <p className="text-xs mt-2">Debug info:</p>
+          <pre className="text-xs text-left whitespace-pre-wrap bg-white p-2 rounded border mt-2 overflow-x-auto" style={{maxWidth: 400, margin: '0 auto'}}>
+            roundId: {JSON.stringify(roundId)}
+            round: {JSON.stringify(round, null, 2)}
+            course: {JSON.stringify(course, null, 2)}
+            localStorage.golfRounds: {typeof window !== 'undefined' ? localStorage.getItem('golfRounds') : ''}
+            localStorage.golfCourses: {typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : ''}
+          </pre>
         </div>
-      )}
-    </div>
+        {toastMessage && (
+          <div className="bg-amber-100 border-2 border-amber-500 text-amber-900 px-6 py-4 rounded-lg shadow-lg">
+            <p className="font-semibold text-lg">{toastMessage}</p>
+            <p className="text-sm mt-2">Redirecting to home...</p>
+          </div>
+        )}
+      </div>
+    </PageWrapper>
   );
 
 
   return (
     <PageWrapper title="" userName={round.userName}>
       {/* Top: Course Name Banner with Parent */}
-      {course && (
-        (() => {
-          // Try to get parent course name from localStorage (same as course loading logic)
-          let parentName = '';
-          if (course.parent_id) {
-            try {
-              const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
-              if (savedCourses) {
-                const allCourses = JSON.parse(savedCourses);
-                const parent = allCourses.find((c: any) => c.id === course.parent_id);
-                if (parent) parentName = parent.name;
+
+      {course && (() => {
+        // Get parent name
+        let parentName = '';
+        if (course.parent_id) {
+          try {
+            const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+            if (savedCourses) {
+              const allCourses = JSON.parse(savedCourses);
+              const parent = allCourses.find((c: any) => c.id === course.parent_id);
+              if (parent) parentName = parent.name;
+            }
+          } catch {}
+        }
+        // Determine child course label (Front 9 or Back 9)
+        let childLabel = course.name;
+        if (course.holeCount === 9 && parentName) {
+          childLabel = course.name;
+        } else if (course.holes && course.holes.length === 18 && parentName) {
+          childLabel = currentHoleIndex < 9 ? 'Front 9' : 'Back 9';
+        }
+        if (parentName && course.holeCount === 18) {
+          try {
+            const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+            if (savedCourses) {
+              const allCourses = JSON.parse(savedCourses);
+              const children = allCourses.filter((c: any) => c.parent_id === course.parent_id);
+              if (children.length === 2) {
+                childLabel = currentHoleIndex < 9 ? children[0].name : children[1].name;
               }
-            } catch {}
-          }
-          return (
-            <div className="fixed left-1/2 -translate-x-1/2 z-50 bg-green-900 bg-opacity-95 text-white px-6 py-2 rounded-2xl shadow-2xl border border-green-400 max-w-[95vw] text-center pointer-events-auto flex flex-col items-center" style={{minWidth: 200, boxShadow: '0 4px 24px 0 rgba(0,0,0,0.35)', top: 'env(safe-area-inset-top)'}}>
-              {parentName ? (
-                <div className="text-base md:text-lg font-bold leading-tight">{parentName}</div>
-              ) : (
-                <div className="text-base md:text-lg font-bold leading-tight">{course.name}</div>
+            }
+          } catch {}
+        }
+        return (
+          <div
+            className="fixed left-1/2 -translate-x-1/2 z-50 flex flex-row items-center justify-center"
+            style={{
+              top: 'calc(env(safe-area-inset-top) + 16px)',
+              width: 'min(420px, 95vw)',
+            }}
+          >
+            <div
+              className="w-full flex flex-row items-center gap-3 px-5 py-2 border-t-2 border-b-2 border-green-400 bg-black/70 backdrop-blur-md shadow-lg relative"
+              style={{
+                borderRadius: '14px',
+                background: 'rgba(10, 20, 10, 0.65)',
+                WebkitBackdropFilter: 'blur(12px)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 2px 16px 0 rgba(0,0,0,0.35)',
+              }}
+            >
+              {/* Location icon */}
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4ade80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 21c-4.97-6.16-7.5-10.16-7.5-13.25A7.5 7.5 0 0 1 12 0a7.5 7.5 0 0 1 7.5 7.75C19.5 10.84 16.97 14.84 12 21z" fill="#14532d"/>
+                <circle cx="12" cy="8.5" r="3.5" fill="#4ade80"/>
+              </svg>
+              {/* Course name (childLabel) - always fully visible */}
+              <span
+                className="text-base md:text-lg font-bold leading-tight text-white whitespace-nowrap"
+                style={{
+                  display: 'inline-block',
+                  verticalAlign: 'bottom',
+                }}
+                title={childLabel}
+              >
+                {childLabel}
+              </span>
+              {/* Vertical green bar */}
+              <span className="mx-2 text-green-300 font-bold text-xl">|</span>
+              {/* Parent name - ellipsis if too long */}
+              {parentName && (
+                <span
+                  className="text-base md:text-lg font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis opacity-90"
+                  style={{
+                    maxWidth: '120px',
+                    display: 'inline-block',
+                    verticalAlign: 'bottom',
+                  }}
+                  title={parentName}
+                >
+                  {parentName}
+                </span>
               )}
-              <div className="text-sm md:text-base font-semibold opacity-90">
-                Hole {course.holes && course.holes[currentHoleIndex] ? course.holes[currentHoleIndex].holeNumber ?? (currentHoleIndex + 1) : ''}
-              </div>
+              {/* Hamburger menu button inside header */}
+              <button
+                ref={menuButtonRef}
+                className="ml-auto p-2 rounded-full bg-black bg-opacity-60 hover:bg-opacity-90 shadow border border-gray-700 flex items-center justify-center absolute right-2 top-1/2 -translate-y-1/2"
+                aria-label="Menu"
+                onClick={() => setShowMenu(prev => !prev)}
+                style={{height: 36, width: 36}}
+              >
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="5" y="8" width="18" height="2.5" rx="1.25" fill="#fff" />
+                  <rect x="5" y="13" width="18" height="2.5" rx="1.25" fill="#fff" />
+                  <rect x="5" y="18" width="18" height="2.5" rx="1.25" fill="#fff" />
+                </svg>
+              </button>
             </div>
-          );
-        })()
-      )}
+          </div>
+        );
+      })()}
       {/* Top Right Corner 3-dot Menu */}
-      <div className="fixed top-[calc(1rem+env(safe-area-inset-top))] right-4 z-50">
-        <button
-          className="p-3 rounded-full bg-black bg-opacity-80 hover:bg-opacity-100 shadow-lg border border-gray-700 flex items-center justify-center"
-          aria-label="Menu"
-          onClick={() => setShowMenu(prev => !prev)}
-        >
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="6" cy="14" r="2" fill="#fff"/>
-            <circle cx="14" cy="14" r="2" fill="#fff"/>
-            <circle cx="22" cy="14" r="2" fill="#fff"/>
-          </svg>
-        </button>
+      {/* Hamburger is now inside the header */}
         {showMenu && (
-          <div className="absolute right-0 mt-2 w-44 bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 z-50 backdrop-blur-md" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+          <div
+            ref={menuRef}
+            className="absolute right-0 mt-2 w-44 bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 z-50 backdrop-blur-md"
+            style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
             <ul className="py-2">
               <li>
                 <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-white font-medium" onClick={() => { setShowMenu(false); setShowIncompleteWarning(true); }}>
@@ -1072,7 +1157,6 @@ function TrackRoundContent() {
             </ul>
           </div>
         )}
-      </div>
       {/* Toast notification - More prominent with close button */}
       {toastMessage && (
         <div className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-4 rounded-lg shadow-xl z-50 border-l-4 border-white flex items-center justify-between gap-4">
