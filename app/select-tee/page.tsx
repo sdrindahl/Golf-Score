@@ -201,12 +201,18 @@ function SelectTeePageInner() {
 
   return (
     <PageWrapper title={undefined}>
-      <div className="max-w-xl mx-auto mt-6 mb-2 text-center">
-        {parentName && (
-          <div className="text-2xl font-semibold text-white/90 leading-tight truncate">{parentName}</div>
-        )}
-        {childNames && (
-          <div className="text-xl font-normal text-green-200 leading-tight truncate">{childNames}</div>
+      <div className="max-w-xl mx-auto mt-8 mb-2 flex flex-col items-center">
+        {(parentName || childNames) && (
+          <div className="w-full flex flex-col items-center px-4 py-3 rounded-xl bg-black/60 shadow-lg mb-2">
+            {parentName && (
+              <div className="text-xl font-extrabold text-white drop-shadow-lg tracking-tight text-center mb-1 break-words whitespace-pre-line" style={{textShadow: '0 2px 8px #000', wordBreak: 'break-word'}}> {parentName} </div>
+            )}
+            {childNames && (
+              <div className="text-lg font-medium text-green-200 drop-shadow text-center break-words whitespace-pre-line" style={{textShadow: '0 1px 4px #000', wordBreak: 'break-word'}}> {childNames} </div>
+            )}
+            <hr className="w-3/4 border-t border-green-300 my-2 opacity-60" />
+            <div className="text-base font-semibold text-green-300 tracking-wide mt-1 drop-shadow-sm">Select Tee Box</div>
+          </div>
         )}
       </div>
       {error && (
@@ -217,7 +223,7 @@ function SelectTeePageInner() {
 
       <div className="max-w-2xl mx-auto mt-8 flex flex-col gap-8">
         {/* Tee Selection Cards - grid, not wrapped */}
-        <h2 className="text-lg font-bold mb-4 text-white text-center">Select Tee Box</h2>
+        {/* Removed floating Select Tee Box heading, now in header card above */}
         <div className="flex flex-col gap-3 w-full">
           {[
             { key: 'championship', label: 'Championship Tee', desc: 'Championship tee', border: 'border-black', circle: 'bg-transparent' },
@@ -266,29 +272,32 @@ function SelectTeePageInner() {
 
 
         {/* Tapit Logo Start Round Button (replaces starting hole selection) */}
-        {tee && (
-          <div className="flex flex-col items-center mt-4">
-            <button
-              className="flex items-center justify-center bg-transparent rounded-full shadow-lg p-2 transition-all"
-              style={{ width: 180, height: 180 }}
-              onClick={() => {
-                setStartingHole(1); // Always start on hole 1
-              }}
-              type="button"
-            >
-              <img src="/JustTapIt_Logo.png" alt="JustTapIt Logo" className="w-32 h-32 object-contain" />
-            </button>
-          </div>
-        )}
+        <div className="flex flex-col items-center mt-4">
+          <button
+            className={`flex items-center justify-center bg-transparent rounded-full shadow-lg p-2 transition-all ${!tee ? 'opacity-40 pointer-events-none grayscale' : ''}`}
+            style={{ width: 220, height: 220 }}
+            onClick={() => {
+              if (tee) setStartingHole(1); // Always start on hole 1
+            }}
+            type="button"
+            aria-disabled={!tee}
+          >
+            <img src="/JustTapIt_Logo.png" alt="JustTapIt Logo" className="w-44 h-44 object-contain" />
+          </button>
+        </div>
 
         {/* Cancel Button - pill shape and under cards */}
-        <button
-          className="mt-4 px-8 py-3 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold border border-gray-300 shadow transition-all"
-          onClick={() => router.push('/courses')}
-          type="button"
-        >
-          Cancel
-        </button>
+        <div className="mt-0 flex justify-center w-full">
+          <button
+            className="px-4 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white font-extrabold border border-gray-400 transition-all shadow-sm text-sm"
+            style={{ minWidth: 0, width: 'auto', color: '#fff' }}
+            style={{ minWidth: 0, width: 'auto' }}
+            onClick={() => router.push('/courses')}
+            type="button"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </PageWrapper>
   );
