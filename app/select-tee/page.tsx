@@ -302,7 +302,6 @@ function SelectTeePageInner() {
           <button
             className="px-4 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white font-extrabold border border-gray-400 transition-all shadow-sm text-sm"
             style={{ minWidth: 0, width: 'auto', color: '#fff' }}
-            style={{ minWidth: 0, width: 'auto' }}
             onClick={() => router.push('/courses')}
             type="button"
           >
