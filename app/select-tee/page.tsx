@@ -227,10 +227,10 @@ function SelectTeePageInner() {
         {(parentName || childNames) && (
           <div className="w-full flex flex-col items-center px-4 py-3 rounded-xl bg-black/60 shadow-lg mb-2">
             {parentName && (
-              <div className="text-xl font-extrabold text-white drop-shadow-lg tracking-tight text-center mb-1 break-words whitespace-pre-line" style={{textShadow: '0 2px 8px #000', wordBreak: 'break-word'}}> {parentName} </div>
+              <div className="text-base font-extrabold text-white drop-shadow-lg tracking-tight text-center mb-1 break-words whitespace-pre-line" style={{textShadow: '0 2px 8px #000', wordBreak: 'break-word'}}> {parentName} </div>
             )}
             {childNames && (
-              <div className="text-lg font-medium text-green-200 drop-shadow text-center break-words whitespace-pre-line" style={{textShadow: '0 1px 4px #000', wordBreak: 'break-word'}}> {childNames} </div>
+              <div className="text-sm font-medium text-green-200 drop-shadow text-center break-words whitespace-pre-line" style={{textShadow: '0 1px 4px #000', wordBreak: 'break-word'}}> {childNames} </div>
             )}
             <hr className="w-3/4 border-t border-green-300 my-2 opacity-60" />
             <div className="text-base font-semibold text-green-300 tracking-wide mt-1 drop-shadow-sm">Select Tee Box</div>
@@ -294,7 +294,7 @@ function SelectTeePageInner() {
 
 
         {/* Tapit Logo Start Round Button (replaces starting hole selection) */}
-        <div className="flex flex-col items-center mt-4">
+        <div className="flex flex-col items-center mt-1">
           <button
             className={`flex items-center justify-center rounded-full shadow-lg p-2 transition-all duration-150
               ${!tee ? 'opacity-40 pointer-events-none grayscale' : ''}
