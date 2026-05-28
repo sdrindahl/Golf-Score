@@ -1301,7 +1301,13 @@ function TrackRoundContent() {
                   src="/JustTapIt_Logo.png"
                   alt="JustTapIt Logo"
                   className="w-32 h-32 object-contain select-none drop-shadow-lg"
-                  style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}
+                  style={{
+                    border: '2px solid rgb(57, 255, 20)',
+                    boxShadow: '0 0 24px rgb(57, 255, 20), 0 2px 24px rgba(0,0,0,0.667)',
+                    borderRadius: '24px',
+                    background: '#111',
+                    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))'
+                  }}
                   draggable={false}
                 />
               </button>

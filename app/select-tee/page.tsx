@@ -293,7 +293,18 @@ function SelectTeePageInner() {
             aria-disabled={!tee}
             aria-pressed={tapItPressed}
           >
-            <img src="/JustTapIt_Logo.png" alt="JustTapIt Logo" className="w-44 h-44 object-contain select-none" draggable="false" />
+            <img 
+              src="/JustTapIt_Logo.png" 
+              alt="JustTapIt Logo" 
+              className="w-44 h-44 object-contain select-none" 
+              draggable="false"
+              style={{
+                border: '2px solid rgb(57, 255, 20)',
+                boxShadow: '0 0 24px rgb(57, 255, 20), 0 2px 24px rgba(0,0,0,0.667)',
+                borderRadius: '24px',
+                background: '#111'
+              }}
+            />
           </button>
         </div>
 
