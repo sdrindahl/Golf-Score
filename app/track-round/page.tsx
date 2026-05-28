@@ -1,5 +1,16 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from 'react';
+// ...existing code...
+
+// Add pressed state for TapIt button
+function useTapItPressed() {
+  const [pressed, setPressed] = useState(false);
+  const press = () => {
+    setPressed(true);
+    setTimeout(() => setPressed(false), 150);
+  };
+  return [pressed, press] as const;
+}
 
 // Helper to chunk an array into subarrays of given size
 function chunkArray<T>(arr: T[], size: number): T[][] {
@@ -44,6 +55,7 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
+  const [tapItPressed, tapItPress] = useTapItPressed();
   // Move useAuth to the very top to ensure 'auth' is always initialized before any usage
   const auth = useAuth();
   // State for 3-dot menu
@@ -1279,15 +1291,16 @@ function TrackRoundContent() {
           {!showMap && (
             <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
               <button
-                className="focus:outline-none pointer-events-auto"
-                style={{ background: 'none', border: 'none', padding: 0 }}
-                onClick={() => setShowScoreModal(true)}
-                aria-label="Enter score"
+                className={`focus:outline-none pointer-events-auto group rounded-full shadow-lg p-2 transition-all duration-100
+                  ${tapItPressed ? 'scale-90 bg-black/60 border-4 border-blue-400 shadow-inner' : 'bg-transparent border-0'}`}
+                style={{ border: tapItPressed ? '4px solid #60a5fa' : 'none', padding: 0, position: 'relative', width: 140, height: 140 }}
+                onClick={() => { tapItPress(); setShowScoreModal(true); }}
+                aria-label="Just Tap It to enter your score"
               >
                 <img
-                  src="/golf_ball_score.png"
-                  alt="Golf Ball Icon"
-                  className="w-32 h-32 drop-shadow-lg"
+                  src="/JustTapIt_Logo.png"
+                  alt="JustTapIt Logo"
+                  className="w-32 h-32 object-contain select-none drop-shadow-lg"
                   style={{ filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))' }}
                   draggable={false}
                 />

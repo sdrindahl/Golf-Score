@@ -6,6 +6,8 @@ import { COURSES_DATABASE } from '@/data/courses';
 import { useAuth } from '@/lib/useAuth';
 
 function SelectTeePageInner() {
+      // State for TapIt button pressed feedback
+      const [tapItPressed, setTapItPressed] = React.useState(false);
     // Helper to compute total yards, rating, and slope for a tee type
     function getTeeStats(teeKey: 'men' | 'women' | 'senior' | 'championship') {
       let totalYards = 0;
@@ -276,15 +278,22 @@ function SelectTeePageInner() {
         {/* Tapit Logo Start Round Button (replaces starting hole selection) */}
         <div className="flex flex-col items-center mt-4">
           <button
-            className={`flex items-center justify-center bg-transparent rounded-full shadow-lg p-2 transition-all ${!tee ? 'opacity-40 pointer-events-none grayscale' : ''}`}
+            className={`flex items-center justify-center rounded-full shadow-lg p-2 transition-all duration-150
+              ${!tee ? 'opacity-40 pointer-events-none grayscale' : ''}
+              ${tapItPressed ? 'scale-95 shadow-inner bg-black/30' : 'bg-transparent'}`}
             style={{ width: 220, height: 220 }}
             onClick={() => {
-              if (tee) setStartingHole(1); // Always start on hole 1
+              if (tee) {
+                setTapItPressed(true);
+                setTimeout(() => setTapItPressed(false), 150);
+                setStartingHole(1); // Always start on hole 1
+              }
             }}
             type="button"
             aria-disabled={!tee}
+            aria-pressed={tapItPressed}
           >
-            <img src="/JustTapIt_Logo.png" alt="JustTapIt Logo" className="w-44 h-44 object-contain" />
+            <img src="/JustTapIt_Logo.png" alt="JustTapIt Logo" className="w-44 h-44 object-contain select-none" draggable="false" />
           </button>
         </div>
 
