@@ -204,7 +204,7 @@ function SelectTeePageInner() {
   }
 
   return (
-    <PageWrapper title={undefined}>
+    <PageWrapper title="">
       <div className="max-w-xl mx-auto mt-8 mb-2 flex flex-col items-center">
         {(parentName || childNames) && (
           <div className="w-full flex flex-col items-center px-4 py-3 rounded-xl bg-black/60 shadow-lg mb-2">
