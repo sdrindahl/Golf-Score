@@ -55,11 +55,29 @@ import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsIn
 import { supabase } from '@/lib/supabase';
 
 function TrackRoundContent() {
+  // Ref for menu and button to handle outside clicks (must be at top level)
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // State for 3-dot menu (must be before useEffect that uses it)
+  const [showMenu, setShowMenu] = useState(false);
+
+  // Close menu on outside click (must be at top level, not inside JSX)
+  useEffect(() => {
+    if (!showMenu) return;
+    function handleClick(e: MouseEvent) {
+      const menu = menuRef.current;
+      const btn = menuButtonRef.current;
+      if (menu && !menu.contains(e.target as Node) && btn && !btn.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showMenu]);
   const [tapItPressed, tapItPress] = useTapItPressed();
   // Move useAuth to the very top to ensure 'auth' is always initialized before any usage
   const auth = useAuth();
-  // State for 3-dot menu
-  const [showMenu, setShowMenu] = useState(false);
   // Add missing state for Add Players modal
   const [showAddPlayers, setShowAddPlayers] = useState(false);
   // State for selected players (up to 3)
@@ -1007,6 +1025,7 @@ function TrackRoundContent() {
   return (
     <PageWrapper title="" userName={round.userName}>
       {/* Top: Course Name Banner with Parent */}
+
       {course && (() => {
         // Get parent name
         let parentName = '';
@@ -1091,6 +1110,7 @@ function TrackRoundContent() {
               )}
               {/* Hamburger menu button inside header */}
               <button
+                ref={menuButtonRef}
                 className="ml-auto p-2 rounded-full bg-black bg-opacity-60 hover:bg-opacity-90 shadow border border-gray-700 flex items-center justify-center absolute right-2 top-1/2 -translate-y-1/2"
                 aria-label="Menu"
                 onClick={() => setShowMenu(prev => !prev)}
@@ -1109,7 +1129,10 @@ function TrackRoundContent() {
       {/* Top Right Corner 3-dot Menu */}
       {/* Hamburger is now inside the header */}
         {showMenu && (
-          <div className="absolute right-0 mt-2 w-44 bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 z-50 backdrop-blur-md" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
+          <div
+            ref={menuRef}
+            className="absolute right-0 mt-2 w-44 bg-black bg-opacity-70 rounded-2xl shadow-2xl border border-green-400 z-50 backdrop-blur-md"
+            style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
             <ul className="py-2">
               <li>
                 <button className="w-full flex items-center gap-2 text-left px-4 py-2 hover:bg-gray-800 text-white font-medium" onClick={() => { setShowMenu(false); setShowIncompleteWarning(true); }}>
