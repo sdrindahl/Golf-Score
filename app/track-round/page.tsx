@@ -1062,13 +1062,32 @@ function TrackRoundContent() {
                 <path d="M12 21c-4.97-6.16-7.5-10.16-7.5-13.25A7.5 7.5 0 0 1 12 0a7.5 7.5 0 0 1 7.5 7.75C19.5 10.84 16.97 14.84 12 21z" fill="#14532d"/>
                 <circle cx="12" cy="8.5" r="3.5" fill="#4ade80"/>
               </svg>
-              {/* Course name (childLabel) */}
-              <span className="text-base md:text-lg font-bold leading-tight text-white whitespace-nowrap">{childLabel}</span>
+              {/* Course name (childLabel) - always fully visible */}
+              <span
+                className="text-base md:text-lg font-bold leading-tight text-white whitespace-nowrap"
+                style={{
+                  display: 'inline-block',
+                  verticalAlign: 'bottom',
+                }}
+                title={childLabel}
+              >
+                {childLabel}
+              </span>
               {/* Vertical green bar */}
               <span className="mx-2 text-green-300 font-bold text-xl">|</span>
-              {/* Parent name */}
+              {/* Parent name - ellipsis if too long */}
               {parentName && (
-                <span className="text-base md:text-lg font-semibold text-white whitespace-nowrap opacity-90">{parentName}</span>
+                <span
+                  className="text-base md:text-lg font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis opacity-90"
+                  style={{
+                    maxWidth: '120px',
+                    display: 'inline-block',
+                    verticalAlign: 'bottom',
+                  }}
+                  title={parentName}
+                >
+                  {parentName}
+                </span>
               )}
               {/* Hamburger menu button inside header */}
               <button
