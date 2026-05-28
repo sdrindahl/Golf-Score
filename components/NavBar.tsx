@@ -7,6 +7,18 @@ import { useAuth } from '@/lib/useAuth'
 import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function NavBar() {
+    // Listen for localStorage changes and custom roundStateChanged event to update courseSelectedButNoRound
+    useEffect(() => {
+      const updateState = () => {
+        setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
+      };
+      window.addEventListener('storage', updateState);
+      window.addEventListener('roundStateChanged', updateState);
+      return () => {
+        window.removeEventListener('storage', updateState);
+        window.removeEventListener('roundStateChanged', updateState);
+      };
+    }, []);
   const router = useRouter()
   const pathname = usePathname()
   const auth = useAuth()
@@ -15,12 +27,13 @@ export default function NavBar() {
 
   // State for current round in progress
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+  const [courseSelectedButNoRound, setCourseSelectedButNoRound] = useState(false)
   const [isLastHole, setIsLastHole] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [currentHole, setCurrentHole] = useState<number>(1)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
-  // This ensures button disappears when user returns after round is deleted
+  // Only clear courseSelectedButNoRound if a round is actually in progress
   useEffect(() => {
     const fetchActiveRound = async () => {
       try {
@@ -34,12 +47,19 @@ export default function NavBar() {
         const rounds = await getRoundsInProgress(user.id);
         if (rounds && rounds.length > 0) {
           setCurrentRoundId(rounds[0].id);
+          // Only clear the flag if a round is in progress
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('courseSelectedButNoRound');
+            setCourseSelectedButNoRound(false);
+          }
         } else {
           setCurrentRoundId(null);
+          // Do NOT overwrite courseSelectedButNoRound here; let event listeners control it
         }
       } catch (err) {
         console.error('[NavBar] Error fetching rounds:', err);
         setCurrentRoundId(null);
+        // Do NOT overwrite courseSelectedButNoRound here; let event listeners control it
       }
     };
 
@@ -153,7 +173,7 @@ export default function NavBar() {
                   : 'hover:bg-green-600'
               }`}
             >
-              <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-10 w-10" />
+              <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-10 w-10" />
               Home
             </button>
             <button
@@ -170,16 +190,19 @@ export default function NavBar() {
               onClick={() => {
                 if (currentRoundId) {
                   router.push(`/track-round?id=${currentRoundId}`);
-                } else {
+                } else if (!courseSelectedButNoRound) {
                   router.push('/courses');
                 }
               }}
               className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
                 currentRoundId
                   ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : courseSelectedButNoRound
+                    ? 'bg-blue-300 text-white opacity-60 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
               style={{ minWidth: '0' }}
+              disabled={!!courseSelectedButNoRound && !currentRoundId}
             >
               {currentRoundId ? (
                 <>
