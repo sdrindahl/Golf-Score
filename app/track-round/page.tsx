@@ -117,6 +117,14 @@ function TrackRoundContent() {
   useEffect(() => {
     if (round && Array.isArray(round.scores)) {
       setScores(round.scores);
+      // Find the first hole with no score (null, undefined, or 0)
+      const firstUnscored = round.scores.findIndex((s: number) => s == null || s === 0);
+      if (firstUnscored !== -1) {
+        setCurrentHoleIndex(firstUnscored);
+      } else {
+        // All holes scored: go to the last hole
+        setCurrentHoleIndex(round.scores.length - 1);
+      }
     }
     // Restore perHoleStats if present, normalizing types, skip null/undefined
     if (round && Array.isArray(round.perHoleStats)) {
@@ -1000,7 +1008,7 @@ function TrackRoundContent() {
             } catch {}
           }
           return (
-            <div className="fixed left-1/2 -translate-x-1/2 z-50 bg-green-900 bg-opacity-95 text-white px-6 py-2 rounded-2xl shadow-2xl border border-green-400 max-w-[95vw] text-center pointer-events-auto flex flex-col items-center pt-[env(safe-area-inset-top)] mt-2" style={{minWidth: 200, boxShadow: '0 4px 24px 0 rgba(0,0,0,0.35)', top: '0'}}>
+            <div className="fixed left-1/2 -translate-x-1/2 z-50 bg-green-900 bg-opacity-95 text-white px-6 py-2 rounded-2xl shadow-2xl border border-green-400 max-w-[95vw] text-center pointer-events-auto flex flex-col items-center" style={{minWidth: 200, boxShadow: '0 4px 24px 0 rgba(0,0,0,0.35)', top: 'env(safe-area-inset-top)'}}>
               {parentName ? (
                 <div className="text-base md:text-lg font-bold leading-tight">{parentName}</div>
               ) : (
