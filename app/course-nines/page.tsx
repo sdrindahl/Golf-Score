@@ -74,6 +74,7 @@ function CourseNinesPageInner() {
                       setSelectedChildIds(selectedChildIds.filter((id) => id !== child.id));
                     } else if (selectedChildIds.length < 2) {
                       setSelectedChildIds([...selectedChildIds, child.id]);
+                      localStorage.setItem('courseSelectedButNoRound', 'true');
                     }
                   }}
                   disabled={!isSelected && selectedChildIds.length >= 2}

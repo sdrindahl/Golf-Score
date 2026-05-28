@@ -118,6 +118,8 @@ function SelectTeePageInner() {
           console.log('[DEBUG] Supabase save-course response:', courseResult);
           if (!courseResult.success) throw new Error(courseResult.error || 'Failed to save course to Supabase');
         }
+        // Remove the courseSelectedButNoRound flag since a round is being started
+        localStorage.removeItem('courseSelectedButNoRound');
 
         // 2. Save round to Supabase
         // Debug log outgoing round object

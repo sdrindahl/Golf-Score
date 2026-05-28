@@ -15,6 +15,7 @@ export default function NavBar() {
 
   // State for current round in progress
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
+  const [courseSelectedButNoRound, setCourseSelectedButNoRound] = useState(false)
   const [isLastHole, setIsLastHole] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [currentHole, setCurrentHole] = useState<number>(1)
@@ -34,12 +35,25 @@ export default function NavBar() {
         const rounds = await getRoundsInProgress(user.id);
         if (rounds && rounds.length > 0) {
           setCurrentRoundId(rounds[0].id);
+          // If a round is in progress, clear the flag (robustness)
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('courseSelectedButNoRound');
+            setCourseSelectedButNoRound(false);
+          }
         } else {
           setCurrentRoundId(null);
+          // Check localStorage for courseSelectedButNoRound flag
+          if (typeof window !== 'undefined') {
+            setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
+          }
         }
       } catch (err) {
         console.error('[NavBar] Error fetching rounds:', err);
         setCurrentRoundId(null);
+        // Check localStorage for courseSelectedButNoRound flag
+        if (typeof window !== 'undefined') {
+          setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
+        }
       }
     };
 
@@ -170,16 +184,19 @@ export default function NavBar() {
               onClick={() => {
                 if (currentRoundId) {
                   router.push(`/track-round?id=${currentRoundId}`);
-                } else {
+                } else if (!courseSelectedButNoRound) {
                   router.push('/courses');
                 }
               }}
               className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
                 currentRoundId
                   ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : courseSelectedButNoRound
+                    ? 'bg-blue-300 text-white opacity-60 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
               style={{ minWidth: '0' }}
+              disabled={!!courseSelectedButNoRound && !currentRoundId}
             >
               {currentRoundId ? (
                 <>
