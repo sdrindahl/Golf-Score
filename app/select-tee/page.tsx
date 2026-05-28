@@ -6,6 +6,24 @@ import { COURSES_DATABASE } from '@/data/courses';
 import { useAuth } from '@/lib/useAuth';
 
 function SelectTeePageInner() {
+          // Cleanup on unmount: reset state and localStorage to ensure Start Round is reset if navigating away
+          React.useEffect(() => {
+            return () => {
+              setTee(null);
+              setStartingHole(null);
+              setCreating(false);
+              setSelectedNines([]);
+              localStorage.removeItem('selectedNines');
+              localStorage.removeItem('courseSelectedButNoRound');
+              window.dispatchEvent(new Event('roundStateChanged'));
+            };
+          }, []);
+        // Reset state on mount to avoid stale disabled Start button
+        React.useEffect(() => {
+          setTee(null);
+          setStartingHole(null);
+          setCreating(false);
+        }, []);
       // State for TapIt button pressed feedback
       const [tapItPressed, setTapItPressed] = React.useState(false);
     // Helper to compute total yards, rating, and slope for a tee type

@@ -9,6 +9,15 @@ import type { ChildCourse } from "@/types/api";
 
 
 function CourseNinesPageInner() {
+    // Cleanup on unmount: reset selectedChildIds and related localStorage to ensure Start Round is reset if navigating away
+    useEffect(() => {
+      return () => {
+        setSelectedChildIds([]);
+        localStorage.removeItem('courseSelectedButNoRound');
+        localStorage.removeItem('selectedNines');
+        window.dispatchEvent(new Event('roundStateChanged'));
+      };
+    }, []);
   const router = useRouter();
   const searchParams = useSearchParams();
   const parentId = searchParams?.get("id");

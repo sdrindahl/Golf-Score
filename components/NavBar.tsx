@@ -7,6 +7,18 @@ import { useAuth } from '@/lib/useAuth'
 import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function NavBar() {
+    // Listen for localStorage changes and custom roundStateChanged event to update courseSelectedButNoRound
+    useEffect(() => {
+      const updateState = () => {
+        setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
+      };
+      window.addEventListener('storage', updateState);
+      window.addEventListener('roundStateChanged', updateState);
+      return () => {
+        window.removeEventListener('storage', updateState);
+        window.removeEventListener('roundStateChanged', updateState);
+      };
+    }, []);
   const router = useRouter()
   const pathname = usePathname()
   const auth = useAuth()
@@ -21,7 +33,7 @@ export default function NavBar() {
   const [currentHole, setCurrentHole] = useState<number>(1)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
-  // This ensures button disappears when user returns after round is deleted
+  // Only clear courseSelectedButNoRound if a round is actually in progress
   useEffect(() => {
     const fetchActiveRound = async () => {
       try {
@@ -35,25 +47,19 @@ export default function NavBar() {
         const rounds = await getRoundsInProgress(user.id);
         if (rounds && rounds.length > 0) {
           setCurrentRoundId(rounds[0].id);
-          // If a round is in progress, clear the flag (robustness)
+          // Only clear the flag if a round is in progress
           if (typeof window !== 'undefined') {
             localStorage.removeItem('courseSelectedButNoRound');
             setCourseSelectedButNoRound(false);
           }
         } else {
           setCurrentRoundId(null);
-          // Check localStorage for courseSelectedButNoRound flag
-          if (typeof window !== 'undefined') {
-            setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
-          }
+          // Do NOT overwrite courseSelectedButNoRound here; let event listeners control it
         }
       } catch (err) {
         console.error('[NavBar] Error fetching rounds:', err);
         setCurrentRoundId(null);
-        // Check localStorage for courseSelectedButNoRound flag
-        if (typeof window !== 'undefined') {
-          setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
-        }
+        // Do NOT overwrite courseSelectedButNoRound here; let event listeners control it
       }
     };
 
