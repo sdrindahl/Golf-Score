@@ -1052,18 +1052,27 @@ function TrackRoundContent() {
           if (course.holeCount === 9) {
             childLabel = course.name;
           } else if (course.holes && course.holes.length === 18) {
-            // For 18-hole with parent, always use 'Front' for holes 1-9 and 'Back' for 10-18
+            // For 18-hole with parent, use selection order for nines
             try {
               const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
               if (savedCourses) {
                 const allCourses = JSON.parse(savedCourses);
-                const children = allCourses.filter((c: any) => c.parent_id === course.parent_id);
-                if (children.length === 2) {
-                  const front = children.find((c: any) => /front/i.test(c.name)) || children[0];
-                  const back = children.find((c: any) => /back/i.test(c.name)) || children[1];
-                  childLabel = currentHoleIndex < 9 ? front.name : back.name;
+                // The course.id for a combined course is a comma-separated list of child ids in selection order
+                const courseIds = course.id.split(',').map((id: string) => id.trim());
+                if (courseIds.length === 2) {
+                  const firstNine = allCourses.find((c: any) => c.id === courseIds[0]);
+                  const secondNine = allCourses.find((c: any) => c.id === courseIds[1]);
+                  childLabel = currentHoleIndex < 9 ? (firstNine?.name || '') : (secondNine?.name || '');
                 } else {
-                  childLabel = course.name;
+                  // fallback: try to use Front/Back logic if only two children
+                  const children = allCourses.filter((c: any) => c.parent_id === course.parent_id);
+                  if (children.length === 2) {
+                    const front = children.find((c: any) => /front/i.test(c.name)) || children[0];
+                    const back = children.find((c: any) => /back/i.test(c.name)) || children[1];
+                    childLabel = currentHoleIndex < 9 ? front.name : back.name;
+                  } else {
+                    childLabel = course.name;
+                  }
                 }
               } else {
                 childLabel = course.name;
