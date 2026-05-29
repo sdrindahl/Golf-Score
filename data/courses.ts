@@ -54,7 +54,7 @@ export const COURSES_DATABASE: any[] = [
 
 {
     id: 'CMX',
-    name: 'Chomonix Golf Club',
+    name: 'Chomonix Golf',
     location: 'Lino Lakes',
     state: 'MN',
     holeCount: 18,
@@ -203,7 +203,7 @@ export const COURSES_DATABASE: any[] = [
         },
 {
     id: 'HDG',
-    name: 'Hidden Greens Golf',
+    name: 'Hidden Greens',
     location: 'Hastings',
     state: 'MN',
     holeCount: 18,
@@ -303,7 +303,7 @@ export const COURSES_DATABASE: any[] = [
 
   {
     id: 'BTCC',
-    name: 'Bemidji Town and Country Club',
+    name: 'Bemidji Town and Country',
     location: 'Bemidji',
     state: 'MN',
     holeCount: 18,
@@ -363,7 +363,7 @@ export const COURSES_DATABASE: any[] = [
   },
 {
         id: '19',
-        name: 'Executive Course (Par 30)',
+        name: 'Executive',
         location: 'Inver Grove Heights',
         state: 'MN',
         holeCount: 9,
@@ -383,7 +383,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '20a',
-        name: 'Front 9 (Par 36)',
+        name: 'Front 9',
         location: 'Inver Grove Heights',
         state: 'MN',
         holeCount: 9,
@@ -403,7 +403,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '20b',
-        name: 'Back 9 (Par 36)',
+        name: 'Back 9',
         location: 'Inver Grove Heights',
         state: 'MN',
         holeCount: 9,
@@ -433,7 +433,7 @@ export const COURSES_DATABASE: any[] = [
   },
       {
         id: '18a',
-        name: 'Front 9 (Par 36)',
+        name: 'Front 9',
         location: 'Apple Valley',
         state: 'MN',
         holeCount: 9,
@@ -453,7 +453,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '18b',
-        name: 'Back 9 (Par 36)',
+        name: 'Back 9',
         location: 'Apple Valley',
         state: 'MN',
         holeCount: 9,
@@ -485,7 +485,7 @@ export const COURSES_DATABASE: any[] = [
       // Southern Hills Front 9
       {
         id: '17a',
-        name: 'Front 9 (Par 35)',
+        name: 'Front 9',
         location: 'Farmingtion',
         state: 'MN',
         holeCount: 9,
@@ -506,7 +506,7 @@ export const COURSES_DATABASE: any[] = [
       // Southern Hills Back 9
       {
         id: '17b',
-        name: 'Back 9 (Par 36)',
+        name: 'Back 9',
         location: 'Farmingtion',
         state: 'MN',
         holeCount: 9,
@@ -528,7 +528,7 @@ export const COURSES_DATABASE: any[] = [
       // Parent course for Bunker Hills
   {
     id: 'BH',
-    name: 'Bunker Hills Golf Club',
+    name: 'Bunker Hills',
     location: 'Coon Rapids',
     state: 'MN',
     holeCount: 27,
@@ -537,7 +537,7 @@ export const COURSES_DATABASE: any[] = [
   },
       {
         id: '14',
-        name: 'West Course (Par 36)',
+        name: 'West 9',
         location: 'Coon Rapids',
         state: 'MN',
         holeCount: 9,
@@ -557,7 +557,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '15',
-        name: 'North Course (Par 36)',
+        name: 'North 9',
         location: 'Coon Rapids',
         state: 'MN',
         holeCount: 9,
@@ -577,7 +577,7 @@ export const COURSES_DATABASE: any[] = [
       },
       {
         id: '16',
-        name: 'East Course (Par 36)',
+        name: 'East 9',
         location: 'Coon Rapids',
         state: 'MN',
         holeCount: 9,
@@ -608,7 +608,7 @@ export const COURSES_DATABASE: any[] = [
       // Gold Front 9
       {
         id: '9a',
-        name: 'Gold Front 9 (Par 36)',
+        name: 'G Front 9',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -630,7 +630,7 @@ export const COURSES_DATABASE: any[] = [
       // Gold Back 9
       {
         id: '9b',
-        name: 'Gold Back 9 (Par 36)',
+        name: 'G Back 9',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -661,7 +661,7 @@ export const COURSES_DATABASE: any[] = [
       },// Silver Front 9
       {
         id: '28a',
-        name: 'Silver Front 9 (Par 36)',
+        name: 'S Front 9',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -683,7 +683,7 @@ export const COURSES_DATABASE: any[] = [
       // Silver Back 9
       {
         id: '28b',
-        name: 'Silver Back 9 (Par 36)',
+        name: 'S Back 9',
         location: 'Minnesota',
         state: 'MN',
         holeCount: 9,
@@ -705,7 +705,7 @@ export const COURSES_DATABASE: any[] = [
   // Parent for Lost Spur
   {
     id: 'LS',
-    name: 'Lost Spur Golf Course',
+    name: 'Lost Spur',
     location: 'Lost Spur',
     state: 'MN',
     holeCount: 9,
@@ -714,7 +714,7 @@ export const COURSES_DATABASE: any[] = [
   // Lost Spur 9 holes as child
   {
     id: '11',
-    name: 'Lost Spur 9 (Par 34)',
+    name: 'Nine 9',
     location: 'Lost Spur',
     state: 'MN',
     holeCount: 9,
@@ -735,7 +735,7 @@ export const COURSES_DATABASE: any[] = [
   // Parent for Birnamwood
   {
     id: 'BW',
-    name: 'Birnamwood Golf Course',
+    name: 'Birnamwood',
     location: 'Burnsville',
     state: 'MN',
     holeCount: 9,
@@ -744,7 +744,7 @@ export const COURSES_DATABASE: any[] = [
   // Birnamwood 9 holes as child
   {
     id: '12',
-    name: 'Birnamwood 9 (Par 27)',
+    name: 'Nine 9',
     location: 'Burnsville',
     state: 'MN',
     holeCount: 9,
