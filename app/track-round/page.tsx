@@ -139,8 +139,14 @@ function TrackRoundContent() {
     const startingHole = (round as any).startingHole || (round as any).starting_hole;
     if (startingHole && !isNaN(Number(startingHole))) {
       setCurrentHoleIndex(Math.max(0, Number(startingHole) - 1));
+      return;
     }
-  }, [round, searchParams]);
+    // If both nines are selected (18 holes), always start at first hole (Front 9)
+    if (course && Array.isArray(course.holes) && course.holes.length === 18) {
+      setCurrentHoleIndex(0);
+      return;
+    }
+  }, [round, searchParams, course]);
   const [scores, setScores] = useState<number[]>([]);
 
   // Restore scores from round when round is loaded
@@ -619,8 +625,8 @@ function TrackRoundContent() {
           <div className="flex flex-col items-center justify-center px-12">
             <div className="w-12 h-1 rounded-full bg-gray-600 mb-1" />
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-white">{hole?.holeNumber ?? currentHoleIndex + 1}</span>
-              <span className="text-lg text-gray-300 font-semibold ml-1">Par {hole?.par ?? '-'}</span>
+              <span className="text-3xl font-extrabold text-pink-500">{hole?.holeNumber ?? currentHoleIndex + 1}</span>
+              <span className="text-lg font-extrabold text-pink-500 ml-1">Par {hole?.par ?? '-'}</span>
               {/* Result indicator */}
               {holeResultLabel ? (
                 <span className={`ml-2 px-2 py-0.5 rounded-full ${holeResultLabel.color} text-xs font-bold`}>{holeResultLabel.label}</span>
@@ -628,7 +634,7 @@ function TrackRoundContent() {
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-500 text-white text-xs font-bold">Not Scored</span>
               )}
             </div>
-            <div className="text-sm text-gray-400 font-medium">Hdcp {hole?.handicap ?? '-'}</div>
+            <div className="text-sm font-bold text-blue-400">Hcp {hole?.handicap ?? '-'}</div>
             {/* Show current total score */}
             <div className="mt-1 text-base font-bold text-green-300">Current Score: {totalScore}</div>
           </div>
@@ -1040,23 +1046,43 @@ function TrackRoundContent() {
           } catch {}
         }
         // Determine child course label (Front 9 or Back 9)
-        let childLabel = course.name;
-        if (course.holeCount === 9 && parentName) {
-          childLabel = course.name;
-        } else if (course.holes && course.holes.length === 18 && parentName) {
-          childLabel = currentHoleIndex < 9 ? 'Front 9' : 'Back 9';
-        }
-        if (parentName && course.holeCount === 18) {
-          try {
-            const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
-            if (savedCourses) {
-              const allCourses = JSON.parse(savedCourses);
-              const children = allCourses.filter((c: any) => c.parent_id === course.parent_id);
-              if (children.length === 2) {
-                childLabel = currentHoleIndex < 9 ? children[0].name : children[1].name;
+        let childLabel = '';
+        if (parentName) {
+          // If parent exists, child is the current course name (or Front/Back 9 logic)
+          if (course.holeCount === 9) {
+            childLabel = course.name;
+          } else if (course.holes && course.holes.length === 18) {
+            // For 18-hole with parent, use selection order for nines
+            try {
+              const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+              if (savedCourses) {
+                const allCourses = JSON.parse(savedCourses);
+                // The course.id for a combined course is a comma-separated list of child ids in selection order
+                const courseIds = course.id.split(',').map((id: string) => id.trim());
+                if (courseIds.length === 2) {
+                  const firstNine = allCourses.find((c: any) => c.id === courseIds[0]);
+                  const secondNine = allCourses.find((c: any) => c.id === courseIds[1]);
+                  childLabel = currentHoleIndex < 9 ? (firstNine?.name || '') : (secondNine?.name || '');
+                } else {
+                  // fallback: try to use Front/Back logic if only two children
+                  const children = allCourses.filter((c: any) => c.parent_id === course.parent_id);
+                  if (children.length === 2) {
+                    const front = children.find((c: any) => /front/i.test(c.name)) || children[0];
+                    const back = children.find((c: any) => /back/i.test(c.name)) || children[1];
+                    childLabel = currentHoleIndex < 9 ? front.name : back.name;
+                  } else {
+                    childLabel = course.name;
+                  }
+                }
+              } else {
+                childLabel = course.name;
               }
+            } catch {
+              childLabel = course.name;
             }
-          } catch {}
+          } else {
+            childLabel = course.name;
+          }
         }
         return (
           <div
@@ -1081,20 +1107,7 @@ function TrackRoundContent() {
                 <path d="M12 21c-4.97-6.16-7.5-10.16-7.5-13.25A7.5 7.5 0 0 1 12 0a7.5 7.5 0 0 1 7.5 7.75C19.5 10.84 16.97 14.84 12 21z" fill="#14532d"/>
                 <circle cx="12" cy="8.5" r="3.5" fill="#4ade80"/>
               </svg>
-              {/* Course name (childLabel) - always fully visible */}
-              <span
-                className="text-base md:text-lg font-bold leading-tight text-white whitespace-nowrap"
-                style={{
-                  display: 'inline-block',
-                  verticalAlign: 'bottom',
-                }}
-                title={childLabel}
-              >
-                {childLabel}
-              </span>
-              {/* Vertical green bar */}
-              <span className="mx-2 text-green-300 font-bold text-xl">|</span>
-              {/* Parent name - ellipsis if too long */}
+              {/* Parent name first, always ellipsis if too long */}
               {parentName && (
                 <span
                   className="text-base md:text-lg font-semibold text-white whitespace-nowrap overflow-hidden text-ellipsis opacity-90"
@@ -1106,6 +1119,36 @@ function TrackRoundContent() {
                   title={parentName}
                 >
                   {parentName}
+                </span>
+              )}
+              {/* If both, show bar and child name */}
+              {parentName && childLabel && (
+                <span className="mx-2 text-green-300 font-bold text-xl">|</span>
+              )}
+              {/* Child name (if present) */}
+              {childLabel && (
+                <span
+                  className="text-base md:text-lg font-bold leading-tight text-white whitespace-nowrap"
+                  style={{
+                    display: 'inline-block',
+                    verticalAlign: 'bottom',
+                  }}
+                  title={childLabel}
+                >
+                  {childLabel}
+                </span>
+              )}
+              {/* If no parent, just show course name as main */}
+              {!parentName && (
+                <span
+                  className="text-base md:text-lg font-bold leading-tight text-white whitespace-nowrap"
+                  style={{
+                    display: 'inline-block',
+                    verticalAlign: 'bottom',
+                  }}
+                  title={course.name}
+                >
+                  {course.name}
                 </span>
               )}
               {/* Hamburger menu button inside header */}
@@ -1235,12 +1278,12 @@ function TrackRoundContent() {
               </span>
               <span className="text-lg font-bold text-green-400 mb-1">yds</span>
             </div>
-            <div className="mt-1 text-white text-base font-semibold flex gap-2 items-center">
-              Hole {currentHoleIndex + 1}
+            <div className="mt-1 text-base font-semibold flex gap-2 items-center">
+              <span className="text-pink-500 font-extrabold">Hole {currentHoleIndex + 1}</span>
               <span className="text-xl font-light text-white">•</span>
-              Par {course.holes[currentHoleIndex].par ?? '-'}
+              <span className="text-pink-500 font-extrabold">Par {course.holes[currentHoleIndex].par ?? '-'}</span>
             </div>
-            <div className="text-green-200 text-sm font-medium mb-2">Hcp {course.holes[currentHoleIndex].handicap ?? '-'}</div>
+            <div className="text-blue-400 text-sm font-bold mb-2">Hcp {course.holes[currentHoleIndex].handicap ?? '-'}</div>
             {/* Track Drive Button Workflow */}
             {(() => {
               const drive = perHoleStats[currentHoleIndex]?.drive;
