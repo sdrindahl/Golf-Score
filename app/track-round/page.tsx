@@ -625,8 +625,8 @@ function TrackRoundContent() {
           <div className="flex flex-col items-center justify-center px-12">
             <div className="w-12 h-1 rounded-full bg-gray-600 mb-1" />
             <div className="flex items-center gap-2">
-              <span className="text-3xl font-bold text-white">{hole?.holeNumber ?? currentHoleIndex + 1}</span>
-              <span className="text-lg text-gray-300 font-semibold ml-1">Par {hole?.par ?? '-'}</span>
+              <span className="text-3xl font-extrabold text-pink-500">{hole?.holeNumber ?? currentHoleIndex + 1}</span>
+              <span className="text-lg font-extrabold text-pink-500 ml-1">Par {hole?.par ?? '-'}</span>
               {/* Result indicator */}
               {holeResultLabel ? (
                 <span className={`ml-2 px-2 py-0.5 rounded-full ${holeResultLabel.color} text-xs font-bold`}>{holeResultLabel.label}</span>
@@ -634,7 +634,7 @@ function TrackRoundContent() {
                 <span className="ml-2 px-2 py-0.5 rounded-full bg-gray-500 text-white text-xs font-bold">Not Scored</span>
               )}
             </div>
-            <div className="text-sm text-gray-400 font-medium">Hdcp {hole?.handicap ?? '-'}</div>
+            <div className="text-sm font-bold text-blue-400">Hcp {hole?.handicap ?? '-'}</div>
             {/* Show current total score */}
             <div className="mt-1 text-base font-bold text-green-300">Current Score: {totalScore}</div>
           </div>
@@ -1278,12 +1278,12 @@ function TrackRoundContent() {
               </span>
               <span className="text-lg font-bold text-green-400 mb-1">yds</span>
             </div>
-            <div className="mt-1 text-white text-base font-semibold flex gap-2 items-center">
-              Hole {currentHoleIndex + 1}
+            <div className="mt-1 text-base font-semibold flex gap-2 items-center">
+              <span className="text-pink-500 font-extrabold">Hole {currentHoleIndex + 1}</span>
               <span className="text-xl font-light text-white">•</span>
-              Par {course.holes[currentHoleIndex].par ?? '-'}
+              <span className="text-pink-500 font-extrabold">Par {course.holes[currentHoleIndex].par ?? '-'}</span>
             </div>
-            <div className="text-green-200 text-sm font-medium mb-2">Hcp {course.holes[currentHoleIndex].handicap ?? '-'}</div>
+            <div className="text-blue-400 text-sm font-bold mb-2">Hcp {course.holes[currentHoleIndex].handicap ?? '-'}</div>
             {/* Track Drive Button Workflow */}
             {(() => {
               const drive = perHoleStats[currentHoleIndex]?.drive;
