@@ -203,7 +203,7 @@ export default function NavBar() {
             {/* Home */}
             <button
               onClick={() => router.push('/')}
-              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-1 pt-2 gap-0.5 transition ${
                 isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
                   ? 'text-green-400'
                   : 'text-white/60 active:text-white'
@@ -216,7 +216,7 @@ export default function NavBar() {
             {/* Golfers */}
             <button
               onClick={() => router.push('/players')}
-              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-1 pt-2 gap-0.5 transition ${
                 pathname === '/players' ? 'text-green-400' : 'text-white/60 active:text-white'
               }`}
             >
@@ -225,7 +225,7 @@ export default function NavBar() {
             </button>
 
             {/* Start / Return to Round — elevated circle */}
-            <div className="flex-1 flex flex-col items-center justify-end pb-2">
+            <div className="flex-1 flex flex-col items-center justify-end pb-1">
               <button
                 onClick={() => {
                   if (currentRoundId) {
@@ -235,7 +235,7 @@ export default function NavBar() {
                   }
                 }}
                 disabled={!!courseSelectedButNoRound && !currentRoundId}
-                className={`-translate-y-4 w-[62px] h-[62px] rounded-full flex flex-col items-center justify-center shadow-xl transition border-2 ${
+                className={`-translate-y-3 w-[62px] h-[62px] rounded-full flex flex-col items-center justify-center shadow-xl transition border-2 ${
                   currentRoundId
                     ? 'bg-red-800 border-red-500 text-white'
                     : courseSelectedButNoRound
@@ -253,7 +253,7 @@ export default function NavBar() {
             {/* Courses */}
             <button
               onClick={() => router.push('/courses')}
-              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-1 pt-2 gap-0.5 transition ${
                 pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
                   ? 'text-green-400'
                   : 'text-white/60 active:text-white'
@@ -266,7 +266,7 @@ export default function NavBar() {
             {/* Wallet */}
             <button
               onClick={() => router.push('/wallet')}
-              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-1 pt-2 gap-0.5 transition ${
                 pathname === '/wallet' || pathname?.startsWith('/wallet/')
                   ? 'text-green-400'
                   : 'text-white/60 active:text-white'
@@ -283,7 +283,8 @@ export default function NavBar() {
       {!isTrackRoundPage && currentUser && (
         <button
           onClick={() => setMenuOpen(true)}
-          className="md:hidden fixed top-3 right-3 z-40 w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg bg-black/40 backdrop-blur-sm border border-white/10"
+          className="md:hidden fixed right-3 z-40 w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg bg-black/40 backdrop-blur-sm border border-white/10"
+          style={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}
           aria-label="Open menu"
         >
           <span className="block w-5 h-[2px] bg-white rounded-full" />
@@ -302,8 +303,8 @@ export default function NavBar() {
           />
           {/* Dropdown sheet */}
           <div
-            className="md:hidden fixed top-14 right-3 z-50 w-64 rounded-2xl overflow-hidden drawer-sheet"
-            style={{ background: '#0d1f16', border: '1px solid rgba(34,197,94,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
+            className="md:hidden fixed right-3 z-50 w-64 rounded-2xl overflow-hidden drawer-sheet"
+            style={{ top: 'calc(env(safe-area-inset-top) + 60px)', background: '#0d1f16', border: '1px solid rgba(34,197,94,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
           >
             {/* User info */}
             {currentUser && (
