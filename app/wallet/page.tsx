@@ -336,7 +336,7 @@ export default function WalletPage() {
           <div className="relative space-y-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs tracking-[0.24em] uppercase text-green-500">Total Spend</p>
+                <p className="text-xs tracking-[0.24em] uppercase text-green-500">Total Spent</p>
                 <p className="text-5xl leading-none font-black text-white mt-1">{fmt(totalSpend)}</p>
                 {winningsTotal > 0 ? (
                   <p className="text-sm text-emerald-400 mt-2">Winnings this period: {fmt(winningsTotal)}</p>
