@@ -225,6 +225,13 @@ body.wallet-page main {
   touch-action: manipulation;
 }
 
+/* Eliminate iOS 300ms tap delay app-wide */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 /* Hole Map styles */
 .hole-map-distance-label {
   background: rgba(255, 149, 0, 0.9) !important;

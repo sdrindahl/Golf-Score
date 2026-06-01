@@ -306,7 +306,7 @@ export default function WalletPage() {
 
     trendSnapTimeoutRef.current = setTimeout(() => {
       snapTrendToNearestBar()
-    }, 40)
+    }, 350)
   }
 
   if (loading) {
@@ -472,10 +472,10 @@ export default function WalletPage() {
               <div
                 ref={trendScrollRef}
                 onScroll={handleTrendScroll}
-                className="overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+                className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
               >
-              <div className="h-[240px] min-w-full pointer-events-none" style={{ width: `${trendChartWidth}px` }}>
+              <div className="h-[240px] min-w-full" style={{ width: `${trendChartWidth}px`, touchAction: 'pan-x' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={trendData} margin={{ top: 22, right: 8, left: -18, bottom: 0 }} barCategoryGap="24%">
                     <CartesianGrid vertical={false} stroke="#223127" strokeDasharray="3 3" />
