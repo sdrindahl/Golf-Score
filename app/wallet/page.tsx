@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { PieChart, Pie, Cell, Tooltip as PieTooltip, BarChart, Bar, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip, LabelList } from 'recharts'
+import { PieChart, Pie, Cell, BarChart, Bar, CartesianGrid, ResponsiveContainer, XAxis, YAxis, LabelList } from 'recharts'
 import { useAuth } from '@/lib/useAuth'
 import PageWrapper from '@/components/PageWrapper'
 import {
@@ -59,6 +59,7 @@ function renderPieLabel({
       dominantBaseline="central"
       fontSize="12"
       fontWeight="700"
+      pointerEvents="none"
     >
       {`${pct}%`}
     </text>
@@ -391,7 +392,7 @@ export default function WalletPage() {
             </div>
 
             <div className="grid grid-cols-[168px_minmax(0,1fr)] sm:grid-cols-[210px_minmax(0,1fr)] md:grid-cols-[240px_1fr] gap-2 sm:gap-3 items-center">
-              <div className="h-[168px] sm:h-[210px] md:h-[220px] flex items-center justify-center">
+              <div className="h-[168px] sm:h-[210px] md:h-[220px] flex items-center justify-center pointer-events-none">
                 {pieData.length > 0 ? (
                   <PieChart width={168} height={168}>
                     <Pie
@@ -417,10 +418,6 @@ export default function WalletPage() {
                     <text x="50%" y="57%" textAnchor="middle" dominantBaseline="middle" fill="#ffffff" fontSize="13" fontWeight="800">
                       {fmt(breakdownSpendTotal)}
                     </text>
-                    <PieTooltip
-                      formatter={(value) => [fmt(Number(value)), '']}
-                      contentStyle={{ background: '#0b120f', border: '1px solid #1b2b22', borderRadius: 8, color: '#fff' }}
-                    />
                   </PieChart>
                 ) : (
                   <div className="h-full flex items-center justify-center text-sm text-green-400/80">No spend data yet</div>
@@ -481,8 +478,9 @@ export default function WalletPage() {
                 ref={trendScrollRef}
                 onScroll={handleTrendScroll}
                 className="overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
               >
-              <div className="h-[240px] min-w-full" style={{ width: `${trendChartWidth}px` }}>
+              <div className="h-[240px] min-w-full pointer-events-none" style={{ width: `${trendChartWidth}px` }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={trendData} margin={{ top: 22, right: 8, left: -18, bottom: 0 }} barCategoryGap="24%">
                     <CartesianGrid vertical={false} stroke="#223127" strokeDasharray="3 3" />
@@ -501,12 +499,6 @@ export default function WalletPage() {
                       domain={[0, trendTop]}
                       tick={{ fill: '#9ca3af', fontSize: 12 }}
                       tickFormatter={(value) => `$${value}`}
-                    />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(34, 197, 94, 0.08)' }}
-                      contentStyle={{ background: '#0b120f', border: '1px solid #1b2b22', borderRadius: 12, color: '#fff' }}
-                      formatter={(value) => [fmt(Number(value)), 'Spend']}
-                      labelStyle={{ color: '#d1d5db', fontWeight: 600 }}
                     />
                     <Bar dataKey="total" radius={[8, 8, 0, 0]} maxBarSize={42} isAnimationActive={false}>
                       <LabelList
