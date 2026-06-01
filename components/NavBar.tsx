@@ -31,6 +31,7 @@ export default function NavBar() {
   const [isLastHole, setIsLastHole] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [currentHole, setCurrentHole] = useState<number>(1)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
   // Only clear courseSelectedButNoRound if a round is actually in progress
@@ -114,7 +115,13 @@ export default function NavBar() {
     return false
   }
 
+  // Close hamburger menu on route change
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
   const handleLogout = () => {
+    setMenuOpen(false)
     localStorage.removeItem('currentUser')
     router.push('/login')
   }
@@ -130,13 +137,6 @@ export default function NavBar() {
   // Don't show Return to Round button on track-round page
   const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
   const isWalletPage = pathname && pathname.startsWith('/wallet');
-  const isTopMicroBarHiddenPage =
-    pathname === '/' ||
-    pathname?.startsWith('/player') ||
-    pathname?.startsWith('/players') ||
-    pathname?.startsWith('/courses') ||
-    pathname?.startsWith('/settings') ||
-    pathname?.startsWith('/round-detail');
 
   return (
     <>
@@ -187,20 +187,6 @@ export default function NavBar() {
           </div>
         </div>
       </nav>
-
-      {/* Mobile top micro-bar: Settings gear — hidden on Track Round page */}
-      {!isTrackRoundPage && !isWalletPage && !isTopMicroBarHiddenPage && currentUser && (
-        <div className="md:hidden flex justify-end px-3 py-1 border-b border-black/10" style={{ background: 'var(--green-bg)' }}>
-          <button
-            onClick={() => router.push('/settings')}
-            className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
-              pathname === '/settings' ? 'bg-green-600 text-white' : 'text-green-300 hover:text-white'
-            }`}
-          >
-            ⚙️ Settings
-          </button>
-        </div>
-      )}
 
       {/* Mobile Bottom Navigation - hidden ONLY on Track Round page */}
       {isTrackRoundPage ? null : (
@@ -291,6 +277,74 @@ export default function NavBar() {
             </button>
           </div>
         </nav>
+      )}
+
+      {/* Mobile hamburger button — fixed top-right, hidden on track-round */}
+      {!isTrackRoundPage && currentUser && (
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="md:hidden fixed top-3 right-3 z-40 w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg bg-black/40 backdrop-blur-sm border border-white/10"
+          aria-label="Open menu"
+        >
+          <span className="block w-5 h-[2px] bg-white rounded-full" />
+          <span className="block w-5 h-[2px] bg-white rounded-full" />
+          <span className="block w-5 h-[2px] bg-white rounded-full" />
+        </button>
+      )}
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-50 drawer-backdrop"
+            onClick={() => setMenuOpen(false)}
+          />
+          {/* Dropdown sheet */}
+          <div
+            className="md:hidden fixed top-14 right-3 z-50 w-64 rounded-2xl overflow-hidden drawer-sheet"
+            style={{ background: '#0d1f16', border: '1px solid rgba(34,197,94,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
+          >
+            {/* User info */}
+            {currentUser && (
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-green-950/60">
+                <div className="w-10 h-10 rounded-full bg-green-800/60 flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm leading-tight truncate">{currentUser.name}</p>
+                  <p className="text-green-500 text-xs mt-0.5">Signed in</p>
+                </div>
+              </div>
+            )}
+
+            {/* Menu items */}
+            <div className="py-2">
+              <button
+                onClick={() => { setMenuOpen(false); router.push('/player?id=' + currentUser?.id) }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white text-sm font-medium hover:bg-white/5 active:bg-white/10 transition text-left"
+              >
+                <span className="text-lg">👤</span>
+                My Profile
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); router.push('/settings') }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white text-sm font-medium hover:bg-white/5 active:bg-white/10 transition text-left"
+              >
+                <span className="text-lg">⚙️</span>
+                Settings
+              </button>
+              <div className="mx-4 border-t border-green-950/60" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-400 text-sm font-medium hover:bg-red-950/30 active:bg-red-950/50 transition text-left"
+              >
+                <span className="text-lg">🚪</span>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </>
   )

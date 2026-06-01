@@ -225,6 +225,22 @@ body.wallet-page main {
   touch-action: manipulation;
 }
 
+/* Hamburger drawer animations */
+@keyframes slideDown {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.drawer-sheet {
+  animation: slideDown 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.drawer-backdrop {
+  animation: fadeIn 0.2s ease both;
+}
+
 /* Eliminate iOS 300ms tap delay app-wide */
 button,
 a,
