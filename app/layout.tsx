@@ -43,7 +43,10 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="green" />
-        <meta name="apple-mobile-web-app-title" content="ApexTracer" />
+        <meta name="apple-mobile-web-app-title" content="Just Tap It" />
+        <link rel="apple-touch-icon" href="/JustTapIT_Logo.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/JustTapIT_Logo.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/JustTapIT_Logo.png" />
       </head>
       <body>
         <ClientLayout>{children}</ClientLayout>
