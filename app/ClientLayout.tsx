@@ -25,7 +25,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <VersionChecker />
       <InstallPrompt />
       <NavBar />
-      <main className={`max-w-6xl mx-auto p-3 md:p-4 lg:p-6 pb-24 md:pb-6 ${isWalletRoute ? 'bg-[#06110d]' : ''}`}>
+      <main className={`max-w-6xl mx-auto ${isWalletRoute ? 'p-0 pb-24 md:pb-6 bg-[#06110d]' : 'p-3 md:p-4 lg:p-6 pb-24 md:pb-6'}`}>
         {children}
       </main>
     </ThemeProvider>

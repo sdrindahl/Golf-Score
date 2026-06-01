@@ -311,23 +311,20 @@ export default function WalletPage() {
 
   if (loading) {
     return (
-      <PageWrapper title="">
-        <div className="-mx-4 w-auto bg-[#06110d] min-h-screen pb-24 pt-10">
-          <div className="px-5 pb-6 text-white text-center">
-            <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
-            <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />
-          </div>
-          <div className="flex justify-center items-center h-40">
-            <p className="text-green-400">Loading...</p>
-          </div>
+      <div className="w-full bg-[#06110d] min-h-dvh pb-24 pt-10">
+        <div className="px-5 pb-6 text-white text-center">
+          <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
+          <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />
         </div>
-      </PageWrapper>
+        <div className="flex justify-center items-center h-40">
+          <p className="text-green-400">Loading...</p>
+        </div>
+      </div>
     )
   }
 
   return (
-    <PageWrapper title="">
-      <div className="-mx-4 w-auto bg-[#06110d] min-h-screen pb-24 pt-10">
+    <div className="w-full bg-[#06110d] min-h-dvh pb-24 pt-10">
         <div className="px-5 pb-6 text-white text-center">
           <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
           <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />
@@ -564,7 +561,6 @@ export default function WalletPage() {
             </div>
           </div>
         </section>
-      </div>
-    </PageWrapper>
+    </div>
   )
 }
