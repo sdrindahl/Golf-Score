@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
@@ -623,6 +623,24 @@ function RoundDetailContent() {
   const [showPerformance, setShowPerformance] = useState(false);
   const [showPerHole, setShowPerHole] = useState(false);
 
+  const roundDetailSectionLabels = useMemo(() => {
+    if (!course || !Array.isArray(course.holes)) return [] as string[];
+
+    if (nines.length >= 2) {
+      return nines.slice(0, 2).map((n) => n.name || '').filter(Boolean);
+    }
+
+    if (course.holes.length === 18) {
+      return ['Front 9', 'Back 9'];
+    }
+
+    if (course.holes.length === 9) {
+      return [course.name || '9 Holes'];
+    }
+
+    return [] as string[];
+  }, [course, nines]);
+
   if (loading) {
     return (
       <PageWrapper title="Scorecard">
@@ -821,6 +839,7 @@ function RoundDetailContent() {
               scores={round.scores}
               selectedTee={round.selectedTee}
               showTotals={true}
+              sectionLabels={roundDetailSectionLabels}
               onEdit={canEditRound() && !isEditMode ? enterEditMode : undefined}
             />
           </div>

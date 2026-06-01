@@ -202,6 +202,78 @@ function TrackRoundContent() {
     return arr;
   }, [course]);
 
+  const modalCourseContext = useMemo(() => {
+    if (!course) {
+      return { baseName: '', segmentLabel: '' };
+    }
+
+    let parentName = '';
+    let currentSegmentName = '';
+
+    try {
+      const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+      if (savedCourses) {
+        const allCourses = JSON.parse(savedCourses);
+
+        if (course.parent_id) {
+          const parent = allCourses.find((c: any) => c.id === course.parent_id);
+          if (parent?.name) {
+            parentName = parent.name;
+          }
+        }
+
+        if (course.holes?.length === 18 && typeof course.id === 'string' && course.id.includes(',')) {
+          const courseIds = course.id.split(',').map((id: string) => id.trim());
+          const firstNine = allCourses.find((c: any) => c.id === courseIds[0]);
+          const secondNine = allCourses.find((c: any) => c.id === courseIds[1]);
+          currentSegmentName = currentHoleIndex < 9 ? (firstNine?.name || '') : (secondNine?.name || '');
+        } else if (course.holes?.length === 9 && course.parent_id) {
+          currentSegmentName = course.name || '';
+        }
+      }
+    } catch {
+      // Ignore localStorage parse failures and use safe fallbacks below.
+    }
+
+    const baseName = parentName || course.name || '';
+    let segmentLabel = currentSegmentName;
+
+    if (!segmentLabel && course.holes?.length === 18) {
+      segmentLabel = currentHoleIndex < 9 ? 'Front 9' : 'Back 9';
+    }
+
+    return { baseName, segmentLabel };
+  }, [course, currentHoleIndex]);
+
+  const modalSectionLabels = useMemo(() => {
+    if (!course || !Array.isArray(course.holes)) return [] as string[];
+
+    let labels: string[] = [];
+
+    try {
+      const savedCourses = typeof window !== 'undefined' ? localStorage.getItem('golfCourses') : null;
+      if (savedCourses && typeof course.id === 'string' && course.id.includes(',')) {
+        const allCourses = JSON.parse(savedCourses);
+        const courseIds = course.id.split(',').map((id: string) => id.trim());
+        labels = courseIds
+          .map((id: string) => allCourses.find((c: any) => c.id === id)?.name || '')
+          .filter(Boolean);
+      }
+    } catch {
+      // Ignore parse failures and use fallbacks.
+    }
+
+    if (labels.length === 0 && course.holes.length === 18) {
+      labels = ['Front 9', 'Back 9'];
+    }
+
+    if (labels.length === 0 && course.holes.length === 9) {
+      labels = [course.name || '9 Holes'];
+    }
+
+    return labels;
+  }, [course]);
+
   // Load round from localStorage by roundId (must be after roundId is declared)
   useEffect(() => {
     if (!roundId) {
@@ -1616,7 +1688,15 @@ function TrackRoundContent() {
               </button>
             </div>
 
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Enter Score for Hole {course?.holes?.[currentHoleIndex]?.holeNumber ?? currentHoleIndex + 1}</h2>
+            <div className="mb-2 text-center">
+              <p className="text-sm font-semibold text-gray-600">
+                {modalCourseContext.baseName}
+                {modalCourseContext.segmentLabel ? ` • ${modalCourseContext.segmentLabel}` : ''}
+              </p>
+            </div>
+            <h2 className="text-xl font-bold mb-4 text-gray-800">
+              Enter Score for Hole {course?.holes?.[currentHoleIndex]?.holeNumber ?? currentHoleIndex + 1}
+            </h2>
 
             {/* Scorecard Table - 9 holes per row, with totals */}
             {course && course.holes && course.holes.length > 0 && (
@@ -1639,6 +1719,14 @@ function TrackRoundContent() {
                   return (
                     <table key={sectionIdx} className="min-w-full border text-center text-xs mb-2">
                       <thead>
+                        <tr>
+                          <th
+                            colSpan={holes.length + 2}
+                            className="px-1 py-1 font-semibold text-gray-700 bg-gray-50 border-b"
+                          >
+                            {modalSectionLabels[sectionIdx] || (isFrontNine ? 'Front 9' : 'Back 9')}
+                          </th>
+                        </tr>
                         <tr>
                           <th className="px-1 py-1 font-bold">Hole</th>
                           {holes.map((h, i) => (
@@ -1743,14 +1831,14 @@ function TrackRoundContent() {
                     <tbody>
                       <tr>
                         <td className="px-1 py-1 font-bold">Total</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200">{course.holes.slice(0, 9).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200">{course.holes.slice(9, 18).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200" title={modalSectionLabels[0] || 'Front 9'}>{course.holes.slice(0, 9).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200" title={modalSectionLabels[1] || 'Back 9'}>{course.holes.slice(9, 18).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
                         <td className="px-1 py-1 font-bold bg-yellow-100">{course.holes.reduce((sum, h) => sum + (h.par || 0), 0)}</td>
                       </tr>
                       <tr>
                         <td className="px-1 py-1 font-bold">Score</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100">{scores.slice(0, 9).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100">{scores.slice(9, 18).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100" title={modalSectionLabels[0] || 'Front 9'}>{scores.slice(0, 9).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
+                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100" title={modalSectionLabels[1] || 'Back 9'}>{scores.slice(9, 18).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
                         <td className="px-1 py-1 font-bold bg-yellow-100">{scores.reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
                       </tr>
                     </tbody>

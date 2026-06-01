@@ -14,6 +14,7 @@ interface ScorecardTableProps {
   selectedTee?: string;
   showTotals?: boolean;
   onEdit?: () => void;
+  sectionLabels?: string[];
 }
 
 // Helper to chunk array
@@ -28,7 +29,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 const teeNames = ['men', 'women', 'senior', 'championship'] as const;
 const isValidTee = (tee: string): tee is typeof teeNames[number] => teeNames.includes(tee as any);
 
-export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, selectedTee = 'men', showTotals = true, onEdit }) => {
+export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, selectedTee = 'men', showTotals = true, onEdit, sectionLabels = [] }) => {
   if (!holes || holes.length === 0) return null;
   // Ensure holes are sorted by holeNumber so Front 9 comes before Back 9
   const sortedHoles = [...holes].sort((a, b) => (a.holeNumber ?? 0) - (b.holeNumber ?? 0));
@@ -54,6 +55,7 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
         {sections.map((section, sectionIdx) => {
           const startIdx = sectionIdx * 9;
           const isFrontNine = sectionIdx === 0;
+          const sectionLabel = sectionLabels[sectionIdx] || '';
           const parTotal = parTotals[sectionIdx];
           const scoreTotal = scoreTotals[sectionIdx];
           const yardageTotal = yardageTotals[sectionIdx];
@@ -61,6 +63,13 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
           return (
             <table key={sectionIdx} className="min-w-full border-separate border-spacing-0 text-center text-xs mb-2" style={{ borderCollapse: 'separate' }}>
               <thead>
+                {sectionLabel && (
+                  <tr className="bg-gray-50">
+                    <th colSpan={section.length + 2} className="px-1 py-1 font-semibold text-gray-700 border border-gray-300">
+                      {sectionLabel}
+                    </th>
+                  </tr>
+                )}
                 <tr className="bg-gray-200">
                   <th className="px-1 py-1 font-bold border border-gray-400">Hole</th>
                   {section.map((h, i) => (
