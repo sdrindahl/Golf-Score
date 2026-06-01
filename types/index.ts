@@ -41,6 +41,25 @@ export interface User {
   is_admin?: boolean
 }
 
+export type ExpenseCategory =
+  | 'Greens Fees'
+  | 'Equipment & Clothing'
+  | 'Food & Beverages'
+  | 'Winnings'
+  | 'Other'
+
+export interface Expense {
+  id: string
+  user_id: string
+  date: string        // ISO date string YYYY-MM-DD
+  category: ExpenseCategory
+  amount: number
+  notes?: string
+  round_id?: string
+  created_at?: string
+  updated_at?: string
+}
+
 export interface PerHoleStats {
   /**
    * Fairway in Regulation: 'hit' (✓), 'L' (missed left), 'R' (missed right), or undefined (not set)

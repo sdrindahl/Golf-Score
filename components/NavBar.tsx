@@ -129,6 +129,7 @@ export default function NavBar() {
 
   // Don't show Return to Round button on track-round page
   const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
+  const isWalletPage = pathname && pathname.startsWith('/wallet');
 
   return (
     <>
@@ -145,6 +146,25 @@ export default function NavBar() {
             </div>
             {currentUser && (
               <div className="flex items-center gap-4">
+                <button
+                  onClick={() => router.push('/wallet')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded font-semibold text-sm transition ${
+                    pathname === '/wallet' || pathname?.startsWith('/wallet/')
+                      ? 'bg-green-600 text-white'
+                      : 'bg-green-700 hover:bg-green-600 text-white'
+                  }`}
+                >
+                  💳 Golf Wallet
+                </button>
+                <button
+                  onClick={() => router.push('/settings')}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded font-semibold text-sm transition ${
+                    pathname === '/settings' ? 'bg-green-600 text-white' : 'bg-green-700 hover:bg-green-600 text-white'
+                  }`}
+                  title="Settings"
+                >
+                  ⚙️ Settings
+                </button>
                 <div className="flex items-center gap-2 px-3 py-1 bg-green-600 rounded">
                   <span>👤</span>
                   <span className="font-semibold">{currentUser.name}</span>
@@ -160,6 +180,20 @@ export default function NavBar() {
           </div>
         </div>
       </nav>
+
+      {/* Mobile top micro-bar: Settings gear — hidden on Track Round page */}
+      {!isTrackRoundPage && !isWalletPage && currentUser && (
+        <div className="md:hidden flex justify-end px-3 py-1 border-b border-black/10" style={{ background: 'var(--green-bg)' }}>
+          <button
+            onClick={() => router.push('/settings')}
+            className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
+              pathname === '/settings' ? 'bg-green-600 text-white' : 'text-green-300 hover:text-white'
+            }`}
+          >
+            ⚙️ Settings
+          </button>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation - hidden ONLY on Track Round page */}
       {isTrackRoundPage ? null : (
@@ -230,13 +264,15 @@ export default function NavBar() {
               Courses
             </button>
             <button
-              onClick={() => router.push('/settings')}
+              onClick={() => router.push('/wallet')}
               className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
-                pathname === '/settings' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+                pathname === '/wallet' || pathname?.startsWith('/wallet/')
+                  ? 'bg-green-600 text-white'
+                  : 'hover:bg-green-600'
               }`}
             >
-              <img src="/settings1.png" alt="Settings" className="h-10 w-10" />
-              Settings
+              <span className="text-3xl leading-none mb-0.5">💳</span>
+              Golf Wallet
             </button>
           </div>
         </nav>
