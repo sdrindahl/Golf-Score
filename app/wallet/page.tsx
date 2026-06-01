@@ -312,7 +312,7 @@ export default function WalletPage() {
   if (loading) {
     return (
       <PageWrapper title="">
-        <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 bg-[#06110d] min-h-screen pb-24 pt-10">
+        <div className="w-full bg-[#06110d] min-h-screen pb-24 pt-10">
           <div className="px-5 pb-6 text-white text-center">
             <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
             <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />
@@ -327,7 +327,7 @@ export default function WalletPage() {
 
   return (
     <PageWrapper title="">
-      <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 bg-[#06110d] min-h-screen pb-24 pt-10">
+      <div className="w-full bg-[#06110d] min-h-screen pb-24 pt-10">
         <div className="px-5 pb-6 text-white text-center">
           <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
           <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />

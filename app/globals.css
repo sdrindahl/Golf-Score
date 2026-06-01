@@ -212,10 +212,17 @@ body.wallet-page main {
   bottom: 0;
   left: 0;
   right: 0;
+  padding-bottom: env(safe-area-inset-bottom);
   -webkit-position: fixed;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   will-change: transform;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.mobile-navbar button {
+  touch-action: manipulation;
 }
 
 /* Hole Map styles */
