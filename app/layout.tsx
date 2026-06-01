@@ -9,10 +9,10 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
-      { url: '/JustTapIT_Logo.png', sizes: '192x192', type: 'image/png' },
-      { url: '/JustTapIT_Logo.png', sizes: '512x512', type: 'image/png' },
+      { url: '/JustTapIt_Logo.png', sizes: '192x192', type: 'image/png' },
+      { url: '/JustTapIt_Logo.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/JustTapIT_Logo.png',
+    apple: '/apple-touch-icon.png',
   },
   appleWebApp: {
     capable: true,
@@ -44,9 +44,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="green" />
         <meta name="apple-mobile-web-app-title" content="Just Tap It" />
-        <link rel="apple-touch-icon" href="/JustTapIT_Logo.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/JustTapIT_Logo.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/JustTapIT_Logo.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/JustTapIt_Logo.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/JustTapIt_Logo.png" />
       </head>
       <body>
         <ClientLayout>{children}</ClientLayout>
