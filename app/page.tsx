@@ -392,7 +392,7 @@ export default function Home() {
       <div className="px-4 pt-8 pb-4 flex flex-col items-center justify-center">
         <div className="w-full flex flex-row items-center justify-between mb-2">
           <div className="flex flex-row items-center">
-            <img src="/JustTapIT_Logo.png" alt="Just Tap It Logo" className="h-16 w-16 mr-3 self-start" style={{marginLeft: 0}} />
+            <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-16 w-16 mr-3 self-start" style={{marginLeft: 0}} />
             <h1 className="text-3xl font-bold tracking-tight text-white">{currentUser?.name || 'Golfer'}</h1>
           </div>
           <button
