@@ -204,82 +204,90 @@ export default function NavBar() {
 
       {/* Mobile Bottom Navigation - hidden ONLY on Track Round page */}
       {isTrackRoundPage ? null : (
-        <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
-          <div className="flex justify-around">
+        <nav
+          className="md:hidden mobile-navbar text-white z-50 border-t border-green-950/60"
+          style={{
+            background: '#07150f',
+            WebkitTransform: 'translate3d(0, 0, 0)',
+            overflow: 'visible',
+            boxShadow: '0 -4px 24px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div className="flex justify-around items-end">
+            {/* Home */}
             <button
               onClick={() => router.push('/')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
                 isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
+                  ? 'text-green-400'
+                  : 'text-white/60 active:text-white'
               }`}
             >
-              <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-10 w-10" />
-              Home
+              <img src="/JustTapIt_Logo.png" alt="Home" className="h-8 w-8" />
+              <span className="text-[10px] font-medium">Home</span>
             </button>
+
+            {/* Golfers */}
             <button
               onClick={() => router.push('/players')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
-                pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
+                pathname === '/players' ? 'text-green-400' : 'text-white/60 active:text-white'
               }`}
             >
-              <img src="/list_of_golfers.png" alt="Golfers" className="h-10 w-10" />
-              Golfers
+              <img src="/list_of_golfers.png" alt="Golfers" className="h-8 w-8 opacity-80" />
+              <span className="text-[10px] font-medium">Golfers</span>
             </button>
-            {/* Start/Return to Round Button (middle position) */}
-            <button
-              onClick={() => {
-                if (currentRoundId) {
-                  router.push(`/track-round?id=${currentRoundId}`);
-                } else if (!courseSelectedButNoRound) {
-                  router.push('/courses');
-                }
-              }}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
-                currentRoundId
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : courseSelectedButNoRound
-                    ? 'bg-blue-300 text-white opacity-60 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-              style={{ minWidth: '0' }}
-              disabled={!!courseSelectedButNoRound && !currentRoundId}
-            >
-              {currentRoundId ? (
-                <>
-                  <img src="/Players.png" alt="Return to Round" className="h-10 w-10" />
-                  Return to
-                  <br />
-                  Round
-                </>
-              ) : (
-                <>
-                  <span className="text-lg">▶</span>
-                  Start Round
-                </>
-              )}
-            </button>
+
+            {/* Start / Return to Round — elevated circle */}
+            <div className="flex-1 flex flex-col items-center justify-end pb-2">
+              <button
+                onClick={() => {
+                  if (currentRoundId) {
+                    router.push(`/track-round?id=${currentRoundId}`);
+                  } else if (!courseSelectedButNoRound) {
+                    router.push('/courses');
+                  }
+                }}
+                disabled={!!courseSelectedButNoRound && !currentRoundId}
+                className={`-translate-y-4 w-[62px] h-[62px] rounded-full flex flex-col items-center justify-center shadow-xl transition border-2 ${
+                  currentRoundId
+                    ? 'bg-red-800 border-red-500 text-white'
+                    : courseSelectedButNoRound
+                      ? 'bg-[#0d2218] border-green-900 text-white/40 cursor-not-allowed'
+                      : 'bg-[#0d2218] border-green-700 text-white active:bg-[#163322]'
+                }`}
+                style={{ minWidth: 0 }}
+              >
+                <span className="text-[9px] font-bold leading-tight text-center uppercase tracking-wide px-1">
+                  {currentRoundId ? <>Return<br/>Round</> : <>Start<br/>Round</>}
+                </span>
+              </button>
+            </div>
+
+            {/* Courses */}
             <button
               onClick={() => router.push('/courses')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
                 pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
+                  ? 'text-green-400'
+                  : 'text-white/60 active:text-white'
               }`}
             >
-              <img src="/courses.png" alt="Courses" className="h-10 w-10" />
-              Courses
+              <img src="/courses.png" alt="Courses" className="h-8 w-8 opacity-80" />
+              <span className="text-[10px] font-medium">Courses</span>
             </button>
+
+            {/* Wallet */}
             <button
               onClick={() => router.push('/wallet')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
                 pathname === '/wallet' || pathname?.startsWith('/wallet/')
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
+                  ? 'text-green-400'
+                  : 'text-white/60 active:text-white'
               }`}
             >
-              <span className="text-3xl leading-none mb-0.5">💳</span>
-              Golf Wallet
+              <span className="text-[26px] leading-none">💳</span>
+              <span className="text-[10px] font-medium">Wallet</span>
             </button>
           </div>
         </nav>
