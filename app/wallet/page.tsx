@@ -312,7 +312,7 @@ export default function WalletPage() {
   if (loading) {
     return (
       <PageWrapper title="">
-        <div className="w-full bg-[#06110d] min-h-screen pb-24 pt-10">
+        <div className="-mx-4 w-auto bg-[#06110d] min-h-screen pb-24 pt-10">
           <div className="px-5 pb-6 text-white text-center">
             <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
             <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />
@@ -327,12 +327,12 @@ export default function WalletPage() {
 
   return (
     <PageWrapper title="">
-      <div className="w-full bg-[#06110d] min-h-screen pb-24 pt-10">
+      <div className="-mx-4 w-auto bg-[#06110d] min-h-screen pb-24 pt-10">
         <div className="px-5 pb-6 text-white text-center">
           <h1 className="text-4xl font-bold tracking-tight">Golf Wallet</h1>
           <hr className="mt-4 border-t-2 border-black/80 w-3/4 mx-auto" />
         </div>
-        <section className="relative overflow-hidden bg-[#06110d] px-5 py-6 sm:px-6 sm:py-7 border-y border-green-900/70">
+        <section className="relative overflow-hidden bg-[#07150f] px-5 py-6 sm:px-6 sm:py-7 border-y border-green-950/70">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(34,197,94,0.25),transparent_45%),radial-gradient(circle_at_85%_85%,rgba(16,185,129,0.14),transparent_40%)]" />
           <div className="relative space-y-5">
             <div className="flex items-start justify-between gap-3">
@@ -353,22 +353,20 @@ export default function WalletPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-2 sm:gap-3">
-              <div className="rounded-2xl border border-green-900/80 bg-black/35 px-3 py-2">
-                <p className="text-[11px] uppercase tracking-widest text-green-500">Winnings</p>
-                <p className="text-xl font-bold text-emerald-400 mt-1">{fmtCompact(winningsTotal)}</p>
-              </div>
+            <div className="border-t border-green-900/50 pt-3">
+              <p className="text-[11px] uppercase tracking-widest text-green-500">Winnings</p>
+              <p className="text-xl font-bold text-emerald-400 mt-1">{fmtCompact(winningsTotal)}</p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 border-t border-green-900/50 pt-3">
               {(['week', 'month', 'year'] as Period[]).map(p => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-semibold transition ${
+                  className={`flex-1 py-2 rounded-full text-xs sm:text-sm font-semibold transition ${
                     period === p
-                      ? 'bg-green-600 text-white shadow'
-                      : 'bg-black/40 border border-green-900 text-green-300 hover:bg-green-900/40'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-transparent border border-green-900 text-green-300 hover:bg-green-900/30'
                   }`}
                 >
                   {PERIOD_LABELS[p]}
@@ -378,10 +376,10 @@ export default function WalletPage() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-[#06110d] px-4 py-4 sm:px-5 sm:py-5 border-b border-green-900/70">
+        <section className="relative overflow-hidden bg-[#0a1a13] px-5 py-5 sm:px-6 sm:py-6 border-t border-green-950/70">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(34,197,94,0.25),transparent_45%),radial-gradient(circle_at_85%_85%,rgba(16,185,129,0.14),transparent_40%)]" />
           <div className="relative">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-white font-bold text-lg">Spending Breakdown</h2>
               <button
                 onClick={() => router.push('/wallet/history')}
@@ -428,7 +426,7 @@ export default function WalletPage() {
                 {EXPENSE_CATEGORIES.filter(c => breakdownTotals[c] > 0).map(c => {
                   const pct = breakdownSpendTotal > 0 ? Math.round((breakdownTotals[c] / breakdownSpendTotal) * 100) : 0
                   return (
-                    <div key={c} className="border-b border-green-950/80 last:border-b-0 py-1">
+                    <div key={c} className="border-b border-green-950/80 last:border-b-0 py-1.5">
                       <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 text-xs sm:text-sm">
                         <span className="min-w-0 truncate text-gray-200 font-medium flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ background: CATEGORY_COLOR[c] }} />
@@ -441,7 +439,7 @@ export default function WalletPage() {
                   )
                 })}
                 {filtered.length === 0 && (
-                  <div className="rounded-xl border border-green-950 bg-black/30 px-3 py-4 text-center text-sm text-green-400/80">
+                  <div className="border-t border-green-950/80 px-3 py-4 text-center text-sm text-green-400/80">
                     Add your first entry to see category insights.
                   </div>
                 )}
@@ -450,18 +448,18 @@ export default function WalletPage() {
           </div>
         </section>
 
-        <section className="bg-[#06110d] px-4 py-4 sm:px-5 sm:py-5 border-b border-green-900/70">
-          <div className="rounded-2xl border border-green-950 bg-[#0b120f] px-3 py-3 sm:px-4 sm:py-4 shadow-[0_18px_40px_rgba(0,0,0,0.35)]">
+        <section className="bg-[#07150f] px-5 py-5 sm:px-6 sm:py-6 border-t border-green-950/70">
+          <div>
             <div className="flex items-center justify-between gap-3 mb-4">
               <h2 className="text-white font-bold text-lg">Spending Trends</h2>
-              <div className="inline-flex rounded-xl border border-green-950 bg-black/40 p-1">
+              <div className="inline-flex rounded-full border border-green-950 bg-black/35 p-1">
                 {(['week', 'month', 'year'] as Period[]).map(p => (
                   <button
                     key={p}
                     onClick={() => setTrendPeriod(p)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition ${
                       trendPeriod === p
-                        ? 'bg-green-600 text-white shadow-[0_8px_20px_rgba(34,197,94,0.35)]'
+                        ? 'bg-green-600 text-white'
                         : 'text-gray-400 hover:text-green-300'
                     }`}
                   >
@@ -472,8 +470,8 @@ export default function WalletPage() {
             </div>
 
             <div className="relative">
-              {showTrendLeftFade && <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#0b120f] to-transparent" />}
-              {showTrendRightFade && <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#0b120f] to-transparent" />}
+              {showTrendLeftFade && <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-[#07150f] to-transparent" />}
+              {showTrendRightFade && <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-[#07150f] to-transparent" />}
               <div
                 ref={trendScrollRef}
                 onScroll={handleTrendScroll}
@@ -520,7 +518,7 @@ export default function WalletPage() {
           </div>
         </section>
 
-        <section className="relative overflow-hidden bg-[#06110d] px-4 py-4 sm:px-5 sm:py-5 border-b border-green-900/70">
+        <section className="relative overflow-hidden bg-[#0a1a13] px-5 py-5 sm:px-6 sm:py-6 border-y border-green-950/70">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(34,197,94,0.25),transparent_45%),radial-gradient(circle_at_85%_85%,rgba(16,185,129,0.14),transparent_40%)]" />
           <div className="relative">
             <div className="flex items-center justify-between mb-3">
@@ -539,7 +537,7 @@ export default function WalletPage() {
                   <button
                     key={entry.id}
                     onClick={() => router.push('/wallet/history')}
-                    className="w-full rounded-2xl border border-green-950 bg-black/35 px-3 py-3 flex items-center justify-between gap-3 text-left hover:border-green-700 transition"
+                    className="w-full border-b border-green-950/80 px-1 py-3 flex items-center justify-between gap-3 text-left hover:bg-black/20 transition"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span
@@ -559,7 +557,7 @@ export default function WalletPage() {
                   </button>
                 ))
               ) : (
-                <div className="rounded-xl border border-green-950 bg-black/30 px-3 py-5 text-center text-sm text-green-400/80">
+                <div className="border-t border-green-950/80 px-1 py-5 text-center text-sm text-green-400/80">
                   No entries yet.
                 </div>
               )}
