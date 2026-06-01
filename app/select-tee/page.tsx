@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import PageWrapper from '@/components/PageWrapper';
 import { COURSES_DATABASE } from '@/data/courses';
 import { useAuth } from '@/lib/useAuth';
+import { orderNinesForDisplay } from '@/lib/nineOrder';
 
 function SelectTeePageInner() {
           // Cleanup on unmount: reset state and localStorage to ensure Start Round is reset if navigating away
@@ -72,9 +73,10 @@ function SelectTeePageInner() {
       // Try to find nines in COURSES_DATABASE
       const allCourses = COURSES_DATABASE;
       const foundNines = ids.map(id => allCourses.find(c => c.id === id)).filter(Boolean);
-      setSelectedNines(foundNines);
+      const orderedNines = orderNinesForDisplay(foundNines as any[]);
+      setSelectedNines(orderedNines);
       // Save to localStorage for round creation
-      localStorage.setItem('selectedNines', JSON.stringify(foundNines));
+      localStorage.setItem('selectedNines', JSON.stringify(orderedNines));
     }
   }, [searchParams]);
   // Create and save a new round, then navigate (wait for Supabase)
@@ -92,7 +94,7 @@ function SelectTeePageInner() {
       // Generate a unique round ID
       const roundId = Date.now().toString();
       const user = auth.getCurrentUser();
-      const nines = selectedNines;
+      const nines = orderNinesForDisplay(selectedNines as any[]);
       console.log('[DEBUG] Selected nines:', nines);
       console.log('[DEBUG] Tee at round creation:', tee);
       if (!user || !user.id) {

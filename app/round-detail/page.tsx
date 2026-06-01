@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Round, Course } from '@/types'
 import { ScorecardTable } from '@/components/ScorecardTable'
 import { useAuth } from '@/lib/useAuth'
 import PageWrapper from '@/components/PageWrapper'
+import { orderCourseIdsForDisplay } from '@/lib/nineOrder'
 
 function RoundDetailContent() {
   const router = useRouter()
@@ -60,10 +61,10 @@ function RoundDetailContent() {
       
       if (data && data.id) {
         let courseIds: string[] = [];
-        if (apiCourses && apiCourses.length > 0) {
-          courseIds = apiCourses.map((c: any) => c.id)
-        } else if (data.course_id) {
+        if (data.course_id) {
           courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+        } else if (apiCourses && apiCourses.length > 0) {
+          courseIds = apiCourses.map((c: any) => c.id)
         }
         
         // Deep copy the data to ensure React detects the change
@@ -148,10 +149,10 @@ function RoundDetailContent() {
         if (data && data.id) {
           console.log('[DEBUG] round-detail: Processing round data:', data.id)
           let courseIds: string[] = [];
-          if (apiCourses && apiCourses.length > 0) {
-            courseIds = apiCourses.map((c: any) => c.id)
-          } else if (data.course_id) {
+          if (data.course_id) {
             courseIds = String(data.course_id).split(',').map((id: string) => id.trim()).filter(Boolean);
+          } else if (apiCourses && apiCourses.length > 0) {
+            courseIds = apiCourses.map((c: any) => c.id)
           }
           // Convert snake_case to camelCase and map per_hole_stats
           let camelRound: Round = {
@@ -202,11 +203,14 @@ function RoundDetailContent() {
             let foundCourse: Course | null = null;
             const courseIdsArr = courseIds;
             if (courseIdsArr.length > 1) {
-              const selectedCourses = allCourses.filter(c => courseIdsArr.includes(c.id));
+              const orderedCourseIds = orderCourseIdsForDisplay(courseIdsArr, allCourses as any[]);
+              const selectedCourses = orderedCourseIds
+                .map((id) => allCourses.find((c) => c.id === id))
+                .filter(Boolean) as Course[];
               if (selectedCourses.length > 0) {
                 foundCourse = {
                   ...selectedCourses[0],
-                  id: courseIdsArr.join(','),
+                  id: orderedCourseIds.join(','),
                   name: ensuredRound.courseName || 'Combined Course',
                   holes: selectedCourses.flatMap(c => c.holes),
                   holeCount: selectedCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
@@ -599,20 +603,13 @@ function RoundDetailContent() {
     const savedCourses = localStorage.getItem('golfCourses');
     if (savedCourses && courseIds.length > 1) {
       const allCourses = JSON.parse(savedCourses);
-      // Preserve order of courseIds when finding courses
-      let selectedCourses = courseIds.map((id: string) => allCourses.find((c: any) => c.id === id)).filter(Boolean);
-      // Sort so that 'Front 9' comes before 'Back 9' if both are present
-      selectedCourses = selectedCourses.sort((a: any, b: any) => {
-        const aIsFront = /front/i.test(a.name);
-        const bIsFront = /front/i.test(b.name);
-        const aIsBack = /back/i.test(a.name);
-        const bIsBack = /back/i.test(b.name);
-        if (aIsFront && !bIsFront) return -1;
-        if (!aIsFront && bIsFront) return 1;
-        if (aIsBack && !bIsBack) return 1;
-        if (!aIsBack && bIsBack) return -1;
-        return a.name.localeCompare(b.name);
-      });
+      const orderedCourseIds = orderCourseIdsForDisplay(
+        courseIds.map((id: string) => id.trim()).filter(Boolean),
+        allCourses
+      );
+      const selectedCourses = orderedCourseIds
+        .map((id: string) => allCourses.find((c: any) => c.id === id))
+        .filter(Boolean);
       const ninesArr = selectedCourses.map((c: any) => ({ name: c.name, holes: c.holes }));
       setNines(ninesArr);
     } else {
@@ -622,6 +619,24 @@ function RoundDetailContent() {
 
   const [showPerformance, setShowPerformance] = useState(false);
   const [showPerHole, setShowPerHole] = useState(false);
+
+  const roundDetailSectionLabels = useMemo(() => {
+    if (!course || !Array.isArray(course.holes)) return [] as string[];
+
+    if (nines.length >= 2) {
+      return nines.slice(0, 2).map((n) => n.name || '').filter(Boolean);
+    }
+
+    if (course.holes.length === 18) {
+      return ['Front 9', 'Back 9'];
+    }
+
+    if (course.holes.length === 9) {
+      return [course.name || '9 Holes'];
+    }
+
+    return [] as string[];
+  }, [course, nines]);
 
   if (loading) {
     return (
@@ -821,6 +836,7 @@ function RoundDetailContent() {
               scores={round.scores}
               selectedTee={round.selectedTee}
               showTotals={true}
+              sectionLabels={roundDetailSectionLabels}
               onEdit={canEditRound() && !isEditMode ? enterEditMode : undefined}
             />
           </div>
