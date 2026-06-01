@@ -130,6 +130,13 @@ export default function NavBar() {
   // Don't show Return to Round button on track-round page
   const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
   const isWalletPage = pathname && pathname.startsWith('/wallet');
+  const isTopMicroBarHiddenPage =
+    pathname === '/' ||
+    pathname?.startsWith('/player') ||
+    pathname?.startsWith('/players') ||
+    pathname?.startsWith('/courses') ||
+    pathname?.startsWith('/settings') ||
+    pathname?.startsWith('/round-detail');
 
   return (
     <>
@@ -182,7 +189,7 @@ export default function NavBar() {
       </nav>
 
       {/* Mobile top micro-bar: Settings gear — hidden on Track Round page */}
-      {!isTrackRoundPage && !isWalletPage && currentUser && (
+      {!isTrackRoundPage && !isWalletPage && !isTopMicroBarHiddenPage && currentUser && (
         <div className="md:hidden flex justify-end px-3 py-1 border-b border-black/10" style={{ background: 'var(--green-bg)' }}>
           <button
             onClick={() => router.push('/settings')}
