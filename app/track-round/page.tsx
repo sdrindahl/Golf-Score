@@ -1496,10 +1496,9 @@ function TrackRoundContent() {
             <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
               <div className="flex flex-col items-center gap-2 w-[140px]">
                 <div
-                  className="w-full text-center rounded-full px-4 py-1.5 text-base font-black tracking-[0.22em] uppercase bg-black/70 border border-[#39ff14] text-white"
+                  className="w-full text-center rounded-full px-4 py-1.5 text-base font-black tracking-[0.22em] uppercase bg-black/70 border border-[#39ff14] text-[#39ff14]"
                   style={{
                     boxShadow: '0 0 14px rgba(57, 255, 20, 0.95), 0 0 30px rgba(57, 255, 20, 0.55), 0 0 4px rgba(0,0,0,0.85)',
-                    textShadow: '0 0 8px rgba(57, 255, 20, 0.95), 0 0 14px rgba(57, 255, 20, 0.65)',
                   }}
                 >
                   Hole {currentHoleIndex + 1}
