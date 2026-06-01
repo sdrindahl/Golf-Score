@@ -1494,27 +1494,38 @@ function TrackRoundContent() {
           {/* Golf Ball Icon above Bottom NavBar (hidden in map view) */}
           {!showMap && (
             <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
-              <button
-                className={`focus:outline-none pointer-events-auto group rounded-full shadow-lg p-2 transition-all duration-100
-                  ${tapItPressed ? 'scale-90 bg-black/60 border-4 border-blue-400 shadow-inner' : 'bg-transparent border-0'}`}
-                style={{ border: tapItPressed ? '4px solid #60a5fa' : 'none', padding: 0, position: 'relative', width: 140, height: 140 }}
-                onClick={() => { tapItPress(); setShowScoreModal(true); }}
-                aria-label="Just Tap It to enter your score"
-              >
-                <img
-                  src="/JustTapIt_Logo.png"
-                  alt="JustTapIt Logo"
-                  className="w-32 h-32 object-contain select-none drop-shadow-lg"
+              <div className="flex flex-col items-center gap-2 w-[140px]">
+                <div
+                  className="w-full text-center rounded-full px-4 py-1.5 text-base font-black tracking-[0.22em] uppercase bg-black/70 border border-[#39ff14] text-white"
                   style={{
-                    border: '2px solid rgb(57, 255, 20)',
-                    boxShadow: '0 0 24px rgb(57, 255, 20), 0 2px 24px rgba(0,0,0,0.667)',
-                    borderRadius: '24px',
-                    background: '#111',
-                    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))'
+                    boxShadow: '0 0 14px rgba(57, 255, 20, 0.95), 0 0 30px rgba(57, 255, 20, 0.55), 0 0 4px rgba(0,0,0,0.85)',
+                    textShadow: '0 0 8px rgba(57, 255, 20, 0.95), 0 0 14px rgba(57, 255, 20, 0.65)',
                   }}
-                  draggable={false}
-                />
-              </button>
+                >
+                  Hole {currentHoleIndex + 1}
+                </div>
+                <button
+                  className={`focus:outline-none pointer-events-auto group rounded-full shadow-lg p-2 transition-all duration-100 flex items-center justify-center
+                    ${tapItPressed ? 'scale-90 bg-black/60 border-4 border-blue-400 shadow-inner' : 'bg-transparent border-0'}`}
+                  style={{ border: tapItPressed ? '4px solid #60a5fa' : 'none', padding: 0, position: 'relative', width: 140, height: 140 }}
+                  onClick={() => { tapItPress(); setShowScoreModal(true); }}
+                  aria-label="Just Tap It to enter your score"
+                >
+                  <img
+                    src="/JustTapIt_Logo.png"
+                    alt="JustTapIt Logo"
+                    className="block w-32 h-32 object-contain select-none drop-shadow-lg"
+                    style={{
+                      border: '2px solid rgb(57, 255, 20)',
+                      boxShadow: '0 0 24px rgb(57, 255, 20), 0 2px 24px rgba(0,0,0,0.667)',
+                      borderRadius: '24px',
+                      background: '#111',
+                      filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))'
+                    }}
+                    draggable={false}
+                  />
+                </button>
+              </div>
             </div>
           )}
         {/* Modern Bottom Action Bar with Icons */}
