@@ -390,19 +390,9 @@ export default function Home() {
       {/* Debug output removed for production */}
       {/* Welcome Banner */}
       <div className="px-4 pt-8 pb-4 flex flex-col items-center justify-center">
-        <div className="w-full flex flex-row items-center justify-between mb-2">
-          <div className="flex flex-row items-center">
-            <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-16 w-16 mr-3 self-start" style={{marginLeft: 0}} />
-            <h1 className="text-3xl font-bold tracking-tight text-white">{currentUser?.name || 'Golfer'}</h1>
-          </div>
-          <button
-            onClick={() => router.push('/settings')}
-            className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-green-400 hover:text-white hover:bg-green-800 transition text-xs font-semibold md:hidden"
-            aria-label="Settings"
-          >
-            <span className="text-2xl">⚙️</span>
-            Settings
-          </button>
+        <div className="w-full flex flex-row items-center mb-2">
+          <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-16 w-16 mr-3 self-start" style={{marginLeft: 0}} />
+          <h1 className="text-3xl font-bold tracking-tight text-white">{currentUser?.name || 'Golfer'}</h1>
         </div>
       </div>
 

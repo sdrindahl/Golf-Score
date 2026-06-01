@@ -31,6 +31,7 @@ export default function NavBar() {
   const [isLastHole, setIsLastHole] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [currentHole, setCurrentHole] = useState<number>(1)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Fetch active rounds from Supabase on mount and when pathname changes
   // Only clear courseSelectedButNoRound if a round is actually in progress
@@ -114,7 +115,13 @@ export default function NavBar() {
     return false
   }
 
+  // Close hamburger menu on route change
+  useEffect(() => {
+    setMenuOpen(false)
+  }, [pathname])
+
   const handleLogout = () => {
+    setMenuOpen(false)
     localStorage.removeItem('currentUser')
     router.push('/login')
   }
@@ -130,13 +137,6 @@ export default function NavBar() {
   // Don't show Return to Round button on track-round page
   const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
   const isWalletPage = pathname && pathname.startsWith('/wallet');
-  const isTopMicroBarHiddenPage =
-    pathname === '/' ||
-    pathname?.startsWith('/player') ||
-    pathname?.startsWith('/players') ||
-    pathname?.startsWith('/courses') ||
-    pathname?.startsWith('/settings') ||
-    pathname?.startsWith('/round-detail');
 
   return (
     <>
@@ -188,101 +188,163 @@ export default function NavBar() {
         </div>
       </nav>
 
-      {/* Mobile top micro-bar: Settings gear — hidden on Track Round page */}
-      {!isTrackRoundPage && !isWalletPage && !isTopMicroBarHiddenPage && currentUser && (
-        <div className="md:hidden flex justify-end px-3 py-1 border-b border-black/10" style={{ background: 'var(--green-bg)' }}>
-          <button
-            onClick={() => router.push('/settings')}
-            className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-semibold transition ${
-              pathname === '/settings' ? 'bg-green-600 text-white' : 'text-green-300 hover:text-white'
-            }`}
-          >
-            ⚙️ Settings
-          </button>
-        </div>
-      )}
-
       {/* Mobile Bottom Navigation - hidden ONLY on Track Round page */}
       {isTrackRoundPage ? null : (
-        <nav className="md:hidden mobile-navbar text-white z-50 shadow-2xl border-t border-black/10" style={{ background: 'var(--green-bg)', WebkitTransform: 'translate3d(0, 0, 0)' }}>
-          <div className="flex justify-around">
+        <nav
+          className="md:hidden mobile-navbar text-white z-50 border-t border-green-950/60"
+          style={{
+            background: '#07150f',
+            WebkitTransform: 'translate3d(0, 0, 0)',
+            overflow: 'visible',
+            boxShadow: '0 -4px 24px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div className="flex justify-around items-end">
+            {/* Home */}
             <button
               onClick={() => router.push('/')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
                 isActive('/') && pathname !== '/course-search' && pathname !== '/manage-courses'
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
+                  ? 'text-green-400'
+                  : 'text-white/60 active:text-white'
               }`}
             >
-              <img src="/JustTapIt_Logo.png" alt="Just Tap It Logo" className="h-10 w-10" />
-              Home
+              <img src="/JustTapIt_Logo.png" alt="Home" className="h-8 w-8" />
+              <span className="text-[10px] font-medium">Home</span>
             </button>
+
+            {/* Golfers */}
             <button
               onClick={() => router.push('/players')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
-                pathname === '/players' ? 'bg-green-600 text-white' : 'hover:bg-green-600'
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
+                pathname === '/players' ? 'text-green-400' : 'text-white/60 active:text-white'
               }`}
             >
-              <img src="/list_of_golfers.png" alt="Golfers" className="h-10 w-10" />
-              Golfers
+              <img src="/list_of_golfers.png" alt="Golfers" className="h-8 w-8 opacity-80" />
+              <span className="text-[10px] font-medium">Golfers</span>
             </button>
-            {/* Start/Return to Round Button (middle position) */}
-            <button
-              onClick={() => {
-                if (currentRoundId) {
-                  router.push(`/track-round?id=${currentRoundId}`);
-                } else if (!courseSelectedButNoRound) {
-                  router.push('/courses');
-                }
-              }}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition shadow-lg rounded ${
-                currentRoundId
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : courseSelectedButNoRound
-                    ? 'bg-blue-300 text-white opacity-60 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
-              style={{ minWidth: '0' }}
-              disabled={!!courseSelectedButNoRound && !currentRoundId}
-            >
-              {currentRoundId ? (
-                <>
-                  <img src="/Players.png" alt="Return to Round" className="h-10 w-10" />
-                  Return to
-                  <br />
-                  Round
-                </>
-              ) : (
-                <>
-                  <span className="text-lg">▶</span>
-                  Start Round
-                </>
-              )}
-            </button>
+
+            {/* Start / Return to Round — elevated circle */}
+            <div className="flex-1 flex flex-col items-center justify-end pb-2">
+              <button
+                onClick={() => {
+                  if (currentRoundId) {
+                    router.push(`/track-round?id=${currentRoundId}`);
+                  } else if (!courseSelectedButNoRound) {
+                    router.push('/courses');
+                  }
+                }}
+                disabled={!!courseSelectedButNoRound && !currentRoundId}
+                className={`-translate-y-4 w-[62px] h-[62px] rounded-full flex flex-col items-center justify-center shadow-xl transition border-2 ${
+                  currentRoundId
+                    ? 'bg-red-800 border-red-500 text-white'
+                    : courseSelectedButNoRound
+                      ? 'bg-[#0d2218] border-green-900 text-white/40 cursor-not-allowed'
+                      : 'bg-[#0d2218] border-green-700 text-white active:bg-[#163322]'
+                }`}
+                style={{ minWidth: 0 }}
+              >
+                <span className="text-[9px] font-bold leading-tight text-center uppercase tracking-wide px-1">
+                  {currentRoundId ? <>Return<br/>Round</> : <>Start<br/>Round</>}
+                </span>
+              </button>
+            </div>
+
+            {/* Courses */}
             <button
               onClick={() => router.push('/courses')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
                 pathname === '/courses' || pathname === '/manage-courses' || pathname === '/course-search' || pathname === '/add-course'
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
+                  ? 'text-green-400'
+                  : 'text-white/60 active:text-white'
               }`}
             >
-              <img src="/courses.png" alt="Courses" className="h-10 w-10" />
-              Courses
+              <img src="/courses.png" alt="Courses" className="h-8 w-8 opacity-80" />
+              <span className="text-[10px] font-medium">Courses</span>
             </button>
+
+            {/* Wallet */}
             <button
               onClick={() => router.push('/wallet')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 font-semibold text-xs transition ${
+              className={`flex-1 flex flex-col items-center justify-end pb-3 pt-2 gap-0.5 transition ${
                 pathname === '/wallet' || pathname?.startsWith('/wallet/')
-                  ? 'bg-green-600 text-white'
-                  : 'hover:bg-green-600'
+                  ? 'text-green-400'
+                  : 'text-white/60 active:text-white'
               }`}
             >
-              <span className="text-3xl leading-none mb-0.5">💳</span>
-              Golf Wallet
+              <span className="text-[26px] leading-none">💳</span>
+              <span className="text-[10px] font-medium">Wallet</span>
             </button>
           </div>
         </nav>
+      )}
+
+      {/* Mobile hamburger button — fixed top-right, hidden on track-round */}
+      {!isTrackRoundPage && currentUser && (
+        <button
+          onClick={() => setMenuOpen(true)}
+          className="md:hidden fixed top-3 right-3 z-40 w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg bg-black/40 backdrop-blur-sm border border-white/10"
+          aria-label="Open menu"
+        >
+          <span className="block w-5 h-[2px] bg-white rounded-full" />
+          <span className="block w-5 h-[2px] bg-white rounded-full" />
+          <span className="block w-5 h-[2px] bg-white rounded-full" />
+        </button>
+      )}
+
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-50 drawer-backdrop"
+            onClick={() => setMenuOpen(false)}
+          />
+          {/* Dropdown sheet */}
+          <div
+            className="md:hidden fixed top-14 right-3 z-50 w-64 rounded-2xl overflow-hidden drawer-sheet"
+            style={{ background: '#0d1f16', border: '1px solid rgba(34,197,94,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}
+          >
+            {/* User info */}
+            {currentUser && (
+              <div className="flex items-center gap-3 px-4 py-4 border-b border-green-950/60">
+                <div className="w-10 h-10 rounded-full bg-green-800/60 flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-white font-semibold text-sm leading-tight truncate">{currentUser.name}</p>
+                  <p className="text-green-500 text-xs mt-0.5">Signed in</p>
+                </div>
+              </div>
+            )}
+
+            {/* Menu items */}
+            <div className="py-2">
+              <button
+                onClick={() => { setMenuOpen(false); router.push('/player?id=' + currentUser?.id) }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white text-sm font-medium hover:bg-white/5 active:bg-white/10 transition text-left"
+              >
+                <span className="text-lg">👤</span>
+                My Profile
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); router.push('/settings') }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white text-sm font-medium hover:bg-white/5 active:bg-white/10 transition text-left"
+              >
+                <span className="text-lg">⚙️</span>
+                Settings
+              </button>
+              <div className="mx-4 border-t border-green-950/60" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-400 text-sm font-medium hover:bg-red-950/30 active:bg-red-950/50 transition text-left"
+              >
+                <span className="text-lg">🚪</span>
+                Log Out
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </>
   )

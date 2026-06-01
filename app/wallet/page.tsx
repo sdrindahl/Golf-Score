@@ -164,8 +164,6 @@ export default function WalletPage() {
   const router = useRouter()
   const auth = useAuth()
   const trendScrollRef = useRef<HTMLDivElement | null>(null)
-  const trendSnapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const isTrendAutoSnappingRef = useRef(false)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [period, setPeriod] = useState<Period>('month')
   const [trendPeriod, setTrendPeriod] = useState<Period>('month')
@@ -173,20 +171,20 @@ export default function WalletPage() {
   const [showTrendRightFade, setShowTrendRightFade] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const loadExpenses = useCallback(async () => {
-    const user = auth.getCurrentUser()
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    const data = await getExpenses(user.id)
-    setExpenses(data)
-    setLoading(false)
-  }, [auth, router])
+  const authRef = useRef(auth)
+  const routerRef = useRef(router)
 
   useEffect(() => {
-    loadExpenses()
-  }, [loadExpenses])
+    const user = authRef.current.getCurrentUser()
+    if (!user) {
+      routerRef.current.push('/login')
+      return
+    }
+    getExpenses(user.id).then(data => {
+      setExpenses(data)
+      setLoading(false)
+    })
+  }, [])
 
   const { from, to } = getRangeForPeriod(period)
   const filtered = filterByRange(expenses, from, to)
@@ -228,26 +226,6 @@ export default function WalletPage() {
     setShowTrendRightFade(container.scrollLeft < maxScrollLeft - 8)
   }, [])
 
-  const snapTrendToNearestBar = useCallback(() => {
-    const container = trendScrollRef.current
-    if (!container || trendData.length === 0) return
-
-    const barWidth = trendChartWidth / trendData.length
-    const viewportCenter = container.scrollLeft + container.clientWidth / 2
-    const nearestIndex = Math.round((viewportCenter - barWidth / 2) / barWidth)
-    const boundedIndex = Math.min(Math.max(nearestIndex, 0), trendData.length - 1)
-    const targetLeft = Math.max(boundedIndex * barWidth - container.clientWidth / 2 + barWidth / 2, 0)
-
-    if (Math.abs(container.scrollLeft - targetLeft) < 2) return
-
-    isTrendAutoSnappingRef.current = true
-    container.scrollTo({ left: targetLeft, behavior: 'auto' })
-    window.setTimeout(() => {
-      isTrendAutoSnappingRef.current = false
-      updateTrendFades()
-    }, 40)
-  }, [trendChartWidth, trendData, updateTrendFades])
-
   useEffect(() => {
     const container = trendScrollRef.current
     const currentIndex = trendData.findIndex(point => point.isCurrent)
@@ -260,14 +238,6 @@ export default function WalletPage() {
 
     return () => cancelAnimationFrame(animationFrame)
   }, [trendChartWidth, trendData, trendPeriod, updateTrendFades])
-
-  useEffect(() => {
-    return () => {
-      if (trendSnapTimeoutRef.current) {
-        clearTimeout(trendSnapTimeoutRef.current)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     updateTrendFades()
@@ -297,16 +267,6 @@ export default function WalletPage() {
 
   const handleTrendScroll = () => {
     updateTrendFades()
-
-    if (isTrendAutoSnappingRef.current) return
-
-    if (trendSnapTimeoutRef.current) {
-      clearTimeout(trendSnapTimeoutRef.current)
-    }
-
-    trendSnapTimeoutRef.current = setTimeout(() => {
-      snapTrendToNearestBar()
-    }, 40)
   }
 
   if (loading) {
@@ -472,10 +432,10 @@ export default function WalletPage() {
               <div
                 ref={trendScrollRef}
                 onScroll={handleTrendScroll}
-                className="overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x' }}
+                className="overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x', overscrollBehaviorX: 'contain' }}
               >
-              <div className="h-[240px] min-w-full pointer-events-none" style={{ width: `${trendChartWidth}px` }}>
+              <div className="h-[240px] min-w-full" style={{ width: `${trendChartWidth}px`, touchAction: 'pan-x' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={trendData} margin={{ top: 22, right: 8, left: -18, bottom: 0 }} barCategoryGap="24%">
                     <CartesianGrid vertical={false} stroke="#223127" strokeDasharray="3 3" />

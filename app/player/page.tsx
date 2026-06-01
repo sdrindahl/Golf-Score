@@ -507,15 +507,6 @@ function PlayerProfileContent() {
         </div>
       </PageWrapper>
 
-      {/* Home Button - Fixed at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-br from-emerald-600 via-green-600 to-teal-600 px-4 py-4 z-10">
-        <Link href="/">
-          <button className="w-full bg-white/90 hover:bg-white text-green-700 font-semibold py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-white/20">
-            🏠 Home
-          </button>
-        </Link>
-      </div>
-
     </>
   );
 }
