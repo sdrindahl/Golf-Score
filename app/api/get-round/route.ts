@@ -62,7 +62,12 @@ export async function GET(req: NextRequest) {
       console.error('[DEBUG] Exception in join table query:', err)
     }
 
-    const courseIds = roundCourses.map((rc: any) => rc.course_id) || []
+    const courseIdsFromRound = typeof round.course_id === 'string'
+      ? round.course_id.split(',').map((id: string) => id.trim()).filter(Boolean)
+      : []
+    const courseIds = courseIdsFromRound.length > 0
+      ? courseIdsFromRound
+      : (roundCourses.map((rc: any) => rc.course_id) || [])
     console.log('[DEBUG] Course IDs from join table:', courseIds)
 
     // Fetch all associated courses
@@ -78,7 +83,10 @@ export async function GET(req: NextRequest) {
           console.error('[DEBUG] Course fetch error:', courseError)
           // Don't fail if courses can't be fetched
         } else {
-          courses = courseData || []
+          const unorderedCourses = courseData || []
+          courses = courseIds
+            .map((id: string) => unorderedCourses.find((course: any) => course.id === id))
+            .filter(Boolean)
         }
       } catch (err) {
         console.error('[DEBUG] Exception in course fetch:', err)

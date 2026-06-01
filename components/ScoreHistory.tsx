@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Round } from '@/types'
 import { useAuth } from '@/lib/useAuth'
 import CommentsModal from '@/components/CommentsModal'
+import { orderCourseIdsForDisplay } from '@/lib/nineOrder'
 
 
 interface ScoreHistoryProps {
@@ -160,21 +161,12 @@ export default function ScoreHistory({ rounds, onDelete, readOnly = false, userI
           let parentName = '';
           let childNames: string[] = [];
           if (courses && courses.length && round.courseId) {
-            const courseIds = round.courseId.split(',');
-            let childCourses = courses.filter((c: any) => courseIds.includes(c.id));
+            const courseIds = round.courseId.split(',').map((id) => id.trim()).filter(Boolean);
+            const orderedCourseIds = orderCourseIdsForDisplay(courseIds, courses as any[]);
+            const childCourses = orderedCourseIds
+              .map((id) => courses.find((c: any) => c.id === id))
+              .filter(Boolean);
             if (childCourses.length > 0) {
-              // Sort so that 'Front 9' comes before 'Back 9' if both are present
-              childCourses = childCourses.sort((a: any, b: any) => {
-                const aIsFront = /front/i.test(a.name);
-                const bIsFront = /front/i.test(b.name);
-                const aIsBack = /back/i.test(a.name);
-                const bIsBack = /back/i.test(b.name);
-                if (aIsFront && !bIsFront) return -1;
-                if (!aIsFront && bIsFront) return 1;
-                if (aIsBack && !bIsBack) return 1;
-                if (!aIsBack && bIsBack) return -1;
-                return a.name.localeCompare(b.name);
-              });
               // Assume all children have same parent
               const parentId = childCourses[0].parent_id;
               if (parentId) {

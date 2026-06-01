@@ -53,6 +53,7 @@ import HoleMap from '@/components/HoleMap';
 import { useMemo, useCallback } from 'react';
 import { getRoundsInProgress, subscribeToRoundsInProgress } from '@/lib/roundsInProgress';
 import { supabase } from '@/lib/supabase';
+import { orderCourseIdsForDisplay } from '@/lib/nineOrder';
 
 function TrackRoundContent() {
   // Ref for menu and button to handle outside clicks (must be at top level)
@@ -224,8 +225,9 @@ function TrackRoundContent() {
 
         if (course.holes?.length === 18 && typeof course.id === 'string' && course.id.includes(',')) {
           const courseIds = course.id.split(',').map((id: string) => id.trim());
-          const firstNine = allCourses.find((c: any) => c.id === courseIds[0]);
-          const secondNine = allCourses.find((c: any) => c.id === courseIds[1]);
+          const orderedCourseIds = orderCourseIdsForDisplay(courseIds, allCourses);
+          const firstNine = allCourses.find((c: any) => c.id === orderedCourseIds[0]);
+          const secondNine = allCourses.find((c: any) => c.id === orderedCourseIds[1]);
           currentSegmentName = currentHoleIndex < 9 ? (firstNine?.name || '') : (secondNine?.name || '');
         } else if (course.holes?.length === 9 && course.parent_id) {
           currentSegmentName = course.name || '';
@@ -255,7 +257,8 @@ function TrackRoundContent() {
       if (savedCourses && typeof course.id === 'string' && course.id.includes(',')) {
         const allCourses = JSON.parse(savedCourses);
         const courseIds = course.id.split(',').map((id: string) => id.trim());
-        labels = courseIds
+        const orderedCourseIds = orderCourseIdsForDisplay(courseIds, allCourses);
+        labels = orderedCourseIds
           .map((id: string) => allCourses.find((c: any) => c.id === id)?.name || '')
           .filter(Boolean);
       }
@@ -771,14 +774,15 @@ function TrackRoundContent() {
           ? rawCourseId.split(',').map((id: string) => id.trim()).filter(Boolean)
           : [];
       console.log('Looking for courseIds:', courseIds, 'in', allCourses.map(c => c.id));
+      const orderedCourseIds = orderCourseIdsForDisplay(courseIds, allCourses as any[]);
       // Preserve order of courseIds when finding courses
-      const foundCourses = courseIds.map(id => allCourses.find(c => c.id === id)).filter(Boolean) as Course[];
+      const foundCourses = orderedCourseIds.map(id => allCourses.find(c => c.id === id)).filter(Boolean) as Course[];
       console.log('Found courses:', foundCourses);
       if (foundCourses.length > 0) {
         // Merge holes for multi-nine support
         const mergedCourse: Course = {
           ...foundCourses[0],
-          id: courseIds.join(','),
+          id: orderedCourseIds.join(','),
           name: round.courseName || 'Combined Course',
           holes: foundCourses.flatMap(c => c.holes),
           holeCount: foundCourses.reduce((sum, c) => sum + (c.holes?.length || 0), 0),
@@ -1131,9 +1135,10 @@ function TrackRoundContent() {
                 const allCourses = JSON.parse(savedCourses);
                 // The course.id for a combined course is a comma-separated list of child ids in selection order
                 const courseIds = course.id.split(',').map((id: string) => id.trim());
-                if (courseIds.length === 2) {
-                  const firstNine = allCourses.find((c: any) => c.id === courseIds[0]);
-                  const secondNine = allCourses.find((c: any) => c.id === courseIds[1]);
+                const orderedCourseIds = orderCourseIdsForDisplay(courseIds, allCourses);
+                if (orderedCourseIds.length === 2) {
+                  const firstNine = allCourses.find((c: any) => c.id === orderedCourseIds[0]);
+                  const secondNine = allCourses.find((c: any) => c.id === orderedCourseIds[1]);
                   childLabel = currentHoleIndex < 9 ? (firstNine?.name || '') : (secondNine?.name || '');
                 } else {
                   // fallback: try to use Front/Back logic if only two children

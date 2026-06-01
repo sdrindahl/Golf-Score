@@ -31,9 +31,7 @@ const isValidTee = (tee: string): tee is typeof teeNames[number] => teeNames.inc
 
 export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, selectedTee = 'men', showTotals = true, onEdit, sectionLabels = [] }) => {
   if (!holes || holes.length === 0) return null;
-  // Ensure holes are sorted by holeNumber so Front 9 comes before Back 9
-  const sortedHoles = [...holes].sort((a, b) => (a.holeNumber ?? 0) - (b.holeNumber ?? 0));
-  const sections = chunkArray(sortedHoles, 9);
+  const sections = chunkArray(holes, 9);
 
   // Compute totals
   const parTotals = sections.map(section => section.reduce((sum, h) => sum + (h.par || 0), 0));
@@ -171,8 +169,8 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
             <thead>
               <tr className="bg-gray-200">
                 <th className="px-1 py-1 font-bold border border-gray-400"></th>
-                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">Front 9</th>
-                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">Back 9</th>
+                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">{sectionLabels[0] || 'Front 9'}</th>
+                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">{sectionLabels[1] || 'Back 9'}</th>
                 <th className="px-1 py-1 font-bold border border-gray-400">Total</th>
               </tr>
             </thead>
