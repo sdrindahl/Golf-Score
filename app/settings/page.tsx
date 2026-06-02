@@ -25,6 +25,10 @@ export default function Settings() {
   const [editingName, setEditingName] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [version, setVersion] = useState<VersionInfo | null>(null);
+  const [inProgressRounds, setInProgressRounds] = useState<any[]>([]);
+  const [loadingRounds, setLoadingRounds] = useState(false);
+  const [deleteRoundError, setDeleteRoundError] = useState("");
+  const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
 
   useEffect(() => {
     const user = auth.getCurrentUser();
@@ -80,6 +84,40 @@ export default function Settings() {
   }
   function handleDeleteAccount() {
     // ...implement delete account logic...
+  }
+
+  async function loadInProgressRounds() {
+    setLoadingRounds(true);
+    setDeleteRoundError("");
+    try {
+      const res = await fetch('/api/admin-rounds-in-progress');
+      if (!res.ok) throw new Error('Failed to load rounds');
+      const data = await res.json();
+      setInProgressRounds(data.rounds || []);
+    } catch (err: any) {
+      setDeleteRoundError(err.message || 'Failed to load rounds');
+    } finally {
+      setLoadingRounds(false);
+    }
+  }
+
+  async function handleDeleteRound(roundId: string) {
+    setDeletingRoundId(roundId);
+    setDeleteRoundError("");
+    try {
+      const res = await fetch('/api/delete-round', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roundId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed');
+      setInProgressRounds(prev => prev.filter(r => r.id !== roundId));
+    } catch (err: any) {
+      setDeleteRoundError(err.message || 'Delete failed');
+    } finally {
+      setDeletingRoundId(null);
+    }
   }
 
   return (
@@ -147,6 +185,43 @@ export default function Settings() {
               <p className="text-gray-300 text-xs mb-4">Permanently delete an account and all golf rounds.</p>
               {deleteError && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-3 text-xs font-semibold">{deleteError}</div>}
               <button onClick={handleDeleteAccount} className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors">🗑️ Delete Account</button>
+            </div>
+          )}
+          {currentUser.is_admin && (
+            <div className="bg-black bg-opacity-70 rounded-3xl p-6 shadow-2xl border-2 border-orange-400 mt-6">
+              <h2 className="text-lg font-bold mb-3 text-orange-400">🔴 Manage In-Progress Rounds</h2>
+              <p className="text-gray-300 text-xs mb-4">Delete stuck or abandoned live rounds for any player.</p>
+              {deleteRoundError && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-3 text-xs font-semibold">{deleteRoundError}</div>}
+              <button
+                onClick={loadInProgressRounds}
+                disabled={loadingRounds}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-2 rounded-lg transition-colors mb-3 disabled:opacity-50"
+              >
+                {loadingRounds ? 'Loading...' : '🔄 Load In-Progress Rounds'}
+              </button>
+              {inProgressRounds.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  {inProgressRounds.map((round: any) => (
+                    <div key={round.id} className="flex items-center justify-between bg-gray-900 rounded-xl px-4 py-3 border border-orange-800">
+                      <div>
+                        <div className="text-white font-semibold text-sm">{round.user_name || round.userName || '(unknown)'}</div>
+                        <div className="text-gray-400 text-xs">{round.course_name || round.courseName || round.course_id || 'Unknown course'}</div>
+                        <div className="text-gray-500 text-xs">{round.date ? new Date(round.date).toLocaleDateString() : ''}</div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteRound(round.id)}
+                        disabled={deletingRoundId === round.id}
+                        className="ml-3 bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+                      >
+                        {deletingRoundId === round.id ? '...' : '🗑️ Delete'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {inProgressRounds.length === 0 && !loadingRounds && (
+                <p className="text-gray-500 text-xs text-center">No rounds loaded yet. Click the button above.</p>
+              )}
             </div>
           )}
           {version && (

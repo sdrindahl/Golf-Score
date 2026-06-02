@@ -141,46 +141,64 @@ export default function NavBar() {
   return (
     <>
       {/* Desktop Top Navigation */}
-      <nav className="hidden md:block text-white p-4 sticky top-0 z-50 shadow-lg border-b border-black/10" style={{ background: 'var(--green-bg)' }}>
+      <nav className="hidden md:block text-white px-6 py-3 sticky top-0 z-50 border-b border-green-950/60" style={{ background: '#07150f', boxShadow: '0 2px 16px rgba(0,0,0,0.5)' }}>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between">
-            <div 
+            <div
               onClick={() => router.push('/')}
-              className="flex items-center gap-2 cursor-pointer"
+              className="flex items-center gap-3 cursor-pointer"
             >
-              <img src="/apex_tracer.png" alt="ApexTracer Golf" className="h-12 w-12" />
-              <h1 className="text-2xl font-bold">ApexTracer Golf</h1>
+              <img src="/JustTapIt_Logo.png" alt="Just Tap It" className="h-10 w-10" />
+              <h1 className="text-xl font-bold tracking-tight text-white">Just Tap It Golf</h1>
             </div>
             {currentUser && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => router.push('/wallet')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded font-semibold text-sm transition ${
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition ${
                     pathname === '/wallet' || pathname?.startsWith('/wallet/')
-                      ? 'bg-green-600 text-white'
-                      : 'bg-green-700 hover:bg-green-600 text-white'
+                      ? 'bg-green-700 text-white'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  💳 Golf Wallet
+                  💳 Wallet
                 </button>
                 <button
-                  onClick={() => router.push('/settings')}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded font-semibold text-sm transition ${
-                    pathname === '/settings' ? 'bg-green-600 text-white' : 'bg-green-700 hover:bg-green-600 text-white'
+                  onClick={() => router.push('/courses')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition ${
+                    pathname?.startsWith('/courses') ? 'bg-green-700 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
                   }`}
-                  title="Settings"
+                >
+                  🏌️ Courses
+                </button>
+                <button
+                  onClick={() => router.push('/players')}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition ${
+                    pathname?.startsWith('/players') ? 'bg-green-700 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  👥 Golfers
+                </button>
+                <div className="w-px h-5 bg-green-900 mx-1" />
+                <button
+                  onClick={() => router.push('/settings')}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-semibold text-sm transition ${
+                    pathname === '/settings' ? 'bg-green-700 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
                 >
                   ⚙️ Settings
                 </button>
-                <div className="flex items-center gap-2 px-3 py-1 bg-green-600 rounded">
-                  <span>👤</span>
-                  <span className="font-semibold">{currentUser.name}</span>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-900/50 border border-green-800/50 text-sm font-semibold">
+                  <span className="w-6 h-6 rounded-full bg-green-700 flex items-center justify-center text-xs font-bold">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span>{currentUser.name}</span>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-800 rounded font-semibold text-sm transition"
+                  className="px-3 py-1.5 rounded-lg font-semibold text-sm text-red-400 hover:text-red-300 hover:bg-red-950/30 transition"
                 >
-                  🚪 Logout
+                  Log Out
                 </button>
               </div>
             )}

@@ -1161,6 +1161,7 @@ function TrackRoundContent() {
             childLabel = course.name;
           }
         }
+        if (showMap) return null;
         return (
           <div
             className="fixed left-1/2 -translate-x-1/2 z-50 flex flex-row items-center justify-center"
@@ -1293,7 +1294,7 @@ function TrackRoundContent() {
 
 
       {/* Top Left Corner Card - Yardage, Hole Info, Track Drive */}
-      {course && course.holes && course.holes[currentHoleIndex] && (
+      {!showMap && course && course.holes && course.holes[currentHoleIndex] && (
         <div className="fixed left-4 z-40 flex flex-col items-center gap-2 min-w-[170px] max-w-xs" style={{ top: 'calc(env(safe-area-inset-top) + 96px)' }}> 
           {/* Offset below header/banner and safe area inset */}
          <div className="bg-black bg-opacity-70 rounded-2xl shadow-2xl px-6 py-4 flex flex-col items-start w-full border border-green-400 relative" style={{boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)'}}>
