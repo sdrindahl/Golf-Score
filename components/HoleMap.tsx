@@ -16,6 +16,8 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const measurementPolyline = useRef<any>(null);
   const currentTapMarker = useRef<any>(null);
   const currentLabel = useRef<any>(null);
+  const userMarker = useRef<any>(null);
+  const greenMarker = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tapPoint, setTapPoint] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -80,6 +82,16 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         currentLabel.current = null;
       }
 
+      // Remove previous user/green markers
+      if (userMarker.current) {
+        map.current?.removeLayer(userMarker.current);
+        userMarker.current = null;
+      }
+      if (greenMarker.current) {
+        map.current?.removeLayer(greenMarker.current);
+        greenMarker.current = null;
+      }
+
       // Helper to calculate distance
       const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const toRad = (v: number) => (v * Math.PI) / 180;
@@ -131,6 +143,42 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         weight: 2,
         opacity: 0.7,
       }).addTo(map.current);
+
+      // User position — blue GPS dot with white ring
+      userMarker.current = L.circleMarker([userLat, userLng], {
+        radius: 9,
+        fillColor: '#3b82f6',
+        color: '#ffffff',
+        weight: 2.5,
+        opacity: 1,
+        fillOpacity: 1,
+      }).addTo(map.current);
+      // Inner pulse dot
+      L.circleMarker([userLat, userLng], {
+        radius: 4,
+        fillColor: '#ffffff',
+        color: 'transparent',
+        weight: 0,
+        fillOpacity: 0.9,
+      }).addTo(map.current);
+
+      // Pin marker at green — white flag icon using divIcon
+      const pinIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width: 28px; height: 28px;
+          background: #16a34a;
+          border: 2.5px solid #fff;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 15px; line-height: 1;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        ">⛳</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+      greenMarker.current = L.marker([greenLat, greenLng], { icon: pinIcon }).addTo(map.current);
+
       map.current.on('click', handleMapClick);
       cleanupClick = () => {
         if (map.current) map.current.off('click', handleMapClick);
