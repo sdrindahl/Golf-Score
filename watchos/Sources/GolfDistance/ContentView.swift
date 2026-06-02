@@ -23,6 +23,7 @@ struct ContentView: View {
         }
         .onAppear {
             courseManager.fetchCourses()
+            courseManager.fetchActiveRound()
         }
         // Once GPS and courses are ready, try to auto-select the nearest course
         .onChange(of: locationManager.location) { loc in

@@ -230,6 +230,21 @@ export default function Settings() {
               <div className="text-black font-bold">Build Date: {version.buildDate}{version.buildTime ? `, ${version.buildTime}` : ''}</div>
             </div>
           )}
+          {/* Apple Watch sync — shows the User ID needed by the TapiT watch app */}
+          <div className="mt-6 p-4 bg-gray-100 rounded-2xl border border-gray-300">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">⌚</span>
+              <span className="font-bold text-black text-sm">Apple Watch Sync</span>
+            </div>
+            <p className="text-xs text-gray-600 mb-2">Enter this User ID in the TapiT watch app to sync your active round automatically.</p>
+            <div className="flex items-center gap-2 bg-white rounded-xl px-3 py-2 border border-gray-300">
+              <span className="font-mono text-sm text-black flex-1 select-all">{currentUser.id}</span>
+              <button
+                onClick={() => navigator.clipboard?.writeText(currentUser.id)}
+                className="text-xs text-green-700 font-semibold hover:text-green-900"
+              >Copy</button>
+            </div>
+          </div>
         </div>
       </PageWrapper>
     </div>

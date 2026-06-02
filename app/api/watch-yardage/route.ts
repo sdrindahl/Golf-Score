@@ -1,19 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-interface HoleRow {
-  holeNumber: number;
-  par: number;
-  greenLat?: number;
-  greenLng?: number;
-  men?: { yardage: number };
-}
-
-interface CourseRow {
-  id: string;
-  name: string;
-  holes: HoleRow[] | null;
-}
+import { COURSES_DATABASE } from '@/data/courses';
 
 /**
  * GET /api/watch-yardage
@@ -26,37 +12,24 @@ interface CourseRow {
  */
 export async function GET(req: NextRequest) {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-
     const courseId = req.nextUrl.searchParams.get('courseId');
 
-    let query = supabase.from('courses').select('id, name, holes').not('holes', 'is', null);
+    const source = courseId
+      ? COURSES_DATABASE.filter((c) => c.id === courseId)
+      : COURSES_DATABASE;
 
-    if (courseId) {
-      query = query.eq('id', courseId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const courses = ((data as CourseRow[]) || [])
+    const courses = source
       .map((course) => {
         const holes = (course.holes ?? [])
-          .filter((h) => h.greenLat != null && h.greenLng != null)
-          .map((h) => ({
+          .filter((h: any) => h.greenLat != null && h.greenLng != null)
+          .map((h: any) => ({
             holeNumber: h.holeNumber,
             par: h.par,
             greenLat: h.greenLat,
             greenLng: h.greenLng,
             yardage: h.men?.yardage ?? 0,
           }))
-          .sort((a, b) => a.holeNumber - b.holeNumber);
+          .sort((a: any, b: any) => a.holeNumber - b.holeNumber);
 
         return { id: course.id, name: course.name, holes };
       })
@@ -66,7 +39,6 @@ export async function GET(req: NextRequest) {
       { courses },
       {
         headers: {
-          // Cache for 1 hour – course GPS data changes rarely
           'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
         },
       }
