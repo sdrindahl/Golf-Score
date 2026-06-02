@@ -28,3 +28,17 @@ struct WatchHole: Codable, Identifiable, Hashable {
     /// Par label, e.g. "Par 4"
     var parLabel: String { "Par \(par)" }
 }
+
+// MARK: - Active round (from /api/watch-active-round)
+
+struct ActiveRoundResponse: Codable {
+    let round: ActiveRound?
+}
+
+struct ActiveRound: Codable {
+    let id: String
+    let courseId: String
+    let courseName: String
+    let currentHole: Int
+    let hasGPS: Bool
+}

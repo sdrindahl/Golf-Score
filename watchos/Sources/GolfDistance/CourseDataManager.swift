@@ -19,11 +19,42 @@ final class CourseDataManager: ObservableObject {
     private let cacheKey          = "gd_watchCourseData_v1"
     private let courseSelectionKey = "gd_selectedCourseId"
 
+    @Published var activeRound: ActiveRound?
+    private let userIdKey = "gd_userId"
+
+    /// The userId saved from the web app (set via URL scheme or manual entry)
+    var userId: String? {
+        get { UserDefaults.standard.string(forKey: userIdKey) }
+        set { UserDefaults.standard.set(newValue, forKey: userIdKey) }
+    }
+
     init() {
         loadCachedCourses()
     }
 
     // MARK: - Fetch
+
+    /// Fetch active round from the web app and auto-select the matching course.
+    func fetchActiveRound() {
+        guard let userId, !userId.isEmpty else { return }
+        guard let url = URL(string: "\(apiBaseURL)/api/watch-active-round?userId=\(userId)") else { return }
+
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+            guard let self, let data else { return }
+            DispatchQueue.main.async {
+                if let response = try? JSONDecoder().decode(ActiveRoundResponse.self, from: data),
+                   let round = response.round, round.hasGPS {
+                    self.activeRound = round
+                    // Auto-select the matching course
+                    if let match = self.courses.first(where: { $0.id == round.courseId }) {
+                        self.selectCourse(match)
+                    }
+                } else {
+                    self.activeRound = nil
+                }
+            }
+        }.resume()
+    }
 
     func fetchCourses() {
         isLoading     = true
