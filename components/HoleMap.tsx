@@ -18,6 +18,7 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
   const currentLabel = useRef<any>(null);
   const userMarker = useRef<any>(null);
   const greenMarker = useRef<any>(null);
+  const currentLabel2 = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tapPoint, setTapPoint] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -81,6 +82,10 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
         map.current?.removeLayer(currentLabel.current);
         currentLabel.current = null;
       }
+      if (currentLabel2.current) {
+        map.current?.removeLayer(currentLabel2.current);
+        currentLabel2.current = null;
+      }
 
       // Remove previous user/green markers
       if (userMarker.current) {
@@ -116,32 +121,51 @@ export default function HoleMap({ userLat, userLng, greenLat, greenLng, holeName
       let polylinePoints;
       if (tapPoint) {
         polylinePoints = [[userLat, userLng], [tapPoint.lat, tapPoint.lng], [greenLat, greenLng]];
-        // Add tap marker and label
-        currentTapMarker.current = L.circleMarker([tapPoint.lat, tapPoint.lng], {
-          radius: 5,
-          fillColor: '#ff9500',
-          color: '#fff',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 0.7,
-        }).addTo(map.current!);
-        const distYards = Math.round(getDistance(userLat, userLng, tapPoint.lat, tapPoint.lng));
-        currentLabel.current = L.tooltip({
-          permanent: true,
-          direction: 'right',
-          className: 'hole-map-distance-label',
-          offset: [15, 0],
-        })
-          .setContent(`<strong>${distYards} yd</strong>`)
-          .setLatLng([tapPoint.lat, tapPoint.lng])
-          .addTo(map.current!);
+
+        // Tap marker — white circle outline with filled dot (like screenshot)
+        const tapIcon = L.divIcon({
+          className: '',
+          html: `<div style="
+            width:26px;height:26px;
+            border:2.5px solid #fff;
+            border-radius:50%;
+            background:transparent;
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 0 0 1.5px rgba(0,0,0,0.35),0 2px 6px rgba(0,0,0,0.4);
+          "><div style="width:9px;height:9px;border-radius:50%;background:#fff;"></div></div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+        });
+        currentTapMarker.current = L.marker([tapPoint.lat, tapPoint.lng], { icon: tapIcon }).addTo(map.current!);
+
+        // Blue badge: user → tap distance, at midpoint of that segment
+        const distUserToTap = Math.round(getDistance(userLat, userLng, tapPoint.lat, tapPoint.lng));
+        const midUserTapLat = (userLat + tapPoint.lat) / 2;
+        const midUserTapLng = (userLng + tapPoint.lng) / 2;
+        const blueIcon = L.divIcon({
+          className: '',
+          html: `<div style="background:#2563eb;color:#fff;font-weight:700;font-size:14px;padding:5px 11px;border-radius:9px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);">${distUserToTap} yd</div>`,
+          iconAnchor: [36, 16],
+        });
+        currentLabel.current = L.marker([midUserTapLat, midUserTapLng], { icon: blueIcon }).addTo(map.current!);
+
+        // Orange badge: tap → green distance, at midpoint of that segment
+        const distTapToGreen = Math.round(getDistance(tapPoint.lat, tapPoint.lng, greenLat, greenLng));
+        const midTapGreenLat = (tapPoint.lat + greenLat) / 2;
+        const midTapGreenLng = (tapPoint.lng + greenLng) / 2;
+        const orangeIcon = L.divIcon({
+          className: '',
+          html: `<div style="background:#ea580c;color:#fff;font-weight:700;font-size:14px;padding:5px 11px;border-radius:9px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.5);">${distTapToGreen} yd</div>`,
+          iconAnchor: [36, 16],
+        });
+        currentLabel2.current = L.marker([midTapGreenLat, midTapGreenLng], { icon: orangeIcon }).addTo(map.current!);
       } else {
         polylinePoints = [[userLat, userLng], [greenLat, greenLng]];
       }
       measurementPolyline.current = L.polyline(polylinePoints, {
-        color: 'red',
-        weight: 2,
-        opacity: 0.7,
+        color: '#2563eb',
+        weight: 4,
+        opacity: 0.9,
       }).addTo(map.current);
 
       // User position — blue GPS dot with white ring
