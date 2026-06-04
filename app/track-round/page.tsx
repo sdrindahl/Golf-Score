@@ -1848,7 +1848,7 @@ function TrackRoundContent() {
             )}
             {/* ── TOTAL SCORE ── */}
             <div className="mb-3 mt-1">
-              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">Total Score</p>
+              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">Total Score</p>
               <div className="flex items-center justify-between gap-3">
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
@@ -1863,10 +1863,36 @@ function TrackRoundContent() {
                   }}
                   aria-label="Decrease score"
                 >−</button>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-extrabold text-white shrink-0"
-                  style={{ background: 'rgba(0,0,0,0.5)', boxShadow: '0 0 18px 4px rgba(74,222,128,0.7), 0 0 0 3px rgba(74,222,128,0.5)' }}>
-                  {scores[currentHoleIndex] ?? 0}
-                </div>
+                {(() => {
+                  const s = scores[currentHoleIndex] ?? 0;
+                  const holePar = course?.holes?.[currentHoleIndex]?.par;
+                  const diff = (typeof s === 'number' && s > 0 && typeof holePar === 'number') ? s - holePar : null;
+                  // color: eagle or better=gold, birdie=bright green, par=white/gray, bogey=orange, double+=red, unscored=green
+                  const colorMap: Record<string, { bg: string; glow: string; ring: string }> = {
+                    ace:     { bg: 'rgba(234,179,8,1)',   glow: 'rgba(253,224,71,0.8)',  ring: 'rgba(253,224,71,0.7)' },
+                    eagle:   { bg: 'rgba(234,179,8,1)',   glow: 'rgba(253,224,71,0.8)',  ring: 'rgba(253,224,71,0.7)' },
+                    birdie:  { bg: 'rgba(22,163,74,1)',   glow: 'rgba(74,222,128,0.7)',  ring: 'rgba(74,222,128,0.5)' },
+                    par:     { bg: 'rgba(100,116,139,1)', glow: 'rgba(203,213,225,0.5)', ring: 'rgba(203,213,225,0.4)' },
+                    bogey:   { bg: 'rgba(234,88,12,1)',   glow: 'rgba(251,146,60,0.7)',  ring: 'rgba(251,146,60,0.5)' },
+                    double:  { bg: 'rgba(185,28,28,1)',   glow: 'rgba(248,113,113,0.7)', ring: 'rgba(248,113,113,0.5)' },
+                    default: { bg: 'rgba(22,163,74,1)',   glow: 'rgba(74,222,128,0.7)',  ring: 'rgba(74,222,128,0.5)' },
+                  };
+                  let key = 'default';
+                  if (diff === null) key = 'default';
+                  else if (s === 1) key = 'ace';
+                  else if (diff <= -2) key = 'eagle';
+                  else if (diff === -1) key = 'birdie';
+                  else if (diff === 0) key = 'par';
+                  else if (diff === 1) key = 'bogey';
+                  else if (diff >= 2) key = 'double';
+                  const c = colorMap[key];
+                  return (
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-extrabold text-white shrink-0"
+                      style={{ background: c.bg, boxShadow: `0 0 18px 4px ${c.glow}, 0 0 0 3px ${c.ring}` }}>
+                      {s}
+                    </div>
+                  );
+                })()}
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
                   onClick={() => {
@@ -1891,7 +1917,7 @@ function TrackRoundContent() {
 
             {/* ── FIR ── */}
             <div className="mb-3">
-              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">FIR</p>
+              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">FIR</p>
               <div className="flex gap-2">
                 {([
                   { val: 'L' as const, label: 'Miss Left' },
@@ -1930,7 +1956,7 @@ function TrackRoundContent() {
 
             {/* ── GIR ── */}
             <div className="mb-3">
-              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">GIR</p>
+              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">GIR</p>
               <div className="flex gap-2">
                 {([
                   { val: false, label: 'Missed', activeColor: 'rgba(180,120,20,0.7)', glowColor: 'rgba(251,191,36,0.4)', borderColor: 'rgba(251,191,36,0.5)', dotColor: '#f59e0b' },
@@ -1969,7 +1995,7 @@ function TrackRoundContent() {
 
             {/* ── PUTTS ── */}
             <div className="mb-3">
-              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">Putts</p>
+              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">Putts</p>
               <div className="flex items-center justify-between gap-3">
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
@@ -2080,7 +2106,7 @@ function TrackRoundContent() {
       )}
             {/* ── MASTER ACTION ── */}
             <div className="mt-1">
-              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-1">Master Action</p>
+              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-1">Master Action</p>
               {scores.length === course?.holes?.length && scores.every(s => typeof s === 'number' && s > 0) ? (
                 <button
                   className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
