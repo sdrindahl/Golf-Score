@@ -842,126 +842,127 @@ function RoundDetailContent() {
 
 
           {/* Performance Breakdown (collapsible) */}
-          <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
+          <div className="rounded-2xl shadow-lg p-4" style={{ background: 'rgba(20,30,20,0.82)' }}>
             <button
-              className="flex items-center w-full justify-between text-lg font-bold text-gray-800 mb-3 focus:outline-none"
+              className="flex items-center w-full justify-between text-base font-extrabold tracking-widest uppercase text-green-400 mb-2 focus:outline-none"
               onClick={() => setShowPerformance(v => !v)}
               aria-expanded={showPerformance}
               aria-controls="performance-breakdown"
             >
               Performance Breakdown
-              <span className="ml-2 text-xl">{showPerformance ? '▼' : '▶'}</span>
+              <span className="ml-2 text-base text-gray-400">{showPerformance ? '▼' : '▶'}</span>
             </button>
             {showPerformance && (
-              <div id="performance-breakdown" className="space-y-2">
-                {Object.entries(scoreDistribution).map(([type, count]) => {
-                  const percentage = (count / maxDistribution) * 100
-                  const colors: { [key: string]: string } = {
-                    'Hole in 1': 'from-purple-500 to-purple-400',
-                    'Eagle': 'from-blue-500 to-blue-400',
-                    'Birdie': 'from-green-500 to-green-400',
-                    'Par': 'from-yellow-500 to-yellow-400',
-                    'Bogey': 'from-orange-500 to-orange-400',
-                    'Double+': 'from-red-500 to-red-400',
-                  }
-                  const emojis: { [key: string]: string } = {
-                    'Hole in 1': '⭐',
-                    'Eagle': '🦅',
-                    'Birdie': '🐦',
-                    'Par': '✔️',
-                    'Bogey': '⚠️',
-                    'Double+': '❌',
-                  }
-                  return count > 0 ? (
-                    <div key={type}>
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">{emojis[type]}</span>
-                          <span className="text-sm font-semibold text-gray-700">{type}</span>
-                        </div>
-                        <span className="text-sm font-bold text-gray-800">{count}</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`bg-gradient-to-r ${colors[type]} h-2 rounded-full transition-all`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  ) : null
-                })}
-                {/* Add drive stats summary */}
-                {(() => {
-                  const driveYardages = (round?.perHoleStats || []).map(h => h?.drive?.yardage).filter(y => typeof y === 'number');
-                  if (driveYardages.length === 0) return null;
-                  const avgDrive = Math.round(driveYardages.reduce((a, b) => a + (b || 0), 0) / driveYardages.length);
-                  return (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🚗</span>
-                          <span className="text-sm font-semibold text-gray-700">Avg Drive</span>
-                        </div>
-                        <span className="text-sm font-bold text-blue-800">{avgDrive} yd</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-                {/* Add FIR stats */}
-                {(() => {
-                  const firStats = calculateFIRStats();
-                  if (firStats.total === 0) return null;
-                  return (
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">⛳</span>
-                          <span className="text-sm font-semibold text-gray-700">FIR</span>
-                        </div>
-                        <span className="text-sm font-bold text-green-800">{firStats.hitPercent}%</span>
-                      </div>
-                      <div className="text-xs text-gray-600 pl-6 space-y-1">
-                        <div>Miss Left: {firStats.missLeftPercent}%</div>
-                        <div>Miss Right: {firStats.missRightPercent}%</div>
-                      </div>
-                    </div>
-                  );
-                })()}
-                {/* Add GIR stats */}
-                {(() => {
-                  const girStats = calculateGIRStats();
-                  if (girStats.totalHoles === 0) return null;
-                  return (
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg">🎯</span>
-                          <span className="text-sm font-semibold text-gray-700">GIR</span>
-                        </div>
-                        <span className="text-sm font-bold text-blue-800">{girStats.girPercent}%</span>
-                      </div>
-                    </div>
-                  );
-                })()}
+              <div id="performance-breakdown">
+                {/* Score distribution table */}
+                <table className="min-w-full text-center text-xs mb-3" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                      <th className="px-2 py-1 font-bold text-white text-left">Type</th>
+                      <th className="px-2 py-1 font-bold text-white">Count</th>
+                      <th className="px-2 py-1 font-bold text-white">Distribution</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(scoreDistribution).map(([type, count]) => {
+                      const percentage = (count / maxDistribution) * 100
+                      const barColors: { [key: string]: string } = {
+                        'Hole in 1': 'bg-purple-400',
+                        'Eagle': 'bg-blue-400',
+                        'Birdie': 'bg-green-400',
+                        'Par': 'bg-yellow-400',
+                        'Bogey': 'bg-orange-400',
+                        'Double+': 'bg-red-400',
+                      }
+                      const emojis: { [key: string]: string } = {
+                        'Hole in 1': '⭐',
+                        'Eagle': '🦅',
+                        'Birdie': '🐦',
+                        'Par': '✔️',
+                        'Bogey': '⚠️',
+                        'Double+': '❌',
+                      }
+                      return count > 0 ? (
+                        <tr key={type} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td className="px-2 py-1 text-left">
+                            <span className="mr-1">{emojis[type]}</span>
+                            <span className="font-semibold text-gray-200">{type}</span>
+                          </td>
+                          <td className="px-2 py-1 font-bold text-white">{count}</td>
+                          <td className="px-2 py-1">
+                            <div className="w-full rounded-full h-2" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                              <div className={`${barColors[type]} h-2 rounded-full`} style={{ width: `${percentage}%` }} />
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null
+                    })}
+                  </tbody>
+                </table>
+                {/* Driving / FIR / GIR summary rows */}
+                <table className="min-w-full text-center text-xs" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                      <th className="px-2 py-1 font-bold text-white text-left">Stat</th>
+                      <th className="px-2 py-1 font-bold text-white">Value</th>
+                      <th className="px-2 py-1 font-bold text-white">Detail</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const driveYardages = (round?.perHoleStats || []).map((h: any) => h?.drive?.yardage).filter((y: any) => typeof y === 'number');
+                      if (driveYardages.length === 0) return null;
+                      const avgDrive = Math.round(driveYardages.reduce((a: number, b: number) => a + b, 0) / driveYardages.length);
+                      return (
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td className="px-2 py-1 text-left"><span className="mr-1">🚗</span><span className="font-semibold text-gray-200">Avg Drive</span></td>
+                          <td className="px-2 py-1 font-bold text-yellow-300">{avgDrive} yd</td>
+                          <td className="px-2 py-1 text-gray-400">{driveYardages.length} recorded</td>
+                        </tr>
+                      );
+                    })()}
+                    {(() => {
+                      const firStats = calculateFIRStats();
+                      if (firStats.total === 0) return null;
+                      return (
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td className="px-2 py-1 text-left"><span className="mr-1">⛳</span><span className="font-semibold text-gray-200">FIR</span></td>
+                          <td className="px-2 py-1 font-bold text-green-400">{firStats.hitPercent}%</td>
+                          <td className="px-2 py-1 text-gray-400 text-[10px]">L: {firStats.missLeftPercent}% · R: {firStats.missRightPercent}%</td>
+                        </tr>
+                      );
+                    })()}
+                    {(() => {
+                      const girStats = calculateGIRStats();
+                      if (girStats.totalHoles === 0) return null;
+                      return (
+                        <tr>
+                          <td className="px-2 py-1 text-left"><span className="mr-1">🎯</span><span className="font-semibold text-gray-200">GIR</span></td>
+                          <td className="px-2 py-1 font-bold text-blue-300">{girStats.girPercent}%</td>
+                          <td className="px-2 py-1 text-gray-400">{girStats.totalHoles} holes</td>
+                        </tr>
+                      );
+                    })()}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
 
           {/* Per-Hole Stats Breakdown (collapsible) */}
-          <div className="bg-white/95 backdrop-blur rounded-2xl p-4 shadow-lg border border-white/20">
+          <div className="rounded-2xl shadow-lg p-4" style={{ background: 'rgba(20,30,20,0.82)' }}>
             <button
-              className="flex items-center w-full justify-between text-lg font-bold text-gray-800 mb-3 focus:outline-none"
+              className="flex items-center w-full justify-between text-base font-extrabold tracking-widest uppercase text-green-400 mb-2 focus:outline-none"
               onClick={() => setShowPerHole(v => !v)}
               aria-expanded={showPerHole}
               aria-controls="per-hole-breakdown"
             >
               Per-Hole Stats Breakdown
-              <span className="ml-2 text-xl">{showPerHole ? '▼' : '▶'}</span>
+              <span className="ml-2 text-base text-gray-400">{showPerHole ? '▼' : '▶'}</span>
             </button>
             {showPerHole && (
-              <div id="per-hole-breakdown" className="overflow-x-auto max-h-96 overflow-y-auto">
+              <div id="per-hole-breakdown" className="overflow-x-auto">
                 {(() => {
-                  // Calculate max putts for header
                   const maxPutts = Math.max(
                     ...(course.holes.map((_, idx) => {
                       const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
@@ -969,41 +970,55 @@ function RoundDetailContent() {
                       return puttDistances.length;
                     }) || [0])
                   );
-
                   return (
-                    <table className="min-w-full text-xs md:text-sm border-collapse">
-                      <thead className="sticky top-0 z-20">
-                        <tr className="bg-gray-100">
-                          <th className="p-2 sticky left-0 bg-gray-100 z-20">Hole</th>
-                          <th className="p-2 sticky left-12 bg-gray-100 z-20">Par</th>
-                          <th className="p-2">Score</th>
-                          <th className="p-2">FIR</th>
-                          <th className="p-2">GIR</th>
-                          <th className="p-2">Putts</th>
+                    <table className="min-w-full text-center text-xs" style={{ borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                          <th className="px-1 py-1 font-bold text-white sticky left-0 z-10" style={{ background: 'rgba(20,30,20,0.95)' }}>Hole</th>
+                          <th className="px-1 py-1 font-bold text-white">Par</th>
+                          <th className="px-1 py-1 font-bold text-white">Score</th>
+                          <th className="px-1 py-1 font-bold text-white">FIR</th>
+                          <th className="px-1 py-1 font-bold text-white">GIR</th>
+                          <th className="px-1 py-1 font-bold text-white">Putts</th>
                           {Array.from({ length: maxPutts }, (_, i) => (
-                            <th key={`putt-${i + 1}`} className="p-2">Putt {i + 1}</th>
+                            <th key={`putt-${i + 1}`} className="px-1 py-1 font-bold text-white">P{i + 1}</th>
                           ))}
-                          <th className="p-2">Drive (yd)</th>
+                          <th className="px-1 py-1 font-bold text-white">Drive</th>
                         </tr>
                       </thead>
                       <tbody>
                         {course.holes.map((hole, idx) => {
                           const stats = round.perHoleStats && round.perHoleStats[idx] ? round.perHoleStats[idx] : {};
                           const puttDistances = Array.isArray(stats.puttDistances) ? stats.puttDistances : [];
+                          const score = round.scores[idx];
+                          const par = hole.par ?? 0;
+                          const diff = typeof score === 'number' && score > 0 ? score - par : null;
+                          const scoreBg =
+                            diff === null ? '' :
+                            diff <= -2 ? 'bg-blue-400 border-blue-700' :
+                            diff === -1 ? 'bg-green-400 border-green-700' :
+                            diff === 0 ? 'bg-gray-300 border-gray-500' :
+                            diff === 1 ? 'bg-orange-300 border-orange-500' :
+                            diff === 2 ? 'bg-red-300 border-red-500' : 'bg-red-500 border-red-700';
+                          const rowBg = idx % 2 === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)';
                           return (
-                            <tr key={hole.holeNumber} className="border-b last:border-0">
-                              <td className="p-2 text-center font-bold sticky left-0 bg-white z-10">{hole.holeNumber}</td>
-                              <td className="p-2 text-center font-semibold text-gray-700 sticky left-12 bg-white z-10">{hole.par}</td>
-                              <td className="p-2 text-center">{round.scores[idx] || '-'}</td>
-                              <td className="p-2 text-center">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
-                              <td className="p-2 text-center">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
-                              <td className="p-2 text-center">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
+                            <tr key={hole.holeNumber} style={{ background: rowBg, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                              <td className="px-1 py-1 font-bold text-white sticky left-0 z-10" style={{ background: rowBg }}>{hole.holeNumber}</td>
+                              <td className="px-1 py-1 text-gray-300 font-semibold">{hole.par}</td>
+                              <td className="px-1 py-1">
+                                {typeof score === 'number' && score > 0 ? (
+                                  <span className={`inline-flex w-5 h-5 rounded-full border-2 text-xs font-semibold items-center justify-center text-gray-900 ${scoreBg}`}>{score}</span>
+                                ) : <span className="text-gray-500">-</span>}
+                              </td>
+                              <td className="px-1 py-1 text-gray-300">{stats.fairwayHit === 'hit' ? <span className="text-green-400">✓</span> : stats.fairwayHit === 'L' ? <span className="text-orange-400">L</span> : stats.fairwayHit === 'R' ? <span className="text-orange-400">R</span> : <span className="text-gray-500">-</span>}</td>
+                              <td className="px-1 py-1">{stats.gir === true ? <span className="text-green-400">✓</span> : stats.gir === false ? <span className="text-red-400">✗</span> : <span className="text-gray-500">-</span>}</td>
+                              <td className="px-1 py-1 font-bold text-white">{puttDistances.length > 0 ? puttDistances.length : <span className="text-gray-500">-</span>}</td>
                               {Array.from({ length: maxPutts }, (_, i) => (
-                                <td key={`putt-${i}-${idx}`} className="p-2 text-center">
-                                  {puttDistances[i] ? `${puttDistances[i]}'` : '-'}
+                                <td key={`putt-${i}-${idx}`} className="px-1 py-1 text-[10px] text-gray-300">
+                                  {puttDistances[i] ? `${puttDistances[i]}'` : <span className="text-gray-500">-</span>}
                                 </td>
                               ))}
-                              <td className="p-2 text-center">{stats.drive && typeof stats.drive.yardage === 'number' ? stats.drive.yardage : '-'}{stats.drive && typeof stats.drive.yardage === 'number' ? ' yd' : ''}</td>
+                              <td className="px-1 py-1 text-[10px] text-gray-300">{stats.drive && typeof stats.drive.yardage === 'number' ? <span className="text-yellow-300">{stats.drive.yardage}y</span> : <span className="text-gray-500">-</span>}</td>
                             </tr>
                           );
                         })}

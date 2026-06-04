@@ -42,13 +42,16 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
   const totalYardage = yardageTotals.reduce((a, b) => a + b, 0);
 
   return (
-    <div className="rounded-xl border bg-white shadow p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-bold">Holes Completed</h3>
+    <div className="rounded-2xl shadow-lg p-4" style={{ background: 'rgba(20,30,20,0.82)' }}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-extrabold tracking-widest uppercase text-green-400">Holes Completed</h3>
         {onEdit && (
-          <button className="text-blue-700 underline text-sm font-semibold hover:text-blue-900" onClick={onEdit}>Edit</button>
+          <button className="text-gray-300 text-sm font-semibold hover:text-white" onClick={onEdit}>Edit</button>
         )}
       </div>
+
+      {/* Per-nine tables */}
       <div className="overflow-x-auto w-full">
         {sections.map((section, sectionIdx) => {
           const startIdx = sectionIdx * 9;
@@ -57,28 +60,27 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
           const parTotal = parTotals[sectionIdx];
           const scoreTotal = scoreTotals[sectionIdx];
           const yardageTotal = yardageTotals[sectionIdx];
-          const yardages = section.map(h => isValidTee(selectedTee) ? h[selectedTee]?.yardage ?? '-' : '-');
           return (
-            <table key={sectionIdx} className="min-w-full border-separate border-spacing-0 text-center text-xs mb-2" style={{ borderCollapse: 'separate' }}>
+            <table key={sectionIdx} className="min-w-full text-center text-xs mb-3" style={{ borderCollapse: 'collapse' }}>
               <thead>
                 {sectionLabel && (
-                  <tr className="bg-gray-50">
-                    <th colSpan={section.length + 2} className="px-1 py-1 font-semibold text-gray-700 border border-gray-300">
+                  <tr>
+                    <th colSpan={section.length + 2} className="py-1 text-xs font-semibold text-gray-300 text-center">
                       {sectionLabel}
                     </th>
                   </tr>
                 )}
-                <tr className="bg-gray-200">
-                  <th className="px-1 py-1 font-bold border border-gray-400">Hole</th>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                  <th className="px-1 py-1 font-bold text-white text-left">Hole</th>
                   {section.map((h, i) => (
-                    <th key={i} className="px-1 py-1 font-bold border border-gray-400">{h.holeNumber ?? startIdx + i + 1}</th>
+                    <th key={i} className="px-1 py-1 font-bold text-white">{h.holeNumber ?? startIdx + i + 1}</th>
                   ))}
-                  <th className="px-1 py-1 font-bold border border-gray-400">{isFrontNine ? 'Out' : 'In'}</th>
+                  <th className="px-1 py-1 font-bold text-gray-400">{isFrontNine ? 'Out' : 'In'}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="bg-gray-100">
-                  <td className="px-1 py-1 font-semibold border border-gray-300">Yardage</td>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <td className="px-1 py-1 text-gray-400 text-left text-[10px]">Yardage</td>
                   {section.map((h, i) => {
                     let yard = '-';
                     if (isValidTee(selectedTee) && h[selectedTee] && typeof h[selectedTee].yardage === 'number') {
@@ -86,111 +88,79 @@ export const ScorecardTable: React.FC<ScorecardTableProps> = ({ holes, scores, s
                     } else if (typeof h.yardage === 'number') {
                       yard = h.yardage.toString();
                     }
-                    return (
-                      <td key={i} className="px-1 py-1 text-[10px] text-gray-700 font-bold border border-gray-300">{yard}</td>
-                    );
+                    return <td key={i} className="px-1 py-1 text-[10px] text-gray-300">{yard}</td>;
                   })}
-                  <td className="px-1 py-1 font-bold bg-gray-200 text-[10px] text-gray-700 border border-gray-300">{yardageTotal > 0 ? yardageTotal : ''}</td>
+                  <td className="px-1 py-1 text-[10px] text-gray-300 font-bold">{yardageTotal > 0 ? yardageTotal : ''}</td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-1 py-1 font-semibold border border-gray-300">Par</td>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                  <td className="px-1 py-1 text-gray-400 text-left text-[10px]">Par</td>
                   {section.map((h, i) => (
-                    <td key={i} className="px-1 py-1 border border-gray-300">{h.par ?? '-'}</td>
+                    <td key={i} className="px-1 py-1 text-white">{h.par ?? '-'}</td>
                   ))}
-                  <td className="px-1 py-1 font-bold bg-gray-100 border border-gray-300">{parTotal}</td>
+                  <td className="px-1 py-1 text-white font-bold">{parTotal}</td>
                 </tr>
                 <tr>
-                  <td className="px-1 py-1 font-semibold border border-gray-300">Score</td>
+                  <td className="px-1 py-1 text-gray-400 text-left text-[10px]">Score</td>
                   {section.map((h, i) => {
                     const score = scores[startIdx + i];
                     const par = h.par ?? 0;
-                    let shape = '';
                     let bg = '';
-                    let text = 'text-gray-900';
                     let border = '';
                     let label = '';
                     if (typeof score === 'number' && score > 0) {
                       const diff = score - par;
-                      if (score === 1) {
-                        shape = 'rounded-full';
-                        bg = 'bg-yellow-400';
-                        border = 'border-2 border-yellow-600';
-                        label = 'Ace';
-                      } else if (diff <= -2) {
-                        shape = 'rounded-full';
-                        bg = 'bg-blue-400';
-                        border = 'border-2 border-blue-700';
-                        label = 'Eagle';
-                      } else if (diff === -1) {
-                        shape = 'rounded-full';
-                        bg = 'bg-green-400';
-                        border = 'border-2 border-green-700';
-                        label = 'Birdie';
-                      } else if (diff === 0) {
-                        shape = 'rounded-full';
-                        bg = 'bg-gray-200';
-                        border = 'border-2 border-gray-400';
-                        label = 'Par';
-                      } else if (diff === 1) {
-                        shape = 'rounded-full';
-                        bg = 'bg-orange-300';
-                        border = 'border-2 border-orange-500';
-                        label = 'Bogey';
-                      } else if (diff === 2) {
-                        shape = 'rounded-full';
-                        bg = 'bg-red-300';
-                        border = 'border-2 border-red-500';
-                        label = 'Double';
-                      } else if (diff > 2) {
-                        shape = 'rounded-full';
-                        bg = 'bg-red-500';
-                        border = 'border-2 border-red-700';
-                        label = 'Other';
-                      }
+                      if (score === 1)       { bg = 'bg-yellow-400'; border = 'border-2 border-yellow-600'; label = 'Ace'; }
+                      else if (diff <= -2)   { bg = 'bg-blue-400';   border = 'border-2 border-blue-700';   label = 'Eagle'; }
+                      else if (diff === -1)  { bg = 'bg-green-400';  border = 'border-2 border-green-700';  label = 'Birdie'; }
+                      else if (diff === 0)   { bg = 'bg-gray-300';   border = 'border-2 border-gray-500';   label = 'Par'; }
+                      else if (diff === 1)   { bg = 'bg-orange-300'; border = 'border-2 border-orange-500'; label = 'Bogey'; }
+                      else if (diff === 2)   { bg = 'bg-red-300';    border = 'border-2 border-red-500';    label = 'Double'; }
+                      else                   { bg = 'bg-red-500';    border = 'border-2 border-red-700';    label = 'Other'; }
                     }
                     return (
-                      <td key={i} className={`px-1 py-1 border border-gray-300`} title={label}>
+                      <td key={i} className="px-1 py-1" title={label}>
                         {typeof score === 'number' && score > 0 ? (
-                          <span className={`inline-block w-5 h-5 ${shape} ${bg} ${border} text-xs font-semibold flex items-center justify-center`}>
+                          <span className={`inline-flex w-5 h-5 rounded-full ${bg} ${border} text-xs font-semibold items-center justify-center text-gray-900`}>
                             {score}
                           </span>
                         ) : ''}
                       </td>
                     );
                   })}
-                  <td className="px-1 py-1 font-bold bg-gray-100 border border-gray-300">{scoreTotal > 0 ? scoreTotal : ''}</td>
+                  <td className="px-1 py-1 font-bold text-white">{scoreTotal > 0 ? scoreTotal : ''}</td>
                 </tr>
               </tbody>
             </table>
           );
         })}
-        {showTotals && holes.length === 18 && (
-          <table className="min-w-full border-separate border-spacing-0 text-center text-xs" style={{ borderCollapse: 'separate' }}>
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="px-1 py-1 font-bold border border-gray-400"></th>
-                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">{sectionLabels[0] || 'Front 9'}</th>
-                <th colSpan={9} className="px-1 py-1 font-bold border border-gray-400">{sectionLabels[1] || 'Back 9'}</th>
-                <th className="px-1 py-1 font-bold border border-gray-400">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="px-1 py-1 font-bold border border-gray-300">Total</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200 border border-gray-300">{parTotals[0]}</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200 border border-gray-300">{parTotals[1]}</td>
-                <td className="px-1 py-1 font-bold bg-yellow-100 border border-gray-300">{totalPar}</td>
-              </tr>
-              <tr>
-                <td className="px-1 py-1 font-bold border border-gray-300">Score</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100 border border-gray-300">{scoreTotals[0] || ''}</td>
-                <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100 border border-gray-300">{scoreTotals[1] || ''}</td>
-                <td className="px-1 py-1 font-bold bg-yellow-100 border border-gray-300">{totalScore || ''}</td>
-              </tr>
-            </tbody>
-          </table>
-        )}
       </div>
+
+      {/* Summary cards: Front 9 / Back 9 / Total */}
+      {showTotals && holes.length === 18 && (
+        <div className="flex gap-2 mt-2">
+          <div className="flex-1 rounded-xl border-2 border-yellow-500 bg-black/30 px-3 py-2">
+            <div className="text-xs font-bold text-white">{sectionLabels[0] || 'Front 9'}:</div>
+            <div className="text-sm font-extrabold text-white">{scoreTotals[0] || 0} <span className="text-xs font-normal text-gray-400">/ Par {parTotals[0]}</span></div>
+          </div>
+          <div className="flex-1 rounded-xl border-2 border-blue-500 bg-black/30 px-3 py-2">
+            <div className="text-xs font-bold text-white">{sectionLabels[1] || 'Back 9'}:</div>
+            <div className="text-sm font-extrabold text-white">{scoreTotals[1] || 0} <span className="text-xs font-normal text-gray-400">/ Par {parTotals[1]}</span></div>
+          </div>
+          <div className="flex-1 rounded-xl border-2 border-green-500 bg-black/30 px-3 py-2">
+            <div className="text-xs font-bold text-white">Total:</div>
+            <div className="text-sm font-extrabold text-yellow-300">{totalScore || 0} <span className="text-xs font-normal text-gray-400">/ Par {totalPar}</span></div>
+          </div>
+        </div>
+      )}
+      {/* 9-hole single summary */}
+      {showTotals && holes.length === 9 && (
+        <div className="flex gap-2 mt-2">
+          <div className="flex-1 rounded-xl border-2 border-green-500 bg-black/30 px-3 py-2">
+            <div className="text-xs font-bold text-white">Total:</div>
+            <div className="text-sm font-extrabold text-yellow-300">{scoreTotals[0] || 0} <span className="text-xs font-normal text-gray-400">/ Par {parTotals[0]}</span></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
