@@ -136,18 +136,17 @@ function TrackRoundContent() {
       setCurrentHoleIndex(Math.max(0, Number(holeParam) - 1));
       return;
     }
-    // Else, use round.startingHole if present
-    const startingHole = (round as any).startingHole || (round as any).starting_hole;
-    if (startingHole && !isNaN(Number(startingHole))) {
-      setCurrentHoleIndex(Math.max(0, Number(startingHole) - 1));
-      return;
+    // Only use startingHole if no holes have been scored yet (brand new round)
+    const hasAnyScore = Array.isArray(round.scores) && round.scores.some((s: number) => s != null && s > 0);
+    if (!hasAnyScore) {
+      const startingHole = (round as any).startingHole || (round as any).starting_hole;
+      if (startingHole && !isNaN(Number(startingHole))) {
+        setCurrentHoleIndex(Math.max(0, Number(startingHole) - 1));
+        return;
+      }
     }
-    // If both nines are selected (18 holes), always start at first hole (Front 9)
-    if (course && Array.isArray(course.holes) && course.holes.length === 18) {
-      setCurrentHoleIndex(0);
-      return;
-    }
-  }, [round, searchParams, course]);
+    // Do not set a default here — the scores-based effect handles initial hole placement
+  }, [round, searchParams]);
   const [scores, setScores] = useState<number[]>([]);
 
   // Restore scores from round when round is loaded
@@ -1668,7 +1667,7 @@ function TrackRoundContent() {
 
       {showScoreModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="rounded-2xl shadow-2xl p-4 w-full max-w-md mx-4 relative overflow-y-auto max-h-[90vh]" style={{ background: 'rgba(20,30,20,0.97)' }}>
+          <div className="rounded-2xl shadow-2xl p-4 w-full max-w-md mx-4 relative overflow-y-auto max-h-[90vh]" style={{ background: 'rgba(34,50,34,0.96)' }}>
 
             {/* Hole navigation and picker */}
             <div className="flex items-center justify-between mb-4">
@@ -1761,14 +1760,7 @@ function TrackRoundContent() {
                       </thead>
                       <tbody>
                         <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                          <td className="px-1 py-1 text-gray-400 text-[10px]">Yardage</td>
-                          {yardages.map((y, i) => (
-                            <td key={i} className="px-1 py-1 text-gray-300 text-[10px]">{y}</td>
-                          ))}
-                          <td className="px-1 py-1 font-bold text-gray-300 text-[10px]">{yardageTotal > 0 ? yardageTotal : ''}</td>
-                        </tr>
-                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                          <td className="px-1 py-1 text-gray-400">Par</td>
+                          <td className="px-1 py-1 text-gray-300">Par</td>
                           {holes.map((h, i) => (
                             <td key={i} className={`px-1 py-1 text-white ${startIdx + i === currentHoleIndex ? 'font-bold text-green-400' : ''}`}>{h.par ?? '-'}</td>
                           ))}
@@ -1832,7 +1824,8 @@ function TrackRoundContent() {
                               }
                             }
                             return (
-                              <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'bg-blue-200 font-bold' : ''}`}
+                              <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'font-bold' : ''}`}
+                                style={startIdx + i === currentHoleIndex ? { background: 'rgba(74,222,128,0.18)' } : {}}
                                 title={label}
                               >
                                 {typeof score === 'number' && score > 0 ? (
@@ -1851,34 +1844,11 @@ function TrackRoundContent() {
                     </div>
                   );
                 })}
-                {/* Summary cards if 18 holes */}
-                {course.holes.length === 18 && (() => {
-                  const front = scores.slice(0, 9).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0);
-                  const back  = scores.slice(9, 18).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0);
-                  const frontPar = course.holes.slice(0, 9).reduce((sum, h) => sum + (h.par || 0), 0);
-                  const backPar  = course.holes.slice(9, 18).reduce((sum, h) => sum + (h.par || 0), 0);
-                  return (
-                    <div className="flex gap-2 mt-2">
-                      <div className="flex-1 rounded-xl border-2 border-yellow-500 px-2 py-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
-                        <div className="text-[10px] font-bold text-white">{modalSectionLabels[0] || 'Front 9'}:</div>
-                        <div className="text-sm font-extrabold text-white">{front || 0} <span className="text-[10px] font-normal text-gray-400">/ Par {frontPar}</span></div>
-                      </div>
-                      <div className="flex-1 rounded-xl border-2 border-blue-500 px-2 py-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
-                        <div className="text-[10px] font-bold text-white">{modalSectionLabels[1] || 'Back 9'}:</div>
-                        <div className="text-sm font-extrabold text-white">{back || 0} <span className="text-[10px] font-normal text-gray-400">/ Par {backPar}</span></div>
-                      </div>
-                      <div className="flex-1 rounded-xl border-2 border-green-500 px-2 py-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
-                        <div className="text-[10px] font-bold text-white">Total:</div>
-                        <div className="text-sm font-extrabold text-yellow-300">{(front + back) || 0} <span className="text-[10px] font-normal text-gray-400">/ Par {frontPar + backPar}</span></div>
-                      </div>
-                    </div>
-                  );
-                })()}
               </div>
             )}
             {/* ── TOTAL SCORE ── */}
             <div className="mb-3 mt-1">
-              <p className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">Total Score</p>
+              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">Total Score</p>
               <div className="flex items-center justify-between gap-3">
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
@@ -1921,7 +1891,7 @@ function TrackRoundContent() {
 
             {/* ── FIR ── */}
             <div className="mb-3">
-              <p className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">FIR</p>
+              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">FIR</p>
               <div className="flex gap-2">
                 {([
                   { val: 'L' as const, label: 'Miss Left' },
@@ -1960,7 +1930,7 @@ function TrackRoundContent() {
 
             {/* ── GIR ── */}
             <div className="mb-3">
-              <p className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">GIR</p>
+              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">GIR</p>
               <div className="flex gap-2">
                 {([
                   { val: false, label: 'Missed', activeColor: 'rgba(180,120,20,0.7)', glowColor: 'rgba(251,191,36,0.4)', borderColor: 'rgba(251,191,36,0.5)', dotColor: '#f59e0b' },
@@ -1999,7 +1969,7 @@ function TrackRoundContent() {
 
             {/* ── PUTTS ── */}
             <div className="mb-3">
-              <p className="text-xs font-bold tracking-widest text-gray-400 uppercase mb-2">Putts</p>
+              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-2">Putts</p>
               <div className="flex items-center justify-between gap-3">
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
@@ -2059,7 +2029,7 @@ function TrackRoundContent() {
       {/* Putt Distance Edit Popup */}
       {typeof puttEdit?.idx === 'number' && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 relative flex flex-col items-center" style={{ background: 'rgba(20,30,20,0.97)' }}>
+          <div className="rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 relative flex flex-col items-center" style={{ background: 'rgba(34,50,34,0.96)' }}>
             <button
               className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-white"
               onClick={() => setPuttEdit(null)}
@@ -2110,7 +2080,7 @@ function TrackRoundContent() {
       )}
             {/* ── MASTER ACTION ── */}
             <div className="mt-1">
-              <p className="text-xs font-bold tracking-widest text-gray-500 uppercase mb-1">Master Action</p>
+              <p className="text-[10px] font-semibold tracking-widest text-gray-500 uppercase mb-1">Master Action</p>
               {scores.length === course?.holes?.length && scores.every(s => typeof s === 'number' && s > 0) ? (
                 <button
                   className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
