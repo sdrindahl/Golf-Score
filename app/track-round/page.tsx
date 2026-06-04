@@ -1665,14 +1665,14 @@ function TrackRoundContent() {
       {/* Score Entry Modal */}
 
       {showScoreModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative overflow-y-auto max-h-[90vh]" style={{ background: 'rgba(20,30,20,0.97)' }}>
 
 
             {/* Hole navigation and picker */}
             <div className="flex items-center justify-between mb-4">
               <button
-                className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-bold text-lg border hover:bg-gray-300 disabled:opacity-50"
+                className="px-3 py-1 rounded font-bold text-lg border border-white/20 text-white hover:bg-white/10 disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.08)' }}
                 onClick={() => setCurrentHoleIndex(i => Math.max(0, i - 1))}
                 disabled={currentHoleIndex === 0}
                 aria-label="Previous Hole"
@@ -1680,22 +1680,22 @@ function TrackRoundContent() {
                 &#x25C0;
               </button>
               <div className="flex items-center gap-2">
-                <label htmlFor="hole-picker" className="font-semibold text-gray-700">Hole</label>
+                <label htmlFor="hole-picker" className="font-semibold text-gray-300">Hole</label>
                 <select
                   id="hole-picker"
-                  className="border rounded px-2 py-1 text-lg font-bold bg-white text-gray-800"
+                  className="border border-white/20 rounded px-2 py-1 text-lg font-bold text-white" style={{ background: 'rgba(255,255,255,0.12)' }}
                   value={currentHoleIndex}
                   onChange={e => setCurrentHoleIndex(Number(e.target.value))}
                 >
                   {course?.holes?.map((h, idx) => (
-                    <option key={idx} value={idx}>
+                    <option key={idx} value={idx} style={{ background: '#1a2a1a' }}>
                       {h.holeNumber ?? idx + 1}
                     </option>
                   ))}
                 </select>
               </div>
               <button
-                className="px-3 py-1 rounded bg-gray-200 text-gray-700 font-bold text-lg border hover:bg-gray-300 disabled:opacity-50"
+                className="px-3 py-1 rounded font-bold text-lg border border-white/20 text-white hover:bg-white/10 disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.08)' }}
                 onClick={() => setCurrentHoleIndex(i => Math.min(course.holes.length - 1, i + 1))}
                 disabled={currentHoleIndex === course.holes.length - 1}
                 aria-label="Next Hole"
@@ -1705,12 +1705,12 @@ function TrackRoundContent() {
             </div>
 
             <div className="mb-2 text-center">
-              <p className="text-sm font-semibold text-gray-600">
+              <p className="text-sm font-semibold text-gray-400">
                 {modalCourseContext.baseName}
                 {modalCourseContext.segmentLabel ? ` • ${modalCourseContext.segmentLabel}` : ''}
               </p>
             </div>
-            <h2 className="text-xl font-bold mb-4 text-gray-800">
+            <h2 className="text-base font-extrabold tracking-widest uppercase text-green-400 mb-4">
               Enter Score for Hole {course?.holes?.[currentHoleIndex]?.holeNumber ?? currentHoleIndex + 1}
             </h2>
 
@@ -1733,38 +1733,38 @@ function TrackRoundContent() {
                     isValidTee(selectedTee) ? sum + (h[selectedTee]?.yardage || 0) : sum
                   , 0);
                   return (
-                    <table key={sectionIdx} className="min-w-full border text-center text-xs mb-2">
+                    <table key={sectionIdx} className="min-w-full text-center text-xs mb-2" style={{ borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                           <th
                             colSpan={holes.length + 2}
-                            className="px-1 py-1 font-semibold text-gray-700 bg-gray-50 border-b"
+                            className="px-1 py-1 font-semibold text-gray-400"
                           >
                             {modalSectionLabels[sectionIdx] || (isFrontNine ? 'Front 9' : 'Back 9')}
                           </th>
                         </tr>
-                        <tr>
-                          <th className="px-1 py-1 font-bold">Hole</th>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                          <th className="px-1 py-1 font-bold text-white">Hole</th>
                           {holes.map((h, i) => (
-                            <th key={i} className={`px-1 py-1 font-bold ${startIdx + i === currentHoleIndex ? 'bg-blue-100' : ''}`}>{h.holeNumber ?? startIdx + i + 1}</th>
+                            <th key={i} className={`px-1 py-1 font-bold ${startIdx + i === currentHoleIndex ? 'text-green-400' : 'text-white'}`}>{h.holeNumber ?? startIdx + i + 1}</th>
                           ))}
-                          <th className="px-1 py-1 font-bold">{isFrontNine ? 'Out' : 'In'}</th>
+                          <th className="px-1 py-1 font-bold text-gray-400">{isFrontNine ? 'Out' : 'In'}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td className="px-1 py-1 font-semibold">Yardage</td>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td className="px-1 py-1 text-gray-400 text-[10px]">Yardage</td>
                           {yardages.map((y, i) => (
-                            <td key={i} className="px-1 py-1">{y}</td>
+                            <td key={i} className="px-1 py-1 text-gray-300 text-[10px]">{y}</td>
                           ))}
-                          <td className="px-1 py-1 font-bold bg-gray-100">{yardageTotal > 0 ? yardageTotal : ''}</td>
+                          <td className="px-1 py-1 font-bold text-gray-300 text-[10px]">{yardageTotal > 0 ? yardageTotal : ''}</td>
                         </tr>
-                        <tr>
-                          <td className="px-1 py-1 font-semibold">Par</td>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td className="px-1 py-1 text-gray-400">Par</td>
                           {holes.map((h, i) => (
-                            <td key={i} className={`px-1 py-1 ${startIdx + i === currentHoleIndex ? 'bg-blue-50' : ''}`}>{h.par ?? '-'}</td>
+                            <td key={i} className={`px-1 py-1 text-white ${startIdx + i === currentHoleIndex ? 'font-bold text-green-400' : ''}`}>{h.par ?? '-'}</td>
                           ))}
-                          <td className="px-1 py-1 font-bold bg-gray-100">{parTotal}</td>
+                          <td className="px-1 py-1 font-bold text-white">{parTotal}</td>
                         </tr>
                         <tr>
                           <td className="px-1 py-1 font-semibold">Score</td>
@@ -1835,38 +1835,43 @@ function TrackRoundContent() {
                               </td>
                             );
                           })}
-                          <td className="px-1 py-1 font-bold bg-gray-100">{scoreTotal > 0 ? scoreTotal : ''}</td>
+                          <td className="px-1 py-1 font-bold text-white">{scoreTotal > 0 ? scoreTotal : ''}</td>
                         </tr>
                       </tbody>
                     </table>
                   );
                 })}
-                {/* Overall total row if all 18 holes */}
-                {course.holes.length === 18 && (
-                  <table className="min-w-full border text-center text-xs">
-                    <tbody>
-                      <tr>
-                        <td className="px-1 py-1 font-bold">Total</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200" title={modalSectionLabels[0] || 'Front 9'}>{course.holes.slice(0, 9).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-gray-200" title={modalSectionLabels[1] || 'Back 9'}>{course.holes.slice(9, 18).reduce((sum, h) => sum + (h.par || 0), 0)}</td>
-                        <td className="px-1 py-1 font-bold bg-yellow-100">{course.holes.reduce((sum, h) => sum + (h.par || 0), 0)}</td>
-                      </tr>
-                      <tr>
-                        <td className="px-1 py-1 font-bold">Score</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100" title={modalSectionLabels[0] || 'Front 9'}>{scores.slice(0, 9).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
-                        <td colSpan={9} className="px-1 py-1 font-bold bg-blue-100" title={modalSectionLabels[1] || 'Back 9'}>{scores.slice(9, 18).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
-                        <td className="px-1 py-1 font-bold bg-yellow-100">{scores.reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0) || ''}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                )}
+                {/* Summary cards if 18 holes */}
+                {course.holes.length === 18 && (() => {
+                  const front = scores.slice(0, 9).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0);
+                  const back  = scores.slice(9, 18).reduce((sum, s) => sum + (typeof s === 'number' && s > 0 ? s : 0), 0);
+                  const frontPar = course.holes.slice(0, 9).reduce((sum, h) => sum + (h.par || 0), 0);
+                  const backPar  = course.holes.slice(9, 18).reduce((sum, h) => sum + (h.par || 0), 0);
+                  return (
+                    <div className="flex gap-2 mt-2">
+                      <div className="flex-1 rounded-xl border-2 border-yellow-500 px-2 py-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                        <div className="text-[10px] font-bold text-white">{modalSectionLabels[0] || 'Front 9'}:</div>
+                        <div className="text-sm font-extrabold text-white">{front || 0} <span className="text-[10px] font-normal text-gray-400">/ Par {frontPar}</span></div>
+                      </div>
+                      <div className="flex-1 rounded-xl border-2 border-blue-500 px-2 py-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                        <div className="text-[10px] font-bold text-white">{modalSectionLabels[1] || 'Back 9'}:</div>
+                        <div className="text-sm font-extrabold text-white">{back || 0} <span className="text-[10px] font-normal text-gray-400">/ Par {backPar}</span></div>
+                      </div>
+                      <div className="flex-1 rounded-xl border-2 border-green-500 px-2 py-1" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                        <div className="text-[10px] font-bold text-white">Total:</div>
+                        <div className="text-sm font-extrabold text-yellow-300">{(front + back) || 0} <span className="text-[10px] font-normal text-gray-400">/ Par {frontPar + backPar}</span></div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
-            <div className="mb-4">
-              <label className="block font-semibold mb-2 text-lg">Enter Hole Score</label>
+            <div className="mb-4 mt-4">
+              <label className="block font-semibold mb-2 text-base text-gray-300">Enter Hole Score</label>
               <div className="flex items-center gap-3">
                 <button
-                  className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                  className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
                   onClick={() => {
                     setScores(prev => {
                       const updated = [...prev];
@@ -1878,9 +1883,10 @@ function TrackRoundContent() {
                   }}
                   aria-label="Decrease score"
                 >−</button>
-                <span className="text-2xl font-bold w-10 text-center">{scores[currentHoleIndex] ?? 0}</span>
+                <span className="text-2xl font-bold w-10 text-center text-white">{scores[currentHoleIndex] ?? 0}</span>
                 <button
-                  className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                  className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
                   onClick={() => {
                     setScores(prev => {
                       const updated = [...prev];
@@ -1893,22 +1899,22 @@ function TrackRoundContent() {
                   aria-label="Increase score"
                 >+</button>
               </div>
-              {/* Show drive distance if available */}
               {perHoleStats[currentHoleIndex]?.drive?.yardage != null && (
-                <div className="mt-2 flex items-center gap-2 text-lg text-blue-700 font-semibold">
-                  <span className="inline-block bg-blue-100 rounded px-2 py-1 text-base font-bold">Drive:</span>
-                  <span className="inline-block">{perHoleStats[currentHoleIndex].drive.yardage} yd</span>
+                <div className="mt-2 flex items-center gap-2 text-base font-semibold">
+                  <span className="inline-block rounded px-2 py-1 text-sm font-bold text-yellow-300" style={{ background: 'rgba(255,255,255,0.1)' }}>Drive:</span>
+                  <span className="text-yellow-300">{perHoleStats[currentHoleIndex].drive.yardage} yd</span>
                 </div>
               )}
             </div>
             <div className="mb-4 flex gap-4">
               <div>
-                <label className="block font-semibold mb-1">FIR</label>
+                <label className="block font-semibold mb-1 text-gray-300">FIR</label>
                 <div className="flex gap-1">
                   {(['L', 'hit', 'R'] as Array<'L' | 'hit' | 'R'>).map(opt => (
                     <button
                       key={opt}
-                      className={`px-2 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.fairwayHit === opt ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                      className={`px-2 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.fairwayHit === opt ? 'bg-green-600 text-white border-green-500' : 'text-gray-300 border-white/20'}`}
+                      style={perHoleStats[currentHoleIndex]?.fairwayHit === opt ? {} : { background: 'rgba(255,255,255,0.1)' }}
                       onClick={async () => {
                         setPerHoleStats(stats => {
                           const updated = [...stats];
@@ -1923,10 +1929,11 @@ function TrackRoundContent() {
                 </div>
               </div>
               <div>
-                <label className="block font-semibold mb-1">GIR</label>
+                <label className="block font-semibold mb-1 text-gray-300">GIR</label>
                 <div className="flex gap-1">
                   <button
-                    className={`px-4 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.gir ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                    className={`px-4 py-1 rounded border font-bold text-sm ${perHoleStats[currentHoleIndex]?.gir ? 'bg-green-600 text-white border-green-500' : 'text-gray-300 border-white/20'}`}
+                    style={perHoleStats[currentHoleIndex]?.gir ? {} : { background: 'rgba(255,255,255,0.1)' }}
                     onClick={async () => {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
@@ -1941,11 +1948,11 @@ function TrackRoundContent() {
               </div>
             </div>
             <div className="mb-4">
-              <label className="block font-semibold mb-1">Putts</label>
+              <label className="block font-semibold mb-1 text-gray-300">Putts</label>
               <div className="flex items-center gap-3 justify-between w-full">
                 <div className="flex items-center gap-3">
                   <button
-                    className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                    className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10" style={{ background: 'rgba(255,255,255,0.1)' }}
                     onClick={async () => {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
@@ -1963,9 +1970,9 @@ function TrackRoundContent() {
                     }}
                     aria-label="Decrease putts"
                   >−</button>
-                  <span className="text-2xl font-bold w-12 text-center">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
+                  <span className="text-2xl font-bold w-12 text-center text-white">{perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}</span>
                   <button
-                    className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                    className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10" style={{ background: 'rgba(255,255,255,0.1)' }}
                     onClick={async () => {
                       setPerHoleStats(stats => {
                         const updated = [...stats];
@@ -1985,7 +1992,8 @@ function TrackRoundContent() {
                   >+</button>
                 </div>
                 <button
-                  className="ml-auto px-4 py-2 rounded bg-gray-200 text-gray-700 font-bold text-base border hover:bg-gray-300 transition"
+                  className="ml-auto px-4 py-2 rounded font-bold text-base border border-white/20 text-white hover:bg-white/10 transition"
+                  style={{ background: 'rgba(255,255,255,0.08)' }}
                   onClick={() => setShowScoreModal(false)}
                   aria-label="Close score entry"
                 >
@@ -1995,12 +2003,13 @@ function TrackRoundContent() {
             </div>
             {perHoleStats[currentHoleIndex]?.puttDistances?.length > 0 && (
               <div className="mb-4">
-                <label className="block font-semibold mb-1">Putt Distances (ft)</label>
+                <label className="block font-semibold mb-1 text-gray-300">Putt Distances (ft)</label>
                 <div className="flex flex-wrap gap-2">
                   {perHoleStats[currentHoleIndex].puttDistances.map((dist, idx) => (
                     <button
                       key={idx}
-                      className="w-20 px-2 py-1 border rounded text-center bg-white hover:bg-blue-50 focus:bg-blue-100 transition font-semibold"
+                      className="w-20 px-2 py-1 border border-white/20 rounded text-center text-white font-semibold hover:bg-white/10 transition"
+                      style={{ background: 'rgba(255,255,255,0.1)' }}
                       onClick={() => setPuttEdit({ idx, value: dist })}
                       type="button"
                     >
@@ -2013,23 +2022,25 @@ function TrackRoundContent() {
 
       {/* Putt Distance Edit Popup */}
       {typeof puttEdit?.idx === 'number' && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 relative flex flex-col items-center">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 relative flex flex-col items-center" style={{ background: 'rgba(20,30,20,0.97)' }}>
             <button
-              className="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800"
+              className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-white"
               onClick={() => setPuttEdit(null)}
               aria-label="Close putt edit"
             >×</button>
-            <h3 className="text-lg font-bold mb-4">Edit Putt {puttEdit.idx + 1} Distance</h3>
+            <h3 className="text-base font-extrabold tracking-widest uppercase text-green-400 mb-4">Edit Putt {puttEdit.idx + 1} Distance</h3>
             <div className="flex items-center gap-3 mb-4">
               <button
-                className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10"
+                style={{ background: 'rgba(255,255,255,0.1)' }}
                 onClick={() => setPuttEdit(edit => (edit ? { idx: edit.idx, value: Math.max(0, (edit.value || 0) - 1) } : null))}
                 aria-label="Decrease putt distance"
               >−</button>
-              <span className="text-2xl font-bold w-12 text-center">{puttEdit.value}</span>
+              <span className="text-2xl font-bold w-12 text-center text-white">{puttEdit.value}</span>
               <button
-                className="w-10 h-10 rounded bg-gray-200 text-2xl font-bold text-gray-700 flex items-center justify-center hover:bg-gray-300 border"
+                className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10"
+                style={{ background: 'rgba(255,255,255,0.1)' }}
                 onClick={() => setPuttEdit(edit => (edit ? { idx: edit.idx, value: Math.min(100, (edit.value || 0) + 1) } : null))}
                 aria-label="Increase putt distance"
               >+</button>
@@ -2038,7 +2049,8 @@ function TrackRoundContent() {
               {[5,10,15,20,25,30,35,40,45,50,60,70,80,90,100].map(val => (
                 <button
                   key={val}
-                  className={`py-2 px-2 rounded text-sm font-semibold transition ${puttEdit.value === val ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}`}
+                  className={`py-2 px-2 rounded text-sm font-semibold transition ${puttEdit.value === val ? 'bg-green-600 text-white border border-green-500' : 'text-gray-300 border border-white/20 hover:bg-white/10'}`}
+                  style={puttEdit.value === val ? {} : { background: 'rgba(255,255,255,0.08)' }}
                   onClick={() => setPuttEdit(edit => (edit ? { idx: edit.idx, value: val } : null))}
                   type="button"
                 >{val}</button>
