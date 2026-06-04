@@ -78,7 +78,7 @@ describe('ScorecardTable', () => {
       />
     )
 
-    expect(screen.getAllByText('West 9')).toHaveLength(2)
-    expect(screen.getAllByText('North 9')).toHaveLength(2)
+    expect(screen.getAllByText(/West 9/)).toHaveLength(2)
+    expect(screen.getAllByText(/North 9/)).toHaveLength(2)
   })
 })
