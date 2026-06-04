@@ -842,25 +842,25 @@ function RoundDetailContent() {
 
 
           {/* Performance Breakdown (collapsible) */}
-          <div className="rounded-xl border bg-white shadow p-4">
+          <div className="rounded-2xl shadow-lg p-4" style={{ background: 'rgba(20,30,20,0.82)' }}>
             <button
-              className="flex items-center w-full justify-between text-lg font-bold text-gray-800 mb-2 focus:outline-none"
+              className="flex items-center w-full justify-between text-base font-extrabold tracking-widest uppercase text-green-400 mb-2 focus:outline-none"
               onClick={() => setShowPerformance(v => !v)}
               aria-expanded={showPerformance}
               aria-controls="performance-breakdown"
             >
               Performance Breakdown
-              <span className="ml-2 text-base text-gray-500">{showPerformance ? '▼' : '▶'}</span>
+              <span className="ml-2 text-base text-gray-400">{showPerformance ? '▼' : '▶'}</span>
             </button>
             {showPerformance && (
               <div id="performance-breakdown">
                 {/* Score distribution table */}
-                <table className="min-w-full border-separate border-spacing-0 text-center text-xs mb-3" style={{ borderCollapse: 'separate' }}>
+                <table className="min-w-full text-center text-xs mb-3" style={{ borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr className="bg-gray-200">
-                      <th className="px-2 py-1 font-bold border border-gray-400 text-left">Type</th>
-                      <th className="px-2 py-1 font-bold border border-gray-400">Count</th>
-                      <th className="px-2 py-1 font-bold border border-gray-400">Distribution</th>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                      <th className="px-2 py-1 font-bold text-white text-left">Type</th>
+                      <th className="px-2 py-1 font-bold text-white">Count</th>
+                      <th className="px-2 py-1 font-bold text-white">Distribution</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -883,14 +883,14 @@ function RoundDetailContent() {
                         'Double+': '❌',
                       }
                       return count > 0 ? (
-                        <tr key={type} className="border-b last:border-0">
-                          <td className="px-2 py-1 border border-gray-300 text-left">
+                        <tr key={type} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td className="px-2 py-1 text-left">
                             <span className="mr-1">{emojis[type]}</span>
-                            <span className="font-semibold text-gray-700">{type}</span>
+                            <span className="font-semibold text-gray-200">{type}</span>
                           </td>
-                          <td className="px-2 py-1 border border-gray-300 font-bold text-gray-800">{count}</td>
-                          <td className="px-2 py-1 border border-gray-300">
-                            <div className="w-full bg-gray-200 rounded-full h-2">
+                          <td className="px-2 py-1 font-bold text-white">{count}</td>
+                          <td className="px-2 py-1">
+                            <div className="w-full rounded-full h-2" style={{ background: 'rgba(255,255,255,0.15)' }}>
                               <div className={`${barColors[type]} h-2 rounded-full`} style={{ width: `${percentage}%` }} />
                             </div>
                           </td>
@@ -900,12 +900,12 @@ function RoundDetailContent() {
                   </tbody>
                 </table>
                 {/* Driving / FIR / GIR summary rows */}
-                <table className="min-w-full border-separate border-spacing-0 text-center text-xs" style={{ borderCollapse: 'separate' }}>
+                <table className="min-w-full text-center text-xs" style={{ borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr className="bg-gray-200">
-                      <th className="px-2 py-1 font-bold border border-gray-400 text-left">Stat</th>
-                      <th className="px-2 py-1 font-bold border border-gray-400">Value</th>
-                      <th className="px-2 py-1 font-bold border border-gray-400">Detail</th>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                      <th className="px-2 py-1 font-bold text-white text-left">Stat</th>
+                      <th className="px-2 py-1 font-bold text-white">Value</th>
+                      <th className="px-2 py-1 font-bold text-white">Detail</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -914,10 +914,10 @@ function RoundDetailContent() {
                       if (driveYardages.length === 0) return null;
                       const avgDrive = Math.round(driveYardages.reduce((a: number, b: number) => a + b, 0) / driveYardages.length);
                       return (
-                        <tr>
-                          <td className="px-2 py-1 border border-gray-300 text-left"><span className="mr-1">🚗</span><span className="font-semibold text-gray-700">Avg Drive</span></td>
-                          <td className="px-2 py-1 border border-gray-300 font-bold text-blue-800">{avgDrive} yd</td>
-                          <td className="px-2 py-1 border border-gray-300 text-gray-500">{driveYardages.length} recorded</td>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td className="px-2 py-1 text-left"><span className="mr-1">🚗</span><span className="font-semibold text-gray-200">Avg Drive</span></td>
+                          <td className="px-2 py-1 font-bold text-yellow-300">{avgDrive} yd</td>
+                          <td className="px-2 py-1 text-gray-400">{driveYardages.length} recorded</td>
                         </tr>
                       );
                     })()}
@@ -925,10 +925,10 @@ function RoundDetailContent() {
                       const firStats = calculateFIRStats();
                       if (firStats.total === 0) return null;
                       return (
-                        <tr>
-                          <td className="px-2 py-1 border border-gray-300 text-left"><span className="mr-1">⛳</span><span className="font-semibold text-gray-700">FIR</span></td>
-                          <td className="px-2 py-1 border border-gray-300 font-bold text-green-800">{firStats.hitPercent}%</td>
-                          <td className="px-2 py-1 border border-gray-300 text-gray-500 text-[10px]">L: {firStats.missLeftPercent}% · R: {firStats.missRightPercent}%</td>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                          <td className="px-2 py-1 text-left"><span className="mr-1">⛳</span><span className="font-semibold text-gray-200">FIR</span></td>
+                          <td className="px-2 py-1 font-bold text-green-400">{firStats.hitPercent}%</td>
+                          <td className="px-2 py-1 text-gray-400 text-[10px]">L: {firStats.missLeftPercent}% · R: {firStats.missRightPercent}%</td>
                         </tr>
                       );
                     })()}
@@ -937,9 +937,9 @@ function RoundDetailContent() {
                       if (girStats.totalHoles === 0) return null;
                       return (
                         <tr>
-                          <td className="px-2 py-1 border border-gray-300 text-left"><span className="mr-1">🎯</span><span className="font-semibold text-gray-700">GIR</span></td>
-                          <td className="px-2 py-1 border border-gray-300 font-bold text-blue-800">{girStats.girPercent}%</td>
-                          <td className="px-2 py-1 border border-gray-300 text-gray-500">{girStats.totalHoles} holes</td>
+                          <td className="px-2 py-1 text-left"><span className="mr-1">🎯</span><span className="font-semibold text-gray-200">GIR</span></td>
+                          <td className="px-2 py-1 font-bold text-blue-300">{girStats.girPercent}%</td>
+                          <td className="px-2 py-1 text-gray-400">{girStats.totalHoles} holes</td>
                         </tr>
                       );
                     })()}
@@ -950,15 +950,15 @@ function RoundDetailContent() {
           </div>
 
           {/* Per-Hole Stats Breakdown (collapsible) */}
-          <div className="rounded-xl border bg-white shadow p-4">
+          <div className="rounded-2xl shadow-lg p-4" style={{ background: 'rgba(20,30,20,0.82)' }}>
             <button
-              className="flex items-center w-full justify-between text-lg font-bold text-gray-800 mb-2 focus:outline-none"
+              className="flex items-center w-full justify-between text-base font-extrabold tracking-widest uppercase text-green-400 mb-2 focus:outline-none"
               onClick={() => setShowPerHole(v => !v)}
               aria-expanded={showPerHole}
               aria-controls="per-hole-breakdown"
             >
               Per-Hole Stats Breakdown
-              <span className="ml-2 text-base text-gray-500">{showPerHole ? '▼' : '▶'}</span>
+              <span className="ml-2 text-base text-gray-400">{showPerHole ? '▼' : '▶'}</span>
             </button>
             {showPerHole && (
               <div id="per-hole-breakdown" className="overflow-x-auto">
@@ -971,19 +971,19 @@ function RoundDetailContent() {
                     }) || [0])
                   );
                   return (
-                    <table className="min-w-full border-separate border-spacing-0 text-center text-xs" style={{ borderCollapse: 'separate' }}>
+                    <table className="min-w-full text-center text-xs" style={{ borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr className="bg-gray-200">
-                          <th className="px-1 py-1 font-bold border border-gray-400 sticky left-0 bg-gray-200 z-10">Hole</th>
-                          <th className="px-1 py-1 font-bold border border-gray-400">Par</th>
-                          <th className="px-1 py-1 font-bold border border-gray-400">Score</th>
-                          <th className="px-1 py-1 font-bold border border-gray-400">FIR</th>
-                          <th className="px-1 py-1 font-bold border border-gray-400">GIR</th>
-                          <th className="px-1 py-1 font-bold border border-gray-400">Putts</th>
+                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+                          <th className="px-1 py-1 font-bold text-white sticky left-0 z-10" style={{ background: 'rgba(20,30,20,0.95)' }}>Hole</th>
+                          <th className="px-1 py-1 font-bold text-white">Par</th>
+                          <th className="px-1 py-1 font-bold text-white">Score</th>
+                          <th className="px-1 py-1 font-bold text-white">FIR</th>
+                          <th className="px-1 py-1 font-bold text-white">GIR</th>
+                          <th className="px-1 py-1 font-bold text-white">Putts</th>
                           {Array.from({ length: maxPutts }, (_, i) => (
-                            <th key={`putt-${i + 1}`} className="px-1 py-1 font-bold border border-gray-400">P{i + 1}</th>
+                            <th key={`putt-${i + 1}`} className="px-1 py-1 font-bold text-white">P{i + 1}</th>
                           ))}
-                          <th className="px-1 py-1 font-bold border border-gray-400">Drive</th>
+                          <th className="px-1 py-1 font-bold text-white">Drive</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -997,27 +997,28 @@ function RoundDetailContent() {
                             diff === null ? '' :
                             diff <= -2 ? 'bg-blue-400 border-blue-700' :
                             diff === -1 ? 'bg-green-400 border-green-700' :
-                            diff === 0 ? 'bg-gray-200 border-gray-400' :
+                            diff === 0 ? 'bg-gray-300 border-gray-500' :
                             diff === 1 ? 'bg-orange-300 border-orange-500' :
                             diff === 2 ? 'bg-red-300 border-red-500' : 'bg-red-500 border-red-700';
+                          const rowBg = idx % 2 === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)';
                           return (
-                            <tr key={hole.holeNumber} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="px-1 py-1 font-bold border border-gray-300 sticky left-0 bg-inherit z-10">{hole.holeNumber}</td>
-                              <td className="px-1 py-1 border border-gray-300 text-gray-700 font-semibold">{hole.par}</td>
-                              <td className="px-1 py-1 border border-gray-300">
+                            <tr key={hole.holeNumber} style={{ background: rowBg, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                              <td className="px-1 py-1 font-bold text-white sticky left-0 z-10" style={{ background: rowBg }}>{hole.holeNumber}</td>
+                              <td className="px-1 py-1 text-gray-300 font-semibold">{hole.par}</td>
+                              <td className="px-1 py-1">
                                 {typeof score === 'number' && score > 0 ? (
-                                  <span className={`inline-flex w-5 h-5 rounded-full border-2 text-xs font-semibold items-center justify-center ${scoreBg}`}>{score}</span>
-                                ) : '-'}
+                                  <span className={`inline-flex w-5 h-5 rounded-full border-2 text-xs font-semibold items-center justify-center text-gray-900 ${scoreBg}`}>{score}</span>
+                                ) : <span className="text-gray-500">-</span>}
                               </td>
-                              <td className="px-1 py-1 border border-gray-300">{stats.fairwayHit === 'hit' ? '✓' : stats.fairwayHit === 'L' ? 'L' : stats.fairwayHit === 'R' ? 'R' : '-'}</td>
-                              <td className="px-1 py-1 border border-gray-300">{stats.gir === true ? '✓' : stats.gir === false ? '✗' : '-'}</td>
-                              <td className="px-1 py-1 border border-gray-300 font-bold text-gray-800">{puttDistances.length > 0 ? puttDistances.length : '-'}</td>
+                              <td className="px-1 py-1 text-gray-300">{stats.fairwayHit === 'hit' ? <span className="text-green-400">✓</span> : stats.fairwayHit === 'L' ? <span className="text-orange-400">L</span> : stats.fairwayHit === 'R' ? <span className="text-orange-400">R</span> : <span className="text-gray-500">-</span>}</td>
+                              <td className="px-1 py-1">{stats.gir === true ? <span className="text-green-400">✓</span> : stats.gir === false ? <span className="text-red-400">✗</span> : <span className="text-gray-500">-</span>}</td>
+                              <td className="px-1 py-1 font-bold text-white">{puttDistances.length > 0 ? puttDistances.length : <span className="text-gray-500">-</span>}</td>
                               {Array.from({ length: maxPutts }, (_, i) => (
-                                <td key={`putt-${i}-${idx}`} className="px-1 py-1 border border-gray-300 text-[10px] text-gray-700">
-                                  {puttDistances[i] ? `${puttDistances[i]}'` : '-'}
+                                <td key={`putt-${i}-${idx}`} className="px-1 py-1 text-[10px] text-gray-300">
+                                  {puttDistances[i] ? `${puttDistances[i]}'` : <span className="text-gray-500">-</span>}
                                 </td>
                               ))}
-                              <td className="px-1 py-1 border border-gray-300 text-[10px] text-gray-700">{stats.drive && typeof stats.drive.yardage === 'number' ? `${stats.drive.yardage}y` : '-'}</td>
+                              <td className="px-1 py-1 text-[10px] text-gray-300">{stats.drive && typeof stats.drive.yardage === 'number' ? <span className="text-yellow-300">{stats.drive.yardage}y</span> : <span className="text-gray-500">-</span>}</td>
                             </tr>
                           );
                         })}
