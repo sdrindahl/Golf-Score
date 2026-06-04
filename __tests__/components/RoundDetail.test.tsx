@@ -124,8 +124,12 @@ describe('RoundDetail - Concede Hole Feature', () => {
     localStorage.setItem('golfRounds', JSON.stringify([mockRound]))
     localStorage.setItem('golfCourses', JSON.stringify([mockCourse]))
 
-    // Mock fetch for API calls
-    global.fetch = jest.fn()
+    // Mock fetch for API calls — must return a Response-like object or res.ok will be undefined
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: { entries: () => [] as [string, string][] },
+      json: async () => ({ round: mockRound, courses: [mockCourse] }),
+    })
   })
 
   test('should display conceded hole as "C" instead of blank', () => {
