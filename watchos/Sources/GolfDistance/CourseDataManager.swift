@@ -45,7 +45,7 @@ final class CourseDataManager: ObservableObject {
                 if let response = try? JSONDecoder().decode(ActiveRoundResponse.self, from: data),
                    let round = response.round, round.hasGPS {
                     self.activeRound = round
-                    // Auto-select the matching course
+                    // If courses are already loaded, select now; otherwise fetchCourses will pick it up
                     if let match = self.courses.first(where: { $0.id == round.courseId }) {
                         self.selectCourse(match)
                     }
@@ -87,7 +87,13 @@ final class CourseDataManager: ObservableObject {
                     let response = try JSONDecoder().decode(WatchAPIResponse.self, from: data)
                     self.courses = response.courses
                     self.cacheRawData(data)
-                    self.restoreCourseSelection()
+                    // If an active round was already fetched, apply it now that courses are loaded
+                    if let round = self.activeRound,
+                       let match = self.courses.first(where: { $0.id == round.courseId }) {
+                        self.selectCourse(match)
+                    } else {
+                        self.restoreCourseSelection()
+                    }
                 } catch {
                     self.errorMessage = "Decode error: \(error.localizedDescription)"
                 }
