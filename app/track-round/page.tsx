@@ -1667,12 +1667,12 @@ function TrackRoundContent() {
 
       {showScoreModal && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="rounded-2xl shadow-2xl p-4 w-full max-w-md mx-4 relative overflow-y-auto max-h-[90vh]" style={{ background: 'rgba(34,50,34,0.96)' }}>
+          <div className="rounded-2xl shadow-2xl p-4 w-full max-w-md mx-4 relative overflow-y-auto max-h-[90vh] border border-green-400" style={{ background: 'rgba(0,0,0,0.85)', boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)' }}>
 
             {/* Hole navigation and picker */}
             <div className="flex items-center justify-between mb-4">
               <button
-                className="px-3 py-1 rounded font-bold text-lg border border-white/20 text-white hover:bg-white/10 disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.08)' }}
+                className="px-3 py-1 rounded-lg font-bold text-lg border border-green-400/40 text-green-400 hover:bg-green-400/10 disabled:opacity-30" style={{ background: 'rgba(0,0,0,0.4)' }}
                 onClick={() => setCurrentHoleIndex(i => Math.max(0, i - 1))}
                 disabled={currentHoleIndex === 0}
                 aria-label="Previous Hole"
@@ -1680,10 +1680,10 @@ function TrackRoundContent() {
                 &#x25C0;
               </button>
               <div className="flex items-center gap-2">
-                <label htmlFor="hole-picker" className="font-semibold text-gray-300">Hole</label>
+                <label htmlFor="hole-picker" className="font-semibold text-blue-400">Hole</label>
                 <select
                   id="hole-picker"
-                  className="border border-white/20 rounded px-2 py-1 text-lg font-bold text-white" style={{ background: 'rgba(255,255,255,0.12)' }}
+                  className="border border-blue-400/60 rounded-lg px-2 py-1 text-lg font-bold text-blue-400" style={{ background: 'rgba(0,0,0,0.4)', boxShadow: '0 0 8px 2px rgba(59,130,246,0.3)' }}
                   value={currentHoleIndex}
                   onChange={e => setCurrentHoleIndex(Number(e.target.value))}
                 >
@@ -1695,7 +1695,7 @@ function TrackRoundContent() {
                 </select>
               </div>
               <button
-                className="px-3 py-1 rounded font-bold text-lg border border-white/20 text-white hover:bg-white/10 disabled:opacity-30" style={{ background: 'rgba(255,255,255,0.08)' }}
+                className="px-3 py-1 rounded-lg font-bold text-lg border border-green-400/40 text-green-400 hover:bg-green-400/10 disabled:opacity-30" style={{ background: 'rgba(0,0,0,0.4)' }}
                 onClick={() => setCurrentHoleIndex(i => Math.min(course.holes.length - 1, i + 1))}
                 disabled={currentHoleIndex === course.holes.length - 1}
                 aria-label="Next Hole"
@@ -1710,7 +1710,7 @@ function TrackRoundContent() {
                 {modalCourseContext.segmentLabel ? ` • ${modalCourseContext.segmentLabel}` : ''}
               </p>
             </div>
-            <h2 className="text-base font-extrabold tracking-widest uppercase text-green-400 mb-4">
+            <h2 className="text-base font-extrabold tracking-widest uppercase mb-4" style={{ color: '#38bdf8', textShadow: '0 0 10px rgba(56,189,248,0.5)' }}>
               Enter Score for Hole {course?.holes?.[currentHoleIndex]?.holeNumber ?? currentHoleIndex + 1}
             </h2>
 
@@ -1737,7 +1737,7 @@ function TrackRoundContent() {
                   return (
                     <div key={sectionIdx} className="mb-1">
                       <button
-                        className="w-full flex items-center justify-between px-2 py-1 rounded-lg text-xs font-bold tracking-widest text-gray-400 uppercase hover:bg-white/5 transition"
+                        className="w-full flex items-center justify-between px-2 py-1 rounded-lg text-xs font-bold tracking-widest text-green-400/70 uppercase hover:bg-green-400/10 transition border border-green-400/20"
                         onClick={() => setOpen(s => !s)}
                         type="button"
                       >
@@ -1848,7 +1848,7 @@ function TrackRoundContent() {
             )}
             {/* ── TOTAL SCORE ── */}
             <div className="mb-3 mt-1">
-              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">Total Score</p>
+              <p className="text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: '#38bdf8', letterSpacing: '0.15em' }}>Hole Score</p>
               <div className="flex items-center justify-between gap-3">
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
@@ -1916,8 +1916,8 @@ function TrackRoundContent() {
             </div>
 
             {/* ── FIR ── */}
-            <div className="mb-3">
-              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">FIR</p>
+            <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
+              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#4ade80', letterSpacing: '0.15em' }}>FIR <span className="text-gray-500 font-normal normal-case text-[10px]">Fairway in Regulation</span></p>
               <div className="flex gap-2">
                 {([
                   { val: 'L' as const, label: 'Miss Left' },
@@ -1931,7 +1931,7 @@ function TrackRoundContent() {
                       className="flex-1 h-9 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95"
                       style={active
                         ? { background: 'rgba(22,163,74,0.85)', boxShadow: '0 0 10px 2px rgba(74,222,128,0.5)', color: '#fff', border: '1.5px solid rgba(74,222,128,0.7)' }
-                        : { background: 'rgba(255,255,255,0.1)', color: '#d1d5db', border: '1.5px solid rgba(255,255,255,0.15)' }
+                        : { background: 'rgba(0,0,0,0.4)', color: '#9ca3af', border: '1.5px solid rgba(74,222,128,0.15)' }
                       }
                       onClick={async () => {
                         setPerHoleStats(stats => {
@@ -1955,12 +1955,12 @@ function TrackRoundContent() {
             </div>
 
             {/* ── GIR ── */}
-            <div className="mb-3">
-              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">GIR</p>
+            <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
+              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#4ade80', letterSpacing: '0.15em' }}>GIR <span className="text-gray-500 font-normal normal-case text-[10px]">Green in Regulation</span></p>
               <div className="flex gap-2">
                 {([
                   { val: false, label: 'Missed', activeColor: 'rgba(180,120,20,0.7)', glowColor: 'rgba(251,191,36,0.4)', borderColor: 'rgba(251,191,36,0.5)', dotColor: '#f59e0b' },
-                  { val: true,  label: 'Regulated', activeColor: 'rgba(30,58,138,0.85)', glowColor: 'rgba(96,165,250,0.4)', borderColor: 'rgba(96,165,250,0.6)', dotColor: '#60a5fa' },
+                  { val: true,  label: 'HIT', activeColor: 'rgba(30,58,138,0.85)', glowColor: 'rgba(96,165,250,0.4)', borderColor: 'rgba(96,165,250,0.6)', dotColor: '#60a5fa' },
                 ] as { val: boolean; label: string; activeColor: string; glowColor: string; borderColor: string; dotColor: string }[]).map(({ val, label, activeColor, glowColor, borderColor, dotColor }) => {
                   const gir = perHoleStats[currentHoleIndex]?.gir ?? false;
                   const active = gir === val;
@@ -1970,7 +1970,7 @@ function TrackRoundContent() {
                       className="flex-1 h-9 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95"
                       style={active
                         ? { background: activeColor, boxShadow: `0 0 10px 2px ${glowColor}`, color: '#fff', border: `1.5px solid ${borderColor}` }
-                        : { background: 'rgba(255,255,255,0.08)', color: '#d1d5db', border: '1.5px solid rgba(255,255,255,0.12)' }
+                        : { background: 'rgba(0,0,0,0.4)', color: '#9ca3af', border: '1.5px solid rgba(74,222,128,0.15)' }
                       }
                       onClick={async () => {
                         setPerHoleStats(stats => {
@@ -1994,8 +1994,8 @@ function TrackRoundContent() {
             </div>
 
             {/* ── PUTTS ── */}
-            <div className="mb-3">
-              <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-2">Putts</p>
+            <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(236,72,153,0.2)' }}>
+              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#ec4899', letterSpacing: '0.15em' }}>Putts</p>
               <div className="flex items-center justify-between gap-3">
                 <button
                   className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
@@ -2013,7 +2013,7 @@ function TrackRoundContent() {
                   aria-label="Decrease putts"
                 >−</button>
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-extrabold text-white shrink-0"
-                  style={{ background: 'rgba(0,0,0,0.5)', boxShadow: '0 0 18px 4px rgba(139,92,246,0.7), 0 0 0 3px rgba(139,92,246,0.5)' }}>
+                  style={{ background: 'rgba(0,0,0,0.5)', boxShadow: '0 0 18px 4px rgba(236,72,153,0.7), 0 0 0 3px rgba(236,72,153,0.5)' }}>
                   {perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}
                 </div>
                 <button
@@ -2034,13 +2034,13 @@ function TrackRoundContent() {
               </div>
               {perHoleStats[currentHoleIndex]?.puttDistances?.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-[10px] font-bold tracking-widest text-gray-500 uppercase mb-2">Putt Distances (ft)</p>
+                  <p className="text-[10px] font-bold tracking-widest text-pink-400/80 uppercase mb-2">Putt Distances (ft)</p>
                   <div className="flex flex-wrap gap-2">
                     {perHoleStats[currentHoleIndex].puttDistances.map((dist, idx) => (
                       <button
                         key={idx}
-                        className="h-9 px-4 rounded-full border border-white/20 text-white font-semibold text-sm hover:bg-white/10 transition active:scale-95"
-                        style={{ background: 'rgba(139,92,246,0.2)', borderColor: 'rgba(139,92,246,0.4)' }}
+                        className="h-9 px-4 rounded-full font-semibold text-sm transition active:scale-95 text-white"
+                        style={{ background: 'rgba(236,72,153,0.7)', border: '1.5px solid rgba(236,72,153,0.9)', boxShadow: '0 0 10px 2px rgba(236,72,153,0.4)' }}
                         onClick={() => setPuttEdit({ idx, value: dist })}
                         type="button"
                       >
@@ -2055,24 +2055,24 @@ function TrackRoundContent() {
       {/* Putt Distance Edit Popup */}
       {typeof puttEdit?.idx === 'number' && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 relative flex flex-col items-center" style={{ background: 'rgba(34,50,34,0.96)' }}>
+        <div className="rounded-2xl shadow-2xl p-6 w-full max-w-xs mx-4 relative flex flex-col items-center border border-green-400" style={{ background: 'rgba(0,0,0,0.85)', boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)' }}>
             <button
-              className="absolute top-3 right-3 text-2xl text-gray-400 hover:text-white"
+              className="absolute top-3 right-3 text-2xl text-green-400/70 hover:text-green-400"
               onClick={() => setPuttEdit(null)}
               aria-label="Close putt edit"
             >×</button>
             <h3 className="text-base font-extrabold tracking-widest uppercase text-green-400 mb-4">Edit Putt {puttEdit.idx + 1} Distance</h3>
             <div className="flex items-center gap-3 mb-4">
               <button
-                className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10"
-                style={{ background: 'rgba(255,255,255,0.1)' }}
+                className="w-10 h-10 rounded-lg text-2xl font-bold text-green-400 flex items-center justify-center border border-green-400/40 hover:bg-green-400/10"
+                style={{ background: 'rgba(0,0,0,0.4)' }}
                 onClick={() => setPuttEdit(edit => (edit ? { idx: edit.idx, value: Math.max(0, (edit.value || 0) - 1) } : null))}
                 aria-label="Decrease putt distance"
               >−</button>
               <span className="text-2xl font-bold w-12 text-center text-white">{puttEdit.value}</span>
               <button
-                className="w-10 h-10 rounded text-2xl font-bold text-white flex items-center justify-center border border-white/20 hover:bg-white/10"
-                style={{ background: 'rgba(255,255,255,0.1)' }}
+                className="w-10 h-10 rounded-lg text-2xl font-bold text-green-400 flex items-center justify-center border border-green-400/40 hover:bg-green-400/10"
+                style={{ background: 'rgba(0,0,0,0.4)' }}
                 onClick={() => setPuttEdit(edit => (edit ? { idx: edit.idx, value: Math.min(100, (edit.value || 0) + 1) } : null))}
                 aria-label="Increase putt distance"
               >+</button>
@@ -2081,15 +2081,16 @@ function TrackRoundContent() {
               {[5,10,15,20,25,30,35,40,45,50,60,70,80,90,100].map(val => (
                 <button
                   key={val}
-                  className={`py-2 px-2 rounded text-sm font-semibold transition ${puttEdit.value === val ? 'bg-green-600 text-white border border-green-500' : 'text-gray-300 border border-white/20 hover:bg-white/10'}`}
-                  style={puttEdit.value === val ? {} : { background: 'rgba(255,255,255,0.08)' }}
+                  className={`py-2 px-2 rounded-lg text-sm font-semibold transition ${puttEdit.value === val ? 'text-white border border-pink-500' : 'text-gray-300 border border-green-400/20 hover:bg-green-400/10'}`}
+                  style={puttEdit.value === val ? { background: 'rgba(236,72,153,0.7)', boxShadow: '0 0 8px 2px rgba(236,72,153,0.4)' } : { background: 'rgba(0,0,0,0.4)' }}
                   onClick={() => setPuttEdit(edit => (edit ? { idx: edit.idx, value: val } : null))}
                   type="button"
                 >{val}</button>
               ))}
             </div>
             <button
-              className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 rounded-xl mt-2 text-lg"
+              className="w-full text-white font-bold py-2 rounded-xl mt-2 text-lg border border-pink-500/60 hover:border-pink-400"
+              style={{ background: 'rgba(236,72,153,0.7)', boxShadow: '0 0 12px 2px rgba(236,72,153,0.3)' }}
               onClick={() => {
                 setPerHoleStats(stats => {
                   const updated = [...stats];
@@ -2135,8 +2136,8 @@ function TrackRoundContent() {
               )}
             </div>
             <button
-              className="w-full mt-3 h-10 rounded-xl text-sm font-bold tracking-widest uppercase text-gray-400 hover:text-white transition active:scale-95"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}
+              className="w-full mt-3 h-10 rounded-xl text-sm font-bold tracking-widest uppercase text-green-400/70 hover:text-green-400 transition active:scale-95"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(74,222,128,0.2)' }}
               onClick={() => setShowScoreModal(false)}
             >Close</button>
           </div>
