@@ -196,6 +196,27 @@ function TrackRoundContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roundId = searchParams ? searchParams.get('id') : null;
+  // Ref to skip persist on the very first render (before restore has run)
+  const playersPersistedRef = useRef(false);
+  // Restore selectedPlayers from localStorage once roundId is available
+  useEffect(() => {
+    if (!roundId) return;
+    try {
+      const saved = localStorage.getItem(`trackRoundPlayers_${roundId}`);
+      if (saved) setSelectedPlayers(JSON.parse(saved));
+    } catch {}
+  }, [roundId]);
+  // Persist selectedPlayers to localStorage whenever they change (skip first render)
+  useEffect(() => {
+    if (!roundId) return;
+    if (!playersPersistedRef.current) {
+      playersPersistedRef.current = true;
+      return; // skip initial mount — let restore run first
+    }
+    try {
+      localStorage.setItem(`trackRoundPlayers_${roundId}`, JSON.stringify(selectedPlayers));
+    } catch {}
+  }, [selectedPlayers, roundId]);
   const [round, setRound] = useState<Round | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1453,7 +1474,7 @@ function TrackRoundContent() {
                         <div className="mt-4 flex justify-end gap-2">
                           <button className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-bold text-base border hover:bg-gray-300" onClick={() => setShowAddPlayers(false)}>Done</button>
                           {selectedPlayers.length > 0 && (
-                            <button className="px-4 py-2 rounded bg-red-600 text-white font-bold text-base border hover:bg-red-700" onClick={() => setSelectedPlayers([])}>Clear</button>
+                            <button className="px-4 py-2 rounded bg-red-600 text-white font-bold text-base border hover:bg-red-700" onClick={() => { setSelectedPlayers([]); if (roundId) localStorage.removeItem(`trackRoundPlayers_${roundId}`); }}>Clear</button>
                           )}
                         </div>
                       </div>
@@ -1600,7 +1621,7 @@ function TrackRoundContent() {
                   {playerScores[p.id] != null ? playerScores[p.id]!.total : '—'}
                 </span>
                 {playerScores[p.id] != null && (
-                  <span className="text-[9px] font-bold text-white/60 leading-none mt-0.5">
+                  <span className="text-[9px] font-bold text-pink-500 leading-none mt-0.5">
                     Thru {playerScores[p.id]!.thru}
                   </span>
                 )}
