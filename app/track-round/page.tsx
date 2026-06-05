@@ -161,7 +161,8 @@ function TrackRoundContent() {
         for (const s of roundScores) {
           if (s != null && s > 0) { total += s; thru++; }
         }
-        const finished = totalHoles > 0 && thru === totalHoles;
+        // Finished if all holes scored, OR if the round has been saved/ended (in_progress=false)
+        const finished = (totalHoles > 0 && thru === totalHoles) || latestRound.in_progress === false;
         newScores[player.id] = thru > 0 ? { total, thru, finished } : null;
       } catch {
         newScores[player.id] = null;
