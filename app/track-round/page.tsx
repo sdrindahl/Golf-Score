@@ -86,7 +86,7 @@ function TrackRoundContent() {
   // State for all available players
   const [allPlayers, setAllPlayers] = useState<User[]>([]);
   // State for player scores: map from player.id to score relative to par (null = not available)
-  const [playerScores, setPlayerScores] = useState<Record<string, { total: number; thru: number } | null>>({});
+  const [playerScores, setPlayerScores] = useState<Record<string, { total: number; thru: number; finished: boolean } | null>>({});
   // Pull-to-refresh state
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
@@ -113,30 +113,56 @@ function TrackRoundContent() {
       setPlayerScores({});
       return;
     }
-    const newScores: Record<string, { total: number; thru: number } | null> = {};
+    const newScores: Record<string, { total: number; thru: number; finished: boolean } | null> = {};
     await Promise.all(selectedPlayers.map(async (player) => {
       try {
-        const res = await fetch('/api/get-in-progress-rounds', {
+        // 1. Check for an active in-progress round first
+        const inProgressRes = await fetch('/api/get-in-progress-rounds', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: player.id }),
         });
-        const data = await res.json();
-        const rounds: any[] = data.rounds || [];
-        if (rounds.length === 0) {
+        const inProgressData = await inProgressRes.json();
+        const inProgressRounds: any[] = inProgressData.rounds || [];
+
+        let latestRound: any = inProgressRounds[0] || null;
+
+        // 2. No in-progress round — fall back to most recent completed round,
+        //    but only if it was played today
+        if (!latestRound) {
+          const completedRes = await fetch('/api/get-user-rounds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: player.id }),
+          });
+          const completedData = await completedRes.json();
+          const allRounds: any[] = completedData.rounds || [];
+          if (allRounds.length > 0) {
+            const mostRecent = allRounds[0];
+            const roundDate = new Date(mostRecent.date || mostRecent.created_at);
+            const today = new Date();
+            const sameDay =
+              roundDate.getFullYear() === today.getFullYear() &&
+              roundDate.getMonth() === today.getMonth() &&
+              roundDate.getDate() === today.getDate();
+            if (sameDay) latestRound = mostRecent;
+          }
+        }
+
+        if (!latestRound) {
           newScores[player.id] = null;
           return;
         }
-        // Use the most recent in-progress round
-        const latestRound = rounds[0];
+
         const roundScores: number[] = latestRound.scores || [];
-        // Sum all scored holes (non-zero values) and count how many have been played
+        const totalHoles = roundScores.length;
         let total = 0;
         let thru = 0;
         for (const s of roundScores) {
           if (s != null && s > 0) { total += s; thru++; }
         }
-        newScores[player.id] = thru > 0 ? { total, thru } : null;
+        const finished = totalHoles > 0 && thru === totalHoles;
+        newScores[player.id] = thru > 0 ? { total, thru, finished } : null;
       } catch {
         newScores[player.id] = null;
       }
@@ -1642,7 +1668,7 @@ function TrackRoundContent() {
               </span>
               {playerScores[p.id] != null && (
                 <span className="text-[9px] font-bold text-pink-500 leading-none mt-0.5">
-                  Thru {playerScores[p.id]!.thru}
+                  {playerScores[p.id]!.finished ? 'F' : `Thru ${playerScores[p.id]!.thru}`}
                 </span>
               )}
             </div>
