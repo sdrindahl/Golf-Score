@@ -177,6 +177,8 @@ function TrackRoundContent() {
   // Score entry modal state
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showFront9, setShowFront9] = useState(false);
+  // True when score was pre-filled with par on modal open — hides it from scorecard until saved
+  const [scoreIsPreview, setScoreIsPreview] = useState(false);
   const [showBack9, setShowBack9] = useState(false);
 
   // Helper: calculate total score (sum of scores array)
@@ -410,6 +412,8 @@ function TrackRoundContent() {
   // Heartbeat refs
   const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPageVisibleRef = useRef<boolean>(true);
+  // Score value before modal opens — restored if user closes without saving
+  const scoreBeforeModalRef = useRef<number | null>(null);
   // Persist currentHoleIndex to localStorage whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1509,7 +1513,24 @@ function TrackRoundContent() {
                   className={`focus:outline-none pointer-events-auto group rounded-full shadow-lg p-2 transition-all duration-100 flex items-center justify-center
                     ${tapItPressed ? 'scale-90 bg-black/60 border-4 border-blue-400 shadow-inner' : 'bg-transparent border-0'}`}
                   style={{ border: tapItPressed ? '4px solid #60a5fa' : 'none', padding: 0, position: 'relative', width: 140, height: 140 }}
-                  onClick={() => { tapItPress(); setShowScoreModal(true); }}
+                  onClick={() => {
+                    tapItPress();
+                    // Remember score before opening so Close can discard the par pre-fill
+                    scoreBeforeModalRef.current = scores[currentHoleIndex] ?? 0;
+                    // Default score to par if hole hasn't been scored yet
+                    const holePar = course?.holes?.[currentHoleIndex]?.par;
+                    if ((scores[currentHoleIndex] == null || scores[currentHoleIndex] === 0) && holePar) {
+                      setScores(prev => {
+                        const updated = [...prev];
+                        updated[currentHoleIndex] = holePar;
+                        return updated;
+                      });
+                      setScoreIsPreview(true);
+                    } else {
+                      setScoreIsPreview(false);
+                    }
+                    setShowScoreModal(true);
+                  }}
                   aria-label="Just Tap It to enter your score"
                 >
                   <img
@@ -1723,7 +1744,10 @@ function TrackRoundContent() {
                   const isFrontNine = startIdx === 0;
                   const sectionLabel = modalSectionLabels[sectionIdx] || (isFrontNine ? 'Front 9' : 'Back 9');
                   const parTotal = holes.reduce((sum, h) => sum + (h.par || 0), 0);
-                  const scoreTotal = holes.reduce((sum, h, i) => sum + (typeof scores[startIdx + i] === 'number' && scores[startIdx + i] > 0 ? scores[startIdx + i] : 0), 0);
+                  const scoreTotal = holes.reduce((sum, h, i) => {
+                    if (scoreIsPreview && startIdx + i === currentHoleIndex) return sum;
+                    return sum + (typeof scores[startIdx + i] === 'number' && scores[startIdx + i] > 0 ? scores[startIdx + i] : 0);
+                  }, 0);
                   const teeNames = ['men', 'women', 'senior', 'championship'] as const;
                   const isValidTee = (tee: string): tee is typeof teeNames[number] => teeNames.includes(tee as any);
                   const yardages = holes.map(h =>
@@ -1769,7 +1793,7 @@ function TrackRoundContent() {
                         <tr>
                           <td className="px-1 py-1 font-semibold">Score</td>
                           {holes.map((h, i) => {
-                            const score = scores[startIdx + i];
+                            const score = (scoreIsPreview && startIdx + i === currentHoleIndex) ? 0 : scores[startIdx + i];
                             const par = h.par ?? 0;
                             let shape = '';
                             let bg = '';
@@ -2113,6 +2137,8 @@ function TrackRoundContent() {
                   className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
                   style={{ background: 'rgba(10,20,10,0.95)', color: '#4ade80', border: '1.5px solid rgba(74,222,128,0.25)', boxShadow: '0 0 12px 2px rgba(74,222,128,0.15)' }}
                   onClick={async () => {
+                    scoreBeforeModalRef.current = null;
+                    setScoreIsPreview(false);
                     await handleFinishRound();
                     setShowScoreModal(false);
                   }}
@@ -2122,6 +2148,8 @@ function TrackRoundContent() {
                   className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
                   style={{ background: 'rgba(10,20,10,0.95)', color: '#4ade80', border: '1.5px solid rgba(74,222,128,0.25)', boxShadow: '0 0 12px 2px rgba(74,222,128,0.15)' }}
                   onClick={async () => {
+                    scoreBeforeModalRef.current = null;
+                    setScoreIsPreview(false);
                     await immediateSaveRound();
                     setShowScoreModal(false);
                     setCurrentHoleIndex(idx => {
@@ -2138,7 +2166,19 @@ function TrackRoundContent() {
             <button
               className="w-full mt-3 h-10 rounded-xl text-sm font-bold tracking-widest uppercase text-green-400/70 hover:text-green-400 transition active:scale-95"
               style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(74,222,128,0.2)' }}
-              onClick={() => setShowScoreModal(false)}
+              onClick={() => {
+                // Restore score to 0 if hole was unscored when modal opened (discard par pre-fill)
+                if (scoreBeforeModalRef.current === 0 || scoreBeforeModalRef.current == null) {
+                  setScores(prev => {
+                    const updated = [...prev];
+                    updated[currentHoleIndex] = 0;
+                    return updated;
+                  });
+                }
+                scoreBeforeModalRef.current = null;
+                setScoreIsPreview(false);
+                setShowScoreModal(false);
+              }}
             >Close</button>
           </div>
         </div>
