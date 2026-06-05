@@ -1509,7 +1509,19 @@ function TrackRoundContent() {
                   className={`focus:outline-none pointer-events-auto group rounded-full shadow-lg p-2 transition-all duration-100 flex items-center justify-center
                     ${tapItPressed ? 'scale-90 bg-black/60 border-4 border-blue-400 shadow-inner' : 'bg-transparent border-0'}`}
                   style={{ border: tapItPressed ? '4px solid #60a5fa' : 'none', padding: 0, position: 'relative', width: 140, height: 140 }}
-                  onClick={() => { tapItPress(); setShowScoreModal(true); }}
+                  onClick={() => {
+                    tapItPress();
+                    // Default score to par if hole hasn't been scored yet
+                    const holePar = course?.holes?.[currentHoleIndex]?.par;
+                    if ((scores[currentHoleIndex] == null || scores[currentHoleIndex] === 0) && holePar) {
+                      setScores(prev => {
+                        const updated = [...prev];
+                        updated[currentHoleIndex] = holePar;
+                        return updated;
+                      });
+                    }
+                    setShowScoreModal(true);
+                  }}
                   aria-label="Just Tap It to enter your score"
                 >
                   <img
