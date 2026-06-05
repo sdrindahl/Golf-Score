@@ -85,6 +85,13 @@ function TrackRoundContent() {
   const [selectedPlayers, setSelectedPlayers] = useState<User[]>([]);
   // State for all available players
   const [allPlayers, setAllPlayers] = useState<User[]>([]);
+  // State for player scores: map from player.id to score relative to par (null = not available)
+  const [playerScores, setPlayerScores] = useState<Record<string, { total: number; thru: number; finished: boolean } | null>>({});
+  // Pull-to-refresh state
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullStartYRef = useRef<number | null>(null);
+  const PULL_THRESHOLD = 70;
 
   // Get current user
   const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
@@ -99,6 +106,109 @@ function TrackRoundContent() {
     }
     if (showAddPlayers) fetchPlayers();
   }, [showAddPlayers, auth, user]);
+
+  // Fetch in-progress round scores for selected players
+  const fetchPlayerScores = useCallback(async () => {
+    if (selectedPlayers.length === 0) {
+      setPlayerScores({});
+      return;
+    }
+    const newScores: Record<string, { total: number; thru: number; finished: boolean } | null> = {};
+    await Promise.all(selectedPlayers.map(async (player) => {
+      try {
+        // 1. Check for an active in-progress round first
+        const inProgressRes = await fetch('/api/get-in-progress-rounds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: player.id }),
+        });
+        const inProgressData = await inProgressRes.json();
+        const inProgressRounds: any[] = inProgressData.rounds || [];
+
+        let latestRound: any = inProgressRounds[0] || null;
+
+        // 2. No in-progress round — fall back to most recent completed round,
+        //    but only if it was played today
+        if (!latestRound) {
+          const completedRes = await fetch('/api/get-user-rounds', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: player.id }),
+          });
+          const completedData = await completedRes.json();
+          const allRounds: any[] = completedData.rounds || [];
+          if (allRounds.length > 0) {
+            const mostRecent = allRounds[0];
+            const roundDate = new Date(mostRecent.date || mostRecent.created_at);
+            const today = new Date();
+            const sameDay =
+              roundDate.getFullYear() === today.getFullYear() &&
+              roundDate.getMonth() === today.getMonth() &&
+              roundDate.getDate() === today.getDate();
+            if (sameDay) latestRound = mostRecent;
+          }
+        }
+
+        if (!latestRound) {
+          newScores[player.id] = null;
+          return;
+        }
+
+        const roundScores: number[] = latestRound.scores || [];
+        const totalHoles = roundScores.length;
+        let total = 0;
+        let thru = 0;
+        for (const s of roundScores) {
+          if (s != null && s > 0) { total += s; thru++; }
+        }
+        // Finished if all holes scored, OR if the round has been saved/ended (in_progress=false)
+        const finished = (totalHoles > 0 && thru === totalHoles) || latestRound.in_progress === false;
+        newScores[player.id] = thru > 0 ? { total, thru, finished } : null;
+      } catch {
+        newScores[player.id] = null;
+      }
+    }));
+    setPlayerScores(newScores);
+  }, [selectedPlayers]);
+
+  // Fetch player scores when players are first added or the selected players list changes
+  useEffect(() => {
+    fetchPlayerScores();
+  }, [fetchPlayerScores, selectedPlayers]);
+
+  // Pull-to-refresh touch handlers
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        pullStartYRef.current = e.touches[0].clientY;
+      }
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (pullStartYRef.current === null) return;
+      const dist = e.touches[0].clientY - pullStartYRef.current;
+      if (dist > 0) {
+        setPullDistance(Math.min(dist, PULL_THRESHOLD * 1.5));
+      }
+    };
+    const handleTouchEnd = async () => {
+      if (pullDistance >= PULL_THRESHOLD) {
+        setPullRefreshing(true);
+        await fetchPlayerScores();
+        setPullRefreshing(false);
+      }
+      setPullDistance(0);
+      pullStartYRef.current = null;
+    };
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [fetchPlayerScores, pullDistance]);
+
         // ...existing code...
       // Ensure isClient is true in browser for immediate saves
       // (Only declare once at the top of the component)
@@ -113,6 +223,27 @@ function TrackRoundContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roundId = searchParams ? searchParams.get('id') : null;
+  // Ref to skip persist on the very first render (before restore has run)
+  const playersPersistedRef = useRef(false);
+  // Restore selectedPlayers from localStorage once roundId is available
+  useEffect(() => {
+    if (!roundId) return;
+    try {
+      const saved = localStorage.getItem(`trackRoundPlayers_${roundId}`);
+      if (saved) setSelectedPlayers(JSON.parse(saved));
+    } catch {}
+  }, [roundId]);
+  // Persist selectedPlayers to localStorage whenever they change (skip first render)
+  useEffect(() => {
+    if (!roundId) return;
+    if (!playersPersistedRef.current) {
+      playersPersistedRef.current = true;
+      return; // skip initial mount — let restore run first
+    }
+    try {
+      localStorage.setItem(`trackRoundPlayers_${roundId}`, JSON.stringify(selectedPlayers));
+    } catch {}
+  }, [selectedPlayers, roundId]);
   const [round, setRound] = useState<Round | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,6 +256,11 @@ function TrackRoundContent() {
     }
     return 0;
   });
+
+  // Refresh player scores each time the user navigates to a new hole
+  useEffect(() => {
+    fetchPlayerScores();
+  }, [currentHoleIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Set currentHoleIndex from URL (?hole=) or round.startingHole after round/searchParams are loaded
   useEffect(() => {
@@ -1111,6 +1247,27 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
+      {/* Pull-to-refresh indicator */}
+      {(pullDistance > 10 || pullRefreshing) && (
+        <div
+          className="fixed top-0 left-0 w-full flex justify-center z-[999] pointer-events-none transition-all"
+          style={{ transform: `translateY(${pullRefreshing ? 56 : Math.min(pullDistance * 0.6, 56)}px)` }}
+        >
+          <div className="flex items-center gap-2 bg-black/70 text-green-300 text-sm font-bold px-4 py-2 rounded-full shadow-lg">
+            {pullRefreshing ? (
+              <>
+                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh scores'}
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {/* Top: Course Name Banner with Parent */}
 
       {course && (() => {
@@ -1309,8 +1466,8 @@ function TrackRoundContent() {
             </div>
                   {/* Add Players Modal */}
                   {showAddPlayers && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative">
+                    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-60" style={{ paddingTop: '10vh', paddingBottom: '120px' }}>
+                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative overflow-y-auto" style={{ maxHeight: 'calc(100vh - 10vh - 120px)' }}>
                         <h2 className="text-xl font-bold mb-4 text-gray-800">Add Players (up to 3)</h2>
                         <button className="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800" onClick={() => setShowAddPlayers(false)} aria-label="Close">×</button>
                         <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
@@ -1344,7 +1501,7 @@ function TrackRoundContent() {
                         <div className="mt-4 flex justify-end gap-2">
                           <button className="px-4 py-2 rounded bg-gray-200 text-gray-700 font-bold text-base border hover:bg-gray-300" onClick={() => setShowAddPlayers(false)}>Done</button>
                           {selectedPlayers.length > 0 && (
-                            <button className="px-4 py-2 rounded bg-red-600 text-white font-bold text-base border hover:bg-red-700" onClick={() => setSelectedPlayers([])}>Clear</button>
+                            <button className="px-4 py-2 rounded bg-red-600 text-white font-bold text-base border hover:bg-red-700" onClick={() => { setSelectedPlayers([]); if (roundId) localStorage.removeItem(`trackRoundPlayers_${roundId}`); }}>Clear</button>
                           )}
                         </div>
                       </div>
@@ -1471,28 +1628,54 @@ function TrackRoundContent() {
         </div>
       )}
 
-      {selectedPlayers.length > 0 && (
-        <div
-          className="fixed z-40 flex flex-col items-start justify-start gap-2"
-          style={{ 
-            top: '600px',
-            left: '20px'
-          }}
-        >
-          {selectedPlayers.map((p, idx) => (
-            <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-              {/* Avatar */}
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
+      {/* Left-side player panel: plus button always visible, players listed below */}
+      <div
+        className="fixed z-40 flex flex-col items-start justify-start gap-2"
+        style={{ top: '580px', left: '20px' }}
+      >
+        {/* Plus button — hidden once 3 players are added */}
+        {selectedPlayers.length < 3 && (
+          <button
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-black/50 border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white shadow-lg transition"
+            onClick={() => setShowAddPlayers(true)}
+            aria-label="Add player"
+            title="Add player"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </button>
+        )}
+        {selectedPlayers.map((p, idx) => (
+          <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {/* Avatar with subtle × at 11 o'clock */}
+            <div className="relative w-9 h-9 shrink-0">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px]" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
                 {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              {/* Score badge */}
-              <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
-                E
-              </span>
+              <button
+                className="absolute text-white hover:text-white/60 text-sm leading-none transition"
+                style={{ top: '-4px', left: '2px' }}
+                onClick={() => setSelectedPlayers(prev => prev.filter(pl => pl.id !== p.id))}
+                aria-label={`Remove ${p.name}`}
+              >
+                ×
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+            {/* Score badge */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
+                {playerScores[p.id] != null ? playerScores[p.id]!.total : '—'}
+              </span>
+              {playerScores[p.id] != null && (
+                <span className="text-[9px] font-bold text-pink-500 leading-none mt-0.5">
+                  {playerScores[p.id]!.finished ? 'F' : `Thru ${playerScores[p.id]!.thru}`}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       {/* Main layout: add a class to hide background image when map is open */}
