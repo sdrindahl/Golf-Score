@@ -1601,35 +1601,44 @@ function TrackRoundContent() {
         </div>
       )}
 
-      {selectedPlayers.length > 0 && (
-        <div
-          className="fixed z-40 flex flex-col items-start justify-start gap-2"
-          style={{ 
-            top: '600px',
-            left: '20px'
-          }}
-        >
-          {selectedPlayers.map((p, idx) => (
-            <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-              {/* Avatar */}
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
-                {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
-              </div>
-              {/* Score badge */}
-              <div className="flex flex-col items-center">
-                <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
-                  {playerScores[p.id] != null ? playerScores[p.id]!.total : '—'}
-                </span>
-                {playerScores[p.id] != null && (
-                  <span className="text-[9px] font-bold text-pink-500 leading-none mt-0.5">
-                    Thru {playerScores[p.id]!.thru}
-                  </span>
-                )}
-              </div>
+      {/* Left-side player panel: plus button always visible, players listed below */}
+      <div
+        className="fixed z-40 flex flex-col items-start justify-start gap-2"
+        style={{ top: '580px', left: '20px' }}
+      >
+        {/* Plus button — hidden once 3 players are added */}
+        {selectedPlayers.length < 3 && (
+          <button
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-black/50 border border-pink-500 text-pink-500 hover:bg-pink-500 hover:text-white shadow-lg transition"
+            onClick={() => setShowAddPlayers(true)}
+            aria-label="Add player"
+            title="Add player"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </button>
+        )}
+        {selectedPlayers.map((p, idx) => (
+          <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {/* Avatar */}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
+              {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
             </div>
-          ))}
-        </div>
-      )}
+            {/* Score badge */}
+            <div className="flex flex-col items-center">
+              <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
+                {playerScores[p.id] != null ? playerScores[p.id]!.total : '—'}
+              </span>
+              {playerScores[p.id] != null && (
+                <span className="text-[9px] font-bold text-pink-500 leading-none mt-0.5">
+                  Thru {playerScores[p.id]!.thru}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Main layout: map as background, overlays for yardage, scoring, and bottom bar */}
       {/* Main layout: add a class to hide background image when map is open */}
