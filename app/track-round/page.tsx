@@ -1621,19 +1621,18 @@ function TrackRoundContent() {
         )}
         {selectedPlayers.map((p, idx) => (
           <div key={p.id} className="flex flex-row items-center gap-1.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-            {/* Avatar with remove button on long-press / tap ✕ */}
-            <div className="relative">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px] shrink-0" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
+            {/* Avatar with subtle × at 11 o'clock */}
+            <div className="relative w-9 h-9 shrink-0">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-[12px]" style={{ background: idx === 0 ? '#3b5d3a' : idx === 1 ? '#3a4a5d' : '#4b3a5d' }}>
                 {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
               </div>
-              {/* Remove button */}
               <button
-                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center shadow"
-                style={{ fontSize: '9px', lineHeight: 1 }}
+                className="absolute text-white hover:text-white/60 text-sm leading-none transition"
+                style={{ top: '-4px', left: '2px' }}
                 onClick={() => setSelectedPlayers(prev => prev.filter(pl => pl.id !== p.id))}
                 aria-label={`Remove ${p.name}`}
               >
-                ✕
+                ×
               </button>
             </div>
             {/* Score badge */}
