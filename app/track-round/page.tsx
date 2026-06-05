@@ -85,6 +85,13 @@ function TrackRoundContent() {
   const [selectedPlayers, setSelectedPlayers] = useState<User[]>([]);
   // State for all available players
   const [allPlayers, setAllPlayers] = useState<User[]>([]);
+  // State for player scores: map from player.id to score relative to par (null = not available)
+  const [playerScores, setPlayerScores] = useState<Record<string, { total: number; thru: number } | null>>({});
+  // Pull-to-refresh state
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullStartYRef = useRef<number | null>(null);
+  const PULL_THRESHOLD = 70;
 
   // Get current user
   const user = auth.getCurrentUser ? auth.getCurrentUser() : undefined;
@@ -99,6 +106,82 @@ function TrackRoundContent() {
     }
     if (showAddPlayers) fetchPlayers();
   }, [showAddPlayers, auth, user]);
+
+  // Fetch in-progress round scores for selected players
+  const fetchPlayerScores = useCallback(async () => {
+    if (selectedPlayers.length === 0) {
+      setPlayerScores({});
+      return;
+    }
+    const newScores: Record<string, { total: number; thru: number } | null> = {};
+    await Promise.all(selectedPlayers.map(async (player) => {
+      try {
+        const res = await fetch('/api/get-in-progress-rounds', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: player.id }),
+        });
+        const data = await res.json();
+        const rounds: any[] = data.rounds || [];
+        if (rounds.length === 0) {
+          newScores[player.id] = null;
+          return;
+        }
+        // Use the most recent in-progress round
+        const latestRound = rounds[0];
+        const roundScores: number[] = latestRound.scores || [];
+        // Sum all scored holes (non-zero values) and count how many have been played
+        let total = 0;
+        let thru = 0;
+        for (const s of roundScores) {
+          if (s != null && s > 0) { total += s; thru++; }
+        }
+        newScores[player.id] = thru > 0 ? { total, thru } : null;
+      } catch {
+        newScores[player.id] = null;
+      }
+    }));
+    setPlayerScores(newScores);
+  }, [selectedPlayers]);
+
+  // Fetch player scores when players are first added or the selected players list changes
+  useEffect(() => {
+    fetchPlayerScores();
+  }, [fetchPlayerScores, selectedPlayers]);
+
+  // Pull-to-refresh touch handlers
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        pullStartYRef.current = e.touches[0].clientY;
+      }
+    };
+    const handleTouchMove = (e: TouchEvent) => {
+      if (pullStartYRef.current === null) return;
+      const dist = e.touches[0].clientY - pullStartYRef.current;
+      if (dist > 0) {
+        setPullDistance(Math.min(dist, PULL_THRESHOLD * 1.5));
+      }
+    };
+    const handleTouchEnd = async () => {
+      if (pullDistance >= PULL_THRESHOLD) {
+        setPullRefreshing(true);
+        await fetchPlayerScores();
+        setPullRefreshing(false);
+      }
+      setPullDistance(0);
+      pullStartYRef.current = null;
+    };
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [fetchPlayerScores, pullDistance]);
+
         // ...existing code...
       // Ensure isClient is true in browser for immediate saves
       // (Only declare once at the top of the component)
@@ -125,6 +208,11 @@ function TrackRoundContent() {
     }
     return 0;
   });
+
+  // Refresh player scores each time the user navigates to a new hole
+  useEffect(() => {
+    fetchPlayerScores();
+  }, [currentHoleIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Set currentHoleIndex from URL (?hole=) or round.startingHole after round/searchParams are loaded
   useEffect(() => {
@@ -1111,6 +1199,27 @@ function TrackRoundContent() {
 
   return (
     <PageWrapper title="" userName={round.userName}>
+      {/* Pull-to-refresh indicator */}
+      {(pullDistance > 10 || pullRefreshing) && (
+        <div
+          className="fixed top-0 left-0 w-full flex justify-center z-[999] pointer-events-none transition-all"
+          style={{ transform: `translateY(${pullRefreshing ? 56 : Math.min(pullDistance * 0.6, 56)}px)` }}
+        >
+          <div className="flex items-center gap-2 bg-black/70 text-green-300 text-sm font-bold px-4 py-2 rounded-full shadow-lg">
+            {pullRefreshing ? (
+              <>
+                <svg className="animate-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh scores'}
+              </>
+            )}
+          </div>
+        </div>
+      )}
       {/* Top: Course Name Banner with Parent */}
 
       {course && (() => {
@@ -1309,8 +1418,8 @@ function TrackRoundContent() {
             </div>
                   {/* Add Players Modal */}
                   {showAddPlayers && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative">
+                    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-60" style={{ paddingTop: '10vh', paddingBottom: '120px' }}>
+                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 relative overflow-y-auto" style={{ maxHeight: 'calc(100vh - 10vh - 120px)' }}>
                         <h2 className="text-xl font-bold mb-4 text-gray-800">Add Players (up to 3)</h2>
                         <button className="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800" onClick={() => setShowAddPlayers(false)} aria-label="Close">×</button>
                         <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
@@ -1486,9 +1595,16 @@ function TrackRoundContent() {
                 {p.name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
               </div>
               {/* Score badge */}
-              <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
-                E
-              </span>
+              <div className="flex flex-col items-center">
+                <span className="text-xs font-black px-1.5 py-0.5 rounded bg-black/40 min-w-[20px] text-center" style={{ color: idx === 0 ? '#7fff7a' : idx === 1 ? '#6ec1ff' : '#c17fff' }}>
+                  {playerScores[p.id] != null ? playerScores[p.id]!.total : '—'}
+                </span>
+                {playerScores[p.id] != null && (
+                  <span className="text-[9px] font-bold text-white/60 leading-none mt-0.5">
+                    Thru {playerScores[p.id]!.thru}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
