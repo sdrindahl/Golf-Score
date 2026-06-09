@@ -120,7 +120,7 @@ function TrackRoundContent() {
         const inProgressRes = await fetch('/api/get-in-progress-rounds', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: player.id }),
+          body: JSON.stringify({ userId: player.id, userName: player.name }),
         });
         const inProgressData = await inProgressRes.json();
         const inProgressRounds: any[] = inProgressData.rounds || [];
@@ -163,7 +163,8 @@ function TrackRoundContent() {
         }
         // Finished if all holes scored, OR if the round has been saved/ended (in_progress=false)
         const finished = (totalHoles > 0 && thru === totalHoles) || latestRound.in_progress === false;
-        newScores[player.id] = thru > 0 ? { total, thru, finished } : null;
+        // Always show score info if a round was found — even 0 thru 0 is better than '—'
+        newScores[player.id] = { total, thru, finished };
       } catch {
         newScores[player.id] = null;
       }
@@ -174,6 +175,15 @@ function TrackRoundContent() {
   // Fetch player scores when players are first added or the selected players list changes
   useEffect(() => {
     fetchPlayerScores();
+  }, [fetchPlayerScores, selectedPlayers]);
+
+  // Poll player scores every 30 seconds while players are added
+  useEffect(() => {
+    if (selectedPlayers.length === 0) return;
+    const interval = setInterval(() => {
+      fetchPlayerScores();
+    }, 30000);
+    return () => clearInterval(interval);
   }, [fetchPlayerScores, selectedPlayers]);
 
   // Pull-to-refresh touch handlers
@@ -1149,12 +1159,25 @@ function TrackRoundContent() {
   }, []);
   
   useEffect(() => {
-    // Only debounce saves in the popup
+    // Save when modal is open and scores/stats change (debounced)
     if (!showScoreModal) return;
     if (!round || !course || !isClient) return;
     debouncedImmediateSaveRound();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scores, perHoleStats, showScoreModal]);
+
+  // Immediately save to Supabase when the score modal closes so other players
+  // see the updated score right away without waiting for the heartbeat
+  const prevShowScoreModalRef = useRef(false);
+  useEffect(() => {
+    const wasOpen = prevShowScoreModalRef.current;
+    prevShowScoreModalRef.current = showScoreModal;
+    if (wasOpen && !showScoreModal) {
+      // Modal just closed — push scores to Supabase now
+      immediateSaveRound();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showScoreModal]);
   useEffect(() => {
     return () => {
       if (popupSaveDebounceRef.current) {
