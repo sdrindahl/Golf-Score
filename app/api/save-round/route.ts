@@ -15,6 +15,7 @@ type Round = {
   userName: string;
   courseId: string | string[];
   courseName: string;
+  eventId?: string | null;
   selectedTee: string;
   date: string;
   scores: number[];
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
       date: validRound.date,
       scores: validRound.scores,
       total_score: validRound.totalScore,
+      event_id: validRound.eventId || (round as any).event_id || null,
       notes: validRound.notes,
       in_progress: inProgressValue, // <-- use in_progress to match DB
       selected_tee: selectedTeeFinal,

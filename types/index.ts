@@ -156,12 +156,52 @@ export interface Round {
   scores: number[]
   totalScore?: number
   total_score?: number  // Supabase field name (snake_case)
+  eventId?: string | null
+  event_id?: string | null
   notes?: string
   in_progress?: boolean
   perHoleStats?: PerHoleStats[]  // Array, one per hole (optional)
   per_hole_stats?: PerHoleStats[]  // Supabase field name (snake_case)
   updated_at?: string  // Timestamp of last heartbeat/update
   last_activity_at?: string  // Timestamp of last actual score change
+}
+
+export type EventStatus = 'draft' | 'active' | 'completed'
+
+export interface Event {
+  id: string
+  name: string
+  organizer_id: string
+  course_id?: string | null
+  course_name?: string | null
+  event_date?: string | null
+  hole_count?: number
+  status: EventStatus
+  enabled_features?: string[]
+  created_at?: string
+  updated_at?: string
+}
+
+export interface EventMember {
+  id?: number
+  event_id: string
+  user_id: string
+  role: 'organizer' | 'player'
+  created_at?: string
+  user_name?: string
+}
+
+export interface EventLeaderboardEntry {
+  round_id: string
+  user_id: string
+  user_name: string
+  total_score: number
+  scores: number[]
+  in_progress: boolean
+  thru: number
+  status_label: string
+  updated_at?: string
+  last_activity_at?: string
 }
 
 export interface CommentReaction {
