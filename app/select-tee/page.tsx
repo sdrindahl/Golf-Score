@@ -58,6 +58,8 @@ function SelectTeePageInner() {
     }
   const router = useRouter();
   const searchParams = useSearchParams();
+  const eventId = searchParams?.get('eventId') || '';
+  const eventName = searchParams?.get('eventName') || '';
   const [tee, setTee] = React.useState<'men' | 'women' | 'senior' | 'championship' | null>(null);
   const [startingHole, setStartingHole] = React.useState<number | null>(null);
   const [creating, setCreating] = React.useState(false);
@@ -115,6 +117,8 @@ function SelectTeePageInner() {
         userName: user.name || 'Unknown',
         courseId: nines.map((c: any) => c.id),
         courseName: nines.map((c: any) => c.name).join(' / '),
+        eventId: eventId || null,
+        eventName: eventName || null,
         selectedTee: tee,
         date: new Date().toISOString(),
         scores: Array(nines.length * 9).fill(0),
@@ -172,10 +176,13 @@ function SelectTeePageInner() {
           }
         }
         localStorage.setItem('golfCourses', JSON.stringify(courses));
-        console.log('[DEBUG] Navigating to track-round:', `/track-round?id=${roundId}&tee=${tee}&hole=${startingHole}`);
+        const nextParams = new URLSearchParams({ id: roundId, tee, hole: String(startingHole) });
+        if (eventId) nextParams.set('eventId', eventId);
+        if (eventName) nextParams.set('eventName', eventName);
+        console.log('[DEBUG] Navigating to track-round:', `/track-round?${nextParams.toString()}`);
 
         // 5. Navigate to track-round with id
-        router.push(`/track-round?id=${roundId}&tee=${tee}&hole=${startingHole}`);
+        router.push(`/track-round?${nextParams.toString()}`);
       } catch (err: any) {
         let msg = 'Failed to save round to Supabase';
         if (err) {
@@ -228,6 +235,13 @@ function SelectTeePageInner() {
       <div className="flex flex-col min-h-[80vh] max-w-2xl mx-auto">
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
+          {eventId && (
+            <div className="max-w-xl mx-auto mt-6 mb-2 rounded-2xl border border-cyan-500 bg-cyan-950/70 px-5 py-4 text-white shadow-2xl">
+              <div className="text-xs uppercase tracking-[0.25em] text-cyan-300">Event Round</div>
+              <div className="mt-2 text-lg font-bold">{eventName || 'Unnamed Event'}</div>
+              <div className="mt-1 text-sm text-cyan-100">Choose the tee for this event round. The round will stay linked to the event once play starts.</div>
+            </div>
+          )}
           <div className="max-w-xl mx-auto mt-8 mb-2 flex flex-col items-center">
             {(parentName || childNames) && (
               <div className="w-full flex flex-col items-center px-4 py-3 rounded-xl bg-black/60 shadow-lg mb-2">

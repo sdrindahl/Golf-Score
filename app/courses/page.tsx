@@ -1,21 +1,22 @@
 'use client'
 
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import PageWrapper from '@/components/PageWrapper'
 import { Course, User } from '@/types'
 import { COURSES_DATABASE } from '@/data/courses'
 import { useAuth } from '@/lib/useAuth'
 
-export default function CoursesPage() {
+function CoursesPageInner() {
     // Load courses from localStorage or COURSES_DATABASE on mount
     useEffect(() => {
       setAllCourses(COURSES_DATABASE);
       setDisplayedCourses(COURSES_DATABASE);
     }, []);
   const router = useRouter()
+  const searchParams = useSearchParams()
   const auth = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
@@ -30,6 +31,8 @@ export default function CoursesPage() {
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const [showRoundInProgressMsg, setShowRoundInProgressMsg] = useState(false)
+  const eventId = searchParams?.get('eventId') || ''
+  const eventName = searchParams?.get('eventName') || ''
   useEffect(() => {
     // Check for round in progress
     const roundId = localStorage.getItem('currentRoundId')
@@ -88,6 +91,13 @@ export default function CoursesPage() {
       {/* End sticky header */}
 
       <div className="space-y-4">
+        {eventId && (
+          <div className="rounded-2xl border border-cyan-500 bg-cyan-950/70 px-5 py-4 text-white shadow-2xl">
+            <div className="text-xs uppercase tracking-[0.25em] text-cyan-300">Event Round</div>
+            <div className="mt-2 text-lg font-bold">{eventName || 'Unnamed Event'}</div>
+            <div className="mt-1 text-sm text-cyan-100">Choose the course for this event round. The event will stay attached through tee selection and live scoring.</div>
+          </div>
+        )}
         {parentCourses.length === 0 ? (
           <div className="card text-center text-gray-500">
             No courses added yet. Add courses to get started.
@@ -102,7 +112,10 @@ export default function CoursesPage() {
                   onClick={() => {
                     localStorage.setItem('courseSelectedButNoRound', 'true');
                     window.dispatchEvent(new Event('roundStateChanged'));
-                    router.push(`/course-nines?id=${parent.id}`);
+                    const params = new URLSearchParams({ id: parent.id })
+                    if (eventId) params.set('eventId', eventId)
+                    if (eventName) params.set('eventName', eventName)
+                    router.push(`/course-nines?${params.toString()}`);
                   }}
                 >
                   <h3 className="text-lg font-bold text-white">{parent.name}</h3>
@@ -118,4 +131,16 @@ export default function CoursesPage() {
       </div>
     </PageWrapper>
   );
+}
+
+export default function CoursesPage() {
+  return (
+    <Suspense fallback={
+      <PageWrapper title="">
+        <div className="max-w-2xl mx-auto py-6 text-center text-white">Loading courses...</div>
+      </PageWrapper>
+    }>
+      <CoursesPageInner />
+    </Suspense>
+  )
 }

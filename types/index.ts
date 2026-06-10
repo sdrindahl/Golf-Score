@@ -158,6 +158,8 @@ export interface Round {
   total_score?: number  // Supabase field name (snake_case)
   eventId?: string | null
   event_id?: string | null
+  eventName?: string | null
+  event_name?: string | null
   notes?: string
   in_progress?: boolean
   perHoleStats?: PerHoleStats[]  // Array, one per hole (optional)

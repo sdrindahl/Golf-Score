@@ -117,6 +117,18 @@ export default function EventDetailPage() {
             <span className="rounded-full border border-cyan-700 px-4 py-2 text-xs uppercase tracking-wide text-cyan-100">{event?.status || 'draft'}</span>
           </div>
 
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href={`/courses?eventId=${encodeURIComponent(params.id)}&eventName=${encodeURIComponent(event?.name || '')}`}
+              className="inline-flex items-center rounded-full bg-cyan-400 px-5 py-2 text-sm font-bold text-slate-950 hover:bg-cyan-300 transition-colors"
+            >
+              Start Event Round
+            </Link>
+            <div className="inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-xs text-gray-200">
+              Choose a course, then the round will stay attached to this event.
+            </div>
+          </div>
+
           <div className="mt-6 flex flex-wrap gap-2 border-t border-white/10 pt-4">
             {tabs.map((tab) => (
               <button
