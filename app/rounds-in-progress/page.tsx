@@ -141,20 +141,18 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
         return (
           <div
             key={parentName}
-            className="bg-[linear-gradient(180deg,rgba(8,24,18,0.92),rgba(10,28,20,0.84))] rounded-[22px] shadow-2xl border border-green-400/35 overflow-hidden backdrop-blur-md"
+            className="bg-[linear-gradient(180deg,rgba(8,24,18,0.92),rgba(10,28,20,0.84))] rounded-[22px] shadow-2xl border border-green-400/35 overflow-hidden backdrop-blur-md mx-4 sm:mx-0"
             style={{ boxShadow: '0 14px 28px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(134,239,172,0.08)' }}
           >
-            <div
-              className="grid grid-cols-[76px_minmax(0,1fr)_56px] sm:grid-cols-[88px_minmax(0,1fr)_68px] gap-3 px-3 py-3 bg-[linear-gradient(90deg,rgba(18,56,37,0.92),rgba(12,42,31,0.88))] border-b border-green-400/20"
-            >
+            <div className="grid grid-cols-[56px_minmax(0,1fr)_52px] sm:grid-cols-[72px_minmax(0,1fr)_64px] gap-3 px-4 py-3 bg-[linear-gradient(180deg,rgba(12,48,31,0.95),rgba(10,37,24,0.92))] border-b border-green-400/18">
               <img
                 src={getPreviewImage(parentName, groupIndex)}
                 alt={parentName}
-                className="w-[76px] h-[64px] sm:w-[88px] sm:h-[72px] rounded-[14px] object-cover border border-white/10"
+                className="w-14 h-14 sm:w-[72px] sm:h-[72px] rounded-[16px] object-cover border border-white/10"
               />
               <div className="min-w-0 flex flex-col justify-center">
-                <h2 className="text-[17px] sm:text-[20px] font-bold text-white leading-tight truncate">{parentName}</h2>
-                <div className="mt-1.5 flex items-center gap-2 flex-wrap text-[10px] sm:text-[11px] text-white/70">
+                <h2 className="text-[15px] sm:text-[20px] font-bold text-white leading-tight truncate">{parentName}</h2>
+                <div className="mt-1 flex items-center gap-2 flex-wrap text-[10px] sm:text-[11px] text-white/70">
                   <span className="inline-flex items-center gap-1">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                     18 Holes
@@ -166,8 +164,8 @@ function LeaderboardByCourse({ rounds, currentUserId, currentUserName, onOpenCom
                 </div>
               </div>
               <div className="flex flex-col items-end justify-center text-right">
-                <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-lime-400/90">Round</span>
-                <span className="text-[28px] sm:text-3xl font-bold text-white leading-none">{sorted.length}</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-lime-400/90">Round</span>
+                <span className="text-[22px] sm:text-[28px] font-bold text-white leading-none">{sorted.length}</span>
               </div>
             </div>
             <div className="grid grid-cols-[24px_minmax(0,1fr)_36px_44px_44px_18px] sm:grid-cols-[40px_minmax(0,1fr)_52px_58px_58px_26px] gap-x-2 px-3 sm:px-4 py-3 border-b border-green-400/15 text-[9px] sm:text-[11px] font-semibold uppercase tracking-[0.12em] text-white/65 bg-black/10">
@@ -486,24 +484,24 @@ export default function RoundsInProgressPage() {
           </div>
         </div>
       )}
-      <div className="relative overflow-hidden rounded-b-[32px] border-b border-white/10 bg-black">
+      <div className="relative overflow-hidden rounded-b-[28px] border-b border-white/10 bg-black min-h-[210px] sm:min-h-[260px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/hole1.png')" }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,13,11,0.18),rgba(6,13,11,0.72)_55%,rgba(6,13,11,0.94))]" />
-        <div className="relative max-w-xl mx-auto px-4 pt-6 pb-5">
-          <div className="mb-2">
+        <div className="relative max-w-xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+18px)] sm:pt-8 pb-4">
+          <div className="mb-1">
             <h1 className="text-[28px] sm:text-[40px] font-bold tracking-tight leading-none text-white">Rounds in Progress</h1>
-            <div className="mt-2 text-green-400 text-[22px] font-semibold tracking-tight">Live Leaderboard</div>
+            <div className="mt-2 text-green-400 text-[19px] sm:text-[22px] font-semibold tracking-tight">Live Leaderboard</div>
           </div>
 
-          <div className="mt-5 mb-4 flex items-center gap-3 px-0">
+          <div className="mt-5 mb-1 flex items-center gap-3 px-0">
             <div className="flex-1 bg-black/35 rounded-2xl border border-white/15 p-1 backdrop-blur-md shadow-lg min-w-0">
               <div className="grid grid-cols-2 gap-1">
                 <button
                   onClick={() => setShowAllPlayers(true)}
-                  className={`font-semibold py-3 px-4 rounded-[14px] transition-all duration-150 text-sm flex items-center justify-center gap-2 ${
+                  className={`font-semibold py-2.5 px-4 rounded-[14px] transition-all duration-150 text-[15px] flex items-center justify-center gap-2 ${
                     showAllPlayers
                       ? 'bg-lime-400 text-[#112212] shadow-[0_10px_20px_rgba(132,204,22,0.25)]'
                       : 'text-white/80'
@@ -514,7 +512,7 @@ export default function RoundsInProgressPage() {
                 </button>
                 <button
                   onClick={() => setShowAllPlayers(false)}
-                  className={`font-semibold py-3 px-4 rounded-[14px] transition-all duration-150 text-sm flex items-center justify-center gap-2 ${
+                  className={`font-semibold py-2.5 px-4 rounded-[14px] transition-all duration-150 text-[15px] flex items-center justify-center gap-2 ${
                     !showAllPlayers
                       ? 'bg-lime-400 text-[#112212] shadow-[0_10px_20px_rgba(132,204,22,0.25)]'
                       : 'text-white/80'
