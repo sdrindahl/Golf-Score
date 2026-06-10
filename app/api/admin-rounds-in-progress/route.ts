@@ -5,6 +5,7 @@ export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    const activeRoundCutoffMs = Date.now() - 4 * 60 * 60 * 1000;
 
     if (!supabaseUrl || !serviceRoleKey) {
       return NextResponse.json(
@@ -28,7 +29,17 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    let roundsWithCourses = data || [];
+    const activeRounds = (data || []).filter((round: any) => {
+      const lastActivityAt = round.last_activity_at ? Date.parse(round.last_activity_at) : Number.NaN;
+      if (Number.isFinite(lastActivityAt)) {
+        return lastActivityAt >= activeRoundCutoffMs;
+      }
+
+      const updatedAt = round.updated_at ? Date.parse(round.updated_at) : Number.NaN;
+      return Number.isFinite(updatedAt) && updatedAt >= activeRoundCutoffMs;
+    });
+
+    let roundsWithCourses = activeRounds;
     if (roundsWithCourses.length > 0) {
       roundsWithCourses = await Promise.all(
         roundsWithCourses.map(async (round: any) => {
