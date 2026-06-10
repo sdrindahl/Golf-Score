@@ -39,6 +39,42 @@ export interface User {
   name: string
   password: string
   is_admin?: boolean
+  feature_overrides?: Record<string, boolean>
+}
+
+export type FeatureFlagAudience = 'off' | 'admins' | 'users' | 'all'
+
+export type FeatureFlagKey =
+  | 'events_core'
+  | 'events_teams'
+  | 'events_games'
+  | 'events_public_view'
+  | 'events_payouts'
+
+export interface FeatureFlag {
+  key: FeatureFlagKey
+  name: string
+  description?: string
+  enabled: boolean
+  audience: FeatureFlagAudience
+  enabled_user_ids?: string[]
+  updated_at?: string
+  updated_by?: string | null
+}
+
+export interface FeatureFlagsResponse {
+  flags: FeatureFlag[]
+  source: 'supabase' | 'local'
+}
+
+export interface FeatureFlagState {
+  key: FeatureFlagKey
+  enabled: boolean
+}
+
+export interface FeatureFlagEvaluationContext {
+  userId?: string | null
+  isAdmin?: boolean
 }
 
 export type ExpenseCategory =

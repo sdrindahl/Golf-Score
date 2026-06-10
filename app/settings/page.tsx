@@ -3,14 +3,16 @@ import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../lib/useAuth";
+import { useFeatureFlags } from "../../lib/featureFlagsContext";
 import PageWrapper from "../../components/PageWrapper";
-import { User } from "../../types";
+import { FeatureFlag, FeatureFlagAudience, User } from "../../types";
 
 type VersionInfo = { version: string; buildDate: string; buildTime?: string };
 
 export default function Settings() {
   const router = useRouter();
   const auth = useAuth();
+  const { flags, source, loading: flagsLoading, saveFlag } = useFeatureFlags();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [newName, setNewName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -29,6 +31,10 @@ export default function Settings() {
   const [loadingRounds, setLoadingRounds] = useState(false);
   const [deleteRoundError, setDeleteRoundError] = useState("");
   const [deletingRoundId, setDeletingRoundId] = useState<string | null>(null);
+  const [featureFlagError, setFeatureFlagError] = useState("");
+  const [featureFlagSuccess, setFeatureFlagSuccess] = useState("");
+  const [savingFlagKey, setSavingFlagKey] = useState<string | null>(null);
+  const [draftFlags, setDraftFlags] = useState<Record<string, FeatureFlag>>({});
 
   useEffect(() => {
     const user = auth.getCurrentUser();
@@ -44,6 +50,18 @@ export default function Settings() {
       .then((data) => setVersion(data))
       .catch(() => {});
   }, [router]);
+
+  useEffect(() => {
+    const nextDraftFlags = flags.reduce<Record<string, FeatureFlag>>((accumulator, flag) => {
+      accumulator[flag.key] = {
+        ...flag,
+        enabled_user_ids: flag.enabled_user_ids || [],
+      };
+      return accumulator;
+    }, {});
+
+    setDraftFlags(nextDraftFlags);
+  }, [flags]);
 
   if (loading) {
     return (
@@ -120,6 +138,50 @@ export default function Settings() {
     }
   }
 
+  function updateDraftFlag(flagKey: string, patch: Partial<FeatureFlag>) {
+    setDraftFlags((previous) => {
+      const existing = previous[flagKey];
+      if (!existing) return previous;
+
+      return {
+        ...previous,
+        [flagKey]: {
+          ...existing,
+          ...patch,
+        },
+      };
+    });
+  }
+
+  async function handleSaveFeatureFlag(flagKey: string) {
+    const draftFlag = draftFlags[flagKey];
+    if (!draftFlag) return;
+
+    setSavingFlagKey(flagKey);
+    setFeatureFlagError("");
+    setFeatureFlagSuccess("");
+
+    try {
+      await saveFlag({
+        ...draftFlag,
+        enabled_user_ids: draftFlag.audience === 'users' ? (draftFlag.enabled_user_ids || []) : [],
+      });
+      setFeatureFlagSuccess(`${draftFlag.name} updated.`);
+    } catch (err: any) {
+      setFeatureFlagError(err.message || 'Failed to update feature flag.');
+    } finally {
+      setSavingFlagKey(null);
+    }
+  }
+
+  function handleAudienceChange(flagKey: string, audience: FeatureFlagAudience) {
+    updateDraftFlag(flagKey, {
+      audience,
+      enabled: audience !== 'off',
+      enabled_user_ids: audience === 'users' ? (draftFlags[flagKey]?.enabled_user_ids || []) : [],
+    });
+  }
+
   return (
     <div className="min-h-screen flex flex-col pb-24">
       <PageWrapper title="Account Settings">
@@ -129,6 +191,94 @@ export default function Settings() {
               <Link href="/themes">
                 <button className="w-full bg-black bg-opacity-70 border border-green-400 text-green-400 font-semibold py-3 rounded-2xl shadow-2xl hover:bg-green-900 hover:text-white transition-all">🎨 Themes</button>
               </Link>
+            </div>
+          )}
+          {currentUser.is_admin && (
+            <div className="bg-black bg-opacity-70 rounded-3xl p-6 shadow-2xl border-2 border-cyan-400 mt-6">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <h2 className="text-lg font-bold text-cyan-300">Feature Rollout</h2>
+                  <p className="text-xs text-gray-300 mt-1">Control which production users can see upcoming features before general release.</p>
+                </div>
+                <div className="text-[11px] uppercase tracking-wide text-cyan-200 bg-cyan-950/70 border border-cyan-700 rounded-full px-3 py-1">
+                  Source: {flagsLoading ? 'loading' : source}
+                </div>
+              </div>
+              {featureFlagError && <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-3 text-xs font-semibold">{featureFlagError}</div>}
+              {featureFlagSuccess && <div className="bg-green-100 text-green-700 p-3 rounded-lg mb-3 text-xs font-semibold">✅ {featureFlagSuccess}</div>}
+              <div className="space-y-4">
+                {flags.map((flag) => {
+                  const draftFlag = draftFlags[flag.key] || flag;
+                  const enabledUserIds = draftFlag.enabled_user_ids || [];
+
+                  return (
+                    <div key={flag.key} className="rounded-2xl border border-cyan-900 bg-slate-950/70 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-bold text-white">{draftFlag.name}</div>
+                          <div className="text-[11px] uppercase tracking-wide text-cyan-300 mt-1">{draftFlag.key}</div>
+                          <p className="text-xs text-gray-300 mt-2">{draftFlag.description}</p>
+                        </div>
+                        <label className="flex items-center gap-2 text-xs text-gray-200">
+                          <span>Enabled</span>
+                          <input
+                            type="checkbox"
+                            checked={draftFlag.enabled}
+                            onChange={(e) => updateDraftFlag(flag.key, {
+                              enabled: e.target.checked,
+                              audience: e.target.checked ? draftFlag.audience : 'off',
+                            })}
+                            className="h-4 w-4 accent-cyan-400"
+                          />
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                        <label className="text-xs text-gray-200">
+                          <span className="block mb-1">Audience</span>
+                          <select
+                            value={draftFlag.enabled ? draftFlag.audience : 'off'}
+                            onChange={(e) => handleAudienceChange(flag.key, e.target.value as FeatureFlagAudience)}
+                            className="w-full px-3 py-2 rounded-xl border border-cyan-800 bg-slate-900 text-white"
+                          >
+                            <option value="off">Off</option>
+                            <option value="admins">Admins only</option>
+                            <option value="users">Selected users</option>
+                            <option value="all">All users</option>
+                          </select>
+                        </label>
+                        <label className="text-xs text-gray-200">
+                          <span className="block mb-1">User Allowlist</span>
+                          <input
+                            type="text"
+                            value={enabledUserIds.join(', ')}
+                            onChange={(e) => updateDraftFlag(flag.key, {
+                              enabled_user_ids: e.target.value
+                                .split(',')
+                                .map((value) => value.trim())
+                                .filter(Boolean),
+                            })}
+                            disabled={(draftFlag.enabled ? draftFlag.audience : 'off') !== 'users'}
+                            placeholder="user-id-1, user-id-2"
+                            className="w-full px-3 py-2 rounded-xl border border-cyan-800 bg-slate-900 text-white disabled:opacity-40"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 mt-4">
+                        <p className="text-[11px] text-gray-400">
+                          Recommended use: keep core flags on admins first, then move to selected users, then all users.
+                        </p>
+                        <button
+                          onClick={() => handleSaveFeatureFlag(flag.key)}
+                          disabled={savingFlagKey === flag.key || flagsLoading}
+                          className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {savingFlagKey === flag.key ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           <div className="bg-black bg-opacity-70 rounded-3xl p-6 shadow-2xl border border-green-400 mt-6">
