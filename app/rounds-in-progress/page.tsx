@@ -484,50 +484,49 @@ export default function RoundsInProgressPage() {
           </div>
         </div>
       )}
-      <div className="relative overflow-hidden rounded-b-[28px] border-b border-white/10 bg-black min-h-[210px] sm:min-h-[260px]">
+      <div className="relative overflow-hidden rounded-b-[28px] border-b border-white/10 bg-black min-h-[190px] sm:min-h-[230px]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('/hole1.png')" }}
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,13,11,0.18),rgba(6,13,11,0.72)_55%,rgba(6,13,11,0.94))]" />
-        <div className="relative max-w-xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+18px)] sm:pt-8 pb-4">
+        <div className="relative max-w-xl mx-auto px-4 pt-[calc(env(safe-area-inset-top)+20px)] sm:pt-10 pb-8 sm:pb-10">
           <div className="mb-1">
             <h1 className="text-[28px] sm:text-[40px] font-bold tracking-tight leading-none text-white">Rounds in Progress</h1>
             <div className="mt-2 text-green-400 text-[19px] sm:text-[22px] font-semibold tracking-tight">Live Leaderboard</div>
-          </div>
-
-          <div className="mt-5 mb-1 flex items-center gap-3 px-0">
-            <div className="flex-1 bg-black/35 rounded-2xl border border-white/15 p-1 backdrop-blur-md shadow-lg min-w-0">
-              <div className="grid grid-cols-2 gap-1">
-                <button
-                  onClick={() => setShowAllPlayers(true)}
-                  className={`font-semibold py-2.5 px-4 rounded-[14px] transition-all duration-150 text-[15px] flex items-center justify-center gap-2 ${
-                    showAllPlayers
-                      ? 'bg-lime-400 text-[#112212] shadow-[0_10px_20px_rgba(132,204,22,0.25)]'
-                      : 'text-white/80'
-                  }`}
-                >
-                  <span className="text-base">👥</span>
-                  <span>All Players</span>
-                </button>
-                <button
-                  onClick={() => setShowAllPlayers(false)}
-                  className={`font-semibold py-2.5 px-4 rounded-[14px] transition-all duration-150 text-[15px] flex items-center justify-center gap-2 ${
-                    !showAllPlayers
-                      ? 'bg-lime-400 text-[#112212] shadow-[0_10px_20px_rgba(132,204,22,0.25)]'
-                      : 'text-white/80'
-                  }`}
-                >
-                  <span className="text-base">☆</span>
-                  <span>Favorites</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
       <div className="bg-[#07110d]">
         <div className="max-w-xl mx-auto px-0 sm:px-4 py-4">
+        <div className="px-4 sm:px-0 -mt-6 sm:-mt-7 mb-5 relative z-10">
+          <div className="bg-black/65 rounded-2xl border border-white/10 p-1 backdrop-blur-md shadow-[0_18px_40px_rgba(0,0,0,0.34)] min-w-0">
+            <div className="grid grid-cols-2 gap-1">
+              <button
+                onClick={() => setShowAllPlayers(true)}
+                className={`font-semibold py-2.5 px-4 rounded-[14px] transition-all duration-150 text-[15px] flex items-center justify-center gap-2 ${
+                  showAllPlayers
+                    ? 'bg-lime-400 text-[#112212] shadow-[0_10px_20px_rgba(132,204,22,0.25)]'
+                    : 'text-white/80'
+                }`}
+              >
+                <span className="text-base">👥</span>
+                <span>All Players</span>
+              </button>
+              <button
+                onClick={() => setShowAllPlayers(false)}
+                className={`font-semibold py-2.5 px-4 rounded-[14px] transition-all duration-150 text-[15px] flex items-center justify-center gap-2 ${
+                  !showAllPlayers
+                    ? 'bg-lime-400 text-[#112212] shadow-[0_10px_20px_rgba(132,204,22,0.25)]'
+                    : 'text-white/80'
+                }`}
+              >
+                <span className="text-base">☆</span>
+                <span>Favorites</span>
+              </button>
+            </div>
+          </div>
+        </div>
         {fetchError && (
           <div className="bg-black/45 rounded-2xl shadow-2xl border border-red-500/40 p-6 text-center backdrop-blur-md mx-4 sm:mx-0" style={{ boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)' }}>
             <p className="text-red-200 font-semibold">{fetchError}</p>
