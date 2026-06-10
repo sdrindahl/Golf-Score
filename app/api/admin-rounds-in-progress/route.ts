@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -10,7 +13,12 @@ export async function GET() {
     if (!supabaseUrl || !serviceRoleKey) {
       return NextResponse.json(
         { error: 'Rounds in progress API is missing Supabase server configuration.' },
-        { status: 500 }
+        {
+          status: 500,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+        }
       );
     }
 
@@ -26,7 +34,15 @@ export async function GET() {
       .order('date', { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: error.message },
+        {
+          status: 500,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+        }
+      );
     }
 
     const activeRounds = (data || []).filter((round: any) => {
@@ -63,8 +79,23 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ rounds: roundsWithCourses, count: roundsWithCourses.length });
+    return NextResponse.json(
+      { rounds: roundsWithCourses, count: roundsWithCourses.length },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || 'Unknown error' },
+      {
+        status: 500,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   }
 }
