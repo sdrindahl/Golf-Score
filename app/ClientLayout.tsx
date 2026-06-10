@@ -10,14 +10,16 @@ import { ThemeProvider } from '@/lib/themeContext';
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isWalletRoute = pathname?.startsWith('/wallet');
+  const isRoundsInProgressRoute = pathname === '/rounds-in-progress';
+  const isFullBleedDarkRoute = isWalletRoute || isRoundsInProgressRoute;
 
   useEffect(() => {
-    document.body.classList.toggle('wallet-page', Boolean(isWalletRoute));
+    document.body.classList.toggle('wallet-page', Boolean(isFullBleedDarkRoute));
 
     return () => {
       document.body.classList.remove('wallet-page');
     };
-  }, [pathname]);
+  }, [isFullBleedDarkRoute]);
 
   return (
     <ThemeProvider>
@@ -25,7 +27,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       <VersionChecker />
       <InstallPrompt />
       <NavBar />
-      <main className={`max-w-6xl mx-auto ${isWalletRoute ? 'p-0 pb-24 md:pb-6 bg-[#06110d]' : 'p-3 md:p-4 lg:p-6 pb-24 md:pb-6'}`}>
+      <main className={`${isFullBleedDarkRoute ? 'w-full max-w-none mx-0 p-0 pb-24 md:pb-6 bg-[#06110d]' : 'max-w-6xl mx-auto p-3 md:p-4 lg:p-6 pb-24 md:pb-6'}`}>
         {children}
       </main>
     </ThemeProvider>

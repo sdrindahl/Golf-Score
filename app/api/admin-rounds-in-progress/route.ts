@@ -1,20 +1,27 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Service role key bypasses RLS — admin-only endpoint
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
-
 export async function GET() {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        { error: 'Rounds in progress API is missing Supabase server configuration.' },
+        { status: 500 }
+      );
+    }
+
+    // Service role key bypasses RLS — required for cross-user leaderboard reads
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
     const { data, error } = await supabaseAdmin
       .from('rounds')
       .select('id, user_name, user_id, date, scores, total_score, in_progress, updated_at, last_activity_at')
       .eq('in_progress', true)
-      .order('last_activity_at', { ascending: false, nullsFirst: false })
-      .order('updated_at', { ascending: false, nullsFirst: false })
+      .order('last_activity_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .order('date', { ascending: false });
 
     if (error) {
@@ -45,7 +52,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ rounds: roundsWithCourses });
+    return NextResponse.json({ rounds: roundsWithCourses, count: roundsWithCourses.length });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 500 });
   }
