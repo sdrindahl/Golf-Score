@@ -11,6 +11,7 @@ type Round = {
   id: string;
   user_name?: string;
   userName?: string;
+  date?: string;
   course_id?: string;
   courseId?: string;
   scores?: number[];
