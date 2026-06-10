@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { EventLeaderboardEntry, FeatureFlag } from '@/types'
+import { EventLeaderboardEntry, EventTeam, FeatureFlag } from '@/types'
 import { DEFAULT_FEATURE_FLAGS, isFeatureEnabled, mergeFeatureFlags } from '@/lib/featureFlags'
 
 export function getSupabaseServerConfig() {
@@ -103,5 +103,65 @@ export function buildEventLeaderboardEntries(rounds: any[]): EventLeaderboardEnt
     }
 
     return right.thru - left.thru
+  })
+}
+
+function sumScores(scores: number[], startIndex: number) {
+  return scores.slice(startIndex).reduce((total, score) => total + (Number(score) > 0 ? Number(score) : 0), 0)
+}
+
+function compareScrambleTiebreak(leftScores: number[], rightScores: number[]) {
+  const slices = [9, 6, 3, 1]
+
+  for (const size of slices) {
+    const leftValue = sumScores(leftScores, Math.max(leftScores.length - size, 0))
+    const rightValue = sumScores(rightScores, Math.max(rightScores.length - size, 0))
+    if (leftValue !== rightValue) {
+      return leftValue - rightValue
+    }
+  }
+
+  return 0
+}
+
+export function buildScrambleLeaderboardEntries(teamScores: any[], teams: EventTeam[]): EventLeaderboardEntry[] {
+  const teamMap = new Map(teams.map((team) => [team.id, team]))
+
+  return (teamScores || []).map((teamScore) => {
+    const scores: number[] = Array.isArray(teamScore.scores) ? teamScore.scores : []
+    const thru = scores.filter((score) => Number(score) > 0).length
+    const team = teamMap.get(teamScore.team_id)
+
+    return {
+      round_id: `team:${teamScore.team_id}`,
+      user_id: teamScore.team_id,
+      user_name: team?.name || 'Team',
+      total_score: teamScore.total_score || 0,
+      scores,
+      in_progress: Boolean(teamScore.in_progress),
+      thru,
+      status_label: teamScore.in_progress ? `Through ${thru}` : 'Finished',
+      updated_at: teamScore.updated_at,
+      last_activity_at: teamScore.last_activity_at,
+      entry_kind: 'team' as const,
+      team_id: teamScore.team_id,
+      team_name: team?.name || 'Team',
+      member_names: (team?.members || []).map((member) => member.user_name || 'Unknown Player'),
+    }
+  }).sort((left, right) => {
+    if (left.in_progress !== right.in_progress) {
+      return left.in_progress ? -1 : 1
+    }
+
+    if (left.total_score !== right.total_score) {
+      return left.total_score - right.total_score
+    }
+
+    const playoffCompare = compareScrambleTiebreak(left.scores, right.scores)
+    if (playoffCompare !== 0) {
+      return playoffCompare
+    }
+
+    return (left.team_name || left.user_name).localeCompare(right.team_name || right.user_name)
   })
 }

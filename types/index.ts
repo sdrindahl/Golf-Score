@@ -239,6 +239,17 @@ export interface EventTeam {
   members?: EventTeamMember[]
 }
 
+export interface EventTeamScore {
+  id: string
+  event_id: string
+  team_id: string
+  scores: number[]
+  total_score: number
+  in_progress: boolean
+  updated_at?: string
+  last_activity_at?: string
+}
+
 export interface EventLeaderboardEntry {
   round_id: string
   user_id: string
@@ -250,6 +261,10 @@ export interface EventLeaderboardEntry {
   status_label: string
   updated_at?: string
   last_activity_at?: string
+  entry_kind?: 'player' | 'team'
+  team_id?: string
+  team_name?: string
+  member_names?: string[]
 }
 
 export interface EventTeamMember {

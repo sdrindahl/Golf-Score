@@ -239,13 +239,12 @@ export default function EventDetailPage() {
 
           <div className="mb-4 flex flex-wrap items-center gap-3">
             {event?.format === 'scramble' ? (
-              <button
-                type="button"
-                disabled
-                className="inline-flex items-center rounded-full bg-white/10 px-5 py-2.5 text-sm font-bold text-white/60"
+              <Link
+                href={`/events/${params.id}/scramble`}
+                className="inline-flex items-center rounded-full bg-lime-400 px-5 py-2.5 text-sm font-bold text-[#07150f] hover:bg-lime-300 transition-colors"
               >
-                Scramble scoring comes next
-              </button>
+                Enter Scramble Scores
+              </Link>
             ) : (
               <Link
                 href={`/courses?eventId=${encodeURIComponent(params.id)}&eventName=${encodeURIComponent(event?.name || '')}`}
@@ -256,7 +255,7 @@ export default function EventDetailPage() {
             )}
             <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/75">
               {event?.format === 'scramble'
-                ? 'Teams are assigned. Dedicated scramble score entry is the next slice.'
+                ? 'This event now uses team-first scramble scoring instead of individual rounds.'
                 : 'Choose a course and keep the round attached to this event.'}
             </div>
           </div>
@@ -284,7 +283,7 @@ export default function EventDetailPage() {
                 <>
                   <div className="grid grid-cols-[44px_minmax(0,1fr)_72px_56px] gap-3 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
                     <div>Pos</div>
-                    <div>Player</div>
+                    <div>{event?.format === 'scramble' ? 'Team' : 'Player'}</div>
                     <div className="text-center">Score</div>
                     <div className="text-center">Thru</div>
                   </div>
@@ -297,8 +296,12 @@ export default function EventDetailPage() {
                             {getInitials(entry.user_name)}
                           </div>
                           <div className="min-w-0">
-                            <div className="truncate text-[16px] font-bold text-white">{entry.user_name}</div>
-                            <div className="mt-1 text-xs text-white/55">{entry.in_progress ? 'In Progress' : 'Finished'}</div>
+                            <div className="truncate text-[16px] font-bold text-white">{entry.team_name || entry.user_name}</div>
+                            <div className="mt-1 text-xs text-white/55">
+                              {entry.entry_kind === 'team' && entry.member_names?.length
+                                ? entry.member_names.join(' • ')
+                                : entry.in_progress ? 'In Progress' : 'Finished'}
+                            </div>
                           </div>
                         </div>
                         <div className="flex justify-center">
