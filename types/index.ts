@@ -170,6 +170,31 @@ export interface Round {
 
 export type EventStatus = 'draft' | 'active' | 'completed'
 
+export type EventFormat = 'scramble' | 'best_ball' | 'match_play'
+
+export type EventSideGame = 'skins'
+
+export type EventWagerMode = 'per_hole' | 'overall_match'
+
+export type EventSkinsTiebreaker = 'carry_over_or_split' | 'chip_or_putt'
+
+export interface EventBettingConfig {
+  currency?: 'usd' | 'points'
+  wager_mode?: EventWagerMode | null
+  wager_value?: number | null
+  skin_value?: number | null
+  skins_tiebreaker?: EventSkinsTiebreaker | null
+  skins_validation_required?: boolean
+}
+
+export interface EventFormatConfig {
+  format: EventFormat
+  team_size_max?: number | null
+  team_count?: number | null
+  side_games?: EventSideGame[]
+  betting?: EventBettingConfig
+}
+
 export interface Event {
   id: string
   name: string
@@ -179,6 +204,10 @@ export interface Event {
   event_date?: string | null
   hole_count?: number
   status: EventStatus
+  format?: EventFormat | null
+  side_games?: EventSideGame[]
+  format_config?: EventFormatConfig | null
+  betting_config?: EventBettingConfig | null
   enabled_features?: string[]
   created_at?: string
   updated_at?: string
@@ -193,6 +222,23 @@ export interface EventMember {
   user_name?: string
 }
 
+export interface EventTeamMember {
+  id?: number
+  team_id: string
+  event_id: string
+  user_id: string
+  created_at?: string
+  user_name?: string
+}
+
+export interface EventTeam {
+  id: string
+  event_id: string
+  name: string
+  created_at?: string
+  members?: EventTeamMember[]
+}
+
 export interface EventLeaderboardEntry {
   round_id: string
   user_id: string
@@ -204,6 +250,23 @@ export interface EventLeaderboardEntry {
   status_label: string
   updated_at?: string
   last_activity_at?: string
+}
+
+export interface EventTeamMember {
+  id?: number
+  team_id: string
+  event_id: string
+  user_id: string
+  created_at?: string
+  user_name?: string
+}
+
+export interface EventTeam {
+  id: string
+  event_id: string
+  name: string
+  created_at?: string
+  members?: EventTeamMember[]
 }
 
 export interface CommentReaction {

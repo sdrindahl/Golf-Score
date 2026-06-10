@@ -39,7 +39,7 @@ export async function requireEventsCoreAccess(userId?: string | null) {
       .from('users')
       .select('id, is_admin')
       .eq('id', userId)
-      .single(),
+      .maybeSingle(),
     supabaseAdmin
       .from('feature_flags')
       .select('key, name, description, enabled, audience, enabled_user_ids, updated_at, updated_by'),
@@ -55,6 +55,15 @@ export async function requireEventsCoreAccess(userId?: string | null) {
 
   const flags = mergeFeatureFlags((flagsData || DEFAULT_FEATURE_FLAGS) as FeatureFlag[])
   const eventsFlag = flags.find((flag) => flag.key === 'events_core')
+  if (!user) {
+    return {
+      allowed: false,
+      user: null,
+      flags,
+      error: 'Current user was not found in Supabase. Sign in again or re-sync your account.',
+    }
+  }
+
   const allowed = eventsFlag
     ? isFeatureEnabled(eventsFlag, { userId, isAdmin: user?.is_admin })
     : false

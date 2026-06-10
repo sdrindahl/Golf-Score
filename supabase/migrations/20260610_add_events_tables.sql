@@ -12,6 +12,10 @@ create table if not exists public.events (
   updated_at timestamptz not null default timezone('utc'::text, now())
 );
 
+alter table public.events enable row level security;
+
+revoke all on public.events from anon, authenticated;
+
 create table if not exists public.event_members (
   id bigserial primary key,
   event_id text not null references public.events(id) on delete cascade,
@@ -20,6 +24,10 @@ create table if not exists public.event_members (
   created_at timestamptz not null default timezone('utc'::text, now()),
   unique (event_id, user_id)
 );
+
+alter table public.event_members enable row level security;
+
+revoke all on public.event_members from anon, authenticated;
 
 alter table public.rounds
   add column if not exists event_id text references public.events(id) on delete set null;

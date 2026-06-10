@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { EventTeam, EventTeamMember } from '@/types'
 import { buildEventLeaderboardEntries, getSupabaseClients, requireEventsCoreAccess } from '@/lib/eventsServer'
 
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: 'You do not have access to this event.' }, { status: 403 })
     }
 
-    const [{ data: event, error: eventError }, { data: members, error: membersError }, { data: rounds, error: roundsError }] = await Promise.all([
+    const [{ data: event, error: eventError }, { data: members, error: membersError }, { data: rounds, error: roundsError }, { data: teams, error: teamsError }, { data: teamMembers, error: teamMembersError }] = await Promise.all([
       supabaseAdmin
         .from('events')
         .select('*')
@@ -48,13 +49,27 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         .order('in_progress', { ascending: false })
         .order('last_activity_at', { ascending: false, nullsFirst: false })
         .order('updated_at', { ascending: false, nullsFirst: false }),
+      supabaseAdmin
+        .from('event_teams')
+        .select('id, event_id, name, created_at')
+        .eq('event_id', id)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('event_team_members')
+        .select('id, team_id, event_id, user_id, created_at')
+        .eq('event_id', id),
     ])
 
     if (eventError) throw eventError
     if (membersError) throw membersError
     if (roundsError) throw roundsError
+    if (teamsError) throw teamsError
+    if (teamMembersError) throw teamMembersError
 
-    const memberUserIds = (members || []).map((member: any) => member.user_id)
+    const memberUserIds = Array.from(new Set([
+      ...(members || []).map((member: any) => member.user_id),
+      ...(teamMembers || []).map((member: any) => member.user_id),
+    ]))
     let usersById = new Map<string, string>()
 
     if (memberUserIds.length > 0) {
@@ -75,9 +90,26 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       user_name: usersById.get(member.user_id) || 'Unknown Player',
     }))
 
+    const teamMembersByTeamId = new Map<string, EventTeamMember[]>()
+    for (const member of teamMembers || []) {
+      const enrichedMember: EventTeamMember = {
+        ...member,
+        user_name: usersById.get(member.user_id) || 'Unknown Player',
+      }
+      const existingMembers = teamMembersByTeamId.get(member.team_id) || []
+      existingMembers.push(enrichedMember)
+      teamMembersByTeamId.set(member.team_id, existingMembers)
+    }
+
+    const enrichedTeams: EventTeam[] = (teams || []).map((team: any) => ({
+      ...team,
+      members: teamMembersByTeamId.get(team.id) || [],
+    }))
+
     return NextResponse.json({
       event,
       members: enrichedMembers,
+      teams: enrichedTeams,
       leaderboard: buildEventLeaderboardEntries(rounds || []),
     })
   } catch (error: any) {

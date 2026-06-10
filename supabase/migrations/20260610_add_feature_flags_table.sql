@@ -9,6 +9,10 @@ create table if not exists public.feature_flags (
   updated_by text
 );
 
+alter table public.feature_flags enable row level security;
+
+revoke all on public.feature_flags from anon, authenticated;
+
 create index if not exists feature_flags_audience_idx on public.feature_flags (audience);
 
 create or replace function public.update_feature_flags_updated_at()

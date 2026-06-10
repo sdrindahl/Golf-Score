@@ -12,7 +12,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const isWalletRoute = pathname?.startsWith('/wallet');
   const isRoundsInProgressRoute = pathname === '/rounds-in-progress';
-  const isFullBleedDarkRoute = isWalletRoute || isRoundsInProgressRoute;
+  const isEventsRoute = pathname?.startsWith('/events');
+  const isFullBleedDarkRoute = isWalletRoute || isRoundsInProgressRoute || isEventsRoute;
 
   useEffect(() => {
     document.body.classList.toggle('wallet-page', Boolean(isFullBleedDarkRoute));
