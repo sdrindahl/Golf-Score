@@ -290,6 +290,7 @@ export default function RoundsInProgressPage() {
   const auth = useAuth();
   const [rounds, setRounds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [openCommentsModal, setOpenCommentsModal] = useState<string | null>(null);
   const [commentCounts, setCommentCounts] = useState<{ [roundId: string]: number }>({});
@@ -341,17 +342,22 @@ export default function RoundsInProgressPage() {
   // Fetch and hydrate rounds
   const fetchAndHydrateRounds = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const response = await fetch('/api/admin-rounds-in-progress', {
         method: 'GET',
         cache: 'no-store',
       });
       const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to load rounds in progress.');
+      }
       const hydratedData = hydrateRoundsWithHoles(payload.rounds || []);
       setRounds(hydratedData);
     } catch (err) {
       setLoading(false);
       setRounds([]);
+      setFetchError(err instanceof Error ? err.message : 'Failed to load rounds in progress.');
       console.error(err);
       return;
     }
@@ -360,13 +366,6 @@ export default function RoundsInProgressPage() {
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    document.body.classList.add('wallet-page');
-    return () => {
-      document.body.classList.remove('wallet-page');
-    };
   }, []);
 
   // Toggle player selection
@@ -531,7 +530,12 @@ export default function RoundsInProgressPage() {
       </div>
       <div className="bg-[#07110d]">
         <div className="max-w-xl mx-auto px-0 sm:px-4 py-4">
-        {displayedRounds.length === 0 && (
+        {fetchError && (
+          <div className="bg-black/45 rounded-2xl shadow-2xl border border-red-500/40 p-6 text-center backdrop-blur-md mx-4 sm:mx-0" style={{ boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)' }}>
+            <p className="text-red-200 font-semibold">{fetchError}</p>
+          </div>
+        )}
+        {!fetchError && displayedRounds.length === 0 && (
           <div className="bg-black/45 rounded-2xl shadow-2xl border border-white/10 p-6 text-center backdrop-blur-md" style={{ boxShadow: '0 2px 16px 0 rgba(0,0,0,0.5)' }}>
             <p className="text-white/65 font-semibold">
               {rounds.length === 0 ? 'No rounds in progress.' : 'No rounds match selected players.'}
