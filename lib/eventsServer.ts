@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { EventLeaderboardEntry, EventTeam, EventTeamPlayerScore, FeatureFlag } from '@/types'
+import { EventLeaderboardEntry, EventMatchPlayHoleResult, EventMatchPlayScore, EventTeam, EventTeamPlayerScore, FeatureFlag } from '@/types'
 import { DEFAULT_FEATURE_FLAGS, isFeatureEnabled, mergeFeatureFlags } from '@/lib/featureFlags'
 
 export function getSupabaseServerConfig() {
@@ -221,4 +221,114 @@ export function buildBestBallLeaderboardEntries(playerScores: EventTeamPlayerSco
 
     return right.thru - left.thru
   })
+}
+
+function getMatchPlayDelta(result: EventMatchPlayHoleResult) {
+  if (result === 'team1') return 1
+  if (result === 'team2') return -1
+  return 0
+}
+
+function getMatchPlayState(lead: number, playedHoles: number, holeCount: number, winnerTeamId?: string | null) {
+  if (playedHoles === 0) {
+    return {
+      teamOne: 'Not started',
+      teamTwo: 'Not started',
+      summary: 'Not started',
+    }
+  }
+
+  const remainingHoles = holeCount - playedHoles
+  if (winnerTeamId && Math.abs(lead) > remainingHoles && lead !== 0) {
+    const closeOut = `${Math.abs(lead)} & ${remainingHoles}`
+    return {
+      teamOne: lead > 0 ? `Won ${closeOut}` : `Lost ${closeOut}`,
+      teamTwo: lead < 0 ? `Won ${closeOut}` : `Lost ${closeOut}`,
+      summary: closeOut,
+    }
+  }
+
+  if (lead === 0) {
+    const summary = playedHoles === holeCount ? 'Halved Match' : `All Square thru ${playedHoles}`
+    return {
+      teamOne: summary,
+      teamTwo: summary,
+      summary,
+    }
+  }
+
+  return {
+    teamOne: lead > 0 ? `${Math.abs(lead)} Up thru ${playedHoles}` : `${Math.abs(lead)} Down thru ${playedHoles}`,
+    teamTwo: lead < 0 ? `${Math.abs(lead)} Up thru ${playedHoles}` : `${Math.abs(lead)} Down thru ${playedHoles}`,
+    summary: `${Math.abs(lead)} Up thru ${playedHoles}`,
+  }
+}
+
+export function buildMatchPlayLeaderboardEntries(matchScore: EventMatchPlayScore | null | undefined, teams: EventTeam[], holeCount = 18): EventLeaderboardEntry[] {
+  if (teams.length < 2) {
+    return []
+  }
+
+  const orderedTeams = matchScore
+    ? [teams.find((team) => team.id === matchScore.team_one_id), teams.find((team) => team.id === matchScore.team_two_id)].filter(Boolean) as EventTeam[]
+    : teams.slice(0, 2)
+
+  if (orderedTeams.length < 2) {
+    return []
+  }
+
+  const [teamOne, teamTwo] = orderedTeams
+  const holeResults = Array.isArray(matchScore?.hole_results) ? matchScore.hole_results as EventMatchPlayHoleResult[] : []
+  let lead = 0
+  let playedHoles = 0
+
+  for (const result of holeResults) {
+    if (!result) {
+      continue
+    }
+
+    playedHoles += 1
+    lead += getMatchPlayDelta(result)
+  }
+
+  const state = getMatchPlayState(lead, playedHoles, holeCount, matchScore?.winning_team_id)
+
+  return [
+    {
+      round_id: `match-play:${teamOne.id}`,
+      user_id: teamOne.id,
+      user_name: teamOne.name,
+      total_score: lead,
+      scores: holeResults.map((result) => getMatchPlayDelta(result)),
+      in_progress: Boolean(matchScore?.in_progress ?? true),
+      thru: playedHoles,
+      status_label: state.teamOne,
+      updated_at: matchScore?.updated_at,
+      last_activity_at: matchScore?.last_activity_at,
+      entry_kind: 'team' as const,
+      team_id: teamOne.id,
+      team_name: teamOne.name,
+      member_names: (teamOne.members || []).map((member) => member.user_name || 'Unknown Player'),
+      match_state: state.teamOne,
+      versus_name: teamTwo.name,
+    },
+    {
+      round_id: `match-play:${teamTwo.id}`,
+      user_id: teamTwo.id,
+      user_name: teamTwo.name,
+      total_score: lead * -1,
+      scores: holeResults.map((result) => getMatchPlayDelta(result) * -1),
+      in_progress: Boolean(matchScore?.in_progress ?? true),
+      thru: playedHoles,
+      status_label: state.teamTwo,
+      updated_at: matchScore?.updated_at,
+      last_activity_at: matchScore?.last_activity_at,
+      entry_kind: 'team' as const,
+      team_id: teamTwo.id,
+      team_name: teamTwo.name,
+      member_names: (teamTwo.members || []).map((member) => member.user_name || 'Unknown Player'),
+      match_state: state.teamTwo,
+      versus_name: teamOne.name,
+    },
+  ].sort((left, right) => right.total_score - left.total_score)
 }

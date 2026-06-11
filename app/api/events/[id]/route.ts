@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { EventTeam, EventTeamMember } from '@/types'
-import { buildBestBallLeaderboardEntries, buildEventLeaderboardEntries, buildScrambleLeaderboardEntries, getSupabaseClients, requireEventsCoreAccess } from '@/lib/eventsServer'
+import { buildBestBallLeaderboardEntries, buildEventLeaderboardEntries, buildMatchPlayLeaderboardEntries, buildScrambleLeaderboardEntries, getSupabaseClients, requireEventsCoreAccess } from '@/lib/eventsServer'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: 'You do not have access to this event.' }, { status: 403 })
     }
 
-    const [{ data: event, error: eventError }, { data: members, error: membersError }, { data: rounds, error: roundsError }, { data: teams, error: teamsError }, { data: teamMembers, error: teamMembersError }, { data: teamScores, error: teamScoresError }, { data: teamPlayerScores, error: teamPlayerScoresError }] = await Promise.all([
+    const [{ data: event, error: eventError }, { data: members, error: membersError }, { data: rounds, error: roundsError }, { data: teams, error: teamsError }, { data: teamMembers, error: teamMembersError }, { data: teamScores, error: teamScoresError }, { data: teamPlayerScores, error: teamPlayerScoresError }, { data: matchPlayScore, error: matchPlayScoreError }] = await Promise.all([
       supabaseAdmin
         .from('events')
         .select('*')
@@ -66,6 +66,11 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         .from('event_team_player_scores')
         .select('id, event_id, team_id, user_id, scores, total_score, in_progress, updated_at, last_activity_at')
         .eq('event_id', id),
+      supabaseAdmin
+        .from('event_match_play_scores')
+        .select('id, event_id, team_one_id, team_two_id, hole_results, in_progress, winning_team_id, closing_hole, updated_at, last_activity_at')
+        .eq('event_id', id)
+        .maybeSingle(),
     ])
 
     if (eventError) throw eventError
@@ -75,6 +80,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     if (teamMembersError) throw teamMembersError
     if (teamScoresError) throw teamScoresError
     if (teamPlayerScoresError) throw teamPlayerScoresError
+    if (matchPlayScoreError) throw matchPlayScoreError
 
     const memberUserIds = Array.from(new Set([
       ...(members || []).map((member: any) => member.user_id),
@@ -120,6 +126,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       ? buildScrambleLeaderboardEntries(teamScores || [], enrichedTeams)
       : event?.format === 'best_ball'
         ? buildBestBallLeaderboardEntries(teamPlayerScores || [], enrichedTeams)
+        : event?.format === 'match_play'
+          ? buildMatchPlayLeaderboardEntries(matchPlayScore || null, enrichedTeams, event?.hole_count || 18)
       : buildEventLeaderboardEntries(rounds || [])
 
     return NextResponse.json({

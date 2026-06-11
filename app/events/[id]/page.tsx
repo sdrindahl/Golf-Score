@@ -53,6 +53,10 @@ function formatTeamStrokeTotal(value: number) {
   return `${value}`
 }
 
+function formatMatchPlayState(entry: EventLeaderboardEntry) {
+  return entry.match_state || entry.status_label || '--'
+}
+
 function getScoreChipClasses(value: number) {
   if (value < 0) return 'bg-red-600/90 text-white border-red-400/30'
   if (value > 0) return 'bg-lime-700/90 text-white border-lime-400/30'
@@ -127,13 +131,14 @@ export default function EventDetailPage() {
   const tabs: Array<{ key: TabKey; label: string; enabled: boolean }> = [
     { key: 'leaderboard', label: 'Leaderboard', enabled: true },
     { key: 'players', label: 'Players', enabled: true },
-    { key: 'teams', label: 'Teams', enabled: teamsEnabled || event?.format === 'scramble' || event?.format === 'best_ball' },
+    { key: 'teams', label: 'Teams', enabled: teamsEnabled || event?.format === 'scramble' || event?.format === 'best_ball' || event?.format === 'match_play' },
     { key: 'games', label: 'Games', enabled: gamesEnabled },
     { key: 'info', label: 'Info', enabled: true },
   ]
 
   const heroImage = getEventHeroImage(event?.id || params.id)
   const isTeamStrokeFormat = event?.format === 'scramble' || event?.format === 'best_ball'
+  const isMatchPlay = event?.format === 'match_play'
   const totalPlayers = members.length
   const roundsStarted = leaderboard.length
   const liveCount = leaderboard.filter((entry) => entry.in_progress).length
@@ -213,7 +218,7 @@ export default function EventDetailPage() {
               </div>
               <div className="rounded-2xl bg-white/5 px-3 py-3 text-center">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">Lead</div>
-                <div className="mt-1 text-xl font-bold text-white">{leadScore !== null ? (isTeamStrokeFormat ? formatTeamStrokeTotal(leadScore) : formatScore(leadScore)) : '--'}</div>
+                <div className="mt-1 text-xl font-bold text-white">{isMatchPlay ? (leaderboard[0] ? formatMatchPlayState(leaderboard[0]) : '--') : leadScore !== null ? (isTeamStrokeFormat ? formatTeamStrokeTotal(leadScore) : formatScore(leadScore)) : '--'}</div>
               </div>
             </div>
 
@@ -257,6 +262,13 @@ export default function EventDetailPage() {
               >
                 Enter Best Ball Scores
               </Link>
+            ) : event?.format === 'match_play' ? (
+              <Link
+                href={`/events/${params.id}/match-play`}
+                className="inline-flex items-center rounded-full bg-lime-400 px-5 py-2.5 text-sm font-bold text-[#07150f] hover:bg-lime-300 transition-colors"
+              >
+                Enter Match Play Results
+              </Link>
             ) : (
               <Link
                 href={`/courses?eventId=${encodeURIComponent(params.id)}&eventName=${encodeURIComponent(event?.name || '')}`}
@@ -270,6 +282,8 @@ export default function EventDetailPage() {
                 ? 'This event now uses team-first scramble scoring instead of individual rounds.'
                 : event?.format === 'best_ball'
                   ? 'Enter player scores and the team low ball will be derived automatically.'
+                  : event?.format === 'match_play'
+                    ? 'Track the winner of each hole and the match state will update automatically.'
                 : 'Choose a course and keep the round attached to this event.'}
             </div>
           </div>
@@ -295,15 +309,15 @@ export default function EventDetailPage() {
                 <div className="px-5 py-8 text-sm text-white/65">No event rounds yet. Once rounds are linked to this event they will appear here.</div>
               ) : (
                 <>
-                  <div className="grid grid-cols-[44px_minmax(0,1fr)_72px_56px] gap-3 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
+                  <div className="grid grid-cols-[44px_minmax(0,1fr)_110px_56px] gap-3 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
                     <div>Pos</div>
-                    <div>{isTeamStrokeFormat ? 'Team' : 'Player'}</div>
-                    <div className="text-center">Score</div>
+                    <div>{isTeamStrokeFormat || isMatchPlay ? 'Team' : 'Player'}</div>
+                    <div className="text-center">{isMatchPlay ? 'State' : 'Score'}</div>
                     <div className="text-center">Thru</div>
                   </div>
                   <div>
                     {leaderboard.map((entry, index) => (
-                      <div key={entry.round_id} className="grid grid-cols-[44px_minmax(0,1fr)_72px_56px] items-center gap-3 border-t border-white/8 px-5 py-4">
+                      <div key={entry.round_id} className="grid grid-cols-[44px_minmax(0,1fr)_110px_56px] items-center gap-3 border-t border-white/8 px-5 py-4">
                         <div className="text-[28px] font-bold text-lime-300">{index + 1}</div>
                         <div className="min-w-0 flex items-center gap-3">
                           <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br ${getAvatarPalette(entry.user_name)} text-sm font-bold text-white shadow-lg`}>
@@ -319,8 +333,8 @@ export default function EventDetailPage() {
                           </div>
                         </div>
                         <div className="flex justify-center">
-                          <span className={`min-w-[58px] rounded-xl border px-3 py-2 text-center text-[22px] font-bold ${getScoreChipClasses(entry.total_score)}`}>
-                            {isTeamStrokeFormat ? formatTeamStrokeTotal(entry.total_score) : formatScore(entry.total_score)}
+                          <span className={`min-w-[78px] rounded-xl border px-3 py-2 text-center text-[18px] font-bold ${getScoreChipClasses(entry.total_score)}`}>
+                            {isMatchPlay ? formatMatchPlayState(entry) : isTeamStrokeFormat ? formatTeamStrokeTotal(entry.total_score) : formatScore(entry.total_score)}
                           </span>
                         </div>
                         <div className="text-center">
@@ -369,6 +383,8 @@ export default function EventDetailPage() {
               <p className="mt-2 text-sm text-white/65">
                 {event?.format === 'best_ball'
                   ? 'Best Ball teams are persisted here so the low-ball leaderboard can be derived from each player card.'
+                  : event?.format === 'match_play'
+                    ? 'Match Play persists both sides so the hole-by-hole match state can be tracked on the event.'
                   : 'Scramble teams are now persisted on the event and shown here as the team-first competition view.'}
               </p>
               {teams.length === 0 ? (
@@ -380,7 +396,7 @@ export default function EventDetailPage() {
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-lg font-bold text-white">{team.name}</div>
-                          <div className="mt-1 text-xs uppercase tracking-[0.14em] text-white/45">{event?.format === 'best_ball' ? 'Best Ball Team' : 'Scramble Team'} {index + 1}</div>
+                          <div className="mt-1 text-xs uppercase tracking-[0.14em] text-white/45">{event?.format === 'best_ball' ? 'Best Ball Team' : event?.format === 'match_play' ? 'Match Play Side' : 'Scramble Team'} {index + 1}</div>
                         </div>
                         <div className="rounded-full border border-lime-400/25 bg-lime-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-lime-300">
                           {team.members?.length || 0} Players

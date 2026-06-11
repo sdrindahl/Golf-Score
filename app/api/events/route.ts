@@ -140,14 +140,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validationError.message || 'Invalid betting configuration.' }, { status: 400 })
     }
 
-    if (format === 'scramble' || format === 'best_ball') {
+    if (format === 'scramble' || format === 'best_ball' || format === 'match_play') {
       if (teams.length < 2) {
-        return NextResponse.json({ error: `${format === 'scramble' ? 'Scramble' : 'Best Ball'} events need at least two teams.` }, { status: 400 })
+        return NextResponse.json({ error: `${format === 'scramble' ? 'Scramble' : format === 'best_ball' ? 'Best Ball' : 'Match Play'} events need at least two teams.` }, { status: 400 })
       }
 
       const invalidTeam = teams.find((team) => team.memberIds.length === 0 || team.memberIds.length > 4)
       if (invalidTeam) {
         return NextResponse.json({ error: 'Each team must have between 1 and 4 players.' }, { status: 400 })
+      }
+
+      if (format === 'match_play' && teams.length !== 2) {
+        return NextResponse.json({ error: 'Match Play requires exactly two teams.' }, { status: 400 })
       }
     }
 
@@ -199,7 +203,7 @@ export async function POST(request: NextRequest) {
       throw memberError
     }
 
-    if ((format === 'scramble' || format === 'best_ball') && teams.length > 0) {
+    if ((format === 'scramble' || format === 'best_ball' || format === 'match_play') && teams.length > 0) {
       const teamRows = teams.map((team, index) => ({
         id: `${eventId}_team_${index + 1}`,
         event_id: eventId,

@@ -30,7 +30,7 @@ const FORMAT_LABELS: Record<EventFormat, string> = {
   match_play: 'Match Play',
 }
 
-const TEAM_FORMATS: EventFormat[] = ['scramble', 'best_ball']
+const TEAM_FORMATS: EventFormat[] = ['scramble', 'best_ball', 'match_play']
 
 type EventSetupState = {
   name: string
@@ -108,7 +108,9 @@ export default function EventsPage() {
   const configuredTeams = getConfiguredTeams(setup)
   const configuredTeamsValid = !usesTeams
     ? true
-    : configuredTeams.length >= 2 && configuredTeams.every((team) => team.memberIds.length > 0 && team.memberIds.length <= 4)
+    : setup.format === 'match_play'
+      ? configuredTeams.length === 2 && configuredTeams.every((team) => team.memberIds.length > 0 && team.memberIds.length <= 4)
+      : configuredTeams.length >= 2 && configuredTeams.every((team) => team.memberIds.length > 0 && team.memberIds.length <= 4)
 
   useEffect(() => {
     const user = auth.getCurrentUser()
@@ -344,7 +346,12 @@ export default function EventsPage() {
                       <button
                         key={option.key}
                         type="button"
-                        onClick={() => setSetup((previous) => ({ ...previous, format: option.key }))}
+                        onClick={() => setSetup((previous) => ({
+                          ...previous,
+                          format: option.key,
+                          scrambleTeamCount: option.key === 'match_play' ? 2 : previous.scrambleTeamCount,
+                          scrambleAssignments: assignMembersRoundRobin(previous.selectedMemberIds, option.key === 'match_play' ? 2 : previous.scrambleTeamCount),
+                        }))}
                         className={`rounded-2xl border px-4 py-4 text-left transition ${isActive ? 'border-lime-400/50 bg-lime-400/10 text-white' : 'border-green-900 bg-slate-950 text-gray-200 hover:border-green-700'}`}
                       >
                         <div className="font-bold">{option.label}</div>
@@ -480,12 +487,15 @@ export default function EventsPage() {
                       <div className="mt-1 text-xs text-gray-400">
                         {setup.format === 'scramble'
                           ? 'Scramble uses one official team score per hole, so every selected golfer must be placed on a team.'
-                          : 'Best Ball keeps individual player cards and derives the team low ball from them.'}
+                          : setup.format === 'best_ball'
+                            ? 'Best Ball keeps individual player cards and derives the team low ball from them.'
+                            : 'Match Play tracks holes won between two sides, so every selected golfer must be placed on one of two teams.'}
                       </div>
                     </div>
                     <select
                       value={setup.scrambleTeamCount}
                       onChange={(e) => updateScrambleTeamCount(Number(e.target.value))}
+                      disabled={setup.format === 'match_play'}
                       className="rounded-2xl border border-green-800 bg-slate-950 px-4 py-2 text-sm text-white"
                     >
                       {[2, 3, 4].filter((count) => count <= Math.max(2, setup.selectedMemberIds.length || 2)).map((count) => (
@@ -495,7 +505,7 @@ export default function EventsPage() {
                   </div>
 
                   {setup.selectedMemberIds.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-green-900 px-4 py-5 text-sm text-gray-400">Select golfers first, then assign them across scramble teams.</div>
+                    <div className="rounded-2xl border border-dashed border-green-900 px-4 py-5 text-sm text-gray-400">Select golfers first, then assign them across the event teams.</div>
                   ) : (
                     <div className="space-y-4">
                       <div className="space-y-2">
@@ -537,7 +547,11 @@ export default function EventsPage() {
                       </div>
 
                       {!configuredTeamsValid && (
-                        <div className="rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900">This format requires at least two teams, and each team must have between 1 and 4 players.</div>
+                        <div className="rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900">
+                          {setup.format === 'match_play'
+                            ? 'Match Play requires exactly two teams, and each team must have between 1 and 4 players.'
+                            : 'This format requires at least two teams, and each team must have between 1 and 4 players.'}
+                        </div>
                       )}
                     </div>
                   )}

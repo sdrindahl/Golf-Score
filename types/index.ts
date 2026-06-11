@@ -263,6 +263,21 @@ export interface EventTeamPlayerScore {
   user_name?: string
 }
 
+export type EventMatchPlayHoleResult = 'team1' | 'team2' | 'halved' | ''
+
+export interface EventMatchPlayScore {
+  id: string
+  event_id: string
+  team_one_id: string
+  team_two_id: string
+  hole_results: EventMatchPlayHoleResult[]
+  in_progress: boolean
+  winning_team_id?: string | null
+  closing_hole?: number | null
+  updated_at?: string
+  last_activity_at?: string
+}
+
 export interface EventLeaderboardEntry {
   round_id: string
   user_id: string
@@ -278,6 +293,8 @@ export interface EventLeaderboardEntry {
   team_id?: string
   team_name?: string
   member_names?: string[]
+  match_state?: string
+  versus_name?: string
 }
 
 export interface CommentReaction {
