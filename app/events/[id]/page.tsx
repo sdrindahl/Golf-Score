@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useFeatureFlags } from '@/lib/featureFlagsContext'
 import { useAuth } from '@/lib/useAuth'
-import { Event, EventFormat, EventLeaderboardEntry, EventMember, EventTeam, EventWagerMode, User } from '@/types'
+import { Event, EventFormat, EventLeaderboardEntry, EventMember, EventSkinsSummary, EventTeam, EventWagerMode, User } from '@/types'
 
 type TabKey = 'leaderboard' | 'players' | 'teams' | 'games' | 'info'
 
@@ -73,6 +73,7 @@ export default function EventDetailPage() {
   const [members, setMembers] = useState<EventMember[]>([])
   const [teams, setTeams] = useState<EventTeam[]>([])
   const [leaderboard, setLeaderboard] = useState<EventLeaderboardEntry[]>([])
+  const [skinsSummary, setSkinsSummary] = useState<EventSkinsSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<TabKey>('leaderboard')
@@ -118,6 +119,7 @@ export default function EventDetailPage() {
         setMembers(data.members || [])
         setTeams(data.teams || [])
         setLeaderboard(data.leaderboard || [])
+        setSkinsSummary(data.skinsSummary || null)
       } catch (err: any) {
         setError(err.message || 'Failed to load event.')
       } finally {
@@ -442,31 +444,98 @@ export default function EventDetailPage() {
                 <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
                   <div>
                     <h2 className="text-lg font-bold text-white">Skins Game</h2>
-                    <p className="mt-1 text-sm text-white/65">Placeholder game module styled to match the tournament view.</p>
+                    <p className="mt-1 text-sm text-white/65">
+                      {skinsSummary?.enabled
+                        ? 'Gross skins derived from the event scorecards.'
+                        : 'Enable skins on the event setup page to track per-hole skins here.'}
+                    </p>
                   </div>
-                  <button className="rounded-full border border-lime-400/35 px-4 py-2 text-sm font-semibold text-lime-300">View Holes</button>
+                  <div className="rounded-full border border-lime-400/35 px-4 py-2 text-sm font-semibold text-lime-300">
+                    {skinsSummary?.skin_value ? `$${skinsSummary.skin_value.toFixed(2)} / Skin` : 'Skins'}
+                  </div>
                 </div>
                 <div className="px-5 py-5 text-sm text-white/75">
-                  <div className="grid grid-cols-[repeat(9,minmax(0,1fr))] gap-2 text-center text-xs text-white/45 sm:grid-cols-[repeat(18,minmax(0,1fr))]">
-                    {Array.from({ length: 18 }).map((_, index) => (
-                      <div key={index} className="rounded-lg bg-black/20 px-1 py-2">
-                        <div className="text-[10px] uppercase">{index + 1}</div>
-                        <div className="mt-1 font-bold text-lime-300">{index % 5 === 0 ? '2' : index % 7 === 0 ? '3' : '–'}</div>
+                  {!skinsSummary?.enabled ? (
+                    <div className="rounded-2xl border border-dashed border-white/15 bg-black/15 px-4 py-6 text-center text-sm text-white/45">Skins is not enabled on this event.</div>
+                  ) : !skinsSummary.supported ? (
+                    <div className="rounded-2xl border border-dashed border-white/15 bg-black/15 px-4 py-6 text-center text-sm text-white/45">{skinsSummary.message || 'Skins is not available for this event format yet.'}</div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-[repeat(9,minmax(0,1fr))] gap-2 text-center text-xs text-white/45 sm:grid-cols-[repeat(18,minmax(0,1fr))]">
+                        {skinsSummary.holes.map((hole) => (
+                          <div key={hole.hole_number} className="rounded-lg bg-black/20 px-1 py-2">
+                            <div className="text-[10px] uppercase">{hole.hole_number}</div>
+                            <div className="mt-1 font-bold text-lime-300">
+                              {hole.status === 'won'
+                                ? hole.winning_name?.split(' ')[0] || 'Won'
+                                : hole.status === 'carried'
+                                  ? `C${hole.carryover_count + 1}`
+                                  : hole.status === 'pending'
+                                    ? 'Pend'
+                                    : '–'}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/8 bg-black/15 p-4">
-                      <div className="text-xs uppercase tracking-[0.14em] text-white/45">Leader</div>
-                      <div className="mt-2 text-lg font-bold text-white">{leaderboard[0]?.user_name || 'Waiting for play'}</div>
-                      <div className="mt-1 text-sm text-white/55">Projected skins winner</div>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-black/15 p-4">
-                      <div className="text-xs uppercase tracking-[0.14em] text-white/45">Status</div>
-                      <div className="mt-2 text-lg font-bold text-white">{gamesEnabled ? 'Games Enabled' : 'Preview Mode'}</div>
-                      <div className="mt-1 text-sm text-white/55">Turn on `events_games` to make this live later.</div>
-                    </div>
-                  </div>
+                      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                        <div className="rounded-2xl border border-white/8 bg-black/15 p-4">
+                          <div className="text-xs uppercase tracking-[0.14em] text-white/45">Leader</div>
+                          <div className="mt-2 text-lg font-bold text-white">{skinsSummary.standings[0]?.entry_name || 'Waiting for play'}</div>
+                          <div className="mt-1 text-sm text-white/55">{skinsSummary.standings[0]?.skins_won || 0} skins won</div>
+                        </div>
+                        <div className="rounded-2xl border border-white/8 bg-black/15 p-4">
+                          <div className="text-xs uppercase tracking-[0.14em] text-white/45">Status</div>
+                          <div className="mt-2 text-lg font-bold text-white">
+                            {skinsSummary.pending_hole_count > 0
+                              ? `${skinsSummary.pending_hole_count} holes pending tiebreak`
+                              : skinsSummary.current_carryover_count > 1
+                                ? `${skinsSummary.current_carryover_count} skins in carryover`
+                                : 'Up to date'}
+                          </div>
+                          <div className="mt-1 text-sm text-white/55">{skinsSummary.total_skins_awarded} skins awarded • ${skinsSummary.total_payout_value.toFixed(2)} total payout</div>
+                        </div>
+                      </div>
+                      <div className="mt-5 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
+                        <div className="rounded-2xl border border-white/8 bg-black/15 p-4">
+                          <div className="text-xs uppercase tracking-[0.14em] text-white/45">Standings</div>
+                          <div className="mt-3 space-y-3">
+                            {skinsSummary.standings.map((standing) => (
+                              <div key={standing.entry_id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                                <div>
+                                  <div className="font-semibold text-white">{standing.entry_name}</div>
+                                  <div className="mt-1 text-xs text-white/45">{standing.skins_won} skins</div>
+                                </div>
+                                <div className="text-right text-sm font-bold text-lime-300">${standing.payout_value.toFixed(2)}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-white/8 bg-black/15 p-4">
+                          <div className="text-xs uppercase tracking-[0.14em] text-white/45">Hole Log</div>
+                          <div className="mt-3 space-y-3 max-h-[360px] overflow-y-auto pr-1">
+                            {skinsSummary.holes.map((hole) => (
+                              <div key={`hole-log-${hole.hole_number}`} className="rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="font-semibold text-white">Hole {hole.hole_number}</div>
+                                  <div className="text-xs uppercase tracking-[0.14em] text-white/45">{hole.status}</div>
+                                </div>
+                                <div className="mt-2 text-sm text-white/65">
+                                  {hole.status === 'won'
+                                    ? `${hole.winning_name} won with ${hole.winning_score} for ${hole.skins_awarded} skin${hole.skins_awarded === 1 ? '' : 's'}.`
+                                    : hole.status === 'carried'
+                                      ? `Tied at ${hole.winning_score}. Carryover is now ${hole.carryover_count + 1} skins.`
+                                      : hole.status === 'pending'
+                                        ? `Tied at ${hole.winning_score}. Waiting for ${skinsSummary.tiebreaker === 'chip_or_putt' ? 'chip/putt' : 'manual'} tiebreak.`
+                                        : 'No scores recorded yet.'}
+                                </div>
+                                {hole.tied_names?.length ? <div className="mt-2 text-xs text-white/45">Tied: {hole.tied_names.join(' • ')}</div> : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </section>
             </div>

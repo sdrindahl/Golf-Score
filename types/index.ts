@@ -278,6 +278,38 @@ export interface EventMatchPlayScore {
   last_activity_at?: string
 }
 
+export interface EventSkinHoleResult {
+  hole_number: number
+  winning_entry_id?: string | null
+  winning_name?: string | null
+  winning_score?: number | null
+  carryover_count: number
+  skins_awarded: number
+  status: 'won' | 'carried' | 'pending' | 'not_played'
+  tied_names?: string[]
+}
+
+export interface EventSkinsStanding {
+  entry_id: string
+  entry_name: string
+  skins_won: number
+  payout_value: number
+}
+
+export interface EventSkinsSummary {
+  supported: boolean
+  enabled: boolean
+  tiebreaker?: EventSkinsTiebreaker | null
+  skin_value?: number | null
+  total_skins_awarded: number
+  total_payout_value: number
+  pending_hole_count: number
+  current_carryover_count: number
+  holes: EventSkinHoleResult[]
+  standings: EventSkinsStanding[]
+  message?: string
+}
+
 export interface EventLeaderboardEntry {
   round_id: string
   user_id: string

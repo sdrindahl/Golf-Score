@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { EventTeam, EventTeamMember } from '@/types'
-import { buildBestBallLeaderboardEntries, buildEventLeaderboardEntries, buildMatchPlayLeaderboardEntries, buildScrambleLeaderboardEntries, getSupabaseClients, requireEventsCoreAccess } from '@/lib/eventsServer'
+import { buildBestBallLeaderboardEntries, buildEventLeaderboardEntries, buildMatchPlayLeaderboardEntries, buildScrambleLeaderboardEntries, buildSkinsSummary, getSupabaseClients, requireEventsCoreAccess } from '@/lib/eventsServer'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -130,11 +130,20 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
           ? buildMatchPlayLeaderboardEntries(matchPlayScore || null, enrichedTeams, event?.hole_count || 18)
       : buildEventLeaderboardEntries(rounds || [])
 
+    const skinsSummary = buildSkinsSummary({
+      event,
+      rounds: rounds || [],
+      teams: enrichedTeams,
+      teamScores: teamScores || [],
+      teamPlayerScores: teamPlayerScores || [],
+    })
+
     return NextResponse.json({
       event,
       members: enrichedMembers,
       teams: enrichedTeams,
       leaderboard,
+      skinsSummary,
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Failed to load event.' }, { status: 500 })

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { EventLeaderboardEntry, EventMatchPlayHoleResult, EventMatchPlayScore, EventTeam, EventTeamPlayerScore, FeatureFlag } from '@/types'
+import { EventLeaderboardEntry, EventMatchPlayHoleResult, EventMatchPlayScore, EventSkinHoleResult, EventSkinsSummary, EventTeam, EventTeamPlayerScore, Event, FeatureFlag, Round } from '@/types'
 import { DEFAULT_FEATURE_FLAGS, isFeatureEnabled, mergeFeatureFlags } from '@/lib/featureFlags'
 
 export function getSupabaseServerConfig() {
@@ -331,4 +331,209 @@ export function buildMatchPlayLeaderboardEntries(matchScore: EventMatchPlayScore
       versus_name: teamOne.name,
     },
   ].sort((left, right) => right.total_score - left.total_score)
+}
+
+type SkinsEntry = {
+  entry_id: string
+  entry_name: string
+  scores: number[]
+}
+
+function buildBestBallSkinsEntries(playerScores: EventTeamPlayerScore[], teams: EventTeam[]): SkinsEntry[] {
+  const scoresByTeam = new Map<string, EventTeamPlayerScore[]>()
+  for (const score of playerScores || []) {
+    const existingScores = scoresByTeam.get(score.team_id) || []
+    existingScores.push(score)
+    scoresByTeam.set(score.team_id, existingScores)
+  }
+
+  return teams.map((team) => {
+    const teamPlayerScores = scoresByTeam.get(team.id) || []
+    const holeCount = teamPlayerScores.reduce((max, score) => Math.max(max, Array.isArray(score.scores) ? score.scores.length : 0), 18)
+    const lowBallScores = Array.from({ length: holeCount }, (_, holeIndex) => {
+      const holeScores = teamPlayerScores
+        .map((score) => Number(score.scores?.[holeIndex] || 0))
+        .filter((score) => score > 0)
+
+      return holeScores.length > 0 ? Math.min(...holeScores) : 0
+    })
+
+    return {
+      entry_id: team.id,
+      entry_name: team.name,
+      scores: lowBallScores,
+    }
+  })
+}
+
+function buildScrambleSkinsEntries(teamScores: any[], teams: EventTeam[]): SkinsEntry[] {
+  const teamMap = new Map(teams.map((team) => [team.id, team]))
+  return (teamScores || []).map((teamScore) => ({
+    entry_id: teamScore.team_id,
+    entry_name: teamMap.get(teamScore.team_id)?.name || 'Team',
+    scores: Array.isArray(teamScore.scores) ? teamScore.scores : [],
+  }))
+}
+
+function buildRoundSkinsEntries(rounds: any[]): SkinsEntry[] {
+  return (rounds || []).map((round: Round | any) => ({
+    entry_id: round.user_id,
+    entry_name: round.user_name || 'Player',
+    scores: Array.isArray(round.scores) ? round.scores : [],
+  }))
+}
+
+export function buildSkinsSummary(params: {
+  event: Event | null | undefined
+  rounds?: any[]
+  teams?: EventTeam[]
+  teamScores?: any[]
+  teamPlayerScores?: EventTeamPlayerScore[]
+}): EventSkinsSummary {
+  const { event, rounds = [], teams = [], teamScores = [], teamPlayerScores = [] } = params
+  const enabled = Boolean(event?.side_games?.includes('skins'))
+  const skinValue = event?.betting_config?.skin_value ?? 0
+  const tiebreaker = event?.betting_config?.skins_tiebreaker ?? null
+  const holeCount = event?.hole_count || 18
+
+  if (!enabled) {
+    return {
+      supported: false,
+      enabled: false,
+      tiebreaker,
+      skin_value: skinValue,
+      total_skins_awarded: 0,
+      total_payout_value: 0,
+      pending_hole_count: 0,
+      current_carryover_count: 0,
+      holes: [],
+      standings: [],
+      message: 'Skins is not enabled on this event.',
+    }
+  }
+
+  if (event?.format === 'match_play') {
+    return {
+      supported: false,
+      enabled: true,
+      tiebreaker,
+      skin_value: skinValue,
+      total_skins_awarded: 0,
+      total_payout_value: 0,
+      pending_hole_count: 0,
+      current_carryover_count: 0,
+      holes: [],
+      standings: [],
+      message: 'Skins is not derived for Match Play because only hole winners are stored, not stroke scores.',
+    }
+  }
+
+  const entries = event?.format === 'scramble'
+    ? buildScrambleSkinsEntries(teamScores, teams)
+    : event?.format === 'best_ball'
+      ? buildBestBallSkinsEntries(teamPlayerScores, teams)
+      : buildRoundSkinsEntries(rounds)
+
+  const standingsMap = new Map(entries.map((entry) => [entry.entry_id, {
+    entry_id: entry.entry_id,
+    entry_name: entry.entry_name,
+    skins_won: 0,
+    payout_value: 0,
+  }]))
+
+  const holes: EventSkinHoleResult[] = []
+  let carryoverCount = 1
+  let totalSkinsAwarded = 0
+  let pendingHoleCount = 0
+
+  for (let holeIndex = 0; holeIndex < holeCount; holeIndex += 1) {
+    const holeScores = entries
+      .map((entry) => ({
+        entry_id: entry.entry_id,
+        entry_name: entry.entry_name,
+        score: Number(entry.scores?.[holeIndex] || 0),
+      }))
+      .filter((entry) => entry.score > 0)
+
+    if (holeScores.length === 0) {
+      holes.push({
+        hole_number: holeIndex + 1,
+        carryover_count: carryoverCount,
+        skins_awarded: 0,
+        status: 'not_played',
+      })
+      continue
+    }
+
+    const lowestScore = Math.min(...holeScores.map((entry) => entry.score))
+    const winningEntries = holeScores.filter((entry) => entry.score === lowestScore)
+
+    if (winningEntries.length === 1) {
+      const winner = winningEntries[0]
+      const standing = standingsMap.get(winner.entry_id)
+      const skinsAwarded = carryoverCount
+
+      if (standing) {
+        standing.skins_won += skinsAwarded
+        standing.payout_value += skinsAwarded * skinValue
+      }
+
+      totalSkinsAwarded += skinsAwarded
+      holes.push({
+        hole_number: holeIndex + 1,
+        winning_entry_id: winner.entry_id,
+        winning_name: winner.entry_name,
+        winning_score: winner.score,
+        carryover_count: carryoverCount,
+        skins_awarded: skinsAwarded,
+        status: 'won',
+      })
+      carryoverCount = 1
+      continue
+    }
+
+    if (tiebreaker === 'chip_or_putt') {
+      pendingHoleCount += 1
+      holes.push({
+        hole_number: holeIndex + 1,
+        winning_score: lowestScore,
+        carryover_count: carryoverCount,
+        skins_awarded: 0,
+        status: 'pending',
+        tied_names: winningEntries.map((entry) => entry.entry_name),
+      })
+      continue
+    }
+
+    holes.push({
+      hole_number: holeIndex + 1,
+      winning_score: lowestScore,
+      carryover_count: carryoverCount,
+      skins_awarded: 0,
+      status: 'carried',
+      tied_names: winningEntries.map((entry) => entry.entry_name),
+    })
+    carryoverCount += 1
+  }
+
+  const standings = Array.from(standingsMap.values()).sort((left, right) => {
+    if (left.skins_won !== right.skins_won) {
+      return right.skins_won - left.skins_won
+    }
+
+    return left.entry_name.localeCompare(right.entry_name)
+  })
+
+  return {
+    supported: true,
+    enabled: true,
+    tiebreaker,
+    skin_value: skinValue,
+    total_skins_awarded: totalSkinsAwarded,
+    total_payout_value: totalSkinsAwarded * skinValue,
+    pending_hole_count: pendingHoleCount,
+    current_carryover_count: carryoverCount,
+    holes,
+    standings,
+  }
 }
