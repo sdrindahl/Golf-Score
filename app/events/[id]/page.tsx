@@ -49,6 +49,10 @@ function formatScore(value: number) {
   return value > 0 ? `+${value}` : `${value}`
 }
 
+function formatTeamStrokeTotal(value: number) {
+  return `${value}`
+}
+
 function getScoreChipClasses(value: number) {
   if (value < 0) return 'bg-red-600/90 text-white border-red-400/30'
   if (value > 0) return 'bg-lime-700/90 text-white border-lime-400/30'
@@ -123,12 +127,13 @@ export default function EventDetailPage() {
   const tabs: Array<{ key: TabKey; label: string; enabled: boolean }> = [
     { key: 'leaderboard', label: 'Leaderboard', enabled: true },
     { key: 'players', label: 'Players', enabled: true },
-    { key: 'teams', label: 'Teams', enabled: teamsEnabled || event?.format === 'scramble' },
+    { key: 'teams', label: 'Teams', enabled: teamsEnabled || event?.format === 'scramble' || event?.format === 'best_ball' },
     { key: 'games', label: 'Games', enabled: gamesEnabled },
     { key: 'info', label: 'Info', enabled: true },
   ]
 
   const heroImage = getEventHeroImage(event?.id || params.id)
+  const isTeamStrokeFormat = event?.format === 'scramble' || event?.format === 'best_ball'
   const totalPlayers = members.length
   const roundsStarted = leaderboard.length
   const liveCount = leaderboard.filter((entry) => entry.in_progress).length
@@ -208,7 +213,7 @@ export default function EventDetailPage() {
               </div>
               <div className="rounded-2xl bg-white/5 px-3 py-3 text-center">
                 <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">Lead</div>
-                <div className="mt-1 text-xl font-bold text-white">{leadScore !== null ? formatScore(leadScore) : '--'}</div>
+                <div className="mt-1 text-xl font-bold text-white">{leadScore !== null ? (isTeamStrokeFormat ? formatTeamStrokeTotal(leadScore) : formatScore(leadScore)) : '--'}</div>
               </div>
             </div>
 
@@ -245,6 +250,13 @@ export default function EventDetailPage() {
               >
                 Enter Scramble Scores
               </Link>
+            ) : event?.format === 'best_ball' ? (
+              <Link
+                href={`/events/${params.id}/best-ball`}
+                className="inline-flex items-center rounded-full bg-lime-400 px-5 py-2.5 text-sm font-bold text-[#07150f] hover:bg-lime-300 transition-colors"
+              >
+                Enter Best Ball Scores
+              </Link>
             ) : (
               <Link
                 href={`/courses?eventId=${encodeURIComponent(params.id)}&eventName=${encodeURIComponent(event?.name || '')}`}
@@ -256,6 +268,8 @@ export default function EventDetailPage() {
             <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/75">
               {event?.format === 'scramble'
                 ? 'This event now uses team-first scramble scoring instead of individual rounds.'
+                : event?.format === 'best_ball'
+                  ? 'Enter player scores and the team low ball will be derived automatically.'
                 : 'Choose a course and keep the round attached to this event.'}
             </div>
           </div>
@@ -283,7 +297,7 @@ export default function EventDetailPage() {
                 <>
                   <div className="grid grid-cols-[44px_minmax(0,1fr)_72px_56px] gap-3 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/50">
                     <div>Pos</div>
-                    <div>{event?.format === 'scramble' ? 'Team' : 'Player'}</div>
+                    <div>{isTeamStrokeFormat ? 'Team' : 'Player'}</div>
                     <div className="text-center">Score</div>
                     <div className="text-center">Thru</div>
                   </div>
@@ -306,7 +320,7 @@ export default function EventDetailPage() {
                         </div>
                         <div className="flex justify-center">
                           <span className={`min-w-[58px] rounded-xl border px-3 py-2 text-center text-[22px] font-bold ${getScoreChipClasses(entry.total_score)}`}>
-                            {formatScore(entry.total_score)}
+                            {isTeamStrokeFormat ? formatTeamStrokeTotal(entry.total_score) : formatScore(entry.total_score)}
                           </span>
                         </div>
                         <div className="text-center">
@@ -352,7 +366,11 @@ export default function EventDetailPage() {
           {!loading && activeTab === 'teams' && (
             <section className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(8,24,18,0.94),rgba(10,24,19,0.9))] p-5 shadow-2xl">
               <h2 className="text-lg font-bold text-white">Teams</h2>
-              <p className="mt-2 text-sm text-white/65">Scramble teams are now persisted on the event and shown here as the team-first competition view.</p>
+              <p className="mt-2 text-sm text-white/65">
+                {event?.format === 'best_ball'
+                  ? 'Best Ball teams are persisted here so the low-ball leaderboard can be derived from each player card.'
+                  : 'Scramble teams are now persisted on the event and shown here as the team-first competition view.'}
+              </p>
               {teams.length === 0 ? (
                 <div className="mt-5 rounded-2xl border border-dashed border-white/15 bg-black/15 px-4 py-6 text-center text-sm text-white/45">No teams saved on this event yet.</div>
               ) : (
@@ -362,7 +380,7 @@ export default function EventDetailPage() {
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-lg font-bold text-white">{team.name}</div>
-                          <div className="mt-1 text-xs uppercase tracking-[0.14em] text-white/45">Scramble Team {index + 1}</div>
+                          <div className="mt-1 text-xs uppercase tracking-[0.14em] text-white/45">{event?.format === 'best_ball' ? 'Best Ball Team' : 'Scramble Team'} {index + 1}</div>
                         </div>
                         <div className="rounded-full border border-lime-400/25 bg-lime-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-lime-300">
                           {team.members?.length || 0} Players

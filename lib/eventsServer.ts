@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { EventLeaderboardEntry, EventTeam, FeatureFlag } from '@/types'
+import { EventLeaderboardEntry, EventTeam, EventTeamPlayerScore, FeatureFlag } from '@/types'
 import { DEFAULT_FEATURE_FLAGS, isFeatureEnabled, mergeFeatureFlags } from '@/lib/featureFlags'
 
 export function getSupabaseServerConfig() {
@@ -163,5 +163,62 @@ export function buildScrambleLeaderboardEntries(teamScores: any[], teams: EventT
     }
 
     return (left.team_name || left.user_name).localeCompare(right.team_name || right.user_name)
+  })
+}
+
+export function buildBestBallLeaderboardEntries(playerScores: EventTeamPlayerScore[], teams: EventTeam[]): EventLeaderboardEntry[] {
+  const scoresByTeam = new Map<string, EventTeamPlayerScore[]>()
+  for (const score of playerScores || []) {
+    const existingScores = scoresByTeam.get(score.team_id) || []
+    existingScores.push(score)
+    scoresByTeam.set(score.team_id, existingScores)
+  }
+
+  return teams.map((team) => {
+    const teamPlayerScores = scoresByTeam.get(team.id) || []
+    const holeCount = teamPlayerScores.reduce((max, score) => Math.max(max, Array.isArray(score.scores) ? score.scores.length : 0), 18)
+    const lowBallScores = Array.from({ length: holeCount }, (_, holeIndex) => {
+      const holeScores = teamPlayerScores
+        .map((score) => Number(score.scores?.[holeIndex] || 0))
+        .filter((score) => score > 0)
+
+      if (holeScores.length === 0) {
+        return 0
+      }
+
+      return Math.min(...holeScores)
+    })
+
+    const thru = lowBallScores.filter((score) => score > 0).length
+    const totalScore = lowBallScores.reduce((sum, score) => sum + score, 0)
+    const memberNames = (team.members || []).map((member) => member.user_name || 'Unknown Player')
+    const inProgress = teamPlayerScores.some((score) => score.in_progress !== false) || thru < holeCount
+
+    return {
+      round_id: `best-ball:${team.id}`,
+      user_id: team.id,
+      user_name: team.name,
+      total_score: totalScore,
+      scores: lowBallScores,
+      in_progress: inProgress,
+      thru,
+      status_label: inProgress ? `Through ${thru}` : 'Finished',
+      updated_at: teamPlayerScores[0]?.updated_at,
+      last_activity_at: teamPlayerScores[0]?.last_activity_at,
+      entry_kind: 'team' as const,
+      team_id: team.id,
+      team_name: team.name,
+      member_names: memberNames,
+    }
+  }).sort((left, right) => {
+    if (left.in_progress !== right.in_progress) {
+      return left.in_progress ? -1 : 1
+    }
+
+    if (left.total_score !== right.total_score) {
+      return left.total_score - right.total_score
+    }
+
+    return right.thru - left.thru
   })
 }

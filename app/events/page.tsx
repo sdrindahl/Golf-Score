@@ -30,6 +30,8 @@ const FORMAT_LABELS: Record<EventFormat, string> = {
   match_play: 'Match Play',
 }
 
+const TEAM_FORMATS: EventFormat[] = ['scramble', 'best_ball']
+
 type EventSetupState = {
   name: string
   format: EventFormat
@@ -47,7 +49,7 @@ function buildTeamKey(index: number) {
   return `team-${index + 1}`
 }
 
-function getScrambleTeams(setup: EventSetupState) {
+function getConfiguredTeams(setup: EventSetupState) {
   return Array.from({ length: setup.scrambleTeamCount }, (_, index) => {
     const teamId = buildTeamKey(index)
     return {
@@ -102,10 +104,11 @@ export default function EventsPage() {
 
   const eventsEnabled = isEnabled('events_core')
   const skinsEnabled = setup.sideGames.includes('skins')
-  const scrambleTeams = getScrambleTeams(setup)
-  const scrambleTeamsValid = setup.format !== 'scramble'
+  const usesTeams = TEAM_FORMATS.includes(setup.format)
+  const configuredTeams = getConfiguredTeams(setup)
+  const configuredTeamsValid = !usesTeams
     ? true
-    : scrambleTeams.length >= 2 && scrambleTeams.every((team) => team.memberIds.length > 0 && team.memberIds.length <= 4)
+    : configuredTeams.length >= 2 && configuredTeams.every((team) => team.memberIds.length > 0 && team.memberIds.length <= 4)
 
   useEffect(() => {
     const user = auth.getCurrentUser()
@@ -241,7 +244,7 @@ export default function EventsPage() {
           eventDate: setup.eventDate,
           holeCount: setup.holeCount,
           memberIds: setup.selectedMemberIds,
-          teams: setup.format === 'scramble' ? scrambleTeams.filter((team) => team.memberIds.length > 0) : [],
+          teams: usesTeams ? configuredTeams.filter((team) => team.memberIds.length > 0) : [],
           sideGames: setup.sideGames,
           bettingConfig: setup.bettingConfig,
         }),
@@ -469,12 +472,16 @@ export default function EventsPage() {
                   })}
                 </div>
               </div>
-              {setup.format === 'scramble' && (
+              {usesTeams && (
                 <div className="rounded-2xl border border-green-900 bg-slate-950/80 p-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <div>
-                      <div className="text-sm font-semibold text-white">4. Assign scramble teams</div>
-                      <div className="mt-1 text-xs text-gray-400">Scramble uses team-first scoring, so every selected golfer must be placed on a team.</div>
+                      <div className="text-sm font-semibold text-white">4. Assign teams</div>
+                      <div className="mt-1 text-xs text-gray-400">
+                        {setup.format === 'scramble'
+                          ? 'Scramble uses one official team score per hole, so every selected golfer must be placed on a team.'
+                          : 'Best Ball keeps individual player cards and derives the team low ball from them.'}
+                      </div>
                     </div>
                     <select
                       value={setup.scrambleTeamCount}
@@ -513,7 +520,7 @@ export default function EventsPage() {
                       </div>
 
                       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        {scrambleTeams.map((team) => (
+                        {configuredTeams.map((team) => (
                           <div key={team.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
                             <div className="text-sm font-bold text-white">{team.name}</div>
                             <div className="mt-1 text-xs text-gray-400">{team.memberIds.length} player{team.memberIds.length === 1 ? '' : 's'}</div>
@@ -529,14 +536,14 @@ export default function EventsPage() {
                         ))}
                       </div>
 
-                      {!scrambleTeamsValid && (
-                        <div className="rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900">Scramble requires at least two teams, and each team must have between 1 and 4 players.</div>
+                      {!configuredTeamsValid && (
+                        <div className="rounded-2xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900">This format requires at least two teams, and each team must have between 1 and 4 players.</div>
                       )}
                     </div>
                   )}
                 </div>
               )}
-              <button onClick={handleCreateEvent} disabled={saving || !setup.name.trim() || !scrambleTeamsValid} className="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50">
+              <button onClick={handleCreateEvent} disabled={saving || !setup.name.trim() || !configuredTeamsValid} className="w-full rounded-2xl bg-green-600 px-4 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50">
                 {saving ? 'Creating...' : 'Create Event'}
               </button>
             </div>

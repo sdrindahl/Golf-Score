@@ -250,6 +250,19 @@ export interface EventTeamScore {
   last_activity_at?: string
 }
 
+export interface EventTeamPlayerScore {
+  id: string
+  event_id: string
+  team_id: string
+  user_id: string
+  scores: number[]
+  total_score: number
+  in_progress: boolean
+  updated_at?: string
+  last_activity_at?: string
+  user_name?: string
+}
+
 export interface EventLeaderboardEntry {
   round_id: string
   user_id: string
@@ -265,23 +278,6 @@ export interface EventLeaderboardEntry {
   team_id?: string
   team_name?: string
   member_names?: string[]
-}
-
-export interface EventTeamMember {
-  id?: number
-  team_id: string
-  event_id: string
-  user_id: string
-  created_at?: string
-  user_name?: string
-}
-
-export interface EventTeam {
-  id: string
-  event_id: string
-  name: string
-  created_at?: string
-  members?: EventTeamMember[]
 }
 
 export interface CommentReaction {
