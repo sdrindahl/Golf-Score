@@ -3,6 +3,36 @@
 export const COURSES_DATABASE: any[] = [
 
 {
+    id: 'OLG',
+    name: 'Oak Lake Golf',
+    location: 'Erskine,',
+    state: 'MN',
+    holeCount: 9,
+    holes: [],
+  },
+  // Oak Lake Golf 9 holes as child
+  {
+    id: '30',
+    name: 'Nine 9',
+    location: 'Erskine',
+    state: 'MN',
+    holeCount: 9,
+    par: 35,
+    parent_id: 'OLG',
+    holes: [
+      { holeNumber: 1, par: 4, handicap: 15, greenLat: 47.6641233818215, greenLng: -95.97949159269986, men: { yardage: 400, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 390, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 390, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 400, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 2, par: 3, handicap: 13, greenLat: 47.66486959576662, greenLng: -95.97901057770056, men: { yardage: 160, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 135, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 135, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 160, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 3, par: 4, handicap: 1, greenLat: 47.663244147552206, greenLng: -95.98193400826729, men: { yardage: 255, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 255, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 255, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 255, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 4, par: 4, handicap: 3, greenLat: 47.66509884817561, greenLng: -95.98229910966036, men: { yardage: 268, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 260, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 260, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 268, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 5, par: 4, handicap: 17, greenLat: 47.665369859944505, greenLng: -95.97901093365155, men: { yardage: 323, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 315, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 315, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 323, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 6, par: 5, handicap: 9, greenLat: 47.66205963890348, greenLng: -95.97812214930582, men: { yardage: 430, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 430, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 430, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 430, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 7, par: 4, handicap: 5, greenLat: 47.661693507752396, greenLng: -95.97406498219826, men: { yardage: 335, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 305, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 305, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 335, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 8, par: 4, handicap: 11, greenLat: 47.66070437440026, greenLng: -95.97756101833109, men: { yardage: 328, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 310, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 310, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 328, courseRating: 66.0, slopeRating: 109 } },
+      { holeNumber: 9, par: 3, handicap: 7, greenLat: 47.66144716200268, greenLng: -95.97963168069882, men: { yardage: 155, courseRating: 66.0, slopeRating: 109 }, women: { yardage: 155, courseRating: 69.2, slopeRating: 118 }, senior: { yardage: 155, courseRating: 69.2, slopeRating: 118 }, championship: { yardage: 155, courseRating: 66.0, slopeRating: 109 } },
+    ],
+  },
+
+{
     id: 'GLW',
     name: 'Glacier Wood Golf',
     location: 'Iola',
