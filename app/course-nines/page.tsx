@@ -21,6 +21,8 @@ function CourseNinesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const parentId = searchParams?.get("id");
+  const eventId = searchParams?.get('eventId') || '';
+  const eventName = searchParams?.get('eventName') || '';
   const [childCourses, setChildCourses] = useState<ChildCourse[]>([]);
   const [selectedChildIds, setSelectedChildIds] = useState<string[]>([]);
   const [showInProgressModal, setShowInProgressModal] = useState(false);
@@ -45,6 +47,13 @@ function CourseNinesPageInner() {
   return (
     <PageWrapper title="">
       <div className="max-w-lg mx-auto mt-8 flex flex-col gap-6">
+        {eventId && (
+          <div className="rounded-2xl border border-cyan-500 bg-cyan-950/70 px-5 py-4 text-white shadow-2xl">
+            <div className="text-xs uppercase tracking-[0.25em] text-cyan-300">Event Round</div>
+            <div className="mt-2 text-lg font-bold">{eventName || 'Unnamed Event'}</div>
+            <div className="mt-1 text-sm text-cyan-100">Pick the front, back, or both nines for this event round.</div>
+          </div>
+        )}
         <h1 className="text-3xl font-bold mb-4 text-center text-white">{parentCourseName}</h1>
         <h2 className="text-xl font-bold mb-2 text-center text-white">
           {childCourses.length === 1 
@@ -163,7 +172,10 @@ function CourseNinesPageInner() {
               return;
             }
             const ninesParam = selectedChildIds.join(",");
-            router.push(`/select-tee?nines=${ninesParam}`);
+            const params = new URLSearchParams({ nines: ninesParam });
+            if (eventId) params.set('eventId', eventId);
+            if (eventName) params.set('eventName', eventName);
+            router.push(`/select-tee?${params.toString()}`);
           }}
           type="button"
         >
@@ -218,7 +230,10 @@ function CourseNinesPageInner() {
                       setShowInProgressModal(false);
                       // Start new round
                       const ninesParam = selectedChildIds.join(",");
-                      router.push(`/select-tee?nines=${ninesParam}`);
+                      const params = new URLSearchParams({ nines: ninesParam });
+                      if (eventId) params.set('eventId', eventId);
+                      if (eventName) params.set('eventName', eventName);
+                      router.push(`/select-tee?${params.toString()}`);
                     } catch (err) {
                       console.error('Error ending round:', err);
                       alert('Failed to end the round. Please try again.');

@@ -233,6 +233,8 @@ function TrackRoundContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const roundId = searchParams ? searchParams.get('id') : null;
+  const eventIdFromUrl = searchParams ? searchParams.get('eventId') : null;
+  const eventNameFromUrl = searchParams ? searchParams.get('eventName') : null;
   // Ref to skip persist on the very first render (before restore has run)
   const playersPersistedRef = useRef(false);
   // Restore selectedPlayers from localStorage once roundId is available
@@ -599,6 +601,8 @@ function TrackRoundContent() {
             userName: currentUser?.name,
             courseId: currentRound.courseId || (currentRound as any).course_id || currentCourse.id,
             courseName: currentCourse.name,
+            eventId: currentRound.eventId || (currentRound as any).event_id || eventIdFromUrl || null,
+            eventName: currentRound.eventName || (currentRound as any).event_name || eventNameFromUrl || null,
             selectedTee: selectedTeeRef.current || currentRound.selectedTee || (currentRound as any).selected_tee,
             date: currentRound.date,
             scores: scoresRef.current.length > 0 ? scoresRef.current : currentRound.scores,
@@ -674,6 +678,8 @@ function TrackRoundContent() {
         userName: round?.userName || user?.name,
         courseId: round?.courseId || course?.id,
         courseName: round?.courseName || course?.name,
+        eventId: round?.eventId || (round as any)?.event_id || eventIdFromUrl || null,
+        eventName: round?.eventName || (round as any)?.event_name || eventNameFromUrl || null,
         selectedTee: teeToSend,
         // Always use the perHoleStats state
         perHoleStats,
@@ -1048,6 +1054,8 @@ function TrackRoundContent() {
           userName,
           courseId: round.courseId || course.id,
           courseName,
+          eventId: round.eventId || (round as any).event_id || eventIdFromUrl || null,
+          eventName: round.eventName || (round as any).event_name || eventNameFromUrl || null,
           selectedTee: round.selectedTee || 'men',
           date: round.date || new Date().toISOString(),
           scores,
@@ -1115,6 +1123,8 @@ function TrackRoundContent() {
       userName,
       courseId: round.courseId || course.id,
       courseName,
+      eventId: round.eventId || (round as any).event_id || eventIdFromUrl || null,
+      eventName: round.eventName || (round as any).event_name || eventNameFromUrl || null,
       selectedTee: round.selectedTee || 'men',
       date: round.date || new Date().toISOString(),
       scores,
@@ -1289,6 +1299,13 @@ function TrackRoundContent() {
               </>
             )}
           </div>
+        </div>
+      )}
+      {(round.eventName || (round as any).event_name || eventNameFromUrl) && (
+        <div className="max-w-5xl mx-auto mb-4 rounded-2xl border border-cyan-500 bg-cyan-950/70 px-5 py-4 text-white shadow-2xl">
+          <div className="text-xs uppercase tracking-[0.25em] text-cyan-300">Event Round</div>
+          <div className="mt-2 text-lg font-bold">{round.eventName || (round as any).event_name || eventNameFromUrl}</div>
+          <div className="mt-1 text-sm text-cyan-100">Scores from this round will stay attached to the event leaderboard.</div>
         </div>
       )}
       {/* Top: Course Name Banner with Parent */}

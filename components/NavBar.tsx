@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { User } from '@/types'
 import { useAuth } from '@/lib/useAuth'
+import { useFeatureFlags } from '@/lib/featureFlagsContext'
 import { getRoundsInProgress } from '@/lib/roundsInProgress'
 
 export default function NavBar() {
@@ -22,6 +23,7 @@ export default function NavBar() {
   const router = useRouter()
   const pathname = usePathname()
   const auth = useAuth()
+  const { isEnabled } = useFeatureFlags()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -137,6 +139,7 @@ export default function NavBar() {
   // Don't show Return to Round button on track-round page
   const isTrackRoundPage = pathname && pathname.startsWith('/track-round');
   const isWalletPage = pathname && pathname.startsWith('/wallet');
+  const eventsEnabled = isEnabled('events_core')
 
   return (
     <>
@@ -179,6 +182,16 @@ export default function NavBar() {
                 >
                   👥 Golfers
                 </button>
+                {eventsEnabled && (
+                  <button
+                    onClick={() => router.push('/events')}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-semibold text-sm transition ${
+                      pathname?.startsWith('/events') ? 'bg-green-700 text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    🏆 Events
+                  </button>
+                )}
                 <div className="w-px h-5 bg-green-900 mx-1" />
                 <button
                   onClick={() => router.push('/settings')}
@@ -353,6 +366,15 @@ export default function NavBar() {
                 <span className="text-lg">⚙️</span>
                 Settings
               </button>
+              {eventsEnabled && (
+                <button
+                  onClick={() => { setMenuOpen(false); router.push('/events') }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-white text-sm font-medium hover:bg-white/5 active:bg-white/10 transition text-left"
+                >
+                  <span className="text-lg">🏆</span>
+                  Events
+                </button>
+              )}
               <div className="mx-4 border-t border-green-950/60" />
               <button
                 onClick={handleLogout}
