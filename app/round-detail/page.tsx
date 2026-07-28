@@ -1043,17 +1043,17 @@ function RoundDetailContent() {
                       router.push(`/player?id=${round.userId}`);
                     }
                   }}
-                  className={`flex-1 min-w-32 font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
+                  className={`w-full font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all ${
                     isJustCompleted
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                      ? 'bg-green-600 hover:bg-green-700 text-white'
                       : 'bg-white/90 hover:bg-white text-green-700 border border-white/20'
                   }`}
                 >
-                  {isJustCompleted ? 'Complete Round' : '← Back'}
+                  {isJustCompleted ? 'View My Rounds' : '← Back'}
                 </button>
-                {canEditRound() && !hasUnsavedChanges && (
+                {!isJustCompleted && canEditRound() && !hasUnsavedChanges && (
                   <>
-                    <button onClick={handleDeleteRound} className="flex-1 min-w-32 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                    <button onClick={handleDeleteRound} className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all mt-3">
                       Delete Round
                     </button>
                   </>
