@@ -767,7 +767,7 @@ function TrackRoundContent() {
       // Redirect to the completed round detail page when possible (with cache-bust timestamp)
       const finishedRoundId = updatedRound.id || round?.id;
       if (finishedRoundId) {
-        router.push(`/round-detail?id=${finishedRoundId}&t=${Date.now()}`);
+        router.push(`/round-detail?id=${finishedRoundId}&completed=true&t=${Date.now()}`);
       } else if (user) {
         router.push(`/player?id=${user.id}`);
       } else if (round?.userId) {
