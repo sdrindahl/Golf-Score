@@ -1672,20 +1672,6 @@ function TrackRoundContent() {
                 </button>
               );
             })()}
-            {/* Map Icon Button - Right of Track Drive */}
-            <button
-              className={`mt-1 ml-2 w-10 h-10 rounded-full flex items-center justify-center border shadow transition ${showMap ? 'bg-green-700 border-green-500' : 'bg-gray-700 border-gray-600'} hover:bg-green-700`}
-              onClick={() => setShowMap((prev) => !prev)}
-              aria-label="Show Map"
-              title="Show Map"
-              type="button"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={showMap ? '#4ade80' : 'white'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                <line x1="8" y1="2" x2="8" y2="18" />
-                <line x1="16" y1="6" x2="16" y2="22" />
-              </svg>
-            </button>
           </div>
         </div>
       )}
@@ -1797,7 +1783,22 @@ function TrackRoundContent() {
           )}
         {/* Modern Bottom Action Bar with Icons */}
         <div className="fixed bottom-0 left-0 w-full flex flex-col items-center pb-4 z-50">
-          <div className="flex gap-4 mb-2"></div>
+          <div className="flex gap-4 mb-2">
+            {/* Map Icon Button - Right of TAPPIT */}
+            <button
+              className={`w-12 h-12 rounded-full flex items-center justify-center border shadow transition ${showMap ? 'bg-blue-600 border-blue-400' : 'bg-blue-500 border-blue-300'} hover:bg-blue-600`}
+              onClick={() => setShowMap((prev) => !prev)}
+              aria-label="Show Map"
+              title="Show Map"
+              type="button"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                <line x1="8" y1="2" x2="8" y2="18" />
+                <line x1="16" y1="6" x2="16" y2="22" />
+              </svg>
+            </button>
+          </div>
           <button
             className="flex items-center gap-2 w-56 py-4 rounded-full bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg transition-transform duration-100 active:scale-95"
             onClick={() => {/* TODO: Hook up Track Drive logic here */}}
