@@ -1782,7 +1782,7 @@ function TrackRoundContent() {
             </div>
           )}
         {/* Map Icon Button - Below TAPPIT (Always visible) */}
-        <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
+        <div className="fixed bottom-28 right-6 flex items-center z-50 pointer-events-none">
           <button
             className={`pointer-events-auto mt-4 w-12 h-12 rounded-full flex items-center justify-center border shadow transition ${showMap ? 'bg-blue-600 border-blue-400' : 'bg-blue-500 border-blue-300'} hover:bg-blue-600`}
             onClick={() => setShowMap((prev) => !prev)}
