@@ -328,6 +328,10 @@ function TrackRoundContent() {
   // True when score was pre-filled with par on modal open — hides it from scorecard until saved
   const [scoreIsPreview, setScoreIsPreview] = useState(false);
   const [showBack9, setShowBack9] = useState(false);
+  const [trackStatsExpanded, setTrackStatsExpanded] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('trackStatsExpanded') !== 'false';
+  });
 
   // Helper: calculate total score (sum of scores array)
   const totalScore = scores.reduce((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
@@ -719,11 +723,24 @@ function TrackRoundContent() {
         }
       }
       
-      await fetch('/api/save-round', {
+      const saveResponse = await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRound),
       });
+
+      if (!saveResponse.ok) {
+        console.error('[handleFinishRound] Save failed with status:', saveResponse.status);
+        const errorText = await saveResponse.text();
+        console.error('[handleFinishRound] Error response:', errorText);
+        alert('Failed to save round.');
+        setFinishing(false);
+        return;
+      }
+      
+      console.log('[handleFinishRound] Round saved successfully, proceeding to redirect');
+      // Delay to ensure Supabase replication completes before redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Remove or update round in localStorage so it's not in progress
       if (typeof window !== 'undefined' && round) {
         const savedRounds = localStorage.getItem('golfRounds');
@@ -744,8 +761,14 @@ function TrackRoundContent() {
           }
         }
       }
-      // Redirect to player profile page
-      if (user) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('roundStateChanged'));
+      }
+      // Redirect to the completed round detail page when possible (with cache-bust timestamp)
+      const finishedRoundId = updatedRound.id || round?.id;
+      if (finishedRoundId) {
+        router.push(`/round-detail?id=${finishedRoundId}&t=${Date.now()}`);
+      } else if (user) {
         router.push(`/player?id=${user.id}`);
       } else if (round?.userId) {
         router.push(`/player?id=${round.userId}`);
@@ -1984,14 +2007,19 @@ function TrackRoundContent() {
                   return (
                     <div key={sectionIdx} className="mb-1">
                       <button
-                        className="w-full flex items-center justify-between px-2 py-1 rounded-lg text-xs font-bold tracking-widest text-green-400/70 uppercase hover:bg-green-400/10 transition border border-green-400/20"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold tracking-widest text-white uppercase transition active:scale-95 border-2"
+                        style={{
+                          background: isOpen ? 'rgba(22,163,74,0.7)' : 'rgba(22,163,74,0.5)',
+                          borderColor: isOpen ? 'rgba(74,222,128,0.7)' : 'rgba(74,222,128,0.5)',
+                          boxShadow: isOpen ? '0 0 12px 2px rgba(74,222,128,0.4)' : 'none'
+                        }}
                         onClick={() => setOpen(s => !s)}
                         type="button"
                       >
                         <span>{sectionLabel}</span>
                         <span className="flex items-center gap-2">
                           {scoreTotal > 0 && <span className="text-white normal-case font-semibold">{scoreTotal} / {parTotal}</span>}
-                          <span>{isOpen ? '▲' : '▼'}</span>
+                          <span className="text-xl">{isOpen ? '▲' : '▼'}</span>
                         </span>
                       </button>
                       {isOpen && <div className="overflow-x-auto mt-1">
@@ -2162,140 +2190,174 @@ function TrackRoundContent() {
               )}
             </div>
 
-            {/* ── FIR ── */}
+            {/* ── TRACK STATS SECTION (Collapsible) ── */}
             <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
-              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#4ade80', letterSpacing: '0.15em' }}>FIR <span className="text-gray-500 font-normal normal-case text-[10px]">Fairway in Regulation</span></p>
-              <div className="flex gap-2">
-                {([
-                  { val: 'L' as const, label: 'Miss Left' },
-                  { val: 'hit' as const, label: 'Hit' },
-                  { val: 'R' as const, label: 'Miss Right' },
-                ]).map(({ val, label }) => {
-                  const active = perHoleStats[currentHoleIndex]?.fairwayHit === val;
-                  return (
-                    <button
-                      key={val}
-                      className="flex-1 h-9 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95"
-                      style={active
-                        ? { background: 'rgba(22,163,74,0.85)', boxShadow: '0 0 10px 2px rgba(74,222,128,0.5)', color: '#fff', border: '1.5px solid rgba(74,222,128,0.7)' }
-                        : { background: 'rgba(0,0,0,0.4)', color: '#9ca3af', border: '1.5px solid rgba(74,222,128,0.15)' }
-                      }
-                      onClick={async () => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: val };
-                          return updated;
-                        });
-                        await immediateSaveRound();
-                      }}
-                    >
-                      {active
-                        ? <span className="text-green-300 text-base">✓</span>
-                        : <span className="w-4 h-4 rounded-full border-2 border-yellow-500/60 inline-block" />
-                      }
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+              <button
+                className="w-full flex flex-col items-center justify-center px-2 py-1 rounded-lg font-bold uppercase text-xs transition-all active:scale-95 mb-2"
+                style={{
+                  background: trackStatsExpanded ? 'transparent' : 'rgba(0,0,0,0.4)',
+                  color: '#ec4899',
+                  border: trackStatsExpanded ? '1px solid rgba(236,72,153,0.3)' : '1.5px solid rgba(236,72,153,0.15)'
+                }}
+                onClick={() => {
+                  const newState = !trackStatsExpanded;
+                  setTrackStatsExpanded(newState);
+                  localStorage.setItem('trackStatsExpanded', String(newState));
+                }}
+                type="button"
+              >
+                {!trackStatsExpanded ? (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <span style={{ fontSize: '12px' }}>➕</span>
+                      <span style={{ fontSize: '11px' }}>Advanced Stats</span>
+                    </span>
+                    <span className="text-[10px] mt-0.5" style={{ color: '#ec4899', opacity: 0.7 }}>(Optional)</span>
+                  </>
+                ) : (
+                  <span className="text-sm">{trackStatsExpanded ? '▲' : '▼'}</span>
+                )}
+              </button>
 
-            {/* ── GIR ── */}
-            <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
-              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#4ade80', letterSpacing: '0.15em' }}>GIR <span className="text-gray-500 font-normal normal-case text-[10px]">Green in Regulation</span></p>
-              <div className="flex gap-2">
-                {([
-                  { val: false, label: 'Missed', activeColor: 'rgba(180,120,20,0.7)', glowColor: 'rgba(251,191,36,0.4)', borderColor: 'rgba(251,191,36,0.5)', dotColor: '#f59e0b' },
-                  { val: true,  label: 'HIT', activeColor: 'rgba(30,58,138,0.85)', glowColor: 'rgba(96,165,250,0.4)', borderColor: 'rgba(96,165,250,0.6)', dotColor: '#60a5fa' },
-                ] as { val: boolean; label: string; activeColor: string; glowColor: string; borderColor: string; dotColor: string }[]).map(({ val, label, activeColor, glowColor, borderColor, dotColor }) => {
-                  const gir = perHoleStats[currentHoleIndex]?.gir ?? false;
-                  const active = gir === val;
-                  return (
-                    <button
-                      key={label}
-                      className="flex-1 h-9 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95"
-                      style={active
-                        ? { background: activeColor, boxShadow: `0 0 10px 2px ${glowColor}`, color: '#fff', border: `1.5px solid ${borderColor}` }
-                        : { background: 'rgba(0,0,0,0.4)', color: '#9ca3af', border: '1.5px solid rgba(74,222,128,0.15)' }
-                      }
-                      onClick={async () => {
-                        setPerHoleStats(stats => {
-                          const updated = [...stats];
-                          if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                          updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: val };
-                          return updated;
-                        });
-                        await immediateSaveRound();
-                      }}
-                    >
-                      {active
-                        ? <span className="text-base" style={{ color: dotColor }}>✓</span>
-                        : <span className="w-4 h-4 rounded-full inline-block" style={{ background: active ? dotColor : 'rgba(255,255,255,0.15)', border: `2px solid ${active ? dotColor : 'rgba(255,255,255,0.3)'}` }} />
-                      }
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* ── PUTTS ── */}
-            <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(236,72,153,0.2)' }}>
-              <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#ec4899', letterSpacing: '0.15em' }}>Putts</p>
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
-                  onClick={async () => {
-                    setPerHoleStats(stats => {
-                      const updated = [...stats];
-                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                      const prev = updated[currentHoleIndex].puttDistances;
-                      const newCount = Math.max(0, prev.length - 1);
-                      updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0) };
-                      return updated;
-                    });
-                    await immediateSaveRound();
-                  }}
-                  aria-label="Decrease putts"
-                >−</button>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-extrabold text-white shrink-0"
-                  style={{ background: 'rgba(0,0,0,0.5)', boxShadow: '0 0 18px 4px rgba(236,72,153,0.7), 0 0 0 3px rgba(236,72,153,0.5)' }}>
-                  {perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}
-                </div>
-                <button
-                  className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
-                  onClick={async () => {
-                    setPerHoleStats(stats => {
-                      const updated = [...stats];
-                      if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
-                      const prev = updated[currentHoleIndex].puttDistances;
-                      const newCount = Math.min(6, prev.length + 1);
-                      updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0) };
-                      return updated;
-                    });
-                    await immediateSaveRound();
-                  }}
-                  aria-label="Increase putts"
-                >+</button>
-              </div>
-              {perHoleStats[currentHoleIndex]?.puttDistances?.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-[10px] font-bold tracking-widest text-pink-400/80 uppercase mb-2">Putt Distances (ft)</p>
-                  <div className="flex flex-wrap gap-2">
-                    {perHoleStats[currentHoleIndex].puttDistances.map((dist, idx) => (
-                      <button
-                        key={idx}
-                        className="h-9 px-4 rounded-full font-semibold text-sm transition active:scale-95 text-white"
-                        style={{ background: 'rgba(236,72,153,0.7)', border: '1.5px solid rgba(236,72,153,0.9)', boxShadow: '0 0 10px 2px rgba(236,72,153,0.4)' }}
-                        onClick={() => setPuttEdit({ idx, value: dist })}
-                        type="button"
-                      >
-                        {dist} ft
-                      </button>
-                    ))}
+              {trackStatsExpanded && (
+                <>
+                  {/* ── FIR ── */}
+                  <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#4ade80', letterSpacing: '0.15em' }}>FIR <span className="text-gray-500 font-normal normal-case text-[10px]">Fairway in Regulation</span></p>
+                    <div className="flex gap-2">
+                      {([
+                        { val: 'L' as const, label: 'Miss Left' },
+                        { val: 'hit' as const, label: 'Hit' },
+                        { val: 'R' as const, label: 'Miss Right' },
+                      ]).map(({ val, label }) => {
+                        const active = perHoleStats[currentHoleIndex]?.fairwayHit === val;
+                        return (
+                          <button
+                            key={val}
+                            className="flex-1 h-9 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95"
+                            style={active
+                              ? { background: 'rgba(22,163,74,0.85)', boxShadow: '0 0 10px 2px rgba(74,222,128,0.5)', color: '#fff', border: '1.5px solid rgba(74,222,128,0.7)' }
+                              : { background: 'rgba(0,0,0,0.4)', color: '#9ca3af', border: '1.5px solid rgba(74,222,128,0.15)' }
+                            }
+                            onClick={async () => {
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], fairwayHit: val };
+                                return updated;
+                              });
+                              await immediateSaveRound();
+                            }}
+                          >
+                            {active
+                              ? <span className="text-green-300 text-base">✓</span>
+                              : <span className="w-4 h-4 rounded-full border-2 border-yellow-500/60 inline-block" />
+                            }
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+
+                  {/* ── GIR ── */}
+                  <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#4ade80', letterSpacing: '0.15em' }}>GIR <span className="text-gray-500 font-normal normal-case text-[10px]">Green in Regulation</span></p>
+                    <div className="flex gap-2">
+                      {([
+                        { val: false, label: 'Missed', activeColor: 'rgba(180,120,20,0.7)', glowColor: 'rgba(251,191,36,0.4)', borderColor: 'rgba(251,191,36,0.5)', dotColor: '#f59e0b' },
+                        { val: true,  label: 'HIT', activeColor: 'rgba(30,58,138,0.85)', glowColor: 'rgba(96,165,250,0.4)', borderColor: 'rgba(96,165,250,0.6)', dotColor: '#60a5fa' },
+                      ] as { val: boolean; label: string; activeColor: string; glowColor: string; borderColor: string; dotColor: string }[]).map(({ val, label, activeColor, glowColor, borderColor, dotColor }) => {
+                        const gir = perHoleStats[currentHoleIndex]?.gir ?? false;
+                        const active = gir === val;
+                        return (
+                          <button
+                            key={label}
+                            className="flex-1 h-9 rounded-full flex items-center justify-center gap-2 font-semibold text-sm transition-all active:scale-95"
+                            style={active
+                              ? { background: activeColor, boxShadow: `0 0 10px 2px ${glowColor}`, color: '#fff', border: `1.5px solid ${borderColor}` }
+                              : { background: 'rgba(0,0,0,0.4)', color: '#9ca3af', border: '1.5px solid rgba(74,222,128,0.15)' }
+                            }
+                            onClick={async () => {
+                              setPerHoleStats(stats => {
+                                const updated = [...stats];
+                                if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                                updated[currentHoleIndex] = { ...updated[currentHoleIndex], gir: val };
+                                return updated;
+                              });
+                              await immediateSaveRound();
+                            }}
+                          >
+                            {active
+                              ? <span className="text-base" style={{ color: dotColor }}>✓</span>
+                              : <span className="w-4 h-4 rounded-full inline-block" style={{ background: active ? dotColor : 'rgba(255,255,255,0.15)', border: `2px solid ${active ? dotColor : 'rgba(255,255,255,0.3)'}` }} />
+                            }
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* ── PUTTS ── */}
+                  <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(236,72,153,0.2)' }}>
+                    <p className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: '#ec4899', letterSpacing: '0.15em' }}>Putts</p>
+                    <div className="flex items-center justify-between gap-3">
+                      <button
+                        className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
+                        onClick={async () => {
+                          setPerHoleStats(stats => {
+                            const updated = [...stats];
+                            if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                            const prev = updated[currentHoleIndex].puttDistances;
+                            const newCount = Math.max(0, prev.length - 1);
+                            updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0) };
+                            return updated;
+                          });
+                          await immediateSaveRound();
+                        }}
+                        aria-label="Decrease putts"
+                      >−</button>
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl font-extrabold text-white shrink-0"
+                        style={{ background: 'rgba(0,0,0,0.5)', boxShadow: '0 0 18px 4px rgba(236,72,153,0.7), 0 0 0 3px rgba(236,72,153,0.5)' }}>
+                        {perHoleStats[currentHoleIndex]?.puttDistances?.length ?? 0}
+                      </div>
+                      <button
+                        className="flex-1 h-10 rounded-full text-2xl font-bold text-gray-900 bg-white/90 hover:bg-white active:scale-95 transition-transform flex items-center justify-center shadow"
+                        onClick={async () => {
+                          setPerHoleStats(stats => {
+                            const updated = [...stats];
+                            if (!updated[currentHoleIndex]) updated[currentHoleIndex] = defaultPerHoleStat();
+                            const prev = updated[currentHoleIndex].puttDistances;
+                            const newCount = Math.min(6, prev.length + 1);
+                            updated[currentHoleIndex] = { ...updated[currentHoleIndex], puttDistances: Array(newCount).fill(0).map((v, i) => prev[i] || 0) };
+                            return updated;
+                          });
+                          await immediateSaveRound();
+                        }}
+                        aria-label="Increase putts"
+                      >+</button>
+                    </div>
+                    {perHoleStats[currentHoleIndex]?.puttDistances?.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-[10px] font-bold tracking-widest text-pink-400/80 uppercase mb-2">Putt Distances (ft)</p>
+                        <div className="flex flex-wrap gap-2">
+                          {perHoleStats[currentHoleIndex].puttDistances.map((dist, idx) => (
+                            <button
+                              key={idx}
+                              className="h-9 px-4 rounded-full font-semibold text-sm transition active:scale-95 text-white"
+                              style={{ background: 'rgba(236,72,153,0.7)', border: '1.5px solid rgba(236,72,153,0.9)', boxShadow: '0 0 10px 2px rgba(236,72,153,0.4)' }}
+                              onClick={() => setPuttEdit({ idx, value: dist })}
+                              type="button"
+                            >
+                              {dist} ft
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
@@ -2357,8 +2419,13 @@ function TrackRoundContent() {
               <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-1">Master Action</p>
               {scores.length === course?.holes?.length && scores.every(s => typeof s === 'number' && s > 0) ? (
                 <button
-                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
-                  style={{ background: 'rgba(10,20,10,0.95)', color: '#4ade80', border: '1.5px solid rgba(74,222,128,0.25)', boxShadow: '0 0 12px 2px rgba(74,222,128,0.15)' }}
+                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition-all active:scale-95 hover:shadow-lg"
+                  style={{ 
+                    background: 'rgba(22,163,74,0.85)', 
+                    color: '#fff', 
+                    border: '2px solid rgba(74,222,128,0.8)', 
+                    boxShadow: '0 0 20px 4px rgba(74,222,128,0.5)' 
+                  }}
                   onClick={async () => {
                     scoreBeforeModalRef.current = null;
                     setScoreIsPreview(false);
@@ -2368,8 +2435,13 @@ function TrackRoundContent() {
                 >Finish Round</button>
               ) : (
                 <button
-                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
-                  style={{ background: 'rgba(10,20,10,0.95)', color: '#4ade80', border: '1.5px solid rgba(74,222,128,0.25)', boxShadow: '0 0 12px 2px rgba(74,222,128,0.15)' }}
+                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition-all active:scale-95 hover:shadow-lg"
+                  style={{ 
+                    background: 'rgba(22,163,74,0.85)', 
+                    color: '#fff', 
+                    border: '2px solid rgba(74,222,128,0.8)', 
+                    boxShadow: '0 0 20px 4px rgba(74,222,128,0.5)' 
+                  }}
                   onClick={async () => {
                     scoreBeforeModalRef.current = null;
                     setScoreIsPreview(false);
