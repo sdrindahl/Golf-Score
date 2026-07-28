@@ -2188,11 +2188,11 @@ function TrackRoundContent() {
             {/* ── TRACK STATS SECTION (Collapsible) ── */}
             <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
               <button
-                className="w-full flex flex-col items-center justify-center px-3 py-2 rounded-lg font-bold uppercase text-sm transition-all active:scale-95 mb-2"
+                className="w-full flex flex-col items-center justify-center px-2 py-1 rounded-lg font-bold uppercase text-xs transition-all active:scale-95 mb-2"
                 style={{
-                  background: trackStatsExpanded ? 'rgba(22,163,74,0.25)' : 'rgba(0,0,0,0.4)',
+                  background: trackStatsExpanded ? 'transparent' : 'rgba(0,0,0,0.4)',
                   color: '#ec4899',
-                  border: trackStatsExpanded ? '1.5px solid rgba(236,72,153,0.5)' : '1.5px solid rgba(236,72,153,0.15)'
+                  border: trackStatsExpanded ? '1px solid rgba(236,72,153,0.3)' : '1.5px solid rgba(236,72,153,0.15)'
                 }}
                 onClick={() => {
                   const newState = !trackStatsExpanded;
@@ -2201,12 +2201,17 @@ function TrackRoundContent() {
                 }}
                 type="button"
               >
-                <span className="flex items-center gap-2">
-                  <span style={{ fontSize: '14px' }}>➕</span>
-                  Advanced Stats Options
-                </span>
-                <span className="text-xs mt-1" style={{ color: '#ec4899', opacity: 0.7 }}>(Optional)</span>
-                <span className="text-lg">{trackStatsExpanded ? '▲' : '▼'}</span>
+                {!trackStatsExpanded ? (
+                  <>
+                    <span className="flex items-center gap-1">
+                      <span style={{ fontSize: '12px' }}>➕</span>
+                      <span style={{ fontSize: '11px' }}>Advanced Stats Options</span>
+                    </span>
+                    <span className="text-[10px] mt-0.5" style={{ color: '#ec4899', opacity: 0.7 }}>(Optional)</span>
+                  </>
+                ) : (
+                  <span className="text-sm">{trackStatsExpanded ? '▲' : '▼'}</span>
+                )}
               </button>
 
               {trackStatsExpanded && (
