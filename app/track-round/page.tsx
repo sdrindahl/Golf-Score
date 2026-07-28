@@ -2205,7 +2205,7 @@ function TrackRoundContent() {
                   <>
                     <span className="flex items-center gap-1">
                       <span style={{ fontSize: '12px' }}>➕</span>
-                      <span style={{ fontSize: '11px' }}>Advanced Stats Options</span>
+                      <span style={{ fontSize: '11px' }}>Advanced Stats</span>
                     </span>
                     <span className="text-[10px] mt-0.5" style={{ color: '#ec4899', opacity: 0.7 }}>(Optional)</span>
                   </>
