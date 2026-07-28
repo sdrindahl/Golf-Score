@@ -6,6 +6,9 @@ import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { useRouter, usePathname } from 'next/navigation'
+import NavBar from '@/components/NavBar'
+import { getRoundsInProgress } from '@/lib/roundsInProgress'
+import { useFeatureFlags } from '@/lib/featureFlagsContext'
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -28,14 +31,40 @@ jest.mock('@/lib/roundsInProgress', () => ({
   getRoundsInProgress: jest.fn(() => Promise.resolve([])),
 }))
 
+jest.mock('@/lib/featureFlagsContext', () => ({
+  useFeatureFlags: jest.fn(() => ({
+    isEnabled: jest.fn(() => false),
+  })),
+}))
+
 describe('NavBar - Map Button Tests', () => {
   beforeEach(() => {
     ;(useRouter as jest.Mock).mockReturnValue({
       push: jest.fn(),
     })
     ;(usePathname as jest.Mock).mockReturnValue('/track-round')
+    ;(useFeatureFlags as jest.Mock).mockReturnValue({
+      isEnabled: jest.fn(() => false),
+    })
+    ;(getRoundsInProgress as jest.Mock).mockReset()
+    ;(getRoundsInProgress as jest.Mock).mockResolvedValue([])
     // Clear window event listeners
     window.removeEventListener = jest.fn(window.removeEventListener)
+  })
+
+  it('should switch the round button from Return Round to Start Round when the active round is cleared', async () => {
+    ;(usePathname as jest.Mock).mockReturnValue('/player')
+    localStorage.setItem('currentRoundId', 'round-1')
+    ;(getRoundsInProgress as jest.Mock).mockResolvedValue([{ id: 'round-1' }])
+
+    render(<NavBar />)
+
+    expect(await screen.findByRole('button', { name: /Return/i })).toBeInTheDocument()
+
+    localStorage.removeItem('currentRoundId')
+    window.dispatchEvent(new Event('roundStateChanged'))
+
+    expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument()
   })
 
   it('should display "View Map" text on track-round page when map is closed', () => {

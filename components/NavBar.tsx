@@ -11,7 +11,7 @@ export default function NavBar() {
     // Listen for localStorage changes and custom roundStateChanged event to update courseSelectedButNoRound
     useEffect(() => {
       const updateState = () => {
-        setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'));
+        syncRoundStateFromStorage()
       };
       window.addEventListener('storage', updateState);
       window.addEventListener('roundStateChanged', updateState);
@@ -30,6 +30,17 @@ export default function NavBar() {
   // State for current round in progress
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const [courseSelectedButNoRound, setCourseSelectedButNoRound] = useState(false)
+
+  const syncRoundStateFromStorage = () => {
+    const storedRoundId = localStorage.getItem('currentRoundId')
+    if (storedRoundId) {
+      setCurrentRoundId(storedRoundId)
+    } else {
+      setCurrentRoundId(null)
+    }
+
+    setCourseSelectedButNoRound(!!localStorage.getItem('courseSelectedButNoRound'))
+  }
   const [isLastHole, setIsLastHole] = useState(false)
   const [isMapOpen, setIsMapOpen] = useState(false)
   const [currentHole, setCurrentHole] = useState<number>(1)
@@ -46,7 +57,14 @@ export default function NavBar() {
           return;
         }
 
-        // Pass user ID to filter rounds by current user only (FIX: prevent cross-user access bug)
+        // Check localStorage first — if currentRoundId is not set, use that as the source of truth
+        const storedRoundId = localStorage.getItem('currentRoundId');
+        if (!storedRoundId) {
+          setCurrentRoundId(null);
+          return;
+        }
+
+        // Otherwise fetch from Supabase with cache-bust to ensure fresh data
         const rounds = await getRoundsInProgress(user.id);
         if (rounds && rounds.length > 0) {
           setCurrentRoundId(rounds[0].id);
@@ -68,6 +86,11 @@ export default function NavBar() {
 
     fetchActiveRound();
   }, [pathname, auth]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    syncRoundStateFromStorage()
+  }, [pathname])
 
   useEffect(() => {
     // Get current user

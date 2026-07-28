@@ -719,11 +719,24 @@ function TrackRoundContent() {
         }
       }
       
-      await fetch('/api/save-round', {
+      const saveResponse = await fetch('/api/save-round', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRound),
       });
+
+      if (!saveResponse.ok) {
+        console.error('[handleFinishRound] Save failed with status:', saveResponse.status);
+        const errorText = await saveResponse.text();
+        console.error('[handleFinishRound] Error response:', errorText);
+        alert('Failed to save round.');
+        setFinishing(false);
+        return;
+      }
+      
+      console.log('[handleFinishRound] Round saved successfully, proceeding to redirect');
+      // Delay to ensure Supabase replication completes before redirect
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Remove or update round in localStorage so it's not in progress
       if (typeof window !== 'undefined' && round) {
         const savedRounds = localStorage.getItem('golfRounds');
@@ -744,8 +757,14 @@ function TrackRoundContent() {
           }
         }
       }
-      // Redirect to player profile page
-      if (user) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('roundStateChanged'));
+      }
+      // Redirect to the completed round detail page when possible (with cache-bust timestamp)
+      const finishedRoundId = updatedRound.id || round?.id;
+      if (finishedRoundId) {
+        router.push(`/round-detail?id=${finishedRoundId}&t=${Date.now()}`);
+      } else if (user) {
         router.push(`/player?id=${user.id}`);
       } else if (round?.userId) {
         router.push(`/player?id=${round.userId}`);
