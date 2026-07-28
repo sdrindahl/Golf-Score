@@ -2202,9 +2202,10 @@ function TrackRoundContent() {
                 type="button"
               >
                 <span className="flex items-center gap-2">
-                  <span style={{ fontSize: '12px' }}>📊</span>
-                  Advanced Stat Tracking
+                  <span style={{ fontSize: '14px' }}>➕</span>
+                  Advanced Stats Options
                 </span>
+                <span className="text-xs mt-1" style={{ color: '#ec4899', opacity: 0.7 }}>(Optional)</span>
                 <span className="text-lg">{trackStatsExpanded ? '▲' : '▼'}</span>
               </button>
 
