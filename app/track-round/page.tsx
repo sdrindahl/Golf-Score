@@ -2188,11 +2188,11 @@ function TrackRoundContent() {
             {/* ── TRACK STATS SECTION (Collapsible) ── */}
             <div className="mb-3 pt-3" style={{ borderTop: '1px solid rgba(74,222,128,0.2)' }}>
               <button
-                className="w-full flex items-center justify-between px-3 py-2 rounded-lg font-bold uppercase text-sm transition-all active:scale-95 mb-2"
+                className="w-full flex flex-col items-center justify-center px-3 py-2 rounded-lg font-bold uppercase text-sm transition-all active:scale-95 mb-2"
                 style={{
                   background: trackStatsExpanded ? 'rgba(22,163,74,0.25)' : 'rgba(0,0,0,0.4)',
-                  color: trackStatsExpanded ? '#4ade80' : '#9ca3af',
-                  border: trackStatsExpanded ? '1.5px solid rgba(74,222,128,0.5)' : '1.5px solid rgba(74,222,128,0.15)'
+                  color: '#ec4899',
+                  border: trackStatsExpanded ? '1.5px solid rgba(236,72,153,0.5)' : '1.5px solid rgba(236,72,153,0.15)'
                 }}
                 onClick={() => {
                   const newState = !trackStatsExpanded;
@@ -2203,7 +2203,7 @@ function TrackRoundContent() {
               >
                 <span className="flex items-center gap-2">
                   <span style={{ fontSize: '12px' }}>📊</span>
-                  Track Stats
+                  Advanced Stat Tracking
                 </span>
                 <span className="text-lg">{trackStatsExpanded ? '▲' : '▼'}</span>
               </button>
