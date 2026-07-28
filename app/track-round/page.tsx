@@ -330,7 +330,7 @@ function TrackRoundContent() {
   const [showBack9, setShowBack9] = useState(false);
   const [trackStatsExpanded, setTrackStatsExpanded] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('trackStatsExpanded') !== 'false';
+    return localStorage.getItem('trackStatsExpanded') === 'true';
   });
 
   // Helper: calculate total score (sum of scores array)
