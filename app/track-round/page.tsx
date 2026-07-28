@@ -2007,14 +2007,19 @@ function TrackRoundContent() {
                   return (
                     <div key={sectionIdx} className="mb-1">
                       <button
-                        className="w-full flex items-center justify-between px-2 py-1 rounded-lg text-xs font-bold tracking-widest text-green-400/70 uppercase hover:bg-green-400/10 transition border border-green-400/20"
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold tracking-widest text-white uppercase transition active:scale-95 border-2"
+                        style={{
+                          background: isOpen ? 'rgba(22,163,74,0.7)' : 'rgba(22,163,74,0.5)',
+                          borderColor: isOpen ? 'rgba(74,222,128,0.7)' : 'rgba(74,222,128,0.5)',
+                          boxShadow: isOpen ? '0 0 12px 2px rgba(74,222,128,0.4)' : 'none'
+                        }}
                         onClick={() => setOpen(s => !s)}
                         type="button"
                       >
                         <span>{sectionLabel}</span>
                         <span className="flex items-center gap-2">
                           {scoreTotal > 0 && <span className="text-white normal-case font-semibold">{scoreTotal} / {parTotal}</span>}
-                          <span>{isOpen ? '▲' : '▼'}</span>
+                          <span className="text-xl">{isOpen ? '▲' : '▼'}</span>
                         </span>
                       </button>
                       {isOpen && <div className="overflow-x-auto mt-1">
