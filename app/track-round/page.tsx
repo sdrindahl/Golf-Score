@@ -1778,23 +1778,25 @@ function TrackRoundContent() {
                     draggable={false}
                   />
                 </button>
-                {/* Map Icon Button - Below TAPPIT */}
-                <button
-                  className={`mt-4 w-12 h-12 rounded-full flex items-center justify-center border shadow transition ${showMap ? 'bg-blue-600 border-blue-400' : 'bg-blue-500 border-blue-300'} hover:bg-blue-600`}
-                  onClick={() => setShowMap((prev) => !prev)}
-                  aria-label="Show Map"
-                  title="Show Map"
-                  type="button"
-                >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-                    <line x1="8" y1="2" x2="8" y2="18" />
-                    <line x1="16" y1="6" x2="16" y2="22" />
-                  </svg>
-                </button>
               </div>
             </div>
           )}
+        {/* Map Icon Button - Below TAPPIT (Always visible) */}
+        <div className="fixed bottom-28 left-0 w-full flex justify-center items-center z-50 pointer-events-none">
+          <button
+            className={`pointer-events-auto mt-4 w-12 h-12 rounded-full flex items-center justify-center border shadow transition ${showMap ? 'bg-blue-600 border-blue-400' : 'bg-blue-500 border-blue-300'} hover:bg-blue-600`}
+            onClick={() => setShowMap((prev) => !prev)}
+            aria-label="Show Map"
+            title="Show Map"
+            type="button"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+              <line x1="8" y1="2" x2="8" y2="18" />
+              <line x1="16" y1="6" x2="16" y2="22" />
+            </svg>
+          </button>
+        </div>
         {/* Modern Bottom Action Bar with Icons */}
         <div className="fixed bottom-0 left-0 w-full flex flex-col items-center pb-4 z-50">
           <div className="flex gap-4 mb-2"></div>
