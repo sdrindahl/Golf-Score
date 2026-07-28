@@ -2408,8 +2408,13 @@ function TrackRoundContent() {
               <p className="text-xs font-semibold tracking-widest text-gray-300 uppercase mb-1">Master Action</p>
               {scores.length === course?.holes?.length && scores.every(s => typeof s === 'number' && s > 0) ? (
                 <button
-                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
-                  style={{ background: 'rgba(10,20,10,0.95)', color: '#4ade80', border: '1.5px solid rgba(74,222,128,0.25)', boxShadow: '0 0 12px 2px rgba(74,222,128,0.15)' }}
+                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition-all active:scale-95 hover:shadow-lg"
+                  style={{ 
+                    background: 'rgba(22,163,74,0.85)', 
+                    color: '#fff', 
+                    border: '2px solid rgba(74,222,128,0.8)', 
+                    boxShadow: '0 0 20px 4px rgba(74,222,128,0.5)' 
+                  }}
                   onClick={async () => {
                     scoreBeforeModalRef.current = null;
                     setScoreIsPreview(false);
@@ -2419,8 +2424,13 @@ function TrackRoundContent() {
                 >Finish Round</button>
               ) : (
                 <button
-                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition active:scale-95"
-                  style={{ background: 'rgba(10,20,10,0.95)', color: '#4ade80', border: '1.5px solid rgba(74,222,128,0.25)', boxShadow: '0 0 12px 2px rgba(74,222,128,0.15)' }}
+                  className="w-full h-11 rounded-xl font-extrabold text-sm tracking-widest uppercase transition-all active:scale-95 hover:shadow-lg"
+                  style={{ 
+                    background: 'rgba(22,163,74,0.85)', 
+                    color: '#fff', 
+                    border: '2px solid rgba(74,222,128,0.8)', 
+                    boxShadow: '0 0 20px 4px rgba(74,222,128,0.5)' 
+                  }}
                   onClick={async () => {
                     scoreBeforeModalRef.current = null;
                     setScoreIsPreview(false);
