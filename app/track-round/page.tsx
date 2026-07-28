@@ -861,21 +861,6 @@ function TrackRoundContent() {
             &#x25C0;
           </button>
 
-          {/* Map Icon Button */}
-          <button
-            className={`absolute left-16 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center border border-gray-600 shadow transition ${showMap ? 'bg-green-700' : 'bg-gray-700'} hover:bg-green-700`}
-            onClick={() => setShowMap((prev) => !prev)}
-            aria-label="Show Map"
-            title="Show Map"
-            type="button"
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={showMap ? '#4ade80' : 'white'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
-              <line x1="8" y1="2" x2="8" y2="18" />
-              <line x1="16" y1="6" x2="16" y2="22" />
-            </svg>
-          </button>
-
           {/* Center Info */}
           <div className="flex flex-col items-center justify-center px-12">
             <div className="w-12 h-1 rounded-full bg-gray-600 mb-1" />
@@ -1687,6 +1672,20 @@ function TrackRoundContent() {
                 </button>
               );
             })()}
+            {/* Map Icon Button - Right of Track Drive */}
+            <button
+              className={`mt-1 ml-2 w-10 h-10 rounded-full flex items-center justify-center border shadow transition ${showMap ? 'bg-green-700 border-green-500' : 'bg-gray-700 border-gray-600'} hover:bg-green-700`}
+              onClick={() => setShowMap((prev) => !prev)}
+              aria-label="Show Map"
+              title="Show Map"
+              type="button"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={showMap ? '#4ade80' : 'white'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                <line x1="8" y1="2" x2="8" y2="18" />
+                <line x1="16" y1="6" x2="16" y2="22" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
