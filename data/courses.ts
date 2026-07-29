@@ -3,6 +3,56 @@
 export const COURSES_DATABASE: any[] = [
 
 {
+    id: 'ROC',
+    name: 'Oakcrest',
+    location: 'Roseau',
+    state: 'MN',
+    holeCount: 18,
+    // par removed for parent course
+    holes: [],
+  },
+  {
+        id: '29a',
+        name: 'Front 9',
+        location: 'Roseau',
+        state: 'MN',
+        holeCount: 9,
+        par: 36,
+        parent_id: 'ROC',
+        holes: [
+          { holeNumber: 1, par: 4, handicap: 13, greenLat: 48.83837259223955, greenLng: -95.75735852446729, men: { yardage: 311, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 273, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 278, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 325, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 2, par: 5, handicap: 5, greenLat: 48.83384761348229, greenLng: -95.75434162472995, men: { yardage: 522, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 435, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 440, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 536, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 3, par: 4, handicap: 1, greenLat: 48.83016107583533, greenLng: -95.75427926508058, men: { yardage: 394, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 319, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 324, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 406, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 4, par: 4, handicap: 7, greenLat: 48.83031762322844, greenLng: -95.76137387120365, men: { yardage: 415, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 338, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 343, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 429, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 5, par: 3, handicap: 17, greenLat: 48.8315930155954, greenLng: -95.76209351483881, men: { yardage: 179, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 109, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 114, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 186, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 6, par: 5, handicap: 3, greenLat: 48.832170709745505, greenLng: -95.75597154056877, men: { yardage: 509, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 439, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 444, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 526, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 7, par: 3, handicap: 15, greenLat: 48.833149989107525, greenLng: -95.75890731991615, men: { yardage: 169, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 121, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 126, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 183, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 8, par: 4, handicap: 11, greenLat: 48.836807213991015, greenLng: -95.75929685446236, men: { yardage: 359, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 279, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 284, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 371, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 9, par: 4, handicap: 9, greenLat: 48.841127325847594, greenLng: -95.75841271325324, men: { yardage: 395, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 344, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 349, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 401, courseRating: 71.2, slopeRating: 123 } },
+        ],
+      },
+      {
+        id: '29b',
+        name: 'Back 9',
+        location: 'Roseau',
+        state: 'MN',
+        holeCount: 9,
+        par: 35,
+        parent_id: 'ROC',
+        holes: [
+          { holeNumber: 10, par: 3, handicap: 18, greenLat: 48.8429233057171, greenLng: -95.75853772165988, men: { yardage: 147, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 130, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 140, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 162, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 11, par: 4, handicap: 12, greenLat: 48.84181137092062, greenLng: -95.75616548308963, men: { yardage: 290, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 248, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 253, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 311, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 12, par: 3, handicap: 14, greenLat: 48.840227084979, greenLng: -95.75485765896205, men: { yardage: 180, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 159, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 164, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 199, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 13, par: 4, handicap: 8, greenLat: 48.842433666850276, greenLng: -95.75595465444536, men: { yardage: 340, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 310, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 315, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 355, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 14, par: 4, handicap: 2, greenLat: 48.840903144877544, greenLng: -95.75392532312462, men: { yardage: 365, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 285, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 290, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 435, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 15, par: 3, handicap: 16, greenLat: 48.838780406338174, greenLng: -95.75324759156226, men: { yardage: 160, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 124, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 129, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 178, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 16, par: 5, handicap: 6, greenLat: 48.83745227578357, greenLng: -95.75859937789164, men: { yardage: 473, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 386, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 391, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 480, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 17, par: 4, handicap: 4, greenLat: 48.83820561211359, greenLng: -95.75291666493416, men: { yardage: 396, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 356, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 361, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 402, courseRating: 71.2, slopeRating: 123 } },
+          { holeNumber: 18, par: 5, handicap: 10, greenLat: 48.84138715584989, greenLng: -95.75772421080617, men: { yardage: 472, courseRating: 69.7, slopeRating: 122 }, women: { yardage: 399, courseRating: 69.7, slopeRating: 119 }, senior: { yardage: 404, courseRating: 65.3, slopeRating: 114 }, championship: { yardage: 486, courseRating: 71.2, slopeRating: 123 } },
+          ],
+      },
+
+{
     id: 'OLG',
     name: 'Oak Lake Golf',
     location: 'Erskine,',
