@@ -31,6 +31,14 @@ export default function NavBar() {
   const [currentRoundId, setCurrentRoundId] = useState<string | null>(null)
   const [courseSelectedButNoRound, setCourseSelectedButNoRound] = useState(false)
 
+  const clearStoredRoundId = () => {
+    if (typeof window === 'undefined') return
+    if (!localStorage.getItem('currentRoundId')) return
+
+    localStorage.removeItem('currentRoundId')
+    window.dispatchEvent(new Event('roundStateChanged'))
+  }
+
   const syncRoundStateFromStorage = () => {
     const storedRoundId = localStorage.getItem('currentRoundId')
     if (storedRoundId) {
@@ -68,6 +76,7 @@ export default function NavBar() {
         const rounds = await getRoundsInProgress(user.id);
         if (rounds && rounds.length > 0) {
           setCurrentRoundId(rounds[0].id);
+          localStorage.setItem('currentRoundId', rounds[0].id);
           // Only clear the flag if a round is in progress
           if (typeof window !== 'undefined') {
             localStorage.removeItem('courseSelectedButNoRound');
@@ -75,6 +84,8 @@ export default function NavBar() {
           }
         } else {
           setCurrentRoundId(null);
+          // Clear stale local round pointer to prevent Return Round flash on navigation.
+          clearStoredRoundId();
           // Do NOT overwrite courseSelectedButNoRound here; let event listeners control it
         }
       } catch (err) {

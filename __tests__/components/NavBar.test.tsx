@@ -3,7 +3,7 @@
  * Focuses on Map button functionality for the new hole map feature
  */
 import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import '@testing-library/jest-dom'
 import { useRouter, usePathname } from 'next/navigation'
 import NavBar from '@/components/NavBar'
@@ -63,6 +63,20 @@ describe('NavBar - Map Button Tests', () => {
 
     localStorage.removeItem('currentRoundId')
     window.dispatchEvent(new Event('roundStateChanged'))
+
+    expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument()
+  })
+
+  it('should clear stale currentRoundId when no active rounds are returned', async () => {
+    ;(usePathname as jest.Mock).mockReturnValue('/player')
+    localStorage.setItem('currentRoundId', 'stale-round-id')
+    ;(getRoundsInProgress as jest.Mock).mockResolvedValue([])
+
+    render(<NavBar />)
+
+    await waitFor(() => {
+      expect(localStorage.getItem('currentRoundId')).toBeNull()
+    })
 
     expect(await screen.findByRole('button', { name: /Start/i })).toBeInTheDocument()
   })
